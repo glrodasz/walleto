@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { Amount, formatAmount, formatNative } from "./Amount";
+import { Amount, formatAmount, formatCompact, formatNative } from "./Amount";
 
 /** Intl separates an ISO code from the number with a non-breaking space. */
 const norm = (s: string) => s.replace(/\u00a0/g, " ");
@@ -61,5 +61,14 @@ describe("Amount", () => {
   it("appends the ISO code when asked", () => {
     render(<Amount value={100} currency="COP" showCode />);
     expect(screen.getByText("COP")).toBeInTheDocument();
+  });
+});
+
+describe("formatCompact", () => {
+  it("abbreviates axis ticks with the currency made explicit", () => {
+    expect(formatCompact(60_000, "USD")).toBe("$60K");
+    expect(norm(formatCompact(58_275, "SEK"))).toBe("SEK 58.3K");
+    expect(norm(formatCompact(4_000_000, "COP"))).toBe("COP 4M");
+    expect(formatCompact(0, "USD")).toBe("$0");
   });
 });

@@ -10,7 +10,8 @@ import { SubscriptionInsights } from "../../insights/components/SubscriptionInsi
 import { InvestmentValuePanel } from "../../investments/components/InvestmentValuePanel";
 import { PERIODS, DEFAULT_PERIOD_INDEX, getStartDate } from "../helpers/periods";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
-import { toDomainChartData } from "../helpers/domainChartData";
+import { toCumulativeSeries } from "../helpers/domainChartData";
+import { bucketForRange } from "../../../helpers/chartData";
 import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
 import { useCategories } from "../../../hooks/useCategories";
 import { useRecurrentTransactions } from "../../../hooks/useRecurrentTransactions";
@@ -120,7 +121,14 @@ export function DomainPage({ domain }: Props) {
     () => fetched.filter((t) => t.occurredAt.toDate() >= startDate),
     [fetched, startDate]
   );
-  const chartData = useMemo(() => toDomainChartData(transactions, ctx), [transactions, ctx]);
+  const chartData = useMemo(
+    () =>
+      toCumulativeSeries(transactions, ctx, {
+        from: startDate,
+        bucket: bucketForRange(PERIODS[periodIdx].months),
+      }),
+    [transactions, ctx, startDate, periodIdx]
+  );
   const periodTotal = useMemo(
     () => transactions.reduce((sum, t) => sum + convertedAmount(t, ctx), 0),
     [transactions, ctx]
@@ -167,7 +175,13 @@ export function DomainPage({ domain }: Props) {
         onPeriodChange={setPeriodIdx}
       />
 
-      <DomainChart domain={domain} data={chartData} currency={currency} loading={txLoading} />
+      <DomainChart
+        domain={domain}
+        data={chartData}
+        currency={currency}
+        loading={txLoading}
+        hasData={transactions.length > 0}
+      />
 
       <DomainCategoryTable
         domain={domain}

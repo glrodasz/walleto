@@ -49,6 +49,21 @@ export function formatAmount(
 }
 
 /**
+ * Axis ticks: "SEK 60K", "$60K", "COP 4M". Symbol when it is unambiguous
+ * (the reporting currency's own), ISO code otherwise.
+ */
+export function formatCompact(value: number, currency: Currency): string {
+  return new Intl.NumberFormat(GROUPING_LOCALE, {
+    style: "currency",
+    currency,
+    currencyDisplay: currency === "USD" ? "symbol" : "code",
+    notation: "compact",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
+/**
  * How a row's own amount should read next to totals in `displayCurrency`:
  * symbol when they match, ISO code when they don't — $, MXN$ and COP$ are all
  * "$" otherwise.

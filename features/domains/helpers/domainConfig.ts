@@ -9,6 +9,8 @@ interface DomainConfig {
   totalLabel: string;
   /** Run-rate line label ("Planned monthly expenses"). */
   runRateLabel: string;
+  /** Caption of the running-total chart ("Spent so far"). */
+  soFarLabel: string;
   /** CSS token for accents (tabs, chart, card edge). */
   accent: string;
   /** Whether the table shows the payment method column (mockup: expenses only). */
@@ -23,6 +25,7 @@ export const DOMAIN_CONFIG: Record<Domain, DomainConfig> = {
     noun: "incomes",
     totalLabel: "Total incomes",
     runRateLabel: "Planned monthly income",
+    soFarLabel: "Received so far",
     accent: "var(--domain-income)",
     showPaymentMethod: false,
     upIsGood: true,
@@ -32,6 +35,7 @@ export const DOMAIN_CONFIG: Record<Domain, DomainConfig> = {
     noun: "expenses",
     totalLabel: "Total expenses",
     runRateLabel: "Planned monthly expenses",
+    soFarLabel: "Spent so far",
     accent: "var(--domain-expense)",
     showPaymentMethod: true,
     upIsGood: false,
@@ -41,6 +45,7 @@ export const DOMAIN_CONFIG: Record<Domain, DomainConfig> = {
     noun: "investments",
     totalLabel: "Total investments",
     runRateLabel: "Planned monthly investments",
+    soFarLabel: "Invested so far",
     accent: "var(--domain-investment)",
     showPaymentMethod: false,
     upIsGood: true,
@@ -50,6 +55,7 @@ export const DOMAIN_CONFIG: Record<Domain, DomainConfig> = {
     noun: "savings",
     totalLabel: "Total savings",
     runRateLabel: "Planned monthly savings",
+    soFarLabel: "Saved so far",
     accent: "var(--domain-saving)",
     showPaymentMethod: false,
     upIsGood: true,

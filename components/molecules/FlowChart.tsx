@@ -1,5 +1,5 @@
 import dynamic from "next/dynamic";
-import { formatAmount } from "../atoms/Amount";
+import { formatAmount, formatCompact } from "../atoms/Amount";
 import type { FlowPoint } from "../../helpers/chartData";
 import type { Currency } from "../../types";
 
@@ -87,9 +87,7 @@ export function FlowChart({
                 tick={{ fill: "var(--fg-2)", fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(v: number) =>
-                  v >= 1000 ? `$${(v / 1000).toFixed(0)},000` : `$${v}`
-                }
+                tickFormatter={(v: number) => formatCompact(v, currency)}
                 width={68}
               />
               <Tooltip

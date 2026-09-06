@@ -1,4 +1,4 @@
-import { bucketForRange, toFlowSeries } from "./chartData";
+import { bucketForRange, bucketStart, nextBucketStart, toFlowSeries } from "./chartData";
 import { IDENTITY_RATES } from "./fx";
 import type { ExchangeRates } from "./fx";
 import type { Currency, Domain } from "../types";
@@ -106,5 +106,20 @@ describe("toFlowSeries", () => {
         bucket: "day",
       })
     ).toEqual([]);
+  });
+});
+
+describe("bucketStart / nextBucketStart", () => {
+  it("anchors weeks on Monday and strips the time of day", () => {
+    const thursday = new Date(2026, 7, 27, 15, 30); // Aug 27 2026 is a Thursday
+    expect(bucketStart(thursday, "week")).toEqual(new Date(2026, 7, 24));
+    expect(bucketStart(thursday, "day")).toEqual(new Date(2026, 7, 27));
+    expect(bucketStart(thursday, "month")).toEqual(new Date(2026, 7, 1));
+  });
+
+  it("steps to the next bucket", () => {
+    expect(nextBucketStart(new Date(2026, 0, 1), "month")).toEqual(new Date(2026, 1, 1));
+    expect(nextBucketStart(new Date(2026, 7, 24), "week")).toEqual(new Date(2026, 7, 31));
+    expect(nextBucketStart(new Date(2026, 7, 31), "day")).toEqual(new Date(2026, 8, 1));
   });
 });

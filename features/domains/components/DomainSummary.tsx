@@ -47,6 +47,7 @@ export function DomainSummary({
               {up ? "▲" : "▼"} {Math.abs(deltaPct).toFixed(0)}%
             </span>
           )}
+          {hasDelta && <span className="delta-note">vs same point last month</span>}
         </div>
         <span className="run-rate">
           {config.runRateLabel}: <strong>{formatAmount(runRate, currency)}</strong>/mo
@@ -100,6 +101,12 @@ export function DomainSummary({
           color: var(--fg-1);
           font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
           font-variant-numeric: tabular-nums;
+        }
+
+        .delta-note {
+          font-size: 0.72rem;
+          color: var(--fg-2);
+          white-space: nowrap;
         }
 
         .delta-badge {

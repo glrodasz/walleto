@@ -1,5 +1,5 @@
 import dynamic from "next/dynamic";
-import { formatAmount } from "../../../components/atoms/Amount";
+import { formatAmount, formatCompact } from "../../../components/atoms/Amount";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import type { DomainChartPoint } from "../helpers/domainChartData";
 import type { Currency, Domain } from "../../../types";
@@ -22,16 +22,24 @@ interface Props {
   data: DomainChartPoint[];
   currency: Currency;
   loading: boolean;
+  /** The series is zero-filled, so emptiness must be told, not inferred. */
+  hasData: boolean;
 }
 
-/** Single-series area chart in the domain's accent, tooltip = amount, date, source. */
-export function DomainChart({ domain, data, currency, loading }: Props) {
-  const accent = DOMAIN_CONFIG[domain].accent;
+/**
+ * Running total for the period in the domain's accent. A step chart: a
+ * salary is a jump on the day it lands and a flat line after, so the shape
+ * can never suggest money draining between two payments.
+ */
+export function DomainChart({ domain, data, currency, loading, hasData }: Props) {
+  const config = DOMAIN_CONFIG[domain];
+  const accent = config.accent;
   const gradientId = `domainGrad-${domain}`;
 
   return (
     <div className="chart-area">
-      {!loading && data.length === 0 ? (
+      <span className="caption">{config.soFarLabel}</span>
+      {!loading && !hasData ? (
         <p className="empty">No transactions in this period</p>
       ) : (
         <ResponsiveContainer width="100%" height={240}>
@@ -54,7 +62,7 @@ export function DomainChart({ domain, data, currency, loading }: Props) {
               tick={{ fill: "var(--fg-2)", fontSize: 11 }}
               axisLine={false}
               tickLine={false}
-              tickFormatter={(v: number) => (v >= 1000 ? `$${(v / 1000).toFixed(0)},000` : `$${v}`)}
+              tickFormatter={(v: number) => formatCompact(v, currency)}
               width={68}
             />
             <Tooltip
@@ -68,15 +76,19 @@ export function DomainChart({ domain, data, currency, loading }: Props) {
               }}
               labelStyle={{ display: "none" }}
               formatter={(v, _name, entry) => {
-                const amt = typeof v === "number" ? formatAmount(v, currency) : String(v);
-                const { label, name } =
-                  (entry as { payload?: { label?: string; name?: string } }).payload ?? {};
-                return [`${amt}`, `${label ?? ""}${name ? `, ${name}` : ""}`];
+                const point = (entry as { payload?: DomainChartPoint }).payload;
+                const total = typeof v === "number" ? formatAmount(v, currency) : String(v);
+                if (!point) return [total, ""];
+                const detail =
+                  point.added > 0
+                    ? `+${formatAmount(point.added, currency)} (${point.names.join(", ")})`
+                    : "nothing new";
+                return [`${total} so far`, `${point.label} · ${detail}`];
               }}
             />
             <Area
-              type="monotone"
-              dataKey="amount"
+              type="stepAfter"
+              dataKey="total"
               stroke={accent}
               strokeWidth={2}
               fill={`url(#${gradientId})`}
@@ -95,6 +107,16 @@ export function DomainChart({ domain, data, currency, loading }: Props) {
       <style jsx>{`
         .chart-area {
           padding: 8px 0;
+        }
+
+        .caption {
+          display: block;
+          margin: 0 0 6px 8px;
+          font-size: 0.72rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          color: var(--fg-2);
         }
 
         .empty {

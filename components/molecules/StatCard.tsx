@@ -46,7 +46,7 @@ export function StatCard({ title, amount, currency, domain, delta, summary }: Pr
       {hasDelta && (
         <span className={`delta ${deltaGood ? "good" : "bad"}`}>
           {deltaPositive ? "▲" : "▼"} {Math.abs(delta ?? 0).toFixed(1)}%{" "}
-          {deltaPositive ? "more" : "less"} than last month
+          {deltaPositive ? "more" : "less"} than last month to date
         </span>
       )}
       <style jsx>{`

@@ -22,12 +22,12 @@ interface FlowInput extends MoneyFields {
   occurredAt: unknown;
 }
 
-function toDate(occurredAt: unknown): Date {
+export function toDate(occurredAt: unknown): Date {
   const ts = occurredAt as { toDate?: () => Date };
   return typeof ts?.toDate === "function" ? ts.toDate() : new Date(occurredAt as string);
 }
 
-function bucketStart(date: Date, bucket: ChartBucket): Date {
+export function bucketStart(date: Date, bucket: ChartBucket): Date {
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   if (bucket === "day") return d;
   if (bucket === "week") {
@@ -38,7 +38,7 @@ function bucketStart(date: Date, bucket: ChartBucket): Date {
   return new Date(d.getFullYear(), d.getMonth(), 1);
 }
 
-function nextBucketStart(date: Date, bucket: ChartBucket): Date {
+export function nextBucketStart(date: Date, bucket: ChartBucket): Date {
   const d = new Date(date);
   if (bucket === "day") d.setDate(d.getDate() + 1);
   else if (bucket === "week") d.setDate(d.getDate() + 7);
@@ -49,7 +49,7 @@ function nextBucketStart(date: Date, bucket: ChartBucket): Date {
 const DAY_LABEL = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
 const MONTH_LABEL = new Intl.DateTimeFormat("en", { month: "short" });
 
-function bucketLabel(date: Date, bucket: ChartBucket): string {
+export function bucketLabel(date: Date, bucket: ChartBucket): string {
   return bucket === "month" ? MONTH_LABEL.format(date) : DAY_LABEL.format(date);
 }
 

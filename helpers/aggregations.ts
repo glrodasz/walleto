@@ -88,12 +88,14 @@ interface MoMOptions extends MoneyContext {
 export function computeMoM(
   transactions: Transaction[],
   opts: MoMOptions
-): { current: number; previous: number; deltaPct: number } {
+): { current: number; previous: number; deltaPct: number; previousThrough: Date } {
   const now = opts.now ?? new Date();
-  const cy = now.getFullYear();
-  const cm = now.getMonth();
-  const py = cm === 0 ? cy - 1 : cy;
-  const pm = cm === 0 ? 11 : cm - 1;
+  const currentFrom = new Date(now.getFullYear(), now.getMonth(), 1);
+  const previousFrom = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  // Same point last month: the same day-of-month and time, clamped to that
+  // month's length (Mar 31 compares against all of February). Comparing
+  // month-to-date against a whole month would print "-99%" every 2nd.
+  const previousThrough = sameTimeLastMonth(now, previousFrom);
 
   let current = 0;
   let previous = 0;
@@ -107,10 +109,27 @@ export function computeMoM(
         : new Date(t.occurredAt as unknown as string);
 
     const value = convertedAmount(t, opts);
-    if (d.getFullYear() === cy && d.getMonth() === cm) current += value;
-    else if (d.getFullYear() === py && d.getMonth() === pm) previous += value;
+    if (d >= currentFrom && d <= now) current += value;
+    else if (d >= previousFrom && d <= previousThrough) previous += value;
   }
 
   const deltaPct = previous === 0 ? 0 : ((current - previous) / previous) * 100;
-  return { current, previous, deltaPct };
+  return { current, previous, deltaPct, previousThrough };
+}
+
+function sameTimeLastMonth(now: Date, previousFrom: Date): Date {
+  const daysInPrevious = new Date(
+    previousFrom.getFullYear(),
+    previousFrom.getMonth() + 1,
+    0
+  ).getDate();
+  return new Date(
+    previousFrom.getFullYear(),
+    previousFrom.getMonth(),
+    Math.min(now.getDate(), daysInPrevious),
+    now.getHours(),
+    now.getMinutes(),
+    now.getSeconds(),
+    now.getMilliseconds()
+  );
 }

@@ -179,7 +179,36 @@ describe("computeMoM", () => {
   const now = new Date(2026, 5, 20);
 
   it("returns zeros for empty array", () => {
-    expect(computeMoM([], { ...USD, now })).toEqual({ current: 0, previous: 0, deltaPct: 0 });
+    expect(computeMoM([], { ...USD, now })).toMatchObject({
+      current: 0,
+      previous: 0,
+      deltaPct: 0,
+    });
+  });
+
+  it("compares month-to-date against the same day range of last month", () => {
+    const sep2 = new Date(2026, 8, 2, 15);
+    const txns = [
+      makeTransaction(625, new Date(2026, 8, 2, 9)), // this month
+      makeTransaction(600, new Date(2026, 7, 1, 10)), // Aug 1 — inside the range
+      makeTransaction(57_650, new Date(2026, 7, 23)), // Aug 23 — after the same point
+    ];
+    const { current, previous, deltaPct, previousThrough } = computeMoM(txns, {
+      ...USD,
+      now: sep2,
+    });
+    expect(current).toBe(625);
+    expect(previous).toBe(600);
+    expect(deltaPct).toBeCloseTo(4.17, 1);
+    expect(previousThrough).toEqual(new Date(2026, 7, 2, 15));
+  });
+
+  it("clamps the previous range to the shorter month", () => {
+    const mar31 = new Date(2026, 2, 31, 23, 59);
+    const txns = [makeTransaction(50, new Date(2026, 1, 28, 12))];
+    const { previous, previousThrough } = computeMoM(txns, { ...USD, now: mar31 });
+    expect(previous).toBe(50);
+    expect(previousThrough).toEqual(new Date(2026, 1, 28, 23, 59));
   });
 
   it("calculates delta correctly", () => {
