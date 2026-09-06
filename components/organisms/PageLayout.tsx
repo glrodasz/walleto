@@ -105,7 +105,9 @@ export function PageLayout({ title, currency, currencyControl, actions, children
 
           .main {
             padding: 16px;
-            padding-bottom: 80px;
+            /* Clear the fixed bottom nav (64px + safe area) and the floating
+               create button above it, so the last row is never hidden. */
+            padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
           }
         }
       `}</style>

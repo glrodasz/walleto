@@ -19,6 +19,17 @@ export function Modal({ open, title, onClose, children }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+  // Lock the page behind the dialog: on a phone the sheet scrolls internally
+  // and the page must not scroll along with it.
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [open]);
+
   if (!open) return null;
 
   return (
@@ -43,7 +54,7 @@ export function Modal({ open, title, onClose, children }: Props) {
         .overlay {
           position: fixed;
           inset: 0;
-          z-index: 50;
+          z-index: var(--z-overlay, 200);
           background: rgba(10, 10, 15, 0.7);
           backdrop-filter: blur(2px);
           display: flex;
@@ -56,10 +67,30 @@ export function Modal({ open, title, onClose, children }: Props) {
           width: 100%;
           max-width: 560px;
           max-height: calc(100vh - 32px);
+          max-height: calc(100dvh - 32px);
           overflow-y: auto;
+          overscroll-behavior: contain;
           background: var(--bg-1);
           border: 1px solid var(--line-strong);
           border-radius: var(--r-lg);
+        }
+
+        /* Phones: a bottom sheet. Full width, anchored to the bottom edge,
+           padded past the home indicator so the footer buttons stay tappable. */
+        @media (max-width: 767px) {
+          .overlay {
+            align-items: flex-end;
+            padding: 0;
+          }
+
+          .panel {
+            max-width: none;
+            max-height: 92vh;
+            max-height: 92dvh;
+            border-radius: var(--r-lg) var(--r-lg) 0 0;
+            border-bottom: none;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+          }
         }
 
         .head {

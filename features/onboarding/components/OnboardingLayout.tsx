@@ -267,7 +267,7 @@ export function OnboardingLayout({
             left: 0;
             right: 0;
             bottom: 0;
-            z-index: 200;
+            z-index: var(--z-nav, 100);
             margin-top: 0;
             padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
             background: var(--bg-1);

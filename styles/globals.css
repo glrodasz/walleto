@@ -29,6 +29,19 @@
   --domain-expense: var(--accent-hot);
   --domain-investment: var(--accent-cyan);
   --domain-saving: var(--accent-amber);
+
+  /* Stacking order. Overlays must beat the fixed mobile nav and the FAB,
+     otherwise a modal's footer sits under the nav and taps navigate away. */
+  --z-nav: 100;
+  --z-fab: 110;
+  --z-overlay: 200;
+}
+
+/* Phones: 44px is the minimum comfortable touch target. */
+@media (max-width: 767px) {
+  :root {
+    --input-height: 44px;
+  }
 }
 
 html,

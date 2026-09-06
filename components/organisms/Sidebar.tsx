@@ -1,6 +1,8 @@
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useUser } from "@auth0/nextjs-auth0/client";
+import { Modal } from "../molecules/Modal";
 
 interface NavItem {
   label: string;
@@ -35,11 +37,18 @@ const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
   },
 ];
 
+/** Four direct tabs; everything else sits one tap away behind "More". */
 const BOTTOM_NAV: NavItem[] = [
   { label: "Home", href: "/" },
   { label: "Incomes", href: "/incomes" },
   { label: "Expenses", href: "/expenses" },
   { label: "Invest", href: "/investments" },
+];
+
+const MORE_NAV: NavItem[] = [
+  { label: "Savings", href: "/savings" },
+  { label: "Prospect", href: "/prospect" },
+  { label: "Methods", href: "/methods" },
   { label: "Settings", href: "/settings" },
 ];
 
@@ -106,6 +115,14 @@ function NavIcon({ href, size = 20 }: { href: string; size?: number }) {
         <line x1="1" y1="10" x2="23" y2="10" />
       </svg>
     );
+  if (href === "#more")
+    return (
+      <svg {...p}>
+        <circle cx="5" cy="12" r="1.5" />
+        <circle cx="12" cy="12" r="1.5" />
+        <circle cx="19" cy="12" r="1.5" />
+      </svg>
+    );
   return (
     <svg {...p}>
       <circle cx="12" cy="12" r="3" />
@@ -117,9 +134,11 @@ function NavIcon({ href, size = 20 }: { href: string; size?: number }) {
 export function Sidebar() {
   const { pathname } = useRouter();
   const { user } = useUser();
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const name = user?.name ?? user?.nickname ?? "Account";
   const initial = name.trim().charAt(0).toUpperCase() || "?";
+  const moreActive = MORE_NAV.some((item) => item.href === pathname);
 
   return (
     <>
@@ -164,7 +183,7 @@ export function Sidebar() {
       </aside>
 
       {/* ── Mobile bottom nav ────────────────────────── */}
-      <nav className="waletto-bnav" aria-label="Main navigation">
+      <nav className="waletto-bnav" aria-label="Mobile navigation">
         {BOTTOM_NAV.map((item) => (
           <Link
             key={item.href}
@@ -176,7 +195,47 @@ export function Sidebar() {
             <span>{item.label}</span>
           </Link>
         ))}
+        <button
+          type="button"
+          className={`bnav-item bnav-more${moreActive ? " is-active" : ""}`}
+          aria-haspopup="dialog"
+          aria-expanded={moreOpen}
+          onClick={() => setMoreOpen(true)}
+        >
+          <NavIcon href="#more" size={22} />
+          <span>More</span>
+        </button>
       </nav>
+
+      <Modal open={moreOpen} title="More" onClose={() => setMoreOpen(false)}>
+        <div className="more">
+          {MORE_NAV.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={pathname === item.href ? "page" : undefined}
+              className={`more-item${pathname === item.href ? " is-active" : ""}`}
+              onClick={() => setMoreOpen(false)}
+            >
+              <NavIcon href={item.href} size={20} />
+              <span>{item.label}</span>
+            </Link>
+          ))}
+          <div className="more-account">
+            <span className="avatar" aria-hidden="true">
+              {initial}
+            </span>
+            <span className="who-text">
+              <span className="who-name">{name}</span>
+              {user?.email && <span className="who-mail">{user.email}</span>}
+            </span>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a href="/api/auth/logout" className="logout">
+              Log out
+            </a>
+          </div>
+        </div>
+      </Modal>
 
       {/*
        * styled-jsx does not add its scoping hash to a className handed to a
@@ -340,7 +399,7 @@ export function Sidebar() {
           align-items: stretch;
           background: var(--bg-1);
           border-top: 1px solid var(--line);
-          z-index: 200;
+          z-index: var(--z-nav, 100);
           padding-bottom: env(safe-area-inset-bottom, 0px);
         }
 
@@ -364,6 +423,57 @@ export function Sidebar() {
 
         .waletto-bnav :global(.bnav-item.is-active) {
           color: var(--accent);
+        }
+
+        .bnav-more {
+          border: none;
+          background: transparent;
+          font-family: inherit;
+          cursor: pointer;
+        }
+
+        .more {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .more :global(.more-item) {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          min-height: 48px;
+          padding: 0 10px;
+          border-radius: var(--r-sm);
+          font-size: 0.95rem;
+          font-weight: 500;
+          color: var(--fg-1);
+          text-decoration: none;
+        }
+
+        .more :global(.more-item.is-active) {
+          color: var(--accent);
+          background: var(--bg-2);
+        }
+
+        .more-account {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-top: 10px;
+          padding: 14px 10px 0;
+          border-top: 1px solid var(--line);
+        }
+
+        .more-account .who-text {
+          flex: 1;
+        }
+
+        .more-account .logout {
+          flex-shrink: 0;
+          padding: 10px 12px;
+          border: 1px solid var(--line);
+          border-radius: var(--r-sm);
         }
 
         @media (max-width: 767px) {

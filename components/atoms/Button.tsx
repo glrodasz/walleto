@@ -92,6 +92,16 @@ export function Button({
           opacity: 0.45;
           cursor: not-allowed;
         }
+
+        @media (max-width: 767px) {
+          .btn--md {
+            min-height: 44px;
+          }
+
+          .btn--sm {
+            min-height: 36px;
+          }
+        }
       `}</style>
     </button>
   );

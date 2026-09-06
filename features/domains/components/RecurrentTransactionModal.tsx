@@ -464,16 +464,27 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
           color: var(--accent-hot);
         }
 
+        /* Sticks to the bottom of the scrolling sheet so Cancel/Create stay
+           reachable on a long form. Negative margins span the body padding. */
         .actions {
+          position: sticky;
+          bottom: 0;
           display: flex;
           justify-content: flex-end;
           gap: 10px;
-          margin-top: 4px;
+          margin: 4px -22px -22px;
+          padding: 12px 22px 22px;
+          background: var(--bg-1);
         }
 
         @media (max-width: 480px) {
           .pair {
             grid-template-columns: 1fr;
+          }
+
+          .field-hint {
+            margin-top: 0;
+            align-self: flex-start;
           }
         }
       `}</style>

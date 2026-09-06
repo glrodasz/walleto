@@ -134,6 +134,22 @@ export function KebabMenu({ actions, "aria-label": ariaLabel = "More options" }:
           opacity: 0.4;
           cursor: not-allowed;
         }
+
+        @media (max-width: 767px) {
+          .trigger {
+            width: 36px;
+            height: 36px;
+            /* 44px hit area without growing the visible glyph. */
+            margin: -4px;
+            padding: 4px;
+            box-sizing: content-box;
+          }
+
+          .item {
+            padding: 12px 14px;
+            font-size: 0.9rem;
+          }
+        }
       `}</style>
     </div>
   );
