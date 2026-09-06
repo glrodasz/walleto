@@ -2,6 +2,7 @@ import type { Currency, Transaction } from "../../../types";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { TransactionRow } from "../../../components/molecules/TransactionRow";
+import { formatRelativeDay } from "../../../utils/formatRelativeDay";
 
 interface Props {
   transactions: Transaction[];
@@ -14,13 +15,7 @@ function formatDate(ts: Transaction["occurredAt"]): string {
     typeof (ts as { toDate?: () => Date }).toDate === "function"
       ? (ts as { toDate: () => Date }).toDate()
       : new Date(ts as unknown as string);
-
-  const diffDays = Math.floor((Date.now() - date.getTime()) / 86400000);
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7)
-    return new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(-diffDays, "day");
-  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(date);
+  return formatRelativeDay(date);
 }
 
 export function RecentPayments({ transactions, displayCurrency, loading }: Props) {

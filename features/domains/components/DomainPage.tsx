@@ -4,6 +4,7 @@ import { ErrorState } from "../../../components/atoms/ErrorState";
 import { DomainSummary } from "./DomainSummary";
 import { DomainChart } from "./DomainChart";
 import { DomainCategoryTable } from "./DomainCategoryTable";
+import { PeriodTransactionsList } from "./PeriodTransactionsList";
 import { RecurrentTransactionModal } from "./RecurrentTransactionModal";
 import { SubscriptionInsights } from "../../insights/components/SubscriptionInsights";
 import { InvestmentValuePanel } from "../../investments/components/InvestmentValuePanel";
@@ -15,6 +16,7 @@ import { useCategories } from "../../../hooks/useCategories";
 import { useRecurrentTransactions } from "../../../hooks/useRecurrentTransactions";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
+import { deleteTransaction } from "../../../hooks/useTransactions";
 import { startOfPreviousMonth } from "../../../utils/startOfPreviousMonth";
 import { sumMonthly, computeMoM, convertedAmount } from "../../../helpers";
 import type { Currency, Domain, RecurrentTransaction } from "../../../types";
@@ -82,6 +84,18 @@ export function DomainPage({ domain }: Props) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<RecurrentTransaction | undefined>(undefined);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingTxId, setDeletingTxId] = useState<string | null>(null);
+
+  const deleteTx = async (transactionId: string) => {
+    setDeletingTxId(transactionId);
+    try {
+      await deleteTransaction(transactionId);
+    } catch (err) {
+      console.error("Failed to delete transaction:", err);
+    } finally {
+      setDeletingTxId(null);
+    }
+  };
 
   const openCreate = () => {
     setEditingItem(undefined);
@@ -123,6 +137,10 @@ export function DomainPage({ domain }: Props) {
     [recurringItems, selectedCatId]
   );
   const catTotal = useMemo(() => sumMonthly(filteredItems, ctx), [filteredItems, ctx]);
+  const categoryTransactions = useMemo(
+    () => transactions.filter((t) => t.categoryId === selectedCatId),
+    [transactions, selectedCatId]
+  );
 
   const selectedCategoryName = categories.find((c) => c.id === selectedCatId)?.name;
   const showSubscriptionInsights =
@@ -163,6 +181,15 @@ export function DomainPage({ domain }: Props) {
         onEdit={openEdit}
         onDelete={deleteItem}
         deletingId={deletingId}
+      />
+
+      <PeriodTransactionsList
+        title={`${selectedCategoryName ?? config.title} · ${PERIODS[periodIdx].label}`}
+        transactions={categoryTransactions}
+        displayCurrency={currency}
+        loading={txLoading}
+        onDelete={deleteTx}
+        deletingId={deletingTxId}
       />
 
       {showSubscriptionInsights && (

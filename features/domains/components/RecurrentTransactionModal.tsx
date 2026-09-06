@@ -2,11 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Modal } from "../../../components/molecules/Modal";
 import { ScheduleFields } from "../../../components/molecules/ScheduleFields";
 import type { ScheduleValue } from "../../../components/molecules/ScheduleFields";
+import { CategoryField } from "../../../components/molecules/CategoryField";
 import { Select } from "../../../components/atoms/Select";
 import { TextField } from "../../../components/atoms/TextField";
 import { Button } from "../../../components/atoms/Button";
-import { Chip } from "../../../components/atoms/Chip";
-import { Combobox } from "../../../components/atoms/Combobox";
 import { useCategories } from "../../../hooks/useCategories";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { useRecurrentTransactions } from "../../../hooks/useRecurrentTransactions";
@@ -90,13 +89,11 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
   const [form, setForm] = useState<FormState>(empty);
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [creatingCategory, setCreatingCategory] = useState(false);
 
   // Re-seed whenever the modal opens for a different target.
   useEffect(() => {
     if (!open) return;
     setFormError(null);
-    setCreatingCategory(false);
     if (!item) {
       setForm(empty);
       return;
@@ -140,25 +137,7 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
     });
   };
 
-  const roots = categories.filter((c) => !c.parentId);
-  const categoryOptions = roots.map((c) => ({ value: c.id!, label: c.name }));
   const methodOptions = methods.map((m) => ({ value: m.id!, label: paymentMethodOptionLabel(m) }));
-
-  const commitNewCategory = async (name: string) => {
-    setCreatingCategory(false);
-    const existing = roots.find((c) => c.name.toLowerCase() === name.trim().toLowerCase());
-    if (existing?.id) {
-      patch({ categoryId: existing.id });
-      return;
-    }
-    try {
-      const id = await createCategory({ domain, name: name.trim() });
-      patch({ categoryId: id });
-    } catch (err) {
-      console.error("Failed to create category:", err);
-      setFormError(`Couldn't create the category "${name.trim()}"`);
-    }
-  };
 
   const isRecurring = form.frequency !== "ONE_TIME";
   const offersGain = !item && domain === "INVESTMENT" && !isRecurring;
@@ -257,33 +236,14 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
   return (
     <Modal open={open} title={item ? `Edit ${form.name || noun}` : `New ${noun}`} onClose={onClose}>
       <div className="form">
-        <div className="category">
-          {creatingCategory ? (
-            <Combobox
-              autoFocus
-              label={`New ${config.title.toLowerCase()} category`}
-              placeholder="Type a name"
-              suggestions={[]}
-              onSelect={commitNewCategory}
-              onCancel={() => setCreatingCategory(false)}
-            />
-          ) : (
-            <>
-              <Select
-                label="Category"
-                placeholder="Pick a category"
-                options={categoryOptions}
-                value={form.categoryId}
-                onValueChange={(v) => patch({ categoryId: v })}
-              />
-              <div className="category-add">
-                <Chip variant="add" onClick={() => setCreatingCategory(true)}>
-                  New category
-                </Chip>
-              </div>
-            </>
-          )}
-        </div>
+        <CategoryField
+          categories={categories}
+          value={form.categoryId}
+          onChange={(categoryId) => patch({ categoryId })}
+          createCategory={(name) => createCategory({ domain, name })}
+          newLabel={`New ${config.title.toLowerCase()} category`}
+          onError={setFormError}
+        />
 
         <TextField
           label="Name"
@@ -414,16 +374,6 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
           display: flex;
           flex-direction: column;
           gap: 14px;
-        }
-
-        .category {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .category-add {
-          display: flex;
         }
 
         .pair {
