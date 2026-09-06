@@ -59,6 +59,8 @@ features/
   insights/     SubscriptionInsights — costo mensual/anualizado de suscripciones
   investments/  valoraciones por categoría: invertido vs valor, % de ganancia, historial
   prospect/     simulador what-if: qué pasa si cancelo X
+  transactions/ QuickTransactionModal — registrar un pago/ingreso puntual (POST /api/transactions)
+  create/       CreateLauncher — el botón flotante "+" de mobile y su sheet (¿pago puntual o recurrente?)
 ```
 
 Cada una con la misma forma interna: `components/`, `hooks/`, `helpers/`, `data/`.
@@ -82,7 +84,9 @@ types/                                  tipos del dominio
 constants.ts                            constantes y mapas de presentación
 ```
 
-`components/atoms/EmptyState.tsx` y `components/atoms/ErrorState.tsx` son **distintos a propósito**: una regla de Firestore rota o un índice building deben leerse como error, nunca como "sin datos" — esa ambigüedad ya vació la lista de categorías del wizard una vez (ver §3). `components/molecules/Modal.tsx` y `KebabMenu.tsx` son los building blocks de cualquier CRUD nuevo (crear/editar en un modal, acciones por fila en un kebab) — no reinventes overlay ni dropdown.
+`components/atoms/EmptyState.tsx` y `components/atoms/ErrorState.tsx` son **distintos a propósito**: una regla de Firestore rota o un índice building deben leerse como error, nunca como "sin datos" — esa ambigüedad ya vació la lista de categorías del wizard una vez (ver §3). `components/molecules/Modal.tsx` y `KebabMenu.tsx` son los building blocks de cualquier CRUD nuevo (crear/editar en un modal, acciones por fila en un kebab) — no reinventes overlay ni dropdown. `Modal` es un diálogo centrado en desktop y un **bottom sheet** bajo 768px (ancho completo, `dvh`, safe-area, scroll del body bloqueado); los formularios largos fijan su fila de acciones con `position: sticky; bottom: 0` para que Cancelar/Guardar no queden fuera de vista. `components/molecules/CategoryField.tsx` es el select de categoría con creación inline que comparten los dos formularios de alta.
+
+**La única excepción a "los organisms no importan features"** es `PageLayout`, que monta `features/create/CreateLauncher` (el "+" flotante de mobile): tiene que existir en todas las páginas y todas las páginas se construyen sobre ese layout. Los dos formularios que abre se montan solo mientras están abiertos, así ninguna página paga sus listeners.
 
 ---
 
@@ -221,7 +225,7 @@ Otras notas:
 Decisiones explícitas de scope, no descuidos:
 
 - **Migración de producción**: no hay suite de migración en el repo. Cuando toque promover, el owner baja los datos de prod y se escribe un script local en ese momento — el schema actual de la DB es con el que se trabaja.
-- **Entrada manual de transacciones día a día**: `POST /api/transactions` existe (el modelo está listo), pero no hay UI. Los recurrentes son el único write path expuesto.
+- **Editar una transacción puntual**: `PATCH /api/transactions/[id]` existe, pero la lista por período (`PeriodTransactionsList`) solo ofrece Delete; el par charged tampoco está en `QuickTransactionModal` (el schema lo acepta).
 - **Persistencia de escenarios what-if** (`features/prospect`): el estado vive en memoria (`useWhatIf`), se pierde al salir de la página.
 - **Entradas "Simulate cancel"** desde otras pantallas (tablas, insights) hacia un escenario de Prospect precargado — la página funciona standalone con su propio checklist.
-- Scheduler / Cloud Functions, integraciones bancarias, y una versión mobile dedicada de los dashboards (hoy es responsive, no una experiencia nativa).
+- Scheduler / Cloud Functions, integraciones bancarias, y una versión mobile dedicada de los dashboards (hoy es responsive con bottom nav, sheet "More" y el "+" flotante — no una experiencia nativa: sin gestos, toasts, offline ni PWA).

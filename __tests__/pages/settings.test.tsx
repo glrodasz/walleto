@@ -23,6 +23,12 @@ jest.mock("../../hooks/useUserDoc", () => ({
   useUserDoc: () => ({ userDoc: { onboardingCompleted: true }, update: updateMock }),
 }));
 
+// The app shell mounts the mobile create launcher, whose forms reach the
+// Firebase client; this page test is about Settings, not about creating.
+jest.mock("../../features/create/components/CreateLauncher", () => ({
+  CreateLauncher: () => null,
+}));
+
 const fetchMock = jest.fn();
 global.fetch = fetchMock as unknown as typeof fetch;
 

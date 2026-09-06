@@ -26,8 +26,10 @@ rates into a per-user display currency.
 - **Settings** (`/settings`) — account info, main reporting currency, redo
   onboarding.
 
-Day-to-day manual transaction entry has an API (`POST /api/transactions`)
-but no UI yet — recurring items are the only write path exposed today.
+One-off transactions (a coffee, an invoice) are recorded through the create
+button — the header's New buttons on desktop, the floating "+" on phones —
+which asks whether you mean a single dated payment or a recurring item. Each
+domain page lists what was recorded in the selected period, with delete.
 Six months of synthetic PAID transaction history is backfilled from active
 recurring items on first dashboard visit (`useMaterialize`), idempotently.
 

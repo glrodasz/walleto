@@ -149,6 +149,7 @@ export function DomainPage({ domain }: Props) {
   return (
     <PageLayout
       title={config.title}
+      domain={domain}
       actions={
         <NewItemButton label={`New ${config.noun.replace(/s$/, "")}`} onClick={openCreate} />
       }

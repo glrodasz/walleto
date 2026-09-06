@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import Head from "next/head";
 import { Sidebar } from "./Sidebar";
 import { Badge } from "../atoms/Badge";
+import { CreateLauncher } from "../../features/create/components/CreateLauncher";
+import type { Domain } from "../../types";
 
 interface Props {
   title: string;
@@ -9,10 +11,17 @@ interface Props {
   /** Interactive replacement for the static currency badge (display-currency switcher). */
   currencyControl?: ReactNode;
   actions?: ReactNode;
+  /** The page's domain, so the mobile create button skips the domain question. */
+  domain?: Domain;
   children: ReactNode;
 }
 
-export function PageLayout({ title, currency, currencyControl, actions, children }: Props) {
+/**
+ * The app shell. It is the one place a shared organism composes a feature:
+ * the mobile create launcher must exist on every page, and every page is
+ * built on this layout.
+ */
+export function PageLayout({ title, currency, currencyControl, actions, domain, children }: Props) {
   return (
     <>
       <Head>
@@ -35,6 +44,8 @@ export function PageLayout({ title, currency, currencyControl, actions, children
 
           <main className="main">{children}</main>
         </div>
+
+        <CreateLauncher domain={domain} />
       </div>
 
       <style jsx>{`

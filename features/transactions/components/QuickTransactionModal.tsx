@@ -21,7 +21,8 @@ interface Props {
   domain?: Domain;
 }
 
-const COPY: Record<Domain, { title: string; placeholder: string }> = {
+/** Exported so the create launcher can name the option the same way. */
+export const QUICK_COPY: Record<Domain, { title: string; placeholder: string }> = {
   EXPENSE: { title: "Record a payment", placeholder: "Groceries" },
   INCOME: { title: "Record an income", placeholder: "Freelance invoice" },
   INVESTMENT: { title: "Record a contribution", placeholder: "Index fund buy" },
@@ -139,7 +140,7 @@ export function QuickTransactionModal({ open, onClose, domain: fixedDomain }: Pr
   };
 
   return (
-    <Modal open={open} title={COPY[domain].title} onClose={onClose}>
+    <Modal open={open} title={QUICK_COPY[domain].title} onClose={onClose}>
       <div className="form">
         {!fixedDomain && (
           <div className="domains" role="group" aria-label="Type">
@@ -169,7 +170,7 @@ export function QuickTransactionModal({ open, onClose, domain: fixedDomain }: Pr
 
         <TextField
           label="Name"
-          placeholder={COPY[domain].placeholder}
+          placeholder={QUICK_COPY[domain].placeholder}
           value={form.name}
           onValueChange={(v) => patch({ name: v })}
         />
