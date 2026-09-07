@@ -112,6 +112,9 @@ export function useDashboard() {
         ...ctx,
         from: chartStart,
         bucket: "month",
+        // Running totals: the month in progress has no salary yet, and a
+        // per-month series drew that as income collapsing to zero.
+        cumulative: true,
       }),
     [incomeTransactions, expenseTransactions, ctx, chartStart]
   );

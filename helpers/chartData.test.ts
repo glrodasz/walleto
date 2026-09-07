@@ -123,3 +123,48 @@ describe("bucketStart / nextBucketStart", () => {
     expect(nextBucketStart(new Date(2026, 7, 31), "day")).toEqual(new Date(2026, 8, 1));
   });
 });
+
+describe("toFlowSeries cumulative", () => {
+  const from = new Date(2026, 2, 1); // Mar 1
+  const to = new Date(2026, 8, 6); // Sep 6
+  const opts = {
+    rates: IDENTITY_RATES,
+    target: "USD" as Currency,
+    from,
+    to,
+    bucket: "month" as const,
+  };
+
+  const salary = (iso: string) => tx("INCOME", 57_650, iso);
+
+  it("carries a single income forward instead of dropping back to zero", () => {
+    const series = toFlowSeries([salary("2026-03-23T12:00:00.000Z")], {
+      ...opts,
+      cumulative: true,
+    });
+    expect(series.map((p) => p.label)).toEqual(["Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep"]);
+    expect(series.map((p) => p.income)).toEqual(Array(7).fill(57_650));
+    expect(series.map((p) => p.incomeAdded)).toEqual([57_650, 0, 0, 0, 0, 0, 0]);
+  });
+
+  it("steps up on each month that adds money and stays flat on the month in progress", () => {
+    const series = toFlowSeries(
+      [
+        salary("2026-07-23T12:00:00.000Z"),
+        salary("2026-08-23T12:00:00.000Z"),
+        tx("EXPENSE", 1_000, "2026-09-02T12:00:00.000Z"),
+      ],
+      { ...opts, cumulative: true }
+    );
+    // September has no salary yet — the income line holds, never dips.
+    expect(series.map((p) => p.income)).toEqual([0, 0, 0, 0, 57_650, 115_300, 115_300]);
+    expect(series.map((p) => p.expense)).toEqual([0, 0, 0, 0, 0, 0, 1_000]);
+    expect(series[6].expenseAdded).toBe(1_000);
+  });
+
+  it("leaves the per-bucket shape untouched by default", () => {
+    const series = toFlowSeries([salary("2026-07-23T12:00:00.000Z")], opts);
+    expect(series.map((p) => p.income)).toEqual([0, 0, 0, 0, 57_650, 0, 0]);
+    expect(series[4].incomeAdded).toBeUndefined();
+  });
+});

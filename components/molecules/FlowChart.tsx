@@ -27,6 +27,8 @@ interface Props {
   /** Override the two series' colors — default the income/expense domain tokens. */
   colorA?: string;
   colorB?: string;
+  /** "stepAfter" for running totals, where a salary is a jump on one day. */
+  curve?: "monotone" | "stepAfter";
 }
 
 /**
@@ -44,6 +46,7 @@ export function FlowChart({
   labelB = "Expenses",
   colorA = "var(--domain-income)",
   colorB = "var(--domain-expense)",
+  curve = "monotone",
 }: Props) {
   const hasMoney = data.some((p) => p.income !== 0 || p.expense !== 0);
 
@@ -100,13 +103,22 @@ export function FlowChart({
                   padding: "10px 14px",
                 }}
                 labelStyle={{ color: "var(--fg-2)", marginBottom: 4 }}
-                formatter={(v, name) => [
-                  typeof v === "number" ? formatAmount(v, currency) : String(v),
-                  name === "income" ? labelA : labelB,
-                ]}
+                formatter={(v, name, entry) => {
+                  const total = typeof v === "number" ? formatAmount(v, currency) : String(v);
+                  const point = (entry as { payload?: FlowPoint }).payload;
+                  const added = name === "income" ? point?.incomeAdded : point?.expenseAdded;
+                  const label = name === "income" ? labelA : labelB;
+                  // Cumulative series: say what this bucket alone contributed,
+                  // otherwise the flat stretches look like missing data.
+                  if (added === undefined) return [total, label];
+                  return [
+                    added > 0 ? `${total} · +${formatAmount(added, currency)}` : total,
+                    label,
+                  ];
+                }}
               />
               <Area
-                type="monotone"
+                type={curve}
                 dataKey="income"
                 stroke={colorA}
                 strokeWidth={2}
@@ -120,7 +132,7 @@ export function FlowChart({
                 }}
               />
               <Area
-                type="monotone"
+                type={curve}
                 dataKey="expense"
                 stroke={colorB}
                 strokeWidth={2}

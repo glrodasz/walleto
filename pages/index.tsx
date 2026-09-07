@@ -148,7 +148,18 @@ export default function Dashboard() {
       <section className="row">
         <Card>
           <SectionTitle title="Cash flow" />
-          <FlowChart data={flowSeries} currency={currency} loading={loading} />
+          <p className="panel-note">
+            Running total{flowSeries[0] ? ` since ${flowSeries[0].label}` : ""} — the gap between
+            the lines is what you kept.
+          </p>
+          <FlowChart
+            data={flowSeries}
+            currency={currency}
+            loading={loading}
+            labelA="Income so far"
+            labelB="Expenses so far"
+            curve="stepAfter"
+          />
         </Card>
       </section>
 
@@ -176,6 +187,12 @@ export default function Dashboard() {
       )}
 
       <style jsx>{`
+        .panel-note {
+          margin: -4px 0 4px;
+          font-size: 0.78rem;
+          color: var(--fg-2);
+        }
+
         .row {
           display: flex;
           gap: 16px;

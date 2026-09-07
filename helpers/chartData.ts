@@ -15,6 +15,9 @@ export interface FlowPoint {
   label: string;
   income: number;
   expense: number;
+  /** Cumulative series only: what this bucket alone contributed. */
+  incomeAdded?: number;
+  expenseAdded?: number;
 }
 
 interface FlowInput extends MoneyFields {
@@ -58,10 +61,16 @@ export function bucketLabel(date: Date, bucket: ChartBucket): string {
  * every bucket between `from` and `to` exists (empty ones at zero, so lines
  * don't skip quiet stretches), amounts converted via the money context.
  * Other domains are ignored.
+ *
+ * With `cumulative`, each point carries the running total since `from` and
+ * keeps its own contribution in `incomeAdded`/`expenseAdded`. A running total
+ * can only rise or stay flat, so the month in progress — which has fewer days
+ * than the rest and often no salary yet — reads as "nothing more yet" instead
+ * of a collapse to zero.
  */
 export function toFlowSeries(
   transactions: FlowInput[],
-  opts: MoneyContext & { from: Date; to?: Date; bucket: ChartBucket }
+  opts: MoneyContext & { from: Date; to?: Date; bucket: ChartBucket; cumulative?: boolean }
 ): FlowPoint[] {
   const to = opts.to ?? new Date();
   if (to < opts.from) return [];
@@ -90,5 +99,18 @@ export function toFlowSeries(
     else point.expense += value;
   }
 
-  return Array.from(points.values());
+  const series = Array.from(points.values());
+  if (!opts.cumulative) return series;
+
+  let income = 0;
+  let expense = 0;
+  for (const point of series) {
+    point.incomeAdded = point.income;
+    point.expenseAdded = point.expense;
+    income += point.income;
+    expense += point.expense;
+    point.income = income;
+    point.expense = expense;
+  }
+  return series;
 }
