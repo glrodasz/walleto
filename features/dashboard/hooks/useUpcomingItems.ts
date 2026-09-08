@@ -3,6 +3,7 @@ import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { db } from "../../../firebase/client";
 import { useFirebaseAuth } from "../../../hooks/useFirebaseAuth";
+import { markItemPaid } from "../../../hooks/useRecurrentTransactions";
 import type { RecurrentTransaction } from "../../../types";
 
 /** Soonest first; items without a next charge sink to the bottom. */
@@ -55,10 +56,5 @@ export function useUpcomingItems(count: number = 5) {
     );
   }, [ready, user?.sub, count]);
 
-  const markPaid = async (id: string) => {
-    const res = await fetch(`/api/recurrent-transactions/${id}/mark-paid`, { method: "POST" });
-    if (!res.ok) throw new Error(await res.text());
-  };
-
-  return { items, loading, error, markPaid };
+  return { items, loading, error, markPaid: markItemPaid };
 }

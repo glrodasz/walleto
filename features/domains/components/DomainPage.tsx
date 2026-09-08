@@ -1,30 +1,35 @@
 import { useMemo, useState } from "react";
 import { PageLayout } from "../../../components/organisms/PageLayout";
 import { ErrorState } from "../../../components/atoms/ErrorState";
-import { DomainSummary } from "./DomainSummary";
-import { DomainChart } from "./DomainChart";
-import { DomainCategoryTable } from "./DomainCategoryTable";
+import { Card } from "../../../components/atoms/Card";
+import { MonthlyBarsChart } from "../../../components/molecules/MonthlyBarsChart";
+import type { MonthBar } from "../../../components/molecules/MonthlyBarsChart";
+import { MonthHeader } from "./MonthHeader";
+import { ViewTabs } from "./ViewTabs";
+import type { DomainView } from "./ViewTabs";
+import { CategoryMonthList } from "./CategoryMonthList";
+import { CategoryDrilldown } from "./CategoryDrilldown";
 import { PeriodTransactionsList } from "./PeriodTransactionsList";
+import { RecurringChecklist } from "./RecurringChecklist";
 import { RecurrentTransactionModal } from "./RecurrentTransactionModal";
 import { SubscriptionInsights } from "../../insights/components/SubscriptionInsights";
 import { InvestmentValuePanel } from "../../investments/components/InvestmentValuePanel";
-import { PERIODS, DEFAULT_PERIOD_INDEX, getStartDate } from "../helpers/periods";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
-import { toCumulativeSeries } from "../helpers/domainChartData";
-import { bucketForRange } from "../../../helpers/chartData";
+import { expectedForMonth, monthTotals, monthWindows, trailingAverage } from "../helpers/months";
 import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
 import { useCategories } from "../../../hooks/useCategories";
-import { useRecurrentTransactions } from "../../../hooks/useRecurrentTransactions";
+import { useRecurrentTransactions, markItemPaid } from "../../../hooks/useRecurrentTransactions";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
 import { deleteTransaction } from "../../../hooks/useTransactions";
-import { startOfPreviousMonth } from "../../../utils/startOfPreviousMonth";
-import { sumMonthly, computeMoM, convertedAmount } from "../../../helpers";
+import { toDate } from "../../../helpers/chartData";
 import type { Currency, Domain, RecurrentTransaction } from "../../../types";
 
 interface Props {
   domain: Domain;
 }
+
+const MONTHS = 7;
 
 function NewItemButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
@@ -52,41 +57,98 @@ function NewItemButton({ label, onClick }: { label: string; onClick: () => void 
 }
 
 /**
- * The p2/p3 mockup page, parameterized per domain: KPI header with delta and
- * run-rate, period control, area chart, category tabs and the items table.
+ * Month-first page shared by the four domains. One month is selected at a
+ * time; the header, the bars and the panel below all speak about it. The
+ * month in progress carries what the plan still owes before month end.
  */
 export function DomainPage({ domain }: Props) {
   const config = DOMAIN_CONFIG[domain];
   const { ctx, target } = useMoneyContext();
   const currency: Currency = target;
 
-  const [periodIdx, setPeriodIdx] = useState(DEFAULT_PERIOD_INDEX);
-  const startDate = useMemo(() => getStartDate(PERIODS[periodIdx].months), [periodIdx]);
-  // Fetch at least back to the 1st of last month so the MoM badge always
-  // compares against a complete previous month, whatever period is displayed.
-  const fetchStart = useMemo(() => {
-    const momStart = startOfPreviousMonth();
-    return startDate < momStart ? startDate : momStart;
-  }, [startDate]);
+  // One clock per mount: the windows, "still planned" and the checklist all
+  // agree on what "now" is, and the transactions query keeps one start date.
+  const now = useMemo(() => new Date(), []);
+  const windows = useMemo(() => monthWindows(MONTHS, now), [now]);
+  const currentKey = windows[windows.length - 1].key;
+
+  const [selectedKey, setSelectedKey] = useState(currentKey);
+  const [view, setView] = useState<DomainView>("categories");
+  const [drillCategoryId, setDrillCategoryId] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<RecurrentTransaction | undefined>(undefined);
+  const [busyItemId, setBusyItemId] = useState<string | null>(null);
+  const [deletingTxId, setDeletingTxId] = useState<string | null>(null);
 
   const {
-    transactions: fetched,
+    transactions,
     loading: txLoading,
     error: txError,
-  } = useDomainTransactions(domain, fetchStart);
-  const { items: recurringItems, error: itemsError, remove } = useRecurrentTransactions(domain);
+  } = useDomainTransactions(domain, windows[0].start);
+  const { items, error: itemsError, remove } = useRecurrentTransactions(domain);
   const { categories, loading: catLoading, error: catError } = useCategories(domain);
   const { methods } = usePaymentMethods();
   const error = txError ?? itemsError ?? catError;
 
-  const [activeCatId, setActiveCatId] = useState<string | null>(null);
-  const selectedCatId = activeCatId ?? categories[0]?.id ?? null;
+  const window = windows.find((w) => w.key === selectedKey) ?? windows[windows.length - 1];
+  const totals = useMemo(
+    () => monthTotals(transactions, ctx, windows),
+    [transactions, ctx, windows]
+  );
+  const monthTransactions = useMemo(
+    () =>
+      transactions.filter((t) => {
+        const d = toDate(t.occurredAt);
+        return d >= window.start && d < window.end;
+      }),
+    [transactions, window]
+  );
+  const realized = totals[window.key] ?? 0;
+  const expected = useMemo(
+    () => expectedForMonth(window, realized, items, ctx, now),
+    [window, realized, items, ctx, now]
+  );
+  const average = useMemo(() => trailingAverage(totals, windows), [totals, windows]);
+  const hasForeign = useMemo(
+    () => monthTransactions.some((t) => t.currency !== currency),
+    [monthTransactions, currency]
+  );
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<RecurrentTransaction | undefined>(undefined);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [deletingTxId, setDeletingTxId] = useState<string | null>(null);
+  const bars: MonthBar[] = useMemo(
+    () =>
+      windows.map((w) => ({
+        key: w.key,
+        label: w.label,
+        isCurrent: w.isCurrent,
+        amount: totals[w.key] ?? 0,
+        ...(w.isCurrent && expected > realized ? { planned: expected - realized } : {}),
+      })),
+    [windows, totals, expected, realized]
+  );
 
+  const selectMonth = (key: string) => {
+    setSelectedKey(key);
+    setDrillCategoryId(null);
+  };
+
+  const openCreate = () => {
+    setEditingItem(undefined);
+    setModalOpen(true);
+  };
+  const openEdit = (item: RecurrentTransaction) => {
+    setEditingItem(item);
+    setModalOpen(true);
+  };
+  const withBusy = async (id: string, action: () => Promise<void>, what: string) => {
+    setBusyItemId(id);
+    try {
+      await action();
+    } catch (err) {
+      console.error(`Failed to ${what}:`, err);
+    } finally {
+      setBusyItemId(null);
+    }
+  };
   const deleteTx = async (transactionId: string) => {
     setDeletingTxId(transactionId);
     try {
@@ -98,61 +160,87 @@ export function DomainPage({ domain }: Props) {
     }
   };
 
-  const openCreate = () => {
-    setEditingItem(undefined);
-    setModalOpen(true);
-  };
-  const openEdit = (recurringItem: RecurrentTransaction) => {
-    setEditingItem(recurringItem);
-    setModalOpen(true);
-  };
-  const deleteItem = async (recurringItemId: string) => {
-    setDeletingId(recurringItemId);
-    try {
-      await remove(recurringItemId);
-    } catch (err) {
-      console.error("Failed to delete recurrent item:", err);
-    } finally {
-      setDeletingId(null);
-    }
-  };
+  const drillCategory = categories.find((c) => c.id === drillCategoryId) ?? null;
+  const drillIsSubscriptions =
+    domain === "EXPENSE" && drillCategory?.name.trim().toLowerCase() === "subscriptions";
 
-  const transactions = useMemo(
-    () => fetched.filter((t) => t.occurredAt.toDate() >= startDate),
-    [fetched, startDate]
-  );
-  const chartData = useMemo(
-    () =>
-      toCumulativeSeries(transactions, ctx, {
-        from: startDate,
-        bucket: bucketForRange(PERIODS[periodIdx].months),
-      }),
-    [transactions, ctx, startDate, periodIdx]
-  );
-  const periodTotal = useMemo(
-    () => transactions.reduce((sum, t) => sum + convertedAmount(t, ctx), 0),
-    [transactions, ctx]
-  );
-  const momDelta = useMemo(() => computeMoM(fetched, { ...ctx, domain }), [fetched, ctx, domain]);
-  const runRate = useMemo(() => sumMonthly(recurringItems, ctx), [recurringItems, ctx]);
-  const hasForeign = useMemo(
-    () => transactions.some((t) => t.currency !== currency),
-    [transactions, currency]
-  );
-
-  const filteredItems = useMemo(
-    () => recurringItems.filter((i) => i.categoryId === selectedCatId),
-    [recurringItems, selectedCatId]
-  );
-  const catTotal = useMemo(() => sumMonthly(filteredItems, ctx), [filteredItems, ctx]);
-  const categoryTransactions = useMemo(
-    () => transactions.filter((t) => t.categoryId === selectedCatId),
-    [transactions, selectedCatId]
-  );
-
-  const selectedCategoryName = categories.find((c) => c.id === selectedCatId)?.name;
-  const showSubscriptionInsights =
-    domain === "EXPENSE" && selectedCategoryName?.trim().toLowerCase() === "subscriptions";
+  const panel =
+    view === "categories" ? (
+      drillCategory ? (
+        <CategoryDrilldown
+          category={drillCategory}
+          categories={categories}
+          transactions={monthTransactions}
+          currency={currency}
+          ctx={ctx}
+          monthLabel={window.label}
+          loading={txLoading}
+          onBack={() => setDrillCategoryId(null)}
+          onDelete={deleteTx}
+          deletingId={deletingTxId}
+          extras={
+            <>
+              {drillIsSubscriptions && (
+                <SubscriptionInsights
+                  items={items}
+                  categories={categories}
+                  ctx={ctx}
+                  currency={currency}
+                />
+              )}
+              {domain === "INVESTMENT" && drillCategory.id && (
+                <InvestmentValuePanel
+                  key={drillCategory.id}
+                  categoryId={drillCategory.id}
+                  categoryName={drillCategory.name}
+                  ctx={ctx}
+                  currency={currency}
+                />
+              )}
+            </>
+          }
+        />
+      ) : (
+        <CategoryMonthList
+          domain={domain}
+          categories={categories}
+          transactions={monthTransactions}
+          items={items}
+          ctx={ctx}
+          currency={currency}
+          window={window}
+          now={now}
+          loading={txLoading || catLoading}
+          onSelect={setDrillCategoryId}
+        />
+      )
+    ) : view === "transactions" ? (
+      <PeriodTransactionsList
+        title={`${config.title} · ${window.label}`}
+        transactions={monthTransactions}
+        displayCurrency={currency}
+        ctx={ctx}
+        loading={txLoading}
+        onDelete={deleteTx}
+        deletingId={deletingTxId}
+        now={now}
+      />
+    ) : (
+      <RecurringChecklist
+        domain={domain}
+        items={items}
+        transactions={monthTransactions}
+        paymentMethods={methods}
+        ctx={ctx}
+        currency={currency}
+        window={window}
+        now={now}
+        onMarkPaid={(id) => withBusy(id, () => markItemPaid(id), "mark as paid")}
+        onEdit={openEdit}
+        onStop={(id) => withBusy(id, () => remove(id), "stop the item")}
+        busyId={busyItemId}
+      />
+    );
 
   return (
     <PageLayout
@@ -164,67 +252,45 @@ export function DomainPage({ domain }: Props) {
     >
       {error && <ErrorState error={error} />}
 
-      <DomainSummary
-        domain={domain}
-        periodTotal={periodTotal}
-        runRate={runRate}
-        currency={currency}
-        deltaPct={momDelta.deltaPct}
-        approximate={hasForeign}
-        periodIdx={periodIdx}
-        onPeriodChange={setPeriodIdx}
-      />
+      <div className="layout">
+        <div className="overview">
+          <Card accentColor={config.accent}>
+            <MonthHeader
+              domain={domain}
+              windows={windows}
+              selectedKey={selectedKey}
+              onSelect={selectMonth}
+              realized={realized}
+              expected={expected}
+              average={average}
+              currency={currency}
+              approximate={hasForeign}
+            />
+            <MonthlyBarsChart
+              data={bars}
+              series={[{ key: "amount", label: config.spentLabel, color: config.accent }]}
+              currency={currency}
+              loading={txLoading}
+              average={average}
+              selectedKey={selectedKey}
+              onSelect={selectMonth}
+              height={200}
+            />
+          </Card>
+        </div>
 
-      <DomainChart
-        domain={domain}
-        data={chartData}
-        currency={currency}
-        loading={txLoading}
-        hasData={transactions.length > 0}
-      />
-
-      <DomainCategoryTable
-        domain={domain}
-        categories={categories}
-        items={filteredItems}
-        paymentMethods={methods}
-        selectedCategoryId={selectedCatId}
-        categoryTotal={catTotal}
-        currency={currency}
-        loading={catLoading}
-        onSelectCategory={setActiveCatId}
-        onEdit={openEdit}
-        onDelete={deleteItem}
-        deletingId={deletingId}
-      />
-
-      <PeriodTransactionsList
-        title={`${selectedCategoryName ?? config.title} · ${PERIODS[periodIdx].label}`}
-        transactions={categoryTransactions}
-        displayCurrency={currency}
-        loading={txLoading}
-        onDelete={deleteTx}
-        deletingId={deletingTxId}
-      />
-
-      {showSubscriptionInsights && (
-        <SubscriptionInsights
-          items={recurringItems}
-          categories={categories}
-          ctx={ctx}
-          currency={currency}
-        />
-      )}
-
-      {domain === "INVESTMENT" && selectedCatId && selectedCategoryName && (
-        <InvestmentValuePanel
-          key={selectedCatId}
-          categoryId={selectedCatId}
-          categoryName={selectedCategoryName}
-          ctx={ctx}
-          currency={currency}
-        />
-      )}
+        <div className="detail">
+          <ViewTabs
+            value={view}
+            onChange={(v) => {
+              setView(v);
+              setDrillCategoryId(null);
+            }}
+            accent={config.accent}
+          />
+          {panel}
+        </div>
+      </div>
 
       <RecurrentTransactionModal
         domain={domain}
@@ -232,6 +298,28 @@ export function DomainPage({ domain }: Props) {
         item={editingItem}
         onClose={() => setModalOpen(false)}
       />
+
+      <style jsx>{`
+        .layout {
+          display: grid;
+          gap: 20px;
+        }
+
+        .overview,
+        .detail {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          min-width: 0;
+        }
+
+        @media (min-width: 1100px) {
+          .layout {
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+            align-items: start;
+          }
+        }
+      `}</style>
     </PageLayout>
   );
 }

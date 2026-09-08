@@ -28,7 +28,7 @@ Misma idea de "utilidad", pero conoce el negocio de sublr.
 ```
 helpers/aggregations.ts           montos mensuales por dominio, rate-aware (ver §3.1)
 helpers/fx.ts                     convert()/tryConvert() por cross-rates a USD, IDENTITY_RATES
-helpers/chartData.ts              serie de dos dominios (income/expense) para FlowChart
+helpers/chartData.ts              buckets por día/semana/mes + serie income/expense para FlowChart y MonthlyBarsChart
 helpers/materializeOccurrences.ts ocurrencias de un item recurrente en un rango, ids determinísticos
 helpers/scheduleAnchor.ts         elección de fecha del usuario → startDate (incl. "backfill" = 6 meses atrás)
 helpers/paymentMethodLabel.ts     "name - last4" para tablas, "SEB - Autogiro (Bank transfer)" para dropdowns
@@ -54,7 +54,8 @@ Todo lo que solo sirve a una feature vive junta:
 features/
   onboarding/   el wizard de configuración inicial + el guard de acceso
   dashboard/    la home: net-flow, stat cards, cash-flow chart, próximos vencimientos
-  domains/      DomainPage — la pantalla que comparten incomes/expenses/investments/savings
+  domains/      DomainPage — la pantalla month-first que comparten incomes/expenses/investments/savings:
+                selector de mes, gastado vs esperado, barras mensuales, y Categories / Transactions / Recurring
   methods/      CRUD de métodos de pago (la lista de MethodsStep no alcanza para editar)
   insights/     SubscriptionInsights — costo mensual/anualizado de suscripciones
   investments/  valoraciones por categoría: invertido vs valor, % de ganancia, historial
@@ -228,4 +229,7 @@ Decisiones explícitas de scope, no descuidos:
 - **Editar una transacción puntual**: `PATCH /api/transactions/[id]` existe, pero la lista por período (`PeriodTransactionsList`) solo ofrece Delete; el par charged tampoco está en `QuickTransactionModal` (el schema lo acepta).
 - **Persistencia de escenarios what-if** (`features/prospect`): el estado vive en memoria (`useWhatIf`), se pierde al salir de la página.
 - **Entradas "Simulate cancel"** desde otras pantallas (tablas, insights) hacia un escenario de Prospect precargado — la página funciona standalone con su propio checklist.
-- Scheduler / Cloud Functions, integraciones bancarias, y una versión mobile dedicada de los dashboards (hoy es responsive con bottom nav, sheet "More" y el "+" flotante — no una experiencia nativa: sin gestos, toasts, offline ni PWA).
+- **Presupuestos manuales** por dominio o categoría: la barra "gastado vs esperado" usa el plan (ocurrencias de los recurrentes hasta fin de mes, `features/domains/helpers/months.ts`), no un número tecleado.
+- **Saltar una ocurrencia futura** desde el checklist de Recurring ("no este mes"): necesitaría escribir un doc SKIPPED con el id determinístico; hoy solo Mark as paid y Stop.
+- `endDate` en los recurrentes está en el tipo pero nunca se escribe; el forecast trata los items como vigentes hasta que se paran.
+- Scheduler / Cloud Functions, integraciones bancarias, y una experiencia mobile nativa (hoy: bottom nav, sheet "More", "+" flotante y páginas month-first — sin gestos, toasts, offline ni PWA).

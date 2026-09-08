@@ -11,13 +11,16 @@ rates into a per-user display currency.
 - **Dashboard** (`/`) — net-flow hero, per-domain stat cards, cash-flow
   chart, expense breakdown, recent payments, next to expire.
 - **Incomes / Expenses / Investments / Savings** (`/incomes`, `/expenses`,
-  `/investments`, `/savings`) — one parameterized page (`DomainPage`) per
-  domain: KPI header, period control, area chart, category tabs, item table
-  with create/edit/delete. Expenses' Subscriptions tab surfaces subscription
-  cost insights (monthly/annualized, % of income, next charge). Investments
-  adds a valuation panel per category: what you've paid in versus what it's
-  worth now, a gain-% history you record over time, and an Invested-vs-Value
-  chart.
+  `/investments`, `/savings`) — one month-first page (`DomainPage`) per
+  domain: a month picker, the month's figure with a spent-vs-expected bar
+  (expected = what landed + what active recurring items still owe before
+  month end), seven monthly bars with a 6-month average line, and three
+  views of the selected month: Categories (totals, share, planned vs actual,
+  drilldown with subcategories), Transactions (grouped by day) and Recurring
+  (the month's bills as overdue / due / paid, with mark-paid, edit, stop).
+  Expenses' Subscriptions category surfaces subscription cost insights;
+  Investments adds a valuation panel per category (invested vs value, gain-%
+  history, chart).
 - **Prospect** (`/prospect`) — a what-if simulator: check any recurring
   expense, investment or saving to see the monthly/annual amount it would
   free and how your net would change, projected 6 or 12 months out.

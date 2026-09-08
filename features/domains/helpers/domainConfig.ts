@@ -5,12 +5,10 @@ interface DomainConfig {
   title: string;
   /** Lowercase noun for inline copy ("expenses by Housing: $X"). */
   noun: string;
-  /** KPI label ("Total expenses"). */
-  totalLabel: string;
+  /** Verb for the month figure ("Spent in September"). */
+  spentLabel: string;
   /** Run-rate line label ("Planned monthly expenses"). */
   runRateLabel: string;
-  /** Caption of the running-total chart ("Spent so far"). */
-  soFarLabel: string;
   /** CSS token for accents (tabs, chart, card edge). */
   accent: string;
   /** Whether the table shows the payment method column (mockup: expenses only). */
@@ -23,9 +21,8 @@ export const DOMAIN_CONFIG: Record<Domain, DomainConfig> = {
   INCOME: {
     title: "Incomes",
     noun: "incomes",
-    totalLabel: "Total incomes",
+    spentLabel: "Received",
     runRateLabel: "Planned monthly income",
-    soFarLabel: "Received so far",
     accent: "var(--domain-income)",
     showPaymentMethod: false,
     upIsGood: true,
@@ -33,9 +30,8 @@ export const DOMAIN_CONFIG: Record<Domain, DomainConfig> = {
   EXPENSE: {
     title: "Expenses",
     noun: "expenses",
-    totalLabel: "Total expenses",
+    spentLabel: "Spent",
     runRateLabel: "Planned monthly expenses",
-    soFarLabel: "Spent so far",
     accent: "var(--domain-expense)",
     showPaymentMethod: true,
     upIsGood: false,
@@ -43,9 +39,8 @@ export const DOMAIN_CONFIG: Record<Domain, DomainConfig> = {
   INVESTMENT: {
     title: "Investments",
     noun: "investments",
-    totalLabel: "Total investments",
+    spentLabel: "Invested",
     runRateLabel: "Planned monthly investments",
-    soFarLabel: "Invested so far",
     accent: "var(--domain-investment)",
     showPaymentMethod: false,
     upIsGood: true,
@@ -53,9 +48,8 @@ export const DOMAIN_CONFIG: Record<Domain, DomainConfig> = {
   SAVING: {
     title: "Savings",
     noun: "savings",
-    totalLabel: "Total savings",
+    spentLabel: "Saved",
     runRateLabel: "Planned monthly savings",
-    soFarLabel: "Saved so far",
     accent: "var(--domain-saving)",
     showPaymentMethod: false,
     upIsGood: true,

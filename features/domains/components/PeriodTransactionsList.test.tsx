@@ -1,6 +1,10 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { PeriodTransactionsList } from "./PeriodTransactionsList";
-import type { Timestamp, Transaction } from "../../../types";
+import { IDENTITY_RATES } from "../../../helpers/fx";
+import type { Currency, Timestamp, Transaction } from "../../../types";
+
+const ctx = { rates: IDENTITY_RATES, target: "USD" as Currency };
+const now = new Date(2026, 8, 6, 15);
 
 const ts = (date: Date): Timestamp => ({
   seconds: Math.floor(date.getTime() / 1000),
@@ -26,70 +30,68 @@ const tx = (
   ...extra,
 });
 
+const base = {
+  title: "Payments",
+  displayCurrency: "USD" as Currency,
+  ctx,
+  deletingId: null,
+  now,
+};
+
 describe("PeriodTransactionsList", () => {
-  it("lists newest first and tags rows that came from a recurring item", () => {
-    const now = new Date();
-    const older = new Date(now.getTime() - 3 * 86400000);
+  it("groups by day, newest first, with a daily subtotal and a recurring tag", () => {
     render(
       <PeriodTransactionsList
-        title="Payments"
+        {...base}
         transactions={[
-          tx("a", "Old coffee", older),
-          tx("b", "Netflix", now, { recurrentTransactionId: "r1" }),
+          tx("a", "Old coffee", new Date(2026, 8, 3, 9)),
+          tx("b", "Netflix", new Date(2026, 8, 6, 8), { recurrentTransactionId: "r1" }),
+          tx("c", "Bread", new Date(2026, 8, 6, 12), { amount: 5 }),
         ]}
-        displayCurrency="USD"
         onDelete={jest.fn()}
-        deletingId={null}
       />
     );
+    const days = screen.getAllByRole("heading", { level: 3 });
+    expect(days[0]).toHaveTextContent("Today");
+    expect(days[0]).toHaveTextContent("$15.00");
+    expect(days[1]).toHaveTextContent("3 days ago");
+
     const items = screen.getAllByRole("listitem");
-    expect(items[0]).toHaveTextContent("Netflix");
-    expect(items[0]).toHaveTextContent("recurring");
-    expect(items[1]).toHaveTextContent("Old coffee");
-    expect(items[1]).not.toHaveTextContent("recurring");
+    expect(items[0]).toHaveTextContent("Bread");
+    expect(items[1]).toHaveTextContent("Netflix");
+    expect(items[1]).toHaveTextContent("recurring");
+    expect(items[2]).toHaveTextContent("Old coffee");
+    expect(items[2]).toHaveTextContent("one-off");
   });
 
   it("deletes through the kebab and shows the empty state", () => {
     const onDelete = jest.fn();
     const { rerender } = render(
       <PeriodTransactionsList
-        title="Payments"
-        transactions={[tx("a", "Bread", new Date())]}
-        displayCurrency="USD"
+        {...base}
+        transactions={[tx("a", "Bread", new Date(2026, 8, 6))]}
         onDelete={onDelete}
-        deletingId={null}
       />
     );
     fireEvent.click(screen.getByRole("button", { name: "Actions for Bread" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
     expect(onDelete).toHaveBeenCalledWith("a");
 
-    rerender(
-      <PeriodTransactionsList
-        title="Payments"
-        transactions={[]}
-        displayCurrency="USD"
-        onDelete={onDelete}
-        deletingId={null}
-      />
-    );
+    rerender(<PeriodTransactionsList {...base} transactions={[]} onDelete={onDelete} />);
     expect(screen.getByText("Nothing recorded in this period")).toBeInTheDocument();
   });
 
-  it("caps the list and says how many more there are", () => {
+  it("caps the rows and says how many more there are", () => {
     const list = Array.from({ length: 23 }, (_, i) =>
-      tx(`t${i}`, `Row ${i}`, new Date(2026, 5, 1 + (i % 28)))
+      tx(`t${i}`, `Row ${i}`, new Date(2026, 8, 1 + (i % 6), 8 + i))
     );
     render(
-      <PeriodTransactionsList
-        title="Payments"
-        transactions={list}
-        displayCurrency="USD"
-        onDelete={jest.fn()}
-        deletingId={null}
-      />
+      <PeriodTransactionsList {...base} transactions={list} onDelete={jest.fn()} limit={20} />
     );
     expect(screen.getAllByRole("listitem")).toHaveLength(20);
     expect(screen.getByText("and 3 more in this period")).toBeInTheDocument();
+    expect(
+      within(screen.getAllByRole("heading", { level: 3 })[0]).getByText(/\$/)
+    ).toBeInTheDocument();
   });
 });
