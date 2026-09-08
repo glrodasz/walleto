@@ -13,7 +13,7 @@ import { NetFlowCard } from "../features/dashboard/components/NetFlowCard";
 import { topWithOther } from "../features/dashboard/helpers/topWithOther";
 import { Card } from "../components/atoms/Card";
 import { SectionTitle } from "../components/atoms/SectionTitle";
-import { FlowChart } from "../components/molecules/FlowChart";
+import { MonthlyBarsChart } from "../components/molecules/MonthlyBarsChart";
 import { RecurrentTransactionModal } from "../features/domains/components/RecurrentTransactionModal";
 import { useDashboard } from "../features/dashboard/hooks/useDashboard";
 import { useUserDoc } from "../hooks/useUserDoc";
@@ -148,17 +148,15 @@ export default function Dashboard() {
       <section className="row">
         <Card>
           <SectionTitle title="Cash flow" />
-          <p className="panel-note">
-            Running total{flowSeries[0] ? ` since ${flowSeries[0].label}` : ""} — the gap between
-            the lines is what you kept.
-          </p>
-          <FlowChart
+          <p className="panel-note">Monthly totals · this month is still in progress.</p>
+          <MonthlyBarsChart
             data={flowSeries}
+            series={[
+              { key: "income", label: "Income", color: "var(--domain-income)" },
+              { key: "expense", label: "Expenses", color: "var(--domain-expense)" },
+            ]}
             currency={currency}
             loading={loading}
-            labelA="Income so far"
-            labelB="Expenses so far"
-            curve="stepAfter"
           />
         </Card>
       </section>

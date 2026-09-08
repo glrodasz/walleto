@@ -106,15 +106,27 @@ export function useDashboard() {
     [expenseTransactions, ctx]
   );
 
+  // One bar per month. The month in progress is flagged so the chart draws
+  // it lighter: with a salary on the 23rd it holds almost nothing until
+  // then, and a line through that point read as income collapsing.
   const flowSeries = useMemo(
     () =>
       toFlowSeries([...incomeTransactions, ...expenseTransactions], {
         ...ctx,
         from: chartStart,
         bucket: "month",
-        // Running totals: the month in progress has no salary yet, and a
-        // per-month series drew that as income collapsing to zero.
-        cumulative: true,
+      }).map((point, i) => {
+        const start = new Date(chartStart.getFullYear(), chartStart.getMonth() + i, 1);
+        const key = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}`;
+        const nextStart = new Date(start.getFullYear(), start.getMonth() + 1, 1);
+        return {
+          key,
+          label: point.label,
+          income: point.income,
+          expense: point.expense,
+          net: point.income - point.expense,
+          isCurrent: nextStart > new Date(),
+        };
       }),
     [incomeTransactions, expenseTransactions, ctx, chartStart]
   );

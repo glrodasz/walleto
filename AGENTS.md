@@ -53,7 +53,7 @@ Todo lo que solo sirve a una feature vive junta:
 ```
 features/
   onboarding/   el wizard de configuración inicial + el guard de acceso
-  dashboard/    la home: net-flow, stat cards, cash-flow chart, próximos vencimientos
+  dashboard/    la home: net-flow, stat cards, barras mensuales income vs expense, próximos vencimientos
   domains/      DomainPage — la pantalla month-first que comparten incomes/expenses/investments/savings:
                 selector de mes, gastado vs esperado, barras mensuales, y Categories / Transactions / Recurring
   methods/      CRUD de métodos de pago (la lista de MethodsStep no alcanza para editar)

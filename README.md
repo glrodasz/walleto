@@ -8,8 +8,9 @@ investments). It supports multiple currencies first-class: every amount
 stores its native currency, and reporting converts through live exchange
 rates into a per-user display currency.
 
-- **Dashboard** (`/`) — net-flow hero, per-domain stat cards, cash-flow
-  chart, expense breakdown, recent payments, next to expire.
+- **Dashboard** (`/`) — net-flow hero, per-domain stat cards, monthly
+  income-vs-expense bars (the month in progress drawn lighter), expense
+  breakdown, recent payments, next to expire.
 - **Incomes / Expenses / Investments / Savings** (`/incomes`, `/expenses`,
   `/investments`, `/savings`) — one month-first page (`DomainPage`) per
   domain: a month picker, the month's figure with a spent-vs-expected bar
