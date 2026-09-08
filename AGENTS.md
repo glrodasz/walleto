@@ -124,6 +124,10 @@ styled-jsx **no** le pone su hash de scope al `className` que le pasas a un comp
 
 Mismo patrón en `pages/index.tsx` (`.row > :global(*)`). Si estilas algo que no es un elemento DOM literal en ese JSX, asume que necesitas `:global()`.
 
+### Trampa de los render helpers (importante)
+
+El hash de scope solo se estampa en el JSX que devuelve **el propio componente**. Una función auxiliar dentro del componente (`const renderRow = (o) => <li className="row">…`) devuelve elementos **sin** el hash, y sus reglas quedan muertas igual de silenciosamente — así salió el checklist de Recurring con todo el texto pegado. La salida es un componente hijo con su propio `<style jsx>` (`OccurrenceRow` en `RecurringChecklist.tsx`), nunca un helper que devuelve JSX.
+
 ---
 
 ## 3. Datos
@@ -226,7 +230,7 @@ Otras notas:
 Decisiones explícitas de scope, no descuidos:
 
 - **Migración de producción**: no hay suite de migración en el repo. Cuando toque promover, el owner baja los datos de prod y se escribe un script local en ese momento — el schema actual de la DB es con el que se trabaja.
-- **Editar una transacción puntual**: `PATCH /api/transactions/[id]` existe, pero la lista por período (`PeriodTransactionsList`) solo ofrece Delete; el par charged tampoco está en `QuickTransactionModal` (el schema lo acepta).
+- **Par charged en `QuickTransactionModal`**: el schema lo acepta (crear y editar), la UI del formulario puntual todavía no lo ofrece.
 - **Persistencia de escenarios what-if** (`features/prospect`): el estado vive en memoria (`useWhatIf`), se pierde al salir de la página.
 - **Entradas "Simulate cancel"** desde otras pantallas (tablas, insights) hacia un escenario de Prospect precargado — la página funciona standalone con su propio checklist.
 - **Presupuestos manuales** por dominio o categoría: la barra "gastado vs esperado" usa el plan (ocurrencias de los recurrentes hasta fin de mes, `features/domains/helpers/months.ts`), no un número tecleado.

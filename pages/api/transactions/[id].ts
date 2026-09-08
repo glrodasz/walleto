@@ -32,12 +32,38 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
-    const { status, name, amount, occurredAt, chargedAmount, chargedCurrency, paymentMethodId } =
-      parsed.data;
+    const {
+      status,
+      categoryId,
+      name,
+      amount,
+      currency,
+      occurredAt,
+      chargedAmount,
+      chargedCurrency,
+      paymentMethodId,
+    } = parsed.data;
 
-    // The charged pair must still differ from the doc's own currency.
-    if (chargedCurrency && chargedCurrency === existing.currency) {
+    // The charged pair must still differ from the doc's own currency —
+    // whichever of the two this patch leaves in place.
+    const nextCurrency = currency ?? existing.currency;
+    const nextCharged = chargedCurrency === undefined ? existing.chargedCurrency : chargedCurrency;
+    if (nextCharged && nextCharged === nextCurrency) {
       return res.status(400).json({ error: "chargedCurrency must differ from currency" });
+    }
+
+    if (categoryId) {
+      const catSnap = await db.collection("categories").doc(categoryId).get();
+      if (!catSnap.exists) {
+        return res.status(400).json({ error: "Category not found" });
+      }
+      const cat = catSnap.data()!;
+      if (cat.userId !== userId) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      if (cat.domain !== existing.domain) {
+        return res.status(400).json({ error: "Category domain mismatch" });
+      }
     }
 
     if (paymentMethodId) {
@@ -53,8 +79,10 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
     const del = admin.firestore.FieldValue.delete();
     await ref.update({
       ...(status ? { status } : {}),
+      ...(categoryId ? { categoryId } : {}),
       ...(name !== undefined ? { name } : {}),
       ...(amount !== undefined ? { amount } : {}),
+      ...(currency ? { currency } : {}),
       ...(occurredAt
         ? { occurredAt: admin.firestore.Timestamp.fromDate(new Date(occurredAt)) }
         : {}),

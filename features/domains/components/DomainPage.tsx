@@ -12,6 +12,7 @@ import { CategoryDrilldown } from "./CategoryDrilldown";
 import { PeriodTransactionsList } from "./PeriodTransactionsList";
 import { RecurringChecklist } from "./RecurringChecklist";
 import { RecurrentTransactionModal } from "./RecurrentTransactionModal";
+import { QuickTransactionModal } from "../../transactions/components/QuickTransactionModal";
 import { SubscriptionInsights } from "../../insights/components/SubscriptionInsights";
 import { InvestmentValuePanel } from "../../investments/components/InvestmentValuePanel";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
@@ -23,7 +24,7 @@ import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
 import { deleteTransaction } from "../../../hooks/useTransactions";
 import { toDate } from "../../../helpers/chartData";
-import type { Currency, Domain, RecurrentTransaction } from "../../../types";
+import type { Currency, Domain, RecurrentTransaction, Transaction } from "../../../types";
 
 interface Props {
   domain: Domain;
@@ -79,6 +80,7 @@ export function DomainPage({ domain }: Props) {
   const [editingItem, setEditingItem] = useState<RecurrentTransaction | undefined>(undefined);
   const [busyItemId, setBusyItemId] = useState<string | null>(null);
   const [deletingTxId, setDeletingTxId] = useState<string | null>(null);
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
 
   const {
     transactions,
@@ -176,6 +178,7 @@ export function DomainPage({ domain }: Props) {
           monthLabel={window.label}
           loading={txLoading}
           onBack={() => setDrillCategoryId(null)}
+          onEdit={setEditingTx}
           onDelete={deleteTx}
           deletingId={deletingTxId}
           extras={
@@ -221,6 +224,7 @@ export function DomainPage({ domain }: Props) {
         displayCurrency={currency}
         ctx={ctx}
         loading={txLoading}
+        onEdit={setEditingTx}
         onDelete={deleteTx}
         deletingId={deletingTxId}
         now={now}
@@ -298,6 +302,14 @@ export function DomainPage({ domain }: Props) {
         item={editingItem}
         onClose={() => setModalOpen(false)}
       />
+      {editingTx && (
+        <QuickTransactionModal
+          open
+          domain={domain}
+          transaction={editingTx}
+          onClose={() => setEditingTx(null)}
+        />
+      )}
 
       <style jsx>{`
         .layout {

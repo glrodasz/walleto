@@ -98,7 +98,8 @@ export function KebabMenu({ actions, "aria-label": ariaLabel = "More options" }:
           position: absolute;
           top: calc(100% + 4px);
           right: 0;
-          z-index: 20;
+          /* Above the floating create button, below modal overlays. */
+          z-index: calc(var(--z-fab, 110) + 1);
           min-width: 160px;
           background: var(--bg-1);
           border: 1px solid var(--line-strong);

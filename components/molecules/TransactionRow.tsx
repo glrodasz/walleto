@@ -24,14 +24,16 @@ export function TransactionRow({ name, amount, currency, displayCurrency, meta, 
       </span>
       {trailing}
       <style jsx>{`
+        /* Name takes the slack and truncates; amounts sit in one right-aligned
+           column whatever the name's length; the trailing slot hugs the edge. */
         .row {
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          gap: 8px;
+          gap: 10px;
         }
 
         .name {
+          flex: 1;
           font-size: 0.85rem;
           color: var(--fg-1);
           min-width: 0;

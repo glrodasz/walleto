@@ -106,3 +106,63 @@ describe("QuickTransactionModal", () => {
     expect(screen.getByRole("button", { name: "Income" })).toHaveAttribute("aria-pressed", "true");
   });
 });
+
+describe("QuickTransactionModal in edit mode", () => {
+  const existing = {
+    id: "t9",
+    userId: "u",
+    domain: "EXPENSE" as const,
+    categoryId: "c1",
+    name: "Bread",
+    amount: 12.5,
+    currency: "USD" as const,
+    occurredAt: {
+      seconds: 0,
+      nanoseconds: 0,
+      toDate: () => new Date(2026, 8, 3, 12),
+    },
+    status: "PAID" as const,
+  };
+
+  it("prefills the form, pins the domain, and patches only what changed", async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({}) });
+    const onClose = jest.fn();
+    render(<QuickTransactionModal open transaction={existing} onClose={onClose} />);
+
+    expect(screen.getByRole("dialog", { name: "Edit payment" })).toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Type" })).toBeNull();
+    expect(screen.getByLabelText("Name")).toHaveValue("Bread");
+    expect(screen.getByLabelText("Amount")).toHaveValue("12.5");
+    expect(screen.getByLabelText("Date")).toHaveValue("2026-09-03");
+
+    fireEvent.change(screen.getByLabelText("Amount"), { target: { value: "14" } });
+    fireEvent.change(screen.getByLabelText("Date"), { target: { value: "2026-09-04" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/transactions/t9");
+    expect(init.method).toBe("PATCH");
+    expect(JSON.parse(init.body)).toEqual({
+      amount: 14,
+      occurredAt: anchorStartDate({ frequency: "ONE_TIME", date: "2026-09-04" }).toISOString(),
+    });
+  });
+
+  it("clears the payment method with null when it is unset", async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({}) });
+    render(
+      <QuickTransactionModal
+        open
+        transaction={{ ...existing, paymentMethodId: "m1" }}
+        onClose={jest.fn()}
+      />
+    );
+    expect(screen.getByLabelText("Payment method")).toHaveValue("m1");
+    fireEvent.change(screen.getByLabelText("Payment method"), { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ paymentMethodId: null });
+  });
+});

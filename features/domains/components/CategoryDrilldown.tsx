@@ -16,6 +16,7 @@ interface Props {
   monthLabel: string;
   loading?: boolean;
   onBack: () => void;
+  onEdit?: (transaction: Transaction) => void;
   onDelete: (transactionId: string) => void;
   deletingId: string | null;
   /** Domain-specific panels for this category (subscription insights, valuations). */
@@ -35,6 +36,7 @@ export function CategoryDrilldown({
   monthLabel,
   loading,
   onBack,
+  onEdit,
   onDelete,
   deletingId,
   extras,
@@ -75,6 +77,7 @@ export function CategoryDrilldown({
         displayCurrency={currency}
         ctx={ctx}
         loading={loading}
+        onEdit={onEdit}
         onDelete={onDelete}
         deletingId={deletingId}
       />

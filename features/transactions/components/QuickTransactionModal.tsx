@@ -7,18 +7,20 @@ import { Button } from "../../../components/atoms/Button";
 import { useCategories } from "../../../hooks/useCategories";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { useUserDoc } from "../../../hooks/useUserDoc";
-import { createTransaction } from "../../../hooks/useTransactions";
+import { createTransaction, updateTransaction } from "../../../hooks/useTransactions";
 import { paymentMethodOptionLabel } from "../../../helpers/paymentMethodLabel";
 import { anchorStartDate, toDateInputValue } from "../../../helpers/scheduleAnchor";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import { SELECTABLE_CURRENCIES, CURRENCY_SYMBOL } from "../../../constants";
-import type { Currency, Domain } from "../../../types";
+import type { Currency, Domain, Transaction } from "../../../types";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   /** Fixed by the page (a domain page); absent = the user picks. */
   domain?: Domain;
+  /** Present = edit this transaction instead of recording a new one. */
+  transaction?: Transaction;
 }
 
 /** Exported so the create launcher can name the option the same way. */
@@ -56,34 +58,46 @@ interface FormState {
  * items never cover (a coffee, a one-off invoice). It shows up immediately in
  * the period total, the chart and Recent payments through the live queries.
  */
-export function QuickTransactionModal({ open, onClose, domain: fixedDomain }: Props) {
+export function QuickTransactionModal({ open, onClose, domain: pageDomain, transaction }: Props) {
+  // An existing transaction pins the domain; a page may pin it too.
+  const fixedDomain = transaction?.domain ?? pageDomain;
   const [domain, setDomain] = useState<Domain>(fixedDomain ?? "EXPENSE");
   const config = DOMAIN_CONFIG[domain];
   const { userDoc } = useUserDoc();
   const { categories, create: createCategory } = useCategories(domain);
   const { methods } = usePaymentMethods();
 
-  const empty: FormState = useMemo(
-    () => ({
-      categoryId: "",
-      name: "",
-      amount: "",
-      currency: "",
-      date: toDateInputValue(new Date()),
-      paymentMethodId: "",
-    }),
-    []
+  const initial: FormState = useMemo(
+    () =>
+      transaction
+        ? {
+            categoryId: transaction.categoryId,
+            name: transaction.name,
+            amount: String(transaction.amount),
+            currency: transaction.currency,
+            date: toDateInputValue(transaction.occurredAt.toDate()),
+            paymentMethodId: transaction.paymentMethodId ?? "",
+          }
+        : {
+            categoryId: "",
+            name: "",
+            amount: "",
+            currency: "",
+            date: toDateInputValue(new Date()),
+            paymentMethodId: "",
+          },
+    [transaction]
   );
-  const [form, setForm] = useState<FormState>(empty);
+  const [form, setForm] = useState<FormState>(initial);
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
     setDomain(fixedDomain ?? "EXPENSE");
-    setForm(empty);
+    setForm(initial);
     setFormError(null);
-  }, [open, fixedDomain, empty]);
+  }, [open, fixedDomain, initial]);
 
   const patch = (p: Partial<FormState>) => setForm((f) => ({ ...f, ...p }));
 
@@ -117,19 +131,37 @@ export function QuickTransactionModal({ open, onClose, domain: fixedDomain }: Pr
     if (!(amount > 0)) return setFormError("Amount must be greater than zero");
     if (!form.date) return setFormError("Pick a date");
 
+    const occurredAt = anchorStartDate({ frequency: "ONE_TIME", date: form.date });
     setBusy(true);
     setFormError(null);
     try {
-      await createTransaction({
-        domain,
-        categoryId: form.categoryId,
-        name: form.name.trim(),
-        amount,
-        currency: effectiveCurrency,
-        occurredAt: anchorStartDate({ frequency: "ONE_TIME", date: form.date }).toISOString(),
-        status: "PAID",
-        ...(form.paymentMethodId ? { paymentMethodId: form.paymentMethodId } : {}),
-      });
+      if (transaction?.id) {
+        // Send only what changed; the API keeps the rest as it was.
+        const name = form.name.trim();
+        const dateChanged = toDateInputValue(transaction.occurredAt.toDate()) !== form.date;
+        const methodBefore = transaction.paymentMethodId ?? "";
+        await updateTransaction(transaction.id, {
+          ...(form.categoryId !== transaction.categoryId ? { categoryId: form.categoryId } : {}),
+          ...(name !== transaction.name ? { name } : {}),
+          ...(amount !== transaction.amount ? { amount } : {}),
+          ...(effectiveCurrency !== transaction.currency ? { currency: effectiveCurrency } : {}),
+          ...(dateChanged ? { occurredAt: occurredAt.toISOString() } : {}),
+          ...(form.paymentMethodId !== methodBefore
+            ? { paymentMethodId: form.paymentMethodId || null }
+            : {}),
+        });
+      } else {
+        await createTransaction({
+          domain,
+          categoryId: form.categoryId,
+          name: form.name.trim(),
+          amount,
+          currency: effectiveCurrency,
+          occurredAt: occurredAt.toISOString(),
+          status: "PAID",
+          ...(form.paymentMethodId ? { paymentMethodId: form.paymentMethodId } : {}),
+        });
+      }
       onClose();
     } catch (err) {
       console.error("Failed to record transaction:", err);
@@ -140,7 +172,15 @@ export function QuickTransactionModal({ open, onClose, domain: fixedDomain }: Pr
   };
 
   return (
-    <Modal open={open} title={QUICK_COPY[domain].title} onClose={onClose}>
+    <Modal
+      open={open}
+      title={
+        transaction
+          ? QUICK_COPY[domain].title.replace(/^Record an? /, "Edit ")
+          : QUICK_COPY[domain].title
+      }
+      onClose={onClose}
+    >
       <div className="form">
         {!fixedDomain && (
           <div className="domains" role="group" aria-label="Type">

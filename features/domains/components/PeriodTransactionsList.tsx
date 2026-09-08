@@ -15,6 +15,7 @@ interface Props {
   displayCurrency: Currency;
   ctx: MoneyContext;
   loading?: boolean;
+  onEdit?: (transaction: Transaction) => void;
   onDelete: (transactionId: string) => void;
   deletingId: string | null;
   /** Rows shown before the "and N more" line. A month is bounded; 60 covers it. */
@@ -33,6 +34,7 @@ export function PeriodTransactionsList({
   displayCurrency,
   ctx,
   loading,
+  onEdit,
   onDelete,
   deletingId,
   limit = 60,
@@ -82,6 +84,7 @@ export function PeriodTransactionsList({
                     <KebabMenu
                       aria-label={`Actions for ${t.name}`}
                       actions={[
+                        ...(onEdit ? [{ label: "Edit", onSelect: () => onEdit(t) }] : []),
                         {
                           label: deletingId === t.id ? "Deleting…" : "Delete",
                           onSelect: () => t.id && onDelete(t.id),

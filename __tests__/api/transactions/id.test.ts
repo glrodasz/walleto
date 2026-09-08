@@ -182,3 +182,66 @@ describe("DELETE /api/transactions/[id]", () => {
     expect(res.status).toHaveBeenCalledWith(405);
   });
 });
+
+describe("PATCH /api/transactions/[id] — category and currency", () => {
+  const wire = (category: { exists: boolean; data?: Record<string, unknown> }) => {
+    const update = jest.fn().mockResolvedValue(undefined);
+    collectionMock.mockImplementation((name: string) => {
+      if (name === "categories") {
+        return {
+          doc: jest.fn().mockReturnValue({
+            get: jest.fn().mockResolvedValue({
+              exists: category.exists,
+              data: () => category.data ?? { userId: "user1", domain: "EXPENSE" },
+            }),
+          }),
+        };
+      }
+      return {
+        doc: jest.fn().mockReturnValue({
+          get: jest.fn().mockResolvedValue({
+            exists: true,
+            data: () => ({
+              userId: "user1",
+              domain: "EXPENSE",
+              currency: "USD",
+              chargedCurrency: "COP",
+              status: "PAID",
+            }),
+          }),
+          update,
+        }),
+      };
+    });
+    return update;
+  };
+
+  const patch = async (body: Record<string, unknown>) => {
+    const res = mockRes();
+    await handler(
+      { method: "PATCH", query: { id: "tx1" }, body } as unknown as NextApiRequest,
+      res
+    );
+    return res;
+  };
+
+  it("moves the transaction to another category of the same domain", async () => {
+    const update = wire({ exists: true });
+    const res = await patch({ categoryId: "food", currency: "EUR" });
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(update).toHaveBeenCalledWith({ categoryId: "food", currency: "EUR" });
+  });
+
+  it("rejects a category from another domain or another user", async () => {
+    wire({ exists: true, data: { userId: "user1", domain: "INCOME" } });
+    expect((await patch({ categoryId: "salary" })).status).toHaveBeenCalledWith(400);
+
+    wire({ exists: true, data: { userId: "intruder", domain: "EXPENSE" } });
+    expect((await patch({ categoryId: "theirs" })).status).toHaveBeenCalledWith(403);
+  });
+
+  it("rejects a new currency equal to the stored charged currency", async () => {
+    wire({ exists: true });
+    expect((await patch({ currency: "COP" })).status).toHaveBeenCalledWith(400);
+  });
+});

@@ -3,11 +3,12 @@ import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { formatAmount, formatNative } from "../../../components/atoms/Amount";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
+import type { KebabAction } from "../../../components/molecules/KebabMenu";
 import { sumMonthly } from "../../../helpers/aggregations";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { paymentMethodLabel } from "../../../helpers/paymentMethodLabel";
 import { monthOccurrences } from "../helpers/months";
-import type { MonthOccurrence, MonthWindow, OccurrenceStatus } from "../helpers/months";
+import type { MonthWindow, OccurrenceStatus } from "../helpers/months";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import { FREQUENCY_LABELS } from "../../../constants";
 import type {
@@ -47,6 +48,122 @@ const STATUS_LABEL: Record<OccurrenceStatus, string> = {
   paid: "Paid",
 };
 
+interface RowProps {
+  name: string;
+  meta: string;
+  amount: string;
+  status?: OccurrenceStatus;
+  accent: string;
+  actions: KebabAction[];
+}
+
+/**
+ * One checklist row. A component of its own rather than a render helper:
+ * styled-jsx only stamps its scope class on the JSX a component returns
+ * itself, so rows built by a helper function came out unstyled.
+ */
+function OccurrenceRow({ name, meta, amount, status, accent, actions }: RowProps) {
+  return (
+    <li className={`row${status ? ` ${status}` : ""}`}>
+      <span className="main">
+        <span className="name">{name}</span>
+        <span className="meta">{meta}</span>
+      </span>
+      <span className="right">
+        <span className="amount">{amount}</span>
+        {status && <span className={`pill ${status}`}>{STATUS_LABEL[status]}</span>}
+      </span>
+      <KebabMenu aria-label={`Actions for ${name}`} actions={actions} />
+
+      <style jsx>{`
+        .row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 0;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .row:last-child {
+          border-bottom: none;
+        }
+
+        .row.paid .name {
+          color: var(--fg-1);
+        }
+
+        .main {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .name {
+          font-size: 0.9rem;
+          font-weight: 600;
+          color: var(--fg-0);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .meta {
+          font-size: 0.72rem;
+          color: var(--fg-2);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .right {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 3px;
+          flex-shrink: 0;
+        }
+
+        .amount {
+          font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
+          font-variant-numeric: tabular-nums;
+          font-size: 0.88rem;
+          font-weight: 600;
+          color: var(--fg-0);
+          white-space: nowrap;
+        }
+
+        .pill {
+          font-size: 0.66rem;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          padding: 2px 7px;
+          border-radius: 999px;
+          background: var(--bg-3);
+          color: var(--fg-2);
+        }
+
+        .pill.due {
+          color: ${accent};
+          background: color-mix(in srgb, ${accent} 14%, transparent);
+        }
+
+        .pill.overdue {
+          color: var(--accent-hot);
+          background: color-mix(in srgb, var(--accent-hot) 14%, transparent);
+        }
+
+        .pill.paid {
+          color: var(--accent);
+          background: color-mix(in srgb, var(--accent) 12%, transparent);
+        }
+      `}</style>
+    </li>
+  );
+}
+
 /**
  * The month's bills as a checklist. Recurring items stop pretending to be
  * the ledger: what happened lives under Transactions, the plan lives here,
@@ -78,43 +195,6 @@ export function RecurringChecklist({
     return m ? paymentMethodLabel(m) : null;
   };
 
-  const renderRow = (o: MonthOccurrence) => {
-    const id = o.item.id!;
-    const busy = busyId === id;
-    const canPay = o.status !== "paid";
-    return (
-      <li key={`${id}_${o.occurredAt.toISOString()}`} className={`row ${o.status}`}>
-        <span className="main">
-          <span className="name">{o.item.name}</span>
-          <span className="meta">
-            {DATE.format(o.occurredAt)} · {FREQUENCY_LABELS[o.item.frequency]}
-            {methodName(o.item.paymentMethodId) ? ` · ${methodName(o.item.paymentMethodId)}` : ""}
-          </span>
-        </span>
-        <span className="right">
-          <span className="amount">{formatNative(o.item.amount, o.item.currency, currency)}</span>
-          <span className={`pill ${o.status}`}>{STATUS_LABEL[o.status]}</span>
-        </span>
-        <KebabMenu
-          aria-label={`Actions for ${o.item.name}`}
-          actions={[
-            ...(canPay
-              ? [
-                  {
-                    label: busy ? "Marking…" : "Mark as paid",
-                    onSelect: () => onMarkPaid(id),
-                    disabled: busy,
-                  },
-                ]
-              : []),
-            { label: "Edit", onSelect: () => onEdit(o.item) },
-            { label: "Stop", onSelect: () => onStop(id), danger: true, disabled: busy },
-          ]}
-        />
-      </li>
-    );
-  };
-
   return (
     <Card>
       <SectionTitle title="Recurring" />
@@ -135,7 +215,43 @@ export function RecurringChecklist({
                   <span>{g.title}</span>
                   <span className="group-total">{formatAmount(total, currency)}</span>
                 </h3>
-                <ul className="list">{rows.map(renderRow)}</ul>
+                <ul className="list">
+                  {rows.map((o) => {
+                    const id = o.item.id!;
+                    const busy = busyId === id;
+                    const method = methodName(o.item.paymentMethodId);
+                    return (
+                      <OccurrenceRow
+                        key={`${id}_${o.occurredAt.toISOString()}`}
+                        name={o.item.name}
+                        meta={`${DATE.format(o.occurredAt)} · ${FREQUENCY_LABELS[o.item.frequency]}${
+                          method ? ` · ${method}` : ""
+                        }`}
+                        amount={formatNative(o.item.amount, o.item.currency, currency)}
+                        status={o.status}
+                        accent={config.accent}
+                        actions={[
+                          ...(o.status !== "paid"
+                            ? [
+                                {
+                                  label: busy ? "Marking…" : "Mark as paid",
+                                  onSelect: () => onMarkPaid(id),
+                                  disabled: busy,
+                                },
+                              ]
+                            : []),
+                          { label: "Edit", onSelect: () => onEdit(o.item) },
+                          {
+                            label: "Stop",
+                            onSelect: () => onStop(id),
+                            danger: true,
+                            disabled: busy,
+                          },
+                        ]}
+                      />
+                    );
+                  })}
+                </ul>
               </section>
             );
           })}
@@ -145,31 +261,25 @@ export function RecurringChecklist({
               <summary>Not this month ({notThisMonth.length})</summary>
               <ul className="list">
                 {notThisMonth.map((item) => (
-                  <li key={item.id} className="row later-row">
-                    <span className="main">
-                      <span className="name">{item.name}</span>
-                      <span className="meta">
-                        {FREQUENCY_LABELS[item.frequency]}
-                        {item.nextOccurrence
-                          ? ` · next ${DATE.format(item.nextOccurrence.toDate())}`
-                          : ""}
-                      </span>
-                    </span>
-                    <span className="amount">
-                      {formatNative(item.amount, item.currency, currency)}
-                    </span>
-                    <KebabMenu
-                      aria-label={`Actions for ${item.name}`}
-                      actions={[
-                        { label: "Edit", onSelect: () => onEdit(item) },
-                        {
-                          label: "Stop",
-                          onSelect: () => item.id && onStop(item.id),
-                          danger: true,
-                        },
-                      ]}
-                    />
-                  </li>
+                  <OccurrenceRow
+                    key={item.id}
+                    name={item.name}
+                    meta={`${FREQUENCY_LABELS[item.frequency]}${
+                      item.nextOccurrence
+                        ? ` · next ${DATE.format(item.nextOccurrence.toDate())}`
+                        : ""
+                    }`}
+                    amount={formatNative(item.amount, item.currency, currency)}
+                    accent={config.accent}
+                    actions={[
+                      { label: "Edit", onSelect: () => onEdit(item) },
+                      {
+                        label: "Stop",
+                        onSelect: () => item.id && onStop(item.id),
+                        danger: true,
+                      },
+                    ]}
+                  />
                 ))}
               </ul>
             </details>
@@ -216,87 +326,6 @@ export function RecurringChecklist({
           padding: 0;
           display: flex;
           flex-direction: column;
-        }
-
-        .row {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 10px 0;
-          border-bottom: 1px solid var(--line);
-        }
-
-        .row:last-child {
-          border-bottom: none;
-        }
-
-        .row.paid .name {
-          color: var(--fg-1);
-        }
-
-        .main {
-          flex: 1;
-          min-width: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-
-        .name {
-          font-size: 0.9rem;
-          font-weight: 600;
-          color: var(--fg-0);
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .meta {
-          font-size: 0.72rem;
-          color: var(--fg-2);
-        }
-
-        .right {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-end;
-          gap: 3px;
-          flex-shrink: 0;
-        }
-
-        .amount {
-          font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
-          font-variant-numeric: tabular-nums;
-          font-size: 0.88rem;
-          font-weight: 600;
-          color: var(--fg-0);
-          white-space: nowrap;
-        }
-
-        .pill {
-          font-size: 0.66rem;
-          font-weight: 700;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
-          padding: 2px 7px;
-          border-radius: 999px;
-          background: var(--bg-3);
-          color: var(--fg-2);
-        }
-
-        .pill.due {
-          color: ${config.accent};
-          background: color-mix(in srgb, ${config.accent} 14%, transparent);
-        }
-
-        .pill.overdue {
-          color: var(--accent-hot);
-          background: color-mix(in srgb, var(--accent-hot) 14%, transparent);
-        }
-
-        .pill.paid {
-          color: var(--accent);
-          background: color-mix(in srgb, var(--accent) 12%, transparent);
         }
 
         .later {

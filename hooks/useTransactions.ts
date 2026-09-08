@@ -1,4 +1,4 @@
-import type { TransactionInput } from "../schemas";
+import type { TransactionInput, TransactionUpdate } from "../schemas";
 
 /**
  * Write path for one-off transactions. Standalone functions, like
@@ -19,5 +19,15 @@ export async function createTransaction(input: TransactionInput): Promise<string
 /** Soft delete: the API marks the transaction SKIPPED, so every aggregate drops it. */
 export async function deleteTransaction(id: string): Promise<void> {
   const res = await fetch(`/api/transactions/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error(await res.text());
+}
+
+/** Partial update; the API validates category ownership and the charged pair. */
+export async function updateTransaction(id: string, patch: TransactionUpdate): Promise<void> {
+  const res = await fetch(`/api/transactions/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(patch),
+  });
   if (!res.ok) throw new Error(await res.text());
 }

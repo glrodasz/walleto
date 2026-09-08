@@ -163,8 +163,10 @@ export const TransactionInputSchema = z
 export const TransactionUpdateSchema = z
   .object({
     status: TransactionStatusSchema.optional(),
+    categoryId: z.string().min(1).optional(),
     name: z.string().min(1).max(100).trim().optional(),
     amount: z.number().positive().optional(),
+    currency: CurrencySchema.optional(),
     occurredAt: z.iso.datetime().optional(),
     chargedAmount: z.number().positive().nullable().optional(),
     chargedCurrency: CurrencySchema.nullable().optional(),
