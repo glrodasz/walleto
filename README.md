@@ -83,6 +83,22 @@ This project uses Firebase Firestore as database and Auth0 as Auth provider so y
 7. Copy your Auth0 application config from "Settings" and paste it in their respective variables inside the `.env.local` file
 8. Follow the Auth0 example to configure the callback URL's
 
+### Preview deployments and Auth0
+
+The auth routes build the callback URL from the host of each request, so any
+Vercel hostname (deployment hash, branch alias, custom domain) works as long
+as Auth0 allows it. Two settings make that true:
+
+- **Vercel → Environment Variables:** set `AUTH0_BASE_URL` for _Production_
+  only (your real domain). Leave it unset for _Preview_; a value there pins
+  every preview to one deployment and sign-in fails on the others with
+  "Missing state cookie".
+- **Auth0 → Application → Settings:** add the preview hostnames to _Allowed
+  Callback URLs_ (`…/api/auth/callback`) and _Allowed Logout URLs_. The branch
+  alias (`https://sublr-git-<branch>-<team>.vercel.app`) is stable; a wildcard
+  such as `https://*-<team>.vercel.app/api/auth/callback` covers per-deployment
+  URLs if the dashboard accepts it.
+
 Now the project is ready to run. Run the project to check everything is working fine and the subscriptions list will now show empty because you won't have any data in your firestore database.
 
 To populate your Firestore database run the two seed scripts:
