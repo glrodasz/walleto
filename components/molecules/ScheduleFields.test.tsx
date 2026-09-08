@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ScheduleFields } from "./ScheduleFields";
 
-const value = { dayOfMonth: 12, month: 3, date: "2026-03-09" };
+const value = { dayOfMonth: 12, secondDayOfMonth: 27, month: 3, date: "2026-03-09" };
 
 describe("ScheduleFields", () => {
   it("shows only a payment day for monthly items", () => {
@@ -23,8 +23,23 @@ describe("ScheduleFields", () => {
   });
 
   it("shows a start date for weekly items", () => {
-    render(<ScheduleFields frequency="BIWEEKLY" value={value} onChange={jest.fn()} />);
+    render(<ScheduleFields frequency="WEEKLY" value={value} onChange={jest.fn()} />);
     expect(screen.getByLabelText("Starts on")).toHaveValue("2026-03-09");
+  });
+
+  it("shows two payment days for twice-a-month items", () => {
+    const onChange = jest.fn();
+    render(<ScheduleFields frequency="BIWEEKLY" value={value} onChange={onChange} />);
+    expect(screen.getByLabelText("First payment day")).toHaveValue("12");
+    expect(screen.getByLabelText("Second payment day")).toHaveValue("27");
+    fireEvent.change(screen.getByLabelText("Second payment day"), { target: { value: "15" } });
+    expect(onChange).toHaveBeenCalledWith({ secondDayOfMonth: 15 });
+  });
+
+  it("shows the first month and the payment day for quarterly items", () => {
+    render(<ScheduleFields frequency="QUARTERLY" value={value} onChange={jest.fn()} />);
+    expect(screen.getByLabelText("First month")).toHaveValue("3");
+    expect(screen.getByLabelText("Payment day")).toHaveValue("12");
   });
 
   it("reports changes as numbers for day and month", () => {

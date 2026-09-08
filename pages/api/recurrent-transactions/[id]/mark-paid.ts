@@ -59,7 +59,9 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
     { merge: true }
   );
 
-  const next = nextOccurrenceFrom(item.startDate.toDate(), item.frequency, occurredAt);
+  const next = nextOccurrenceFrom(item.startDate.toDate(), item.frequency, occurredAt, {
+    secondDayOfMonth: item.secondDayOfMonth,
+  });
   await ref.update({
     nextOccurrence: next
       ? admin.firestore.Timestamp.fromDate(next)

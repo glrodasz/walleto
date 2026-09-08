@@ -69,3 +69,30 @@ describe("nextOccurrenceFrom", () => {
     expect(y.getMonth()).toBe(0);
   });
 });
+
+describe("nextOccurrenceFrom — twice a month", () => {
+  const start = new Date(2026, 2, 1, 12); // anchored on the 1st, March 2026
+  const opts = { secondDayOfMonth: 15 };
+
+  it("alternates between the anchor day and the second day", () => {
+    expect(nextOccurrenceFrom(start, "BIWEEKLY", new Date(2026, 8, 6), opts)).toEqual(
+      new Date(2026, 8, 15, 12)
+    );
+    expect(nextOccurrenceFrom(start, "BIWEEKLY", new Date(2026, 8, 15, 12), opts)).toEqual(
+      new Date(2026, 9, 1, 12)
+    );
+  });
+
+  it("clamps the second day to short months and keeps the start when not begun", () => {
+    const late = new Date(2026, 0, 1, 12);
+    expect(
+      nextOccurrenceFrom(late, "BIWEEKLY", new Date(2026, 1, 2), { secondDayOfMonth: 31 })
+    ).toEqual(new Date(2026, 1, 28, 12));
+    expect(nextOccurrenceFrom(start, "BIWEEKLY", new Date(2026, 0, 1), opts)).toEqual(start);
+  });
+
+  it("keeps the 14-day step for items without a second day", () => {
+    const next = nextOccurrenceFrom(new Date(2026, 0, 1), "BIWEEKLY", new Date(2026, 0, 10));
+    expect(next).toEqual(new Date(2026, 0, 15));
+  });
+});

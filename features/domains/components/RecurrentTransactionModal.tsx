@@ -75,6 +75,7 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
       frequency: "MONTHLY",
       paymentMethodId: "",
       dayOfMonth: 1,
+      secondDayOfMonth: 15,
       month: 0,
       date: toDateInputValue(new Date()),
       backfill: true,
@@ -98,7 +99,11 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
       setForm(empty);
       return;
     }
-    const schedule = scheduleChoiceFromStartDate(item.startDate.toDate(), item.frequency);
+    const schedule = scheduleChoiceFromStartDate(
+      item.startDate.toDate(),
+      item.frequency,
+      item.secondDayOfMonth
+    );
     setForm({
       categoryId: item.categoryId,
       name: item.name,
@@ -107,6 +112,7 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
       frequency: item.frequency,
       paymentMethodId: item.paymentMethodId ?? "",
       dayOfMonth: schedule.dayOfMonth ?? 1,
+      secondDayOfMonth: schedule.secondDayOfMonth ?? 15,
       month: schedule.month ?? 0,
       date: schedule.date ?? empty.date,
       backfill: false,
@@ -163,6 +169,7 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
     const startDate = anchorStartDate({
       frequency: form.frequency,
       dayOfMonth: form.dayOfMonth,
+      secondDayOfMonth: form.secondDayOfMonth,
       month: form.month,
       date: form.date,
       backfill: !item && isRecurring && form.backfill,
@@ -172,9 +179,11 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
     setFormError(null);
     try {
       if (item?.id) {
+        const twiceMonthly = form.frequency === "BIWEEKLY" ? form.secondDayOfMonth : null;
         const scheduleChanged =
           form.frequency !== item.frequency ||
-          startDate.getTime() !== item.startDate.toDate().getTime();
+          startDate.getTime() !== item.startDate.toDate().getTime() ||
+          twiceMonthly !== (item.secondDayOfMonth ?? null);
         await update(item.id, {
           categoryId: form.categoryId,
           name: form.name.trim(),
@@ -182,7 +191,11 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
           currency: effectiveCurrency,
           // Only a real schedule change should move nextOccurrence.
           ...(scheduleChanged
-            ? { frequency: form.frequency, startDate: startDate.toISOString() }
+            ? {
+                frequency: form.frequency,
+                startDate: startDate.toISOString(),
+                secondDayOfMonth: twiceMonthly,
+              }
             : {}),
           paymentMethodId: form.paymentMethodId || null,
           chargedAmount: form.chargedEnabled ? chargedAmount! : null,
@@ -199,6 +212,7 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
           amount,
           currency: effectiveCurrency,
           frequency: form.frequency,
+          ...(form.frequency === "BIWEEKLY" ? { secondDayOfMonth: form.secondDayOfMonth } : {}),
           startDate: startDate.toISOString(),
           ...(form.paymentMethodId ? { paymentMethodId: form.paymentMethodId } : {}),
           ...(form.chargedEnabled

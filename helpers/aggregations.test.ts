@@ -105,8 +105,8 @@ describe("toMonthlyAmount", () => {
     expect(toMonthlyAmount(makeItem("WEEKLY", 10), USD)).toBeCloseTo(43.45);
   });
 
-  it("BIWEEKLY multiplies by 2.1725", () => {
-    expect(toMonthlyAmount(makeItem("BIWEEKLY", 10), USD)).toBeCloseTo(21.725);
+  it("BIWEEKLY is twice a month", () => {
+    expect(toMonthlyAmount(makeItem("BIWEEKLY", 10), USD)).toBe(20);
   });
 });
 

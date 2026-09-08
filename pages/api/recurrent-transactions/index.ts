@@ -44,6 +44,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       chargedAmount,
       chargedCurrency,
       frequency,
+      secondDayOfMonth,
       type,
       paymentMethodId,
       startDate,
@@ -75,7 +76,10 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
     }
 
     const start = startDate ? new Date(startDate) : new Date();
-    const next = nextOccurrenceFrom(start, frequency);
+    const twiceMonthly = frequency === "BIWEEKLY" ? secondDayOfMonth : undefined;
+    const next = nextOccurrenceFrom(start, frequency, undefined, {
+      secondDayOfMonth: twiceMonthly,
+    });
 
     const ref = await db.collection("recurrentTransactions").add({
       userId,
@@ -87,6 +91,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       ...(chargedAmount !== undefined ? { chargedAmount } : {}),
       ...(chargedCurrency ? { chargedCurrency } : {}),
       frequency,
+      ...(twiceMonthly !== undefined ? { secondDayOfMonth: twiceMonthly } : {}),
       ...(type ? { type } : {}),
       ...(paymentMethodId ? { paymentMethodId } : {}),
       startDate: admin.firestore.Timestamp.fromDate(start),

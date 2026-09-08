@@ -39,7 +39,7 @@ export const CADENCE_SECTIONS: readonly CadenceSection[] = [
   {
     id: "other",
     title: "Other cadence",
-    hint: "Weekly, every two weeks or quarterly.",
+    hint: "Weekly, twice a month or quarterly.",
     frequencies: ["WEEKLY", "BIWEEKLY", "QUARTERLY"],
     defaultFrequency: "QUARTERLY",
     recurring: true,

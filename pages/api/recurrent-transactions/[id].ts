@@ -43,6 +43,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       chargedAmount,
       chargedCurrency,
       frequency,
+      secondDayOfMonth,
       categoryId,
       paymentMethodId,
       type,
@@ -84,9 +85,14 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
 
     // A schedule change moves the next occurrence.
     let occurrencePatch: Record<string, unknown> = {};
-    if (frequency !== undefined || startDate !== undefined) {
+    if (frequency !== undefined || startDate !== undefined || secondDayOfMonth !== undefined) {
       const nextStart = startDate ? new Date(startDate) : existing.startDate.toDate();
-      const next = nextOccurrenceFrom(nextStart, frequency ?? existing.frequency);
+      const next = nextOccurrenceFrom(nextStart, frequency ?? existing.frequency, undefined, {
+        secondDayOfMonth:
+          secondDayOfMonth === undefined
+            ? existing.secondDayOfMonth
+            : (secondDayOfMonth ?? undefined),
+      });
       occurrencePatch = {
         ...(startDate ? { startDate: admin.firestore.Timestamp.fromDate(nextStart) } : {}),
         nextOccurrence: next
@@ -103,6 +109,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       ...(chargedAmount !== undefined ? { chargedAmount: chargedAmount ?? del } : {}),
       ...(chargedCurrency !== undefined ? { chargedCurrency: chargedCurrency ?? del } : {}),
       ...(frequency !== undefined ? { frequency } : {}),
+      ...(secondDayOfMonth !== undefined ? { secondDayOfMonth: secondDayOfMonth ?? del } : {}),
       ...(categoryId !== undefined ? { categoryId } : {}),
       ...(paymentMethodId !== undefined ? { paymentMethodId: paymentMethodId ?? del } : {}),
       ...(type !== undefined ? { type: type ?? del } : {}),

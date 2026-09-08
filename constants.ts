@@ -40,7 +40,7 @@ export const PAYMENT_METHOD_TYPE_LABELS: Record<PaymentMethodType, string> = {
 export const FREQUENCY_LABELS: Record<Frequency, string> = {
   ONE_TIME: "One time",
   WEEKLY: "Weekly",
-  BIWEEKLY: "Biweekly",
+  BIWEEKLY: "Twice a month",
   MONTHLY: "Monthly",
   QUARTERLY: "Quarterly",
   YEARLY: "Yearly",

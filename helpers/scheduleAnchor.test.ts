@@ -84,17 +84,58 @@ describe("anchorStartDate", () => {
     });
   });
 
-  describe("WEEKLY / BIWEEKLY", () => {
+  describe("WEEKLY", () => {
     it("starts at the given date, or today", () => {
       expect(toDateInputValue(anchorStartDate({ frequency: "WEEKLY" }, NOW))).toBe("2026-09-15");
       expect(
-        toDateInputValue(anchorStartDate({ frequency: "BIWEEKLY", date: "2026-09-03" }, NOW))
+        toDateInputValue(anchorStartDate({ frequency: "WEEKLY", date: "2026-09-03" }, NOW))
       ).toBe("2026-09-03");
     });
 
     it("backfills by shifting the start date back", () => {
       const d = anchorStartDate({ frequency: "WEEKLY", date: "2026-09-03", backfill: true }, NOW);
       expect(toDateInputValue(d)).toBe("2026-03-03");
+    });
+  });
+
+  describe("BIWEEKLY (twice a month)", () => {
+    it("anchors on the first payment day of the current month, like monthly", () => {
+      const d = anchorStartDate(
+        { frequency: "BIWEEKLY", dayOfMonth: 1, secondDayOfMonth: 15, backfill: true },
+        NOW
+      );
+      expect(toDateInputValue(d)).toBe("2026-03-01");
+    });
+  });
+
+  describe("QUARTERLY", () => {
+    it("anchors on the most recent month of the cycle whose day has passed", () => {
+      // Cycle Jan/Apr/Jul/Oct on the 15th; on Sep 15 the latest is Jul 15.
+      expect(
+        toDateInputValue(anchorStartDate({ frequency: "QUARTERLY", month: 0, dayOfMonth: 15 }, NOW))
+      ).toBe("2026-07-15");
+      // Cycle Feb/May/Aug/Nov on the 20th; Aug 20 has passed.
+      expect(
+        toDateInputValue(
+          anchorStartDate({ frequency: "QUARTERLY", month: 10, dayOfMonth: 20 }, NOW)
+        )
+      ).toBe("2026-08-20");
+      // Cycle Mar/Jun/Sep/Dec on the 30th; Sep 30 is still ahead, so Jun 30.
+      expect(
+        toDateInputValue(anchorStartDate({ frequency: "QUARTERLY", month: 2, dayOfMonth: 30 }, NOW))
+      ).toBe("2026-06-30");
+    });
+
+    it("backfills six months back while keeping the cycle", () => {
+      const d = anchorStartDate(
+        { frequency: "QUARTERLY", month: 0, dayOfMonth: 15, backfill: true },
+        NOW
+      );
+      expect(toDateInputValue(d)).toBe("2026-01-15");
+    });
+
+    it("falls back to the current month without a first month", () => {
+      expect(toDateInputValue(anchorStartDate({ frequency: "QUARTERLY" }, NOW))).toBe("2026-09-01");
     });
   });
 });
@@ -112,5 +153,10 @@ describe("scheduleChoiceFromStartDate", () => {
     expect(choice.month).toBe(10);
     expect(choice.dayOfMonth).toBe(19);
     expect(choice.date).toBe("2025-11-19");
+  });
+
+  it("carries the second payment day for twice-a-month items", () => {
+    const choice = scheduleChoiceFromStartDate(new Date(2026, 8, 1, 12), "BIWEEKLY", 15);
+    expect(choice).toMatchObject({ dayOfMonth: 1, secondDayOfMonth: 15 });
   });
 });

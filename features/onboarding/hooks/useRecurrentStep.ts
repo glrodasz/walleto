@@ -19,11 +19,13 @@ export interface RecurrentRow extends DraftRow {
   currency: Currency;
   frequency: Frequency;
   paymentMethodId: string;
-  /** MONTHLY / QUARTERLY / YEARLY: payment day, 1–31. */
+  /** MONTHLY / QUARTERLY / YEARLY / BIWEEKLY: (first) payment day, 1–31. */
   dayOfMonth: number;
-  /** YEARLY: month, 0–11. */
+  /** BIWEEKLY: the second payment day, 1–31. */
+  secondDayOfMonth: number;
+  /** YEARLY: month, 0–11. QUARTERLY: first month of the cycle. */
   month: number;
-  /** ONE_TIME / WEEKLY / BIWEEKLY: the date, YYYY-MM-DD. */
+  /** ONE_TIME / WEEKLY: the date, YYYY-MM-DD. */
   date: string;
 }
 
@@ -46,7 +48,11 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
   const saved = useMemo(
     () =>
       items.map((i) => {
-        const choice = scheduleChoiceFromStartDate(i.startDate.toDate(), i.frequency);
+        const choice = scheduleChoiceFromStartDate(
+          i.startDate.toDate(),
+          i.frequency,
+          i.secondDayOfMonth
+        );
         return {
           id: i.id,
           categoryId: i.categoryId,
@@ -56,6 +62,7 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
           frequency: i.frequency,
           paymentMethodId: i.paymentMethodId ?? "",
           dayOfMonth: choice.dayOfMonth ?? 1,
+          secondDayOfMonth: choice.secondDayOfMonth ?? 15,
           month: choice.month ?? 0,
           date: choice.date ?? toDateInputValue(new Date()),
         };
@@ -72,6 +79,7 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
       frequency: "MONTHLY" as Frequency,
       paymentMethodId: "",
       dayOfMonth: 1,
+      secondDayOfMonth: 15,
       month: 0,
       date: toDateInputValue(new Date()),
     }),
@@ -98,6 +106,7 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
       const startDate = anchorStartDate({
         frequency: row.frequency,
         dayOfMonth: row.dayOfMonth,
+        secondDayOfMonth: row.secondDayOfMonth,
         month: row.month,
         date: row.date,
         backfill: backfill && sectionFor(row.frequency).recurring,
@@ -110,6 +119,7 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
         amount,
         currency: row.currency,
         frequency: row.frequency,
+        ...(row.frequency === "BIWEEKLY" ? { secondDayOfMonth: row.secondDayOfMonth } : {}),
         type: typeFor(row),
         startDate: startDate.toISOString(),
         ...(row.paymentMethodId ? { paymentMethodId: row.paymentMethodId } : {}),

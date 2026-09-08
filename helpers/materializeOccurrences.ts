@@ -10,6 +10,7 @@ export interface Occurrence {
 interface ScheduleFields {
   id?: string;
   frequency: Frequency;
+  secondDayOfMonth?: number;
   startDate: Timestamp;
   endDate?: Timestamp;
 }
@@ -32,12 +33,15 @@ export function materializeOccurrences(item: ScheduleFields, from: Date, to: Dat
   const cap = end && end < to ? end : to;
 
   const occurrences: Occurrence[] = [];
+  const opts = { secondDayOfMonth: item.secondDayOfMonth };
   let current: Date | null =
-    start >= from ? start : nextOccurrenceFrom(start, item.frequency, new Date(from.getTime() - 1));
+    start >= from
+      ? start
+      : nextOccurrenceFrom(start, item.frequency, new Date(from.getTime() - 1), opts);
 
   while (current && current <= cap) {
     occurrences.push({ id: occurrenceId(item.id, current), occurredAt: current });
-    current = nextOccurrenceFrom(start, item.frequency, current);
+    current = nextOccurrenceFrom(start, item.frequency, current, opts);
   }
 
   return occurrences;

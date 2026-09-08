@@ -5,11 +5,13 @@ export const BACKFILL_MONTHS = 6;
 
 export interface ScheduleChoice {
   frequency: Frequency;
-  /** MONTHLY / QUARTERLY / YEARLY: day of month, 1–31. Defaults to the 1st. */
+  /** MONTHLY / QUARTERLY / YEARLY / BIWEEKLY: (first) payment day, 1–31. Defaults to the 1st. */
   dayOfMonth?: number;
-  /** YEARLY: month, 0–11. Defaults to January. */
+  /** BIWEEKLY: the second payment day, 1–31. Stored on the item, not in startDate. */
+  secondDayOfMonth?: number;
+  /** YEARLY: month, 0–11 (defaults to January). QUARTERLY: the first month of the cycle. */
   month?: number;
-  /** ONE_TIME / WEEKLY / BIWEEKLY: an explicit date (YYYY-MM-DD). Defaults to today. */
+  /** ONE_TIME / WEEKLY: an explicit date (YYYY-MM-DD). Defaults to today. */
   date?: string;
   /**
    * "I've been paying this for a while": anchor the schedule far enough back
@@ -50,23 +52,36 @@ function localNoon(year: number, month: number, day: number): Date {
 export function anchorStartDate(choice: ScheduleChoice, now: Date = new Date()): Date {
   const today = localNoon(now.getFullYear(), now.getMonth(), now.getDate());
   const day = choice.dayOfMonth ?? 1;
+  const monthsBack = choice.backfill ? BACKFILL_MONTHS : 0;
 
   switch (choice.frequency) {
     case "ONE_TIME":
       return parseDateInput(choice.date, today);
 
-    case "WEEKLY":
-    case "BIWEEKLY": {
+    case "WEEKLY": {
       const base = parseDateInput(choice.date, today);
       return choice.backfill
         ? localNoon(base.getFullYear(), base.getMonth() - BACKFILL_MONTHS, base.getDate())
         : base;
     }
 
+    // Twice a month: the anchor carries the first day; the second lives on the item.
+    case "BIWEEKLY":
     case "MONTHLY":
-    case "QUARTERLY": {
-      const monthsBack = choice.backfill ? BACKFILL_MONTHS : 0;
       return localNoon(now.getFullYear(), now.getMonth() - monthsBack, day);
+
+    case "QUARTERLY": {
+      if (choice.month === undefined) {
+        return localNoon(now.getFullYear(), now.getMonth() - monthsBack, day);
+      }
+      // The most recent month in the cycle (every third month from `month`)
+      // whose payment day is not ahead of today, then further back to backfill.
+      let year = now.getFullYear();
+      let month = now.getMonth() - ((now.getMonth() - choice.month + 12) % 3);
+      if (localNoon(year, month, day) > today) month -= 3;
+      const anchor = localNoon(year, month - monthsBack, day);
+      year = anchor.getFullYear();
+      return anchor;
     }
 
     case "YEARLY": {
@@ -81,12 +96,14 @@ export function anchorStartDate(choice: ScheduleChoice, now: Date = new Date()):
 /** The inverse, for edit forms: which choice reproduces this stored startDate. */
 export function scheduleChoiceFromStartDate(
   startDate: Date,
-  frequency: Frequency
+  frequency: Frequency,
+  secondDayOfMonth?: number
 ): Omit<ScheduleChoice, "backfill"> {
   return {
     frequency,
     dayOfMonth: startDate.getDate(),
     month: startDate.getMonth(),
     date: toDateInputValue(startDate),
+    ...(secondDayOfMonth !== undefined ? { secondDayOfMonth } : {}),
   };
 }

@@ -75,6 +75,8 @@ export interface RecurrentTransaction {
   chargedAmount?: number;
   chargedCurrency?: Currency;
   frequency: Frequency;
+  /** BIWEEKLY only: twice a month, on startDate's day and this one. */
+  secondDayOfMonth?: number;
   type?: RecurrentTransactionType;
   paymentMethodId?: string;
   serviceSnapshot?: {

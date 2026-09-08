@@ -11,7 +11,7 @@ export interface MoneyContext {
 const FREQ_TO_MONTHS: Record<RecurrentTransaction["frequency"], number> = {
   ONE_TIME: 0,
   WEEKLY: 4.345,
-  BIWEEKLY: 2.1725,
+  BIWEEKLY: 2,
   MONTHLY: 1,
   QUARTERLY: 1 / 3,
   YEARLY: 1 / 12,
