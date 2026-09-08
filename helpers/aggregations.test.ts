@@ -3,6 +3,7 @@ import {
   computeMoM,
   convertedAmount,
   groupByCategory,
+  shareByCurrency,
   sumMonthly,
   toMonthlyAmount,
 } from "./aggregations";
@@ -260,5 +261,21 @@ describe("computeMoM", () => {
     ];
     const { current } = computeMoM(txns, { rates: RATES, target: "USD", now });
     expect(current).toBeCloseTo(200);
+  });
+});
+
+describe("shareByCurrency", () => {
+  it("splits the run-rate by currency, largest first, in the target currency", () => {
+    const items = [
+      makeItem("MONTHLY", 57_650, "c", "SEK"),
+      makeItem("MONTHLY", 500, "c", "USD"),
+      makeItem("ONE_TIME", 9_999, "c", "COP"),
+    ];
+    const mix = shareByCurrency(items, USD_REAL);
+    // 57,650 SEK ≈ $5,765 and $500 → 92% / 8%; the one-time COP item has no run-rate.
+    expect(mix.map((m) => m.currency)).toEqual(["SEK", "USD"]);
+    expect(mix[0].pct).toBeCloseTo(92.0, 0);
+    expect(mix[1].pct).toBeCloseTo(8.0, 0);
+    expect(shareByCurrency([], USD)).toEqual([]);
   });
 });

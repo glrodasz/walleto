@@ -3,7 +3,7 @@ import type { MoneyContext, MoneyFields } from "../../../helpers/aggregations";
 import { bucketStart, toDate } from "../../../helpers/chartData";
 import { materializeOccurrences, occurrenceId } from "../../../helpers/materializeOccurrences";
 import { formatRelativeDay } from "../../../utils/formatRelativeDay";
-import type { RecurrentTransaction, Transaction } from "../../../types";
+import type { Currency, RecurrentTransaction, Transaction } from "../../../types";
 
 /** One calendar month on the page: [start, end). */
 export interface MonthWindow {
@@ -63,6 +63,39 @@ export function monthTotals(
     if (key in totals) totals[key] += convertedAmount(t, ctx);
   }
   return totals;
+}
+
+export interface TotalsByCurrency {
+  /** window key → native currency → converted total. */
+  totals: Record<string, Partial<Record<Currency, number>>>;
+  /** Currencies that appear anywhere in the windows, largest grand total first. */
+  currencies: Currency[];
+}
+
+/**
+ * The same monthly totals, split by the currency each transaction was
+ * actually in (amounts still converted into the reporting currency so the
+ * stack adds up). Feeds the "by currency" bars and their legend.
+ */
+export function monthTotalsByCurrency(
+  transactions: (MoneyTransaction & { currency: Currency })[],
+  ctx: MoneyContext,
+  windows: MonthWindow[]
+): TotalsByCurrency {
+  const totals: Record<string, Partial<Record<Currency, number>>> = {};
+  const grand: Partial<Record<Currency, number>> = {};
+  for (const w of windows) totals[w.key] = {};
+  for (const t of transactions) {
+    const key = monthKey(bucketStart(toDate(t.occurredAt), "month"));
+    if (!(key in totals)) continue;
+    const value = convertedAmount(t, ctx);
+    totals[key][t.currency] = (totals[key][t.currency] ?? 0) + value;
+    grand[t.currency] = (grand[t.currency] ?? 0) + value;
+  }
+  const currencies = (Object.keys(grand) as Currency[]).sort(
+    (a, b) => (grand[b] ?? 0) - (grand[a] ?? 0)
+  );
+  return { totals, currencies };
 }
 
 export interface PlannedOccurrence {

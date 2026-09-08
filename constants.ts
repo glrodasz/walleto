@@ -22,6 +22,18 @@ export const CURRENCY_SYMBOL: Record<Currency, string> = {
 };
 
 /** Currencies offered during onboarding, in display order. */
+/** One colour per currency for stacked "by currency" charts — stable across pages. */
+export const CURRENCY_COLORS: Record<Currency, string> = {
+  USD: "var(--palette-1)",
+  EUR: "var(--palette-2)",
+  SEK: "var(--palette-3)",
+  COP: "var(--palette-4)",
+  GBP: "var(--palette-5)",
+  CHF: "var(--palette-6)",
+  MXN: "var(--palette-7)",
+  JPY: "var(--palette-8)",
+};
+
 export const SELECTABLE_CURRENCIES: { value: Currency; label: string }[] = CURRENCIES.map((c) => ({
   value: c,
   label: c,

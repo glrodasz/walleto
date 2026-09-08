@@ -46,6 +46,8 @@ interface Props {
   selectedKey?: string;
   onSelect?: (key: string) => void;
   height?: number;
+  /** Stack every series into one bar (e.g. one segment per currency). */
+  stacked?: boolean;
 }
 
 const HATCH_ID = "monthly-bars-hatch";
@@ -65,6 +67,7 @@ export function MonthlyBarsChart({
   selectedKey,
   onSelect,
   height = 220,
+  stacked = false,
 }: Props) {
   const hasMoney = data.some(
     (d) => series.some((s) => Number(d[s.key]) !== 0) || (d.planned ?? 0) !== 0
@@ -170,30 +173,36 @@ export function MonthlyBarsChart({
                   ifOverflow="extendDomain"
                 />
               )}
-              {series.map((s, i) => (
-                <Bar
-                  key={s.key}
-                  dataKey={s.key}
-                  stackId={i === 0 ? "primary" : undefined}
-                  fill={s.color}
-                  radius={i === 0 && hasPlanned ? [0, 0, 0, 0] : [6, 6, 0, 0]}
-                  isAnimationActive={false}
-                  onClick={(_entry, index) => {
-                    const bar = data[index];
-                    if (bar && onSelect) onSelect(bar.key);
-                  }}
-                  cursor={onSelect ? "pointer" : undefined}
-                >
-                  {data.map((d) => (
-                    <Cell
-                      key={d.key}
-                      fillOpacity={
-                        (d.isCurrent ? 0.55 : 1) * (selectedKey && d.key !== selectedKey ? 0.45 : 1)
-                      }
-                    />
-                  ))}
-                </Bar>
-              ))}
+              {series.map((s, i) => {
+                const inStack = stacked || i === 0;
+                const topOfStack = stacked ? i === series.length - 1 : i === 0;
+                const rounded = !inStack || (topOfStack && !hasPlanned);
+                return (
+                  <Bar
+                    key={s.key}
+                    dataKey={s.key}
+                    stackId={inStack ? "primary" : undefined}
+                    fill={s.color}
+                    radius={rounded ? [6, 6, 0, 0] : [0, 0, 0, 0]}
+                    isAnimationActive={false}
+                    onClick={(_entry, index) => {
+                      const bar = data[index];
+                      if (bar && onSelect) onSelect(bar.key);
+                    }}
+                    cursor={onSelect ? "pointer" : undefined}
+                  >
+                    {data.map((d) => (
+                      <Cell
+                        key={d.key}
+                        fillOpacity={
+                          (d.isCurrent ? 0.55 : 1) *
+                          (selectedKey && d.key !== selectedKey ? 0.45 : 1)
+                        }
+                      />
+                    ))}
+                  </Bar>
+                );
+              })}
               {hasPlanned && (
                 <Bar
                   dataKey="planned"

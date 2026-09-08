@@ -55,6 +55,23 @@ export function groupByCategory(
   }, {});
 }
 
+/** Share of the monthly run-rate held by each currency in use, largest first. */
+export function shareByCurrency(
+  items: RecurrentTransaction[],
+  ctx: MoneyContext
+): { currency: Currency; pct: number }[] {
+  const byCurrency = new Map<Currency, number>();
+  for (const i of items) {
+    byCurrency.set(i.currency, (byCurrency.get(i.currency) ?? 0) + toMonthlyAmount(i, ctx));
+  }
+  const total = Array.from(byCurrency.values()).reduce((a, b) => a + b, 0);
+  if (total <= 0) return [];
+  return Array.from(byCurrency.entries())
+    .filter(([, amount]) => amount > 0)
+    .map(([currency, amount]) => ({ currency, pct: (amount / total) * 100 }))
+    .sort((a, b) => b.pct - a.pct);
+}
+
 /**
  * Monthly money flow across all four domains. `net` follows the owner's
  * definition: what is left unallocated after spending, saving and investing.

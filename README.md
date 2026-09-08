@@ -10,7 +10,8 @@ rates into a per-user display currency.
 
 - **Dashboard** (`/`) — net-flow hero, per-domain stat cards, monthly
   income-vs-expense bars (the month in progress drawn lighter), expense
-  breakdown, recent payments, next to expire. Any recurring item or payment
+  breakdown with a per-currency share line on each card when several
+  currencies are in play, recent payments, next to expire. Any recurring item or payment
   can be hidden from the dashboard (kebab → Hide from dashboard); it leaves
   every dashboard number and list but stays on its domain page. The display
   currency switcher sits in every page header.
@@ -18,7 +19,8 @@ rates into a per-user display currency.
   `/investments`, `/savings`) — one month-first page (`DomainPage`) per
   domain: a month picker, the month's figure with a spent-vs-expected bar
   (expected = what landed + what active recurring items still owe before
-  month end), seven monthly bars with a 6-month average line, and three
+  month end), seven monthly bars with a 6-month average line (stacked by
+  currency, one colour each, when more than one is in use), and three
   views of the selected month: Categories (totals, share, planned vs actual,
   drilldown with subcategories), Transactions (grouped by day) and Recurring
   (the month's bills as overdue / due / paid, with mark-paid, edit, stop).

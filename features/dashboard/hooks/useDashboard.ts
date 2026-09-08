@@ -5,7 +5,7 @@ import { useRecentTransactions } from "./useRecentTransactions";
 import { useUpcomingItems } from "./useUpcomingItems";
 import { useCategories } from "../../../hooks/useCategories";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
-import { groupByCategory, computeMoM, computeFlow } from "../../../helpers";
+import { groupByCategory, computeMoM, computeFlow, shareByCurrency } from "../../../helpers";
 import type { MoneyContext } from "../../../helpers";
 import { toFlowSeries } from "../../../helpers/chartData";
 
@@ -114,6 +114,16 @@ export function useDashboard() {
     [savings, categories, ctx]
   );
 
+  const currencyMix = useMemo(
+    () => ({
+      income: shareByCurrency(incomes, ctx),
+      expense: shareByCurrency(expenses, ctx),
+      investment: shareByCurrency(investments, ctx),
+      saving: shareByCurrency(savings, ctx),
+    }),
+    [incomes, expenses, investments, savings, ctx]
+  );
+
   const momDelta = useMemo(
     () => computeMoM(expenseTransactions, { ...ctx, domain: "EXPENSE" }),
     [expenseTransactions, ctx]
@@ -157,6 +167,7 @@ export function useDashboard() {
     incomesByCategory,
     investmentsByCategory,
     savingsByCategory,
+    currencyMix,
     recentPayments,
     upcoming,
     markPaid,

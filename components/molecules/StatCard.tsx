@@ -14,6 +14,8 @@ interface Props {
   domain: Domain;
   delta?: number;
   summary?: SummaryEntry[];
+  /** Share per currency in use; shown only when more than one is in play. */
+  byCurrency?: { currency: Currency; pct: number }[];
 }
 
 const DOMAIN_ACCENT: Record<Domain, string> = {
@@ -23,7 +25,7 @@ const DOMAIN_ACCENT: Record<Domain, string> = {
   SAVING: "var(--domain-saving)",
 };
 
-export function StatCard({ title, amount, currency, domain, delta, summary }: Props) {
+export function StatCard({ title, amount, currency, domain, delta, summary, byCurrency }: Props) {
   const hasDelta = delta !== undefined && delta !== 0;
   const deltaPositive = (delta ?? 0) > 0;
   // Sentiment is domain-aware: spending less is good, earning less is not.
@@ -39,6 +41,16 @@ export function StatCard({ title, amount, currency, domain, delta, summary }: Pr
             <span key={s.name}>
               {i > 0 && <span className="sep"> · </span>}
               {s.name}: {formatAmount(s.amount, currency)}
+            </span>
+          ))}
+        </span>
+      )}
+      {byCurrency && byCurrency.length > 1 && (
+        <span className="currencies" aria-label="By currency">
+          {byCurrency.map((c, i) => (
+            <span key={c.currency}>
+              {i > 0 && <span className="sep"> · </span>}
+              {c.currency} {c.pct.toFixed(0)}%
             </span>
           ))}
         </span>
@@ -66,6 +78,13 @@ export function StatCard({ title, amount, currency, domain, delta, summary }: Pr
 
         .sep {
           color: var(--line-strong);
+        }
+
+        .currencies {
+          font-size: 0.72rem;
+          font-weight: 600;
+          letter-spacing: 0.02em;
+          color: var(--fg-2);
         }
 
         .delta {

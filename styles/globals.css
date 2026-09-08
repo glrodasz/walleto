@@ -30,6 +30,16 @@
   --domain-investment: var(--accent-cyan);
   --domain-saving: var(--accent-amber);
 
+  /* Categorical palette for "by currency" charts, in legend order. */
+  --palette-1: #7cffb2;
+  --palette-2: #5ee8ff;
+  --palette-3: #ffb84d;
+  --palette-4: #c58cff;
+  --palette-5: #ff8fb1;
+  --palette-6: #8ad6ff;
+  --palette-7: #d9f26b;
+  --palette-8: #ffd166;
+
   /* Stacking order. Overlays must beat the fixed mobile nav and the FAB,
      otherwise a modal's footer sits under the nav and taps navigate away. */
   --z-nav: 100;

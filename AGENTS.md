@@ -26,7 +26,7 @@ utils/formatList.ts            "A", "A y B", "A, B y C"
 Misma idea de "utilidad", pero conoce el negocio de sublr.
 
 ```
-helpers/aggregations.ts           montos mensuales por dominio, rate-aware (ver §3.1)
+helpers/aggregations.ts           montos mensuales por dominio, rate-aware (ver §3.1); shareByCurrency para la mezcla de monedas
 helpers/fx.ts                     convert()/tryConvert() por cross-rates a USD, IDENTITY_RATES
 helpers/chartData.ts              buckets por día/semana/mes + serie income/expense para FlowChart y MonthlyBarsChart
 helpers/materializeOccurrences.ts ocurrencias de un item recurrente en un rango, ids determinísticos

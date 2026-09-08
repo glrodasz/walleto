@@ -4,6 +4,7 @@ import {
   monthKey,
   monthOccurrences,
   monthTotals,
+  monthTotalsByCurrency,
   monthWindows,
   plannedOccurrences,
   plannedRemaining,
@@ -189,5 +190,28 @@ describe("groupByDay", () => {
       ["Yesterday", 207, 2],
     ]);
     expect(groups[1].rows.map((r) => r.id)).toEqual(["c", "a"]);
+  });
+});
+
+describe("monthTotalsByCurrency", () => {
+  it("splits each month by the transaction's own currency and orders currencies by size", () => {
+    const rates = {
+      base: "USD" as const,
+      rates: { USD: 1, EUR: 0.5, MXN: 1, GBP: 1, SEK: 10, CHF: 1, JPY: 1, COP: 1 },
+      fetchedAt: "2026-08-01T00:00:00.000Z",
+    };
+    const windows = monthWindows(2, now);
+    const { totals, currencies } = monthTotalsByCurrency(
+      [
+        tx("a", 57_650, new Date(2026, 7, 23), { currency: "SEK" }),
+        tx("b", 100, new Date(2026, 7, 2), { currency: "USD" }),
+        tx("c", 50, new Date(2026, 8, 2), { currency: "EUR" }),
+      ],
+      { rates, target: "USD" },
+      windows
+    );
+    expect(totals["2026-08"]).toEqual({ SEK: 5_765, USD: 100 });
+    expect(totals["2026-09"]).toEqual({ EUR: 100 });
+    expect(currencies).toEqual(["SEK", "USD", "EUR"]);
   });
 });

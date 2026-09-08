@@ -3,7 +3,8 @@ import { PageLayout } from "../../../components/organisms/PageLayout";
 import { ErrorState } from "../../../components/atoms/ErrorState";
 import { Card } from "../../../components/atoms/Card";
 import { MonthlyBarsChart } from "../../../components/molecules/MonthlyBarsChart";
-import type { MonthBar } from "../../../components/molecules/MonthlyBarsChart";
+import type { BarSeries, MonthBar } from "../../../components/molecules/MonthlyBarsChart";
+import { CURRENCY_COLORS } from "../../../constants";
 import { MonthHeader } from "./MonthHeader";
 import { ViewTabs } from "./ViewTabs";
 import type { DomainView } from "./ViewTabs";
@@ -18,7 +19,13 @@ import { InvestmentValuePanel } from "../../investments/components/InvestmentVal
 import { InvestmentValueList } from "../../investments/components/InvestmentValueList";
 import { ValuationRows } from "../../investments/components/ValuationRows";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
-import { expectedForMonth, monthTotals, monthWindows, trailingAverage } from "../helpers/months";
+import {
+  expectedForMonth,
+  monthTotals,
+  monthTotalsByCurrency,
+  monthWindows,
+  trailingAverage,
+} from "../helpers/months";
 import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
 import { useCategories } from "../../../hooks/useCategories";
 import { useRecurrentTransactions, markItemPaid } from "../../../hooks/useRecurrentTransactions";
@@ -118,16 +125,34 @@ export function DomainPage({ domain }: Props) {
     [monthTransactions, currency]
   );
 
+  // One bar per month. With more than one currency in use the bar is stacked
+  // by the currency each transaction was in, so the mix is visible at a glance.
+  const byCurrency = useMemo(
+    () => monthTotalsByCurrency(transactions, ctx, windows),
+    [transactions, ctx, windows]
+  );
+  const multiCurrency = byCurrency.currencies.length > 1;
+  const series: BarSeries[] = useMemo(
+    () =>
+      multiCurrency
+        ? byCurrency.currencies.map((c) => ({ key: c, label: c, color: CURRENCY_COLORS[c] }))
+        : [{ key: "amount", label: config.spentLabel, color: config.accent }],
+    [multiCurrency, byCurrency.currencies, config.spentLabel, config.accent]
+  );
   const bars: MonthBar[] = useMemo(
     () =>
       windows.map((w) => ({
         key: w.key,
         label: w.label,
         isCurrent: w.isCurrent,
-        amount: totals[w.key] ?? 0,
+        ...(multiCurrency
+          ? Object.fromEntries(
+              byCurrency.currencies.map((c) => [c, byCurrency.totals[w.key]?.[c] ?? 0])
+            )
+          : { amount: totals[w.key] ?? 0 }),
         ...(w.isCurrent && expected > realized ? { planned: expected - realized } : {}),
       })),
-    [windows, totals, expected, realized]
+    [windows, totals, expected, realized, multiCurrency, byCurrency]
   );
 
   const selectMonth = (key: string) => {
@@ -304,7 +329,8 @@ export function DomainPage({ domain }: Props) {
             />
             <MonthlyBarsChart
               data={bars}
-              series={[{ key: "amount", label: config.spentLabel, color: config.accent }]}
+              series={series}
+              stacked={multiCurrency}
               currency={currency}
               loading={txLoading}
               average={average}

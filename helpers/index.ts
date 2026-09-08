@@ -2,6 +2,7 @@ export {
   toMonthlyAmount,
   sumMonthly,
   groupByCategory,
+  shareByCurrency,
   computeMoM,
   computeFlow,
   convertedAmount,

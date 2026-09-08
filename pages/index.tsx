@@ -33,6 +33,7 @@ export default function Dashboard() {
     incomesByCategory,
     investmentsByCategory,
     savingsByCategory,
+    currencyMix,
     recentPayments,
     upcoming,
     markPaid,
@@ -71,6 +72,7 @@ export default function Dashboard() {
               currency={currency}
               domain="INCOME"
               summary={incomesByCategory.slice(0, 2)}
+              byCurrency={currencyMix.income}
             />
             <StatCard
               title="Expenses"
@@ -79,6 +81,7 @@ export default function Dashboard() {
               domain="EXPENSE"
               delta={momDelta.deltaPct}
               summary={expensesByCategory.slice(0, 2)}
+              byCurrency={currencyMix.expense}
             />
             <StatCard
               title="Investments"
@@ -86,6 +89,7 @@ export default function Dashboard() {
               currency={currency}
               domain="INVESTMENT"
               summary={investmentsByCategory.slice(0, 2)}
+              byCurrency={currencyMix.investment}
             />
             <StatCard
               title="Savings"
@@ -93,6 +97,7 @@ export default function Dashboard() {
               currency={currency}
               domain="SAVING"
               summary={savingsByCategory.slice(0, 2)}
+              byCurrency={currencyMix.saving}
             />
           </>
         ) : (
