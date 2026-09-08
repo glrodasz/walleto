@@ -15,6 +15,8 @@ import { RecurrentTransactionModal } from "./RecurrentTransactionModal";
 import { QuickTransactionModal } from "../../transactions/components/QuickTransactionModal";
 import { SubscriptionInsights } from "../../insights/components/SubscriptionInsights";
 import { InvestmentValuePanel } from "../../investments/components/InvestmentValuePanel";
+import { InvestmentValueList } from "../../investments/components/InvestmentValueList";
+import { ValuationRows } from "../../investments/components/ValuationRows";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import { expectedForMonth, monthTotals, monthWindows, trailingAverage } from "../helpers/months";
 import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
@@ -218,16 +220,31 @@ export function DomainPage({ domain }: Props) {
         />
       )
     ) : view === "transactions" ? (
-      <PeriodTransactionsList
-        title={`${config.title} · ${window.label}`}
-        transactions={monthTransactions}
-        displayCurrency={currency}
+      <>
+        <PeriodTransactionsList
+          title={`${config.title} · ${window.label}`}
+          transactions={monthTransactions}
+          displayCurrency={currency}
+          ctx={ctx}
+          loading={txLoading}
+          onEdit={setEditingTx}
+          onDelete={deleteTx}
+          deletingId={deletingTxId}
+          now={now}
+        />
+        {domain === "INVESTMENT" && (
+          <ValuationRows categories={categories} start={window.start} end={window.end} />
+        )}
+      </>
+    ) : view === "value" ? (
+      <InvestmentValueList
+        categories={categories}
         ctx={ctx}
-        loading={txLoading}
-        onEdit={setEditingTx}
-        onDelete={deleteTx}
-        deletingId={deletingTxId}
-        now={now}
+        currency={currency}
+        onOpen={(categoryId) => {
+          setView("categories");
+          setDrillCategoryId(categoryId);
+        }}
       />
     ) : (
       <RecurringChecklist
@@ -291,6 +308,7 @@ export function DomainPage({ domain }: Props) {
               setDrillCategoryId(null);
             }}
             accent={config.accent}
+            showValue={domain === "INVESTMENT"}
           />
           {panel}
         </div>

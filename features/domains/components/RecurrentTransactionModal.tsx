@@ -12,6 +12,7 @@ import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { useRecurrentTransactions } from "../../../hooks/useRecurrentTransactions";
 import { useUserDoc } from "../../../hooks/useUserDoc";
 import { materializeNow } from "../../../hooks/useMaterialize";
+import { createTransaction } from "../../../hooks/useTransactions";
 import { createInvestmentValuation } from "../../../hooks/useInvestmentValuations";
 import { valueFromGain } from "../../investments/helpers/valuation";
 import {
@@ -202,6 +203,22 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
         if (scheduleChanged && startDate < new Date()) {
           await materializeNow().catch((err) => console.error("materialize failed:", err));
         }
+      } else if (!isRecurring) {
+        // "One time" is not a plan, it is a line in the ledger: a dated
+        // transaction, no recurrent item behind it and nothing to materialize.
+        await createTransaction({
+          domain,
+          categoryId: form.categoryId,
+          name: form.name.trim(),
+          amount,
+          currency: effectiveCurrency,
+          occurredAt: startDate.toISOString(),
+          status: "PAID",
+          ...(form.paymentMethodId ? { paymentMethodId: form.paymentMethodId } : {}),
+          ...(form.chargedEnabled
+            ? { chargedAmount: chargedAmount!, chargedCurrency: form.chargedCurrency as Currency }
+            : {}),
+        });
       } else {
         await create({
           domain,
@@ -221,6 +238,8 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
         if (startDate < new Date()) {
           await materializeNow().catch((err) => console.error("materialize failed:", err));
         }
+      }
+      if (!item) {
         // A past one-time investment can carry its performance so far. The
         // basis is this purchase alone; the Investments page recomputes the
         // category's live basis and the user can re-value there any time.

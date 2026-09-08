@@ -6,6 +6,7 @@ import {
   QUICK_COPY,
 } from "../../transactions/components/QuickTransactionModal";
 import { RecurrentTransactionModal } from "../../domains/components/RecurrentTransactionModal";
+import { RecordValueModal } from "../../investments/components/RecordValueModal";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import type { Domain } from "../../../types";
 
@@ -22,7 +23,7 @@ const DOMAIN_LABEL: Record<Domain, string> = {
   SAVING: "Saving",
 };
 
-type Kind = "quick" | "recurring";
+type Kind = "quick" | "recurring" | "value";
 
 /**
  * The phone's create entry point: a floating + button (hidden on desktop,
@@ -78,6 +79,12 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
             <strong>Add a recurring {singular}</strong>
             <span>Something that repeats: a subscription, a salary, rent</span>
           </button>
+          {domain === "INVESTMENT" && (
+            <button type="button" className="option" onClick={() => choose("value")}>
+              <strong>Record current value</strong>
+              <span>What an investment is worth today, as a gain % or a value</span>
+            </button>
+          )}
         </div>
       </Modal>
 
@@ -87,6 +94,7 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
       {kind === "recurring" && (
         <RecurrentTransactionModal open domain={domain} onClose={() => setKind(null)} />
       )}
+      {kind === "value" && <RecordValueModal open onClose={() => setKind(null)} />}
 
       <style jsx>{`
         .fab {

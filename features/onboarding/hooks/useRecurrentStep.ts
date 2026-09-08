@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useCategories } from "../../../hooks/useCategories";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { useRecurrentTransactions } from "../../../hooks/useRecurrentTransactions";
+import { createTransaction, deleteTransaction } from "../../../hooks/useTransactions";
 import { useDraftRows } from "../../../hooks/useDraftRows";
 import type { DraftRow } from "../../../hooks/useDraftRows";
 import {
@@ -112,18 +113,32 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
         backfill: backfill && sectionFor(row.frequency).recurring,
       });
 
-      const id = await create({
-        domain,
-        categoryId: row.categoryId,
-        name: row.name.trim(),
-        amount,
-        currency: row.currency,
-        frequency: row.frequency,
-        ...(row.frequency === "BIWEEKLY" ? { secondDayOfMonth: row.secondDayOfMonth } : {}),
-        type: typeFor(row),
-        startDate: startDate.toISOString(),
-        ...(row.paymentMethodId ? { paymentMethodId: row.paymentMethodId } : {}),
-      });
+      // A one-time row is a ledger entry, not a plan: it becomes a dated
+      // transaction and is not re-hydrated as a row on the way back.
+      const id =
+        row.frequency === "ONE_TIME"
+          ? await createTransaction({
+              domain,
+              categoryId: row.categoryId,
+              name: row.name.trim(),
+              amount,
+              currency: row.currency,
+              occurredAt: startDate.toISOString(),
+              status: "PAID",
+              ...(row.paymentMethodId ? { paymentMethodId: row.paymentMethodId } : {}),
+            })
+          : await create({
+              domain,
+              categoryId: row.categoryId,
+              name: row.name.trim(),
+              amount,
+              currency: row.currency,
+              frequency: row.frequency,
+              ...(row.frequency === "BIWEEKLY" ? { secondDayOfMonth: row.secondDayOfMonth } : {}),
+              type: typeFor(row),
+              startDate: startDate.toISOString(),
+              ...(row.paymentMethodId ? { paymentMethodId: row.paymentMethodId } : {}),
+            });
       draft.update(row.key, { id });
       created++;
     }
@@ -138,7 +153,8 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
     const row = draft.rows.find((r) => r.key === key);
     draft.removeAt(key);
     if (row?.id) {
-      remove(row.id).catch((err) => console.error("Failed to delete recurrent transaction:", err));
+      const del = row.frequency === "ONE_TIME" ? deleteTransaction(row.id) : remove(row.id);
+      del.catch((err) => console.error("Failed to delete row:", err));
     }
   };
 

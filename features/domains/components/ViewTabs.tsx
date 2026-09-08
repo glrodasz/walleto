@@ -1,9 +1,11 @@
-export type DomainView = "categories" | "transactions" | "recurring";
+export type DomainView = "categories" | "transactions" | "recurring" | "value";
 
 interface Props {
   value: DomainView;
   onChange: (view: DomainView) => void;
   accent: string;
+  /** Investments add a fourth view: what each category is worth. */
+  showValue?: boolean;
 }
 
 const VIEWS: { key: DomainView; label: string }[] = [
@@ -12,11 +14,12 @@ const VIEWS: { key: DomainView; label: string }[] = [
   { key: "recurring", label: "Recurring" },
 ];
 
-/** Three views of the same month: aggregated, raw, and the plan. */
-export function ViewTabs({ value, onChange, accent }: Props) {
+/** Three views of the same month: aggregated, raw, and the plan (+ value for investments). */
+export function ViewTabs({ value, onChange, accent, showValue }: Props) {
+  const views = showValue ? [...VIEWS, { key: "value" as DomainView, label: "Value" }] : VIEWS;
   return (
     <div className="tabs" role="tablist" aria-label="View">
-      {VIEWS.map((v) => (
+      {views.map((v) => (
         <button
           key={v.key}
           type="button"
@@ -32,7 +35,7 @@ export function ViewTabs({ value, onChange, accent }: Props) {
       <style jsx>{`
         .tabs {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns: repeat(${showValue ? 4 : 3}, 1fr);
           gap: 4px;
           padding: 4px;
           border-radius: var(--r-md);

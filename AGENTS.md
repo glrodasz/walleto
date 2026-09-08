@@ -59,10 +59,11 @@ features/
                 selector de mes, gastado vs esperado, barras mensuales, y Categories / Transactions / Recurring
   methods/      CRUD de métodos de pago (la lista de MethodsStep no alcanza para editar)
   insights/     SubscriptionInsights — costo mensual/anualizado de suscripciones
-  investments/  valoraciones por categoría: invertido vs valor, % de ganancia, historial
+  investments/  valoraciones por categoría: invertido vs valor, % de ganancia, historial;
+                RecordValueModal ("Record current value" desde el "+"), vista Value e hitos del mes
   prospect/     simulador what-if: qué pasa si cancelo X
   transactions/ QuickTransactionModal — registrar un pago/ingreso puntual (POST /api/transactions)
-  create/       CreateLauncher — el botón flotante "+" de mobile y su sheet (¿pago puntual o recurrente?)
+  create/       CreateLauncher — el botón flotante "+" y su sheet (¿pago puntual, recurrente, o valor de una inversión?)
 ```
 
 Cada una con la misma forma interna: `components/`, `hooks/`, `helpers/`, `data/`.
@@ -225,6 +226,10 @@ Otras notas:
 - Husky + lint-staged formatean con Prettier al commitear, así que no pelees con el formato.
 
 ---
+
+### 3.2 Puntual vs recurrente
+
+Un `frequency: "ONE_TIME"` elegido en el modal de recurrentes o en la sección One-time del wizard **no crea un item recurrente**: escribe una transacción PAID directa (`POST /api/transactions`). El plan (recurrentTransactions) es solo lo que se repite; el ledger (transactions) es lo que pasó. Los items ONE_TIME antiguos siguen funcionando, pero no se crean más.
 
 ## 7. Deferido a propósito
 

@@ -23,6 +23,12 @@ jest.mock("../../../hooks/useRecurrentTransactions", () => ({
   }),
 }));
 
+const createTransactionMock = jest.fn().mockResolvedValue("tx1");
+jest.mock("../../../hooks/useTransactions", () => ({
+  createTransaction: (...args: unknown[]) => createTransactionMock(...args),
+  deleteTransaction: jest.fn().mockResolvedValue(undefined),
+}));
+
 jest.mock("../../../hooks/useCategories", () => ({
   useCategories: () => ({
     categories: [
@@ -134,7 +140,7 @@ describe("useRecurrentStep", () => {
     expect(sent.getDate()).toBe(15);
   });
 
-  it("never backfills a one-time row — it has one date", async () => {
+  it("records a one-time row as a dated transaction, never a plan and never backfilled", async () => {
     const { result } = renderHook(() => useRecurrentStep("EXPENSE", "USD"));
     fillValidRow(result, { frequency: "ONE_TIME", date: "2026-03-09" });
 
@@ -142,7 +148,10 @@ describe("useRecurrentStep", () => {
       await result.current.save();
     });
 
-    const sent = new Date(createMock.mock.calls[0][0].startDate);
+    expect(createMock).not.toHaveBeenCalled();
+    const body = createTransactionMock.mock.calls[0][0];
+    expect(body.status).toBe("PAID");
+    const sent = new Date(body.occurredAt);
     expect([sent.getFullYear(), sent.getMonth(), sent.getDate()]).toEqual([2026, 2, 9]);
   });
 

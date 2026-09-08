@@ -11,6 +11,9 @@ jest.mock("../../transactions/components/QuickTransactionModal", () => ({
   QuickTransactionModal: ({ domain, open }: { domain: string; open: boolean }) =>
     open ? <div data-testid="quick">{domain}</div> : null,
 }));
+jest.mock("../../investments/components/RecordValueModal", () => ({
+  RecordValueModal: () => <div data-testid="value" />,
+}));
 jest.mock("../../domains/components/RecurrentTransactionModal", () => ({
   RecurrentTransactionModal: ({ domain, open }: { domain: string; open: boolean }) =>
     open ? <div data-testid="recurring">{domain}</div> : null,

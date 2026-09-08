@@ -77,3 +77,38 @@ export function useInvestmentValuations(categoryId: string | null) {
 
   return { valuations, loading, error, create: createInvestmentValuation, update, remove };
 }
+
+/**
+ * Every valuation of the user, all categories — the Investments page's Value
+ * view and its month ledger need them side by side. Equality filter only,
+ * newest first in memory.
+ */
+export function useAllInvestmentValuations() {
+  const { user } = useUser();
+  const { ready } = useFirebaseAuth();
+  const [valuations, setValuations] = useState<InvestmentValuation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (!ready || !user?.sub) return;
+    const q = query(collection(db, "investmentValuations"), where("userId", "==", user.sub));
+    return onSnapshot(
+      q,
+      (snap) => {
+        setValuations(
+          snap.docs.map((d) => ({ id: d.id, ...d.data() }) as InvestmentValuation).sort(byAsOfDesc)
+        );
+        setError(null);
+        setLoading(false);
+      },
+      (err) => {
+        console.error("useAllInvestmentValuations onSnapshot error:", err);
+        setError(err instanceof Error ? err : new Error(String(err)));
+        setLoading(false);
+      }
+    );
+  }, [ready, user?.sub]);
+
+  return { valuations, loading, error };
+}
