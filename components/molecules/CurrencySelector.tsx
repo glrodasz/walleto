@@ -1,6 +1,6 @@
-import { Select } from "../../../components/atoms/Select";
-import { SELECTABLE_CURRENCIES, CURRENCY_SYMBOL } from "../../../constants";
-import type { Currency } from "../../../types";
+import { Select } from "../atoms/Select";
+import { SELECTABLE_CURRENCIES, CURRENCY_SYMBOL } from "../../constants";
+import type { Currency } from "../../types";
 
 interface Props {
   value: Currency;

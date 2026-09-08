@@ -33,8 +33,25 @@ interface Props {
   onMarkPaid: (itemId: string) => void;
   onEdit: (item: RecurrentTransaction) => void;
   onStop: (itemId: string) => void;
+  /** Flip the item's hiddenFromDashboard flag. */
+  onToggleHidden?: (item: RecurrentTransaction) => void;
   busyId: string | null;
 }
+
+const hiddenAction = (
+  item: RecurrentTransaction,
+  onToggleHidden?: (item: RecurrentTransaction) => void
+): KebabAction[] =>
+  onToggleHidden
+    ? [
+        {
+          label: item.hiddenFromDashboard ? "Show on dashboard" : "Hide from dashboard",
+          onSelect: () => onToggleHidden(item),
+        },
+      ]
+    : [];
+
+const HIDDEN_TAG = " · hidden on dashboard";
 
 const DATE = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
 const GROUPS: { status: OccurrenceStatus; title: string }[] = [
@@ -182,6 +199,7 @@ export function RecurringChecklist({
   onMarkPaid,
   onEdit,
   onStop,
+  onToggleHidden,
   busyId,
 }: Props) {
   const config = DOMAIN_CONFIG[domain];
@@ -226,7 +244,7 @@ export function RecurringChecklist({
                         name={o.item.name}
                         meta={`${DATE.format(o.occurredAt)} · ${FREQUENCY_LABELS[o.item.frequency]}${
                           method ? ` · ${method}` : ""
-                        }`}
+                        }${o.item.hiddenFromDashboard ? HIDDEN_TAG : ""}`}
                         amount={formatNative(o.item.amount, o.item.currency, currency)}
                         status={o.status}
                         accent={config.accent}
@@ -241,6 +259,7 @@ export function RecurringChecklist({
                               ]
                             : []),
                           { label: "Edit", onSelect: () => onEdit(o.item) },
+                          ...hiddenAction(o.item, onToggleHidden),
                           {
                             label: "Stop",
                             onSelect: () => onStop(id),
@@ -273,6 +292,7 @@ export function RecurringChecklist({
                     accent={config.accent}
                     actions={[
                       { label: "Edit", onSelect: () => onEdit(item) },
+                      ...hiddenAction(item, onToggleHidden),
                       {
                         label: "Stop",
                         onSelect: () => item.id && onStop(item.id),

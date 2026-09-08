@@ -10,6 +10,8 @@ interface Props {
   displayCurrency: Currency;
   loading?: boolean;
   onMarkPaid?: (id: string) => Promise<void>;
+  /** Hide the item from the dashboard (its domain page still shows it). */
+  onHide?: (id: string) => Promise<void>;
 }
 
 function formatDate(ts: RecurrentTransaction["nextOccurrence"]): string {
@@ -21,7 +23,13 @@ function formatDate(ts: RecurrentTransaction["nextOccurrence"]): string {
   return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(date);
 }
 
-export function UpcomingExpirations({ items, displayCurrency, loading, onMarkPaid }: Props) {
+export function UpcomingExpirations({
+  items,
+  displayCurrency,
+  loading,
+  onMarkPaid,
+  onHide,
+}: Props) {
   const [pendingId, setPendingId] = useState<string | null>(null);
 
   const markPaid = async (id: string) => {
@@ -65,6 +73,17 @@ export function UpcomingExpirations({ items, displayCurrency, loading, onMarkPai
                         onSelect: () => markPaid(item.id!),
                         disabled: pendingId === item.id,
                       },
+                      ...(onHide
+                        ? [
+                            {
+                              label: "Hide from dashboard",
+                              onSelect: () =>
+                                onHide(item.id!).catch((err) =>
+                                  console.error("Failed to hide item:", err)
+                                ),
+                            },
+                          ]
+                        : []),
                     ]}
                   />
                 )

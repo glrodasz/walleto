@@ -24,7 +24,7 @@ import { useCategories } from "../../../hooks/useCategories";
 import { useRecurrentTransactions, markItemPaid } from "../../../hooks/useRecurrentTransactions";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
-import { deleteTransaction } from "../../../hooks/useTransactions";
+import { deleteTransaction, updateTransaction } from "../../../hooks/useTransactions";
 import { toDate } from "../../../helpers/chartData";
 import type { Currency, Domain, RecurrentTransaction, Transaction } from "../../../types";
 
@@ -89,7 +89,7 @@ export function DomainPage({ domain }: Props) {
     loading: txLoading,
     error: txError,
   } = useDomainTransactions(domain, windows[0].start);
-  const { items, error: itemsError, remove } = useRecurrentTransactions(domain);
+  const { items, error: itemsError, remove, update } = useRecurrentTransactions(domain);
   const { categories, loading: catLoading, error: catError } = useCategories(domain);
   const { methods } = usePaymentMethods();
   const error = txError ?? itemsError ?? catError;
@@ -153,6 +153,18 @@ export function DomainPage({ domain }: Props) {
       setBusyItemId(null);
     }
   };
+  const toggleItemHidden = (item: RecurrentTransaction) =>
+    item.id &&
+    withBusy(
+      item.id,
+      () => update(item.id!, { hiddenFromDashboard: !item.hiddenFromDashboard }),
+      "update the item"
+    );
+  const toggleTxHidden = (t: Transaction) =>
+    t.id &&
+    updateTransaction(t.id, { hiddenFromDashboard: !t.hiddenFromDashboard }).catch((err) =>
+      console.error("Failed to update transaction:", err)
+    );
   const deleteTx = async (transactionId: string) => {
     setDeletingTxId(transactionId);
     try {
@@ -181,6 +193,7 @@ export function DomainPage({ domain }: Props) {
           loading={txLoading}
           onBack={() => setDrillCategoryId(null)}
           onEdit={setEditingTx}
+          onToggleHidden={toggleTxHidden}
           onDelete={deleteTx}
           deletingId={deletingTxId}
           extras={
@@ -228,6 +241,7 @@ export function DomainPage({ domain }: Props) {
           ctx={ctx}
           loading={txLoading}
           onEdit={setEditingTx}
+          onToggleHidden={toggleTxHidden}
           onDelete={deleteTx}
           deletingId={deletingTxId}
           now={now}
@@ -259,6 +273,7 @@ export function DomainPage({ domain }: Props) {
         onMarkPaid={(id) => withBusy(id, () => markItemPaid(id), "mark as paid")}
         onEdit={openEdit}
         onStop={(id) => withBusy(id, () => remove(id), "stop the item")}
+        onToggleHidden={toggleItemHidden}
         busyId={busyItemId}
       />
     );

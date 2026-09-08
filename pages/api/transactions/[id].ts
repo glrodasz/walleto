@@ -42,6 +42,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       chargedAmount,
       chargedCurrency,
       paymentMethodId,
+      hiddenFromDashboard,
     } = parsed.data;
 
     // The charged pair must still differ from the doc's own currency —
@@ -89,6 +90,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       ...(chargedAmount !== undefined ? { chargedAmount: chargedAmount ?? del } : {}),
       ...(chargedCurrency !== undefined ? { chargedCurrency: chargedCurrency ?? del } : {}),
       ...(paymentMethodId !== undefined ? { paymentMethodId: paymentMethodId ?? del } : {}),
+      ...(hiddenFromDashboard !== undefined ? { hiddenFromDashboard } : {}),
     });
 
     return res.status(200).json({ id });

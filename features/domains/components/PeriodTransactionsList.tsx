@@ -16,6 +16,8 @@ interface Props {
   ctx: MoneyContext;
   loading?: boolean;
   onEdit?: (transaction: Transaction) => void;
+  /** Flip the row's hiddenFromDashboard flag. */
+  onToggleHidden?: (transaction: Transaction) => void;
   onDelete: (transactionId: string) => void;
   deletingId: string | null;
   /** Rows shown before the "and N more" line. A month is bounded; 60 covers it. */
@@ -35,6 +37,7 @@ export function PeriodTransactionsList({
   ctx,
   loading,
   onEdit,
+  onToggleHidden,
   onDelete,
   deletingId,
   limit = 60,
@@ -79,12 +82,24 @@ export function PeriodTransactionsList({
                   amount={t.amount}
                   currency={t.currency}
                   displayCurrency={displayCurrency}
-                  meta={t.recurrentTransactionId ? "recurring" : "one-off"}
+                  meta={`${t.recurrentTransactionId ? "recurring" : "one-off"}${
+                    t.hiddenFromDashboard ? " · hidden on dashboard" : ""
+                  }`}
                   trailing={
                     <KebabMenu
                       aria-label={`Actions for ${t.name}`}
                       actions={[
                         ...(onEdit ? [{ label: "Edit", onSelect: () => onEdit(t) }] : []),
+                        ...(onToggleHidden
+                          ? [
+                              {
+                                label: t.hiddenFromDashboard
+                                  ? "Show on dashboard"
+                                  : "Hide from dashboard",
+                                onSelect: () => onToggleHidden(t),
+                              },
+                            ]
+                          : []),
                         {
                           label: deletingId === t.id ? "Deleting…" : "Delete",
                           onSelect: () => t.id && onDelete(t.id),

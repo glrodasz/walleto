@@ -227,7 +227,11 @@ Otras notas:
 
 ---
 
-### 3.2 Puntual vs recurrente
+### 3.2 Ocultar del dashboard
+
+`hiddenFromDashboard` (en `recurrentTransactions` y en `transactions`) saca el doc de **todos** los números y listas del dashboard (`useDashboard` filtra con `visible()`, `useRecentTransactions` sobre-lee y descarta, `useUpcomingItems` filtra). Las páginas de dominio lo siguen mostrando con la etiqueta "hidden on dashboard". Se cambia desde el kebab de Recurring, Transactions y Next to expire.
+
+### 3.3 Puntual vs recurrente
 
 Un `frequency: "ONE_TIME"` elegido en el modal de recurrentes o en la sección One-time del wizard **no crea un item recurrente**: escribe una transacción PAID directa (`POST /api/transactions`). El plan (recurrentTransactions) es solo lo que se repite; el ledger (transactions) es lo que pasó. Los items ONE_TIME antiguos siguen funcionando, pero no se crean más.
 

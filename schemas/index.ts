@@ -139,6 +139,7 @@ export const RecurrentTransactionUpdateSchema = z
     type: RecurrentTransactionTypeSchema.nullable().optional(),
     startDate: z.iso.datetime().optional(),
     active: z.boolean().optional(),
+    hiddenFromDashboard: z.boolean().optional(),
   })
   .superRefine((v, ctx) => {
     if (Object.keys(v).length === 0) {
@@ -173,6 +174,7 @@ export const TransactionUpdateSchema = z
     chargedAmount: z.number().positive().nullable().optional(),
     chargedCurrency: CurrencySchema.nullable().optional(),
     paymentMethodId: z.string().min(1).nullable().optional(),
+    hiddenFromDashboard: z.boolean().optional(),
   })
   .superRefine((v, ctx) => {
     if (Object.keys(v).length === 0) {

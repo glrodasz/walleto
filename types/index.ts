@@ -88,6 +88,8 @@ export interface RecurrentTransaction {
   endDate?: Timestamp;
   nextOccurrence?: Timestamp;
   active: boolean;
+  /** Kept out of every dashboard number and list; domain pages still show it. */
+  hiddenFromDashboard?: boolean;
   createdAt?: Timestamp;
 }
 
@@ -105,6 +107,8 @@ export interface Transaction {
   paymentMethodId?: string;
   occurredAt: Timestamp;
   status: TransactionStatus;
+  /** Kept out of every dashboard number and list; domain pages still show it. */
+  hiddenFromDashboard?: boolean;
   createdAt?: Timestamp;
 }
 

@@ -10,7 +10,10 @@ rates into a per-user display currency.
 
 - **Dashboard** (`/`) — net-flow hero, per-domain stat cards, monthly
   income-vs-expense bars (the month in progress drawn lighter), expense
-  breakdown, recent payments, next to expire.
+  breakdown, recent payments, next to expire. Any recurring item or payment
+  can be hidden from the dashboard (kebab → Hide from dashboard); it leaves
+  every dashboard number and list but stays on its domain page. The display
+  currency switcher sits in every page header.
 - **Incomes / Expenses / Investments / Savings** (`/incomes`, `/expenses`,
   `/investments`, `/savings`) — one month-first page (`DomainPage`) per
   domain: a month picker, the month's figure with a spent-vs-expected bar

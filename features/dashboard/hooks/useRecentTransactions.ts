@@ -15,18 +15,25 @@ export function useRecentTransactions(count: number = 10) {
   useEffect(() => {
     if (!ready || !user?.sub) return;
 
+    // Over-fetch so rows hidden from the dashboard can be dropped in memory
+    // and the list still shows `count`: a third filter would need a new index.
     const q = query(
       collection(db, "transactions"),
       where("userId", "==", user.sub),
       where("status", "==", "PAID"),
       orderBy("occurredAt", "desc"),
-      limit(count)
+      limit(count * 3)
     );
 
     return onSnapshot(
       q,
       (snap) => {
-        setTransactions(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Transaction));
+        setTransactions(
+          snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }) as Transaction)
+            .filter((t) => !t.hiddenFromDashboard)
+            .slice(0, count)
+        );
         setError(null);
         setLoading(false);
       },

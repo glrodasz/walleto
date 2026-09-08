@@ -26,9 +26,9 @@ const DOMAIN_LABEL: Record<Domain, string> = {
 type Kind = "quick" | "recurring" | "value";
 
 /**
- * The phone's create entry point: a floating + button (hidden on desktop,
- * where the header buttons remain) opening a sheet that asks what to add.
- * The two forms mount only while open, so no page pays for their listeners.
+ * The create entry point on every page and every width: a floating +
+ * button opening a sheet that asks what to add. The forms mount only while
+ * open, so no page pays for their listeners.
  */
 export function CreateLauncher({ domain: fixedDomain }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -178,10 +178,11 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
           background: var(--bg-3);
         }
 
-        /* Desktop keeps the header buttons; the FAB is a phone affordance. */
+        /* Desktop: same button, clear of the page corner; no bottom nav to dodge. */
         @media (min-width: 768px) {
           .fab {
-            display: none;
+            right: 28px;
+            bottom: 28px;
           }
         }
       `}</style>

@@ -49,6 +49,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       type,
       startDate,
       active,
+      hiddenFromDashboard,
     } = parsed.data;
 
     // The charged pair must differ from the item's (possibly updated) currency.
@@ -114,6 +115,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       ...(paymentMethodId !== undefined ? { paymentMethodId: paymentMethodId ?? del } : {}),
       ...(type !== undefined ? { type: type ?? del } : {}),
       ...(active !== undefined ? { active } : {}),
+      ...(hiddenFromDashboard !== undefined ? { hiddenFromDashboard } : {}),
       ...occurrencePatch,
     });
 

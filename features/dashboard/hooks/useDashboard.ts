@@ -26,11 +26,19 @@ function buildCategoryList(
     .sort((a, b) => b.amount - a.amount);
 }
 
+/** The owner's "hide from dashboard": out of every number and list here. */
+const visible = <T extends { hiddenFromDashboard?: boolean }>(rows: T[]) =>
+  rows.filter((r) => !r.hiddenFromDashboard);
+
 export function useDashboard() {
-  const { items: incomes, loading: l1, error: e1 } = useRecurrentTransactions("INCOME");
-  const { items: expenses, loading: l2, error: e2 } = useRecurrentTransactions("EXPENSE");
-  const { items: investments, loading: l3, error: e3 } = useRecurrentTransactions("INVESTMENT");
-  const { items: savings, loading: l7, error: e7 } = useRecurrentTransactions("SAVING");
+  const { items: allIncomes, loading: l1, error: e1 } = useRecurrentTransactions("INCOME");
+  const { items: allExpenses, loading: l2, error: e2 } = useRecurrentTransactions("EXPENSE");
+  const { items: allInvestments, loading: l3, error: e3 } = useRecurrentTransactions("INVESTMENT");
+  const { items: allSavings, loading: l7, error: e7 } = useRecurrentTransactions("SAVING");
+  const incomes = useMemo(() => visible(allIncomes), [allIncomes]);
+  const expenses = useMemo(() => visible(allExpenses), [allExpenses]);
+  const investments = useMemo(() => visible(allInvestments), [allInvestments]);
+  const savings = useMemo(() => visible(allSavings), [allSavings]);
   const { categories, loading: l4, error: e4 } = useCategories();
   const { transactions: recentPayments, loading: l5, error: e5 } = useRecentTransactions(5);
   const { items: upcoming, loading: l6, error: e6, markPaid } = useUpcomingItems(5);
@@ -43,15 +51,20 @@ export function useDashboard() {
     return new Date(now.getFullYear(), now.getMonth() - 6, 1);
   }, []);
   const {
-    transactions: expenseTransactions,
+    transactions: allExpenseTransactions,
     loading: l8,
     error: e8,
   } = useDomainTransactions("EXPENSE", chartStart);
   const {
-    transactions: incomeTransactions,
+    transactions: allIncomeTransactions,
     loading: l9,
     error: e9,
   } = useDomainTransactions("INCOME", chartStart);
+  const expenseTransactions = useMemo(
+    () => visible(allExpenseTransactions),
+    [allExpenseTransactions]
+  );
+  const incomeTransactions = useMemo(() => visible(allIncomeTransactions), [allIncomeTransactions]);
   const { ctx, target, fxStale, fxMissing, setDisplayCurrency } = useMoneyContext();
   const loading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9;
   const error = e1 ?? e2 ?? e3 ?? e4 ?? e5 ?? e6 ?? e7 ?? e8 ?? e9;

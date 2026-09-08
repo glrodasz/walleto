@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { withOnboardingGuard } from "../features/onboarding/helpers/onboardingGuard";
 import { PageLayout } from "../components/organisms/PageLayout";
@@ -8,17 +7,15 @@ import { RecentPayments } from "../features/dashboard/components/RecentPayments"
 import { UpcomingExpirations } from "../features/dashboard/components/UpcomingExpirations";
 import Skeleton from "../components/Skeleton";
 import { ErrorState } from "../components/atoms/ErrorState";
-import { CurrencySelector } from "../features/dashboard/components/CurrencySelector";
 import { NetFlowCard } from "../features/dashboard/components/NetFlowCard";
 import { topWithOther } from "../features/dashboard/helpers/topWithOther";
 import { Card } from "../components/atoms/Card";
 import { SectionTitle } from "../components/atoms/SectionTitle";
 import { MonthlyBarsChart } from "../components/molecules/MonthlyBarsChart";
-import { RecurrentTransactionModal } from "../features/domains/components/RecurrentTransactionModal";
 import { useDashboard } from "../features/dashboard/hooks/useDashboard";
 import { useUserDoc } from "../hooks/useUserDoc";
 import { useMaterialize } from "../hooks/useMaterialize";
-import type { Domain } from "../types";
+import { updateRecurrentItem } from "../hooks/useRecurrentTransactions";
 
 export const getServerSideProps = withOnboardingGuard();
 
@@ -28,7 +25,6 @@ export default function Dashboard() {
   useMaterialize();
   const {
     currency,
-    setDisplayCurrency,
     totals,
     flow,
     approximate,
@@ -47,45 +43,9 @@ export default function Dashboard() {
   } = useDashboard();
 
   const firstName = (user?.name ?? user?.nickname ?? "there").split(" ")[0];
-  const [newDomain, setNewDomain] = useState<Domain | null>(null);
-
-  const actions = (
-    <>
-      <button type="button" className="btn" onClick={() => setNewDomain("INCOME")}>
-        + New income
-      </button>
-      <button type="button" className="btn" onClick={() => setNewDomain("EXPENSE")}>
-        + New expense
-      </button>
-      <style jsx>{`
-        .btn {
-          padding: 8px 14px;
-          border-radius: 8px;
-          font-family: inherit;
-          font-size: 0.8rem;
-          font-weight: 600;
-          cursor: pointer;
-          border: 1px solid var(--line-strong);
-          background: var(--bg-1);
-          color: var(--fg-1);
-          white-space: nowrap;
-        }
-
-        .btn:disabled {
-          opacity: 0.4;
-          cursor: not-allowed;
-        }
-      `}</style>
-    </>
-  );
 
   return (
-    <PageLayout
-      title={`Welcome back, ${firstName}`}
-      currency={currency}
-      currencyControl={<CurrencySelector value={currency} onChange={setDisplayCurrency} />}
-      actions={actions}
-    >
+    <PageLayout title={`Welcome back, ${firstName}`}>
       {error && <ErrorState error={error} />}
       {fxUnavailable && (
         <ErrorState
@@ -177,12 +137,9 @@ export default function Dashboard() {
           displayCurrency={currency}
           loading={loading}
           onMarkPaid={markPaid}
+          onHide={(id) => updateRecurrentItem(id, { hiddenFromDashboard: true })}
         />
       </section>
-
-      {newDomain && (
-        <RecurrentTransactionModal domain={newDomain} open onClose={() => setNewDomain(null)} />
-      )}
 
       <style jsx>{`
         .panel-note {

@@ -1,15 +1,13 @@
 import type { ReactNode } from "react";
 import Head from "next/head";
 import { Sidebar } from "./Sidebar";
-import { Badge } from "../atoms/Badge";
+import { CurrencySelector } from "../molecules/CurrencySelector";
 import { CreateLauncher } from "../../features/create/components/CreateLauncher";
+import { useMoneyContext } from "../../hooks/useMoneyContext";
 import type { Domain } from "../../types";
 
 interface Props {
   title: string;
-  currency?: string;
-  /** Interactive replacement for the static currency badge (display-currency switcher). */
-  currencyControl?: ReactNode;
   actions?: ReactNode;
   /** The page's domain, so the mobile create button skips the domain question. */
   domain?: Domain;
@@ -21,7 +19,10 @@ interface Props {
  * the mobile create launcher must exist on every page, and every page is
  * built on this layout.
  */
-export function PageLayout({ title, currency, currencyControl, actions, domain, children }: Props) {
+export function PageLayout({ title, actions, domain, children }: Props) {
+  // The display currency is a property of the whole app, so its switcher
+  // lives in every page header, not only on the dashboard.
+  const { target, setDisplayCurrency } = useMoneyContext();
   return (
     <>
       <Head>
@@ -37,7 +38,7 @@ export function PageLayout({ title, currency, currencyControl, actions, domain, 
           <header className="header">
             <div className="header-left">
               <h1 className="page-title">{title}</h1>
-              {currencyControl ?? (currency && <Badge label={currency} />)}
+              <CurrencySelector value={target} onChange={setDisplayCurrency} />
             </div>
             {actions && <div className="header-actions">{actions}</div>}
           </header>
@@ -95,7 +96,7 @@ export function PageLayout({ title, currency, currencyControl, actions, domain, 
         }
 
         .main {
-          padding: 24px 28px;
+          padding: 24px 28px 96px;
           display: flex;
           flex-direction: column;
           gap: 20px;

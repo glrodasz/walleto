@@ -19,6 +19,10 @@ jest.mock("@auth0/nextjs-auth0/client", () => ({
   useUser: () => ({ user: { name: "Ada Lovelace", email: "ada@example.com" } }),
 }));
 
+jest.mock("../../hooks/useMoneyContext", () => ({
+  useMoneyContext: () => ({ target: "USD", setDisplayCurrency: jest.fn() }),
+}));
+
 jest.mock("../../hooks/useUserDoc", () => ({
   useUserDoc: () => ({ userDoc: { onboardingCompleted: true }, update: updateMock }),
 }));

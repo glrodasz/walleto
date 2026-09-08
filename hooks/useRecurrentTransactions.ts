@@ -75,3 +75,16 @@ export async function markItemPaid(id: string): Promise<void> {
   const res = await fetch(`/api/recurrent-transactions/${id}/mark-paid`, { method: "POST" });
   if (!res.ok) throw new Error(await res.text());
 }
+
+/** Partial update without subscribing — for pages that only need to flip a flag. */
+export async function updateRecurrentItem(
+  id: string,
+  patch: RecurrentTransactionUpdate
+): Promise<void> {
+  const res = await fetch(`/api/recurrent-transactions/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) throw new Error(await res.text());
+}

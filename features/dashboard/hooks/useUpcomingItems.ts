@@ -40,6 +40,7 @@ export function useUpcomingItems(count: number = 5) {
         const now = Date.now();
         const upcoming = snap.docs
           .map((d) => ({ id: d.id, ...d.data() }) as RecurrentTransaction)
+          .filter((i) => !i.hiddenFromDashboard)
           .filter((i) => (i.nextOccurrence?.toDate().getTime() ?? 0) > now)
           .sort(byNextOccurrence)
           .slice(0, count);
