@@ -3,6 +3,7 @@ import { Modal } from "../../../components/molecules/Modal";
 import { ScheduleFields } from "../../../components/molecules/ScheduleFields";
 import type { ScheduleValue } from "../../../components/molecules/ScheduleFields";
 import { CategoryField } from "../../../components/molecules/CategoryField";
+import { PaymentMethodField } from "../../../components/molecules/PaymentMethodField";
 import { Select } from "../../../components/atoms/Select";
 import { TextField } from "../../../components/atoms/TextField";
 import { Button } from "../../../components/atoms/Button";
@@ -13,7 +14,6 @@ import { useUserDoc } from "../../../hooks/useUserDoc";
 import { materializeNow } from "../../../hooks/useMaterialize";
 import { createInvestmentValuation } from "../../../hooks/useInvestmentValuations";
 import { valueFromGain } from "../../investments/helpers/valuation";
-import { paymentMethodOptionLabel } from "../../../helpers/paymentMethodLabel";
 import {
   BACKFILL_MONTHS,
   anchorStartDate,
@@ -63,7 +63,7 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
   const noun = config.noun.replace(/s$/, "");
   const { userDoc } = useUserDoc();
   const { categories, create: createCategory } = useCategories(domain);
-  const { methods } = usePaymentMethods();
+  const { methods, create: createMethod } = usePaymentMethods();
   const { create, update } = useRecurrentTransactions(domain);
 
   const empty: FormState = useMemo(
@@ -142,8 +142,6 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
         : {}),
     });
   };
-
-  const methodOptions = methods.map((m) => ({ value: m.id!, label: paymentMethodOptionLabel(m) }));
 
   const isRecurring = form.frequency !== "ONE_TIME";
   const offersGain = !item && domain === "INVESTMENT" && !isRecurring;
@@ -291,12 +289,12 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
             value={form.frequency}
             onValueChange={(v) => patch({ frequency: v as Frequency })}
           />
-          <Select
-            label="Payment method"
-            placeholder="None"
-            options={methodOptions}
+          <PaymentMethodField
+            methods={methods}
             value={form.paymentMethodId}
-            onValueChange={onSelectMethod}
+            onChange={onSelectMethod}
+            createMethod={createMethod}
+            onError={setFormError}
           />
         </div>
 

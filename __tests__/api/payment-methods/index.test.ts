@@ -101,10 +101,13 @@ describe("POST /api/payment-methods", () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  it("returns 409 when the method name already exists", async () => {
+  it("returns 409 when a method of the same type already has that name", async () => {
     getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
-    buildChain({
-      get: jest.fn().mockResolvedValue({ empty: false, docs: [{ id: "existing" }] }),
+    const chain = buildChain({
+      get: jest.fn().mockResolvedValue({
+        empty: false,
+        docs: [{ id: "existing", data: () => ({ name: "amex", type: "CREDIT_CARD" }) }],
+      }),
       doc: jest.fn().mockReturnValue({
         get: jest.fn().mockResolvedValue({ data: () => ({ mainCurrency: "USD" }) }),
       }),
@@ -118,7 +121,33 @@ describe("POST /api/payment-methods", () => {
       } as NextApiRequest,
       res
     );
+    expect(chain.where).toHaveBeenCalledWith("type", "==", "CREDIT_CARD");
     expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'You already have a Credit card called "Amex"',
+    });
+  });
+
+  it("allows the same name for a different type", async () => {
+    getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
+    const add = jest.fn().mockResolvedValue({ id: "pm-transfer" });
+    // The type-scoped query finds nothing of type BANK_TRANSFER.
+    buildChain({ get: jest.fn().mockResolvedValue({ empty: true, docs: [] }), add });
+    const res = mockRes();
+    await handler(
+      {
+        method: "POST",
+        query: {},
+        body: {
+          name: "Bancolombia",
+          type: "BANK_TRANSFER",
+          currencies: ["COP"],
+          network: "Transfer",
+        },
+      } as NextApiRequest,
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(201);
   });
 
   it("creates a method and returns 201", async () => {

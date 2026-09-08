@@ -1,5 +1,5 @@
-import { PAYMENT_METHOD_TYPE_LABELS } from "../../constants";
-import type { PaymentMethodType } from "../../types";
+import { PAYMENT_METHOD_TYPE_LABELS } from "../constants";
+import type { PaymentMethodType } from "../types";
 
 /** The type picker in step 2 of the wizard, in display order. */
 export const PAYMENT_METHOD_TYPE_OPTIONS: { value: PaymentMethodType; label: string }[] = (

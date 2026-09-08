@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { useDraftRows } from "../../../hooks/useDraftRows";
 import type { DraftRow } from "../../../hooks/useDraftRows";
-import { CARD_TYPES } from "../paymentMethodOptions";
+import { CARD_TYPES } from "../../../helpers/paymentMethodOptions";
 import type { PaymentMethodType } from "../../../types";
 
 export interface MethodRow extends DraftRow {
@@ -12,19 +12,30 @@ export interface MethodRow extends DraftRow {
   name: string;
 }
 
-export function useMethodsStep() {
+interface Options {
+  /**
+   * Show the already-saved methods as (locked) rows. The wizard wants that so
+   * Back/Next never loses anything; the Methods page has its own list below
+   * the form, so hydrating there showed every method twice.
+   */
+  hydrate?: boolean;
+}
+
+export function useMethodsStep({ hydrate = true }: Options = {}) {
   const { methods, loading, create, remove } = usePaymentMethods();
 
   const saved = useMemo(
     () =>
-      methods.map((m) => ({
-        id: m.id,
-        type: m.type,
-        network: m.network ?? "",
-        last4: m.last4 ?? "",
-        name: m.name,
-      })),
-    [methods]
+      hydrate
+        ? methods.map((m) => ({
+            id: m.id,
+            type: m.type,
+            network: m.network ?? "",
+            last4: m.last4 ?? "",
+            name: m.name,
+          }))
+        : [],
+    [methods, hydrate]
   );
 
   const draft = useDraftRows<MethodRow>(() => ({ type: "", network: "", last4: "", name: "" }), {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Modal } from "../../../components/molecules/Modal";
 import { CategoryField } from "../../../components/molecules/CategoryField";
+import { PaymentMethodField } from "../../../components/molecules/PaymentMethodField";
 import { Select } from "../../../components/atoms/Select";
 import { TextField } from "../../../components/atoms/TextField";
 import { Button } from "../../../components/atoms/Button";
@@ -8,7 +9,6 @@ import { useCategories } from "../../../hooks/useCategories";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { useUserDoc } from "../../../hooks/useUserDoc";
 import { createTransaction, updateTransaction } from "../../../hooks/useTransactions";
-import { paymentMethodOptionLabel } from "../../../helpers/paymentMethodLabel";
 import { anchorStartDate, toDateInputValue } from "../../../helpers/scheduleAnchor";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import { SELECTABLE_CURRENCIES, CURRENCY_SYMBOL } from "../../../constants";
@@ -65,7 +65,7 @@ export function QuickTransactionModal({ open, onClose, domain: pageDomain, trans
   const config = DOMAIN_CONFIG[domain];
   const { userDoc } = useUserDoc();
   const { categories, create: createCategory } = useCategories(domain);
-  const { methods } = usePaymentMethods();
+  const { methods, create: createMethod } = usePaymentMethods();
 
   const initial: FormState = useMemo(
     () =>
@@ -121,8 +121,6 @@ export function QuickTransactionModal({ open, onClose, domain: pageDomain, trans
     setDomain(next);
     patch({ categoryId: "" });
   };
-
-  const methodOptions = methods.map((m) => ({ value: m.id!, label: paymentMethodOptionLabel(m) }));
 
   const submit = async () => {
     const amount = Number(form.amount);
@@ -241,15 +239,13 @@ export function QuickTransactionModal({ open, onClose, domain: pageDomain, trans
             max={toDateInputValue(new Date())}
             onValueChange={(v) => patch({ date: v })}
           />
-          {methods.length > 0 && (
-            <Select
-              label="Payment method"
-              placeholder="None"
-              options={methodOptions}
-              value={form.paymentMethodId}
-              onValueChange={onSelectMethod}
-            />
-          )}
+          <PaymentMethodField
+            methods={methods}
+            value={form.paymentMethodId}
+            onChange={onSelectMethod}
+            createMethod={createMethod}
+            onError={setFormError}
+          />
         </div>
 
         {formError && (

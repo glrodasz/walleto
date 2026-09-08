@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import auth0 from "../../../lib/auth0";
 import admin from "../../../firebase/admin";
 import { PaymentMethodInputSchema } from "../../../schemas";
+import { PAYMENT_METHOD_TYPE_LABELS } from "../../../constants";
 import type { Currency } from "../../../types";
 
 import "../../../firebase/admin";
@@ -44,16 +45,27 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       return res.status(400).json({ error: "defaultCurrency must be one of currencies" });
     }
 
-    const existing = await db
+    // A duplicate is the same *type* with the same name, case-insensitively:
+    // a "Bancolombia" debit card and a "Bancolombia" bank transfer are two
+    // different methods. Firestore compares strings exactly, so the name
+    // check runs in memory over the (few) methods of that type.
+    const sameType = await db
       .collection("paymentMethods")
       .where("userId", "==", userId)
-      .where("name", "==", name)
+      .where("type", "==", type)
       .where("archived", "==", false)
-      .limit(1)
       .get();
-
-    if (!existing.empty) {
-      return res.status(409).json({ error: "Payment method already exists" });
+    const wanted = name.trim().toLowerCase();
+    const clash = (sameType.docs ?? []).some(
+      (d) =>
+        String(d.data()?.name ?? "")
+          .trim()
+          .toLowerCase() === wanted
+    );
+    if (clash) {
+      return res.status(409).json({
+        error: `You already have a ${PAYMENT_METHOD_TYPE_LABELS[type]} called "${name}"`,
+      });
     }
 
     const ref = await db.collection("paymentMethods").add({

@@ -9,7 +9,7 @@ import {
   CARD_TYPES,
   NETWORK_SUGGESTIONS,
   networkFieldLabel,
-} from "../../onboarding/paymentMethodOptions";
+} from "../../../helpers/paymentMethodOptions";
 import { SELECTABLE_CURRENCIES, CURRENCY_SYMBOL } from "../../../constants";
 import type { Currency, PaymentMethod } from "../../../types";
 

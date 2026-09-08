@@ -9,6 +9,7 @@ jest.mock("../../../hooks/useCategories", () => ({
 }));
 jest.mock("../../../hooks/usePaymentMethods", () => ({
   usePaymentMethods: () => ({
+    create: jest.fn(),
     methods: [
       {
         id: "m1",

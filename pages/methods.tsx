@@ -14,7 +14,7 @@ import type { PaymentMethod } from "../types";
 export const getServerSideProps = withOnboardingGuard();
 
 export default function MethodsPage() {
-  const draftState = useMethodsStep();
+  const draftState = useMethodsStep({ hydrate: false });
   const { methods, loading, remove } = usePaymentMethods();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

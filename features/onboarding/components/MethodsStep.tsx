@@ -9,7 +9,7 @@ import {
   NETWORK_SUGGESTIONS,
   PAYMENT_METHOD_TYPE_OPTIONS,
   networkFieldLabel,
-} from "../paymentMethodOptions";
+} from "../../../helpers/paymentMethodOptions";
 import type { PaymentMethodType } from "../../../types";
 
 interface Props {

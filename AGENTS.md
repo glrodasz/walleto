@@ -32,6 +32,7 @@ helpers/chartData.ts              buckets por día/semana/mes + serie income/exp
 helpers/materializeOccurrences.ts ocurrencias de un item recurrente en un rango, ids determinísticos
 helpers/scheduleAnchor.ts         elección de fecha del usuario → startDate (incl. "backfill" = 6 meses atrás)
 helpers/paymentMethodLabel.ts     "name - last4" para tablas, "SEB - Autogiro (Bank transfer)" para dropdowns
+helpers/paymentMethodOptions.ts   tipos de método, sugerencias de red/proveedor, CARD_TYPES (wizard, Methods y PaymentMethodField)
 helpers/recurrence.ts             próxima ocurrencia según Frequency
 helpers/seedDefaultCategories.ts  categorías por defecto
 ```
@@ -85,7 +86,7 @@ types/                                  tipos del dominio
 constants.ts                            constantes y mapas de presentación
 ```
 
-`components/atoms/EmptyState.tsx` y `components/atoms/ErrorState.tsx` son **distintos a propósito**: una regla de Firestore rota o un índice building deben leerse como error, nunca como "sin datos" — esa ambigüedad ya vació la lista de categorías del wizard una vez (ver §3). `components/molecules/Modal.tsx` y `KebabMenu.tsx` son los building blocks de cualquier CRUD nuevo (crear/editar en un modal, acciones por fila en un kebab) — no reinventes overlay ni dropdown. `Modal` es un diálogo centrado en desktop y un **bottom sheet** bajo 768px (ancho completo, `dvh`, safe-area, scroll del body bloqueado); los formularios largos fijan su fila de acciones con `position: sticky; bottom: 0` para que Cancelar/Guardar no queden fuera de vista. `components/molecules/CategoryField.tsx` es el select de categoría con creación inline que comparten los dos formularios de alta.
+`components/atoms/EmptyState.tsx` y `components/atoms/ErrorState.tsx` son **distintos a propósito**: una regla de Firestore rota o un índice building deben leerse como error, nunca como "sin datos" — esa ambigüedad ya vació la lista de categorías del wizard una vez (ver §3). `components/molecules/Modal.tsx` y `KebabMenu.tsx` son los building blocks de cualquier CRUD nuevo (crear/editar en un modal, acciones por fila en un kebab) — no reinventes overlay ni dropdown. `Modal` es un diálogo centrado en desktop y un **bottom sheet** bajo 768px (ancho completo, `dvh`, safe-area, scroll del body bloqueado); los formularios largos fijan su fila de acciones con `position: sticky; bottom: 0` para que Cancelar/Guardar no queden fuera de vista. `components/molecules/CategoryField.tsx` y `PaymentMethodField.tsx` son los selects de categoría y de método de pago con creación inline que comparten los dos formularios de alta.
 
 **La única excepción a "los organisms no importan features"** es `PageLayout`, que monta `features/create/CreateLauncher` (el "+" flotante de mobile): tiene que existir en todas las páginas y todas las páginas se construyen sobre ese layout. Los dos formularios que abre se montan solo mientras están abiertos, así ninguna página paga sus listeners.
 
