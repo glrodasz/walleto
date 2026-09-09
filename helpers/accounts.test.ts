@@ -17,6 +17,7 @@ describe("isAccountDomain", () => {
 describe("formatInterestRate", () => {
   it("keeps whole numbers short and rounds the rest to two decimals", () => {
     expect(formatInterestRate({ value: 3, period: "YEARLY" })).toBe("3% yearly");
+    expect(formatInterestRate({ value: 2.5, period: "YEARLY" })).toBe("2.5% yearly");
     expect(formatInterestRate({ value: 0.4167, period: "MONTHLY" })).toBe("0.42% monthly");
   });
 });

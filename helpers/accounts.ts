@@ -13,7 +13,7 @@ export function isAccountDomain(domain: Domain): domain is AccountDomain {
 
 /** "2.5% yearly" / "0.4% monthly", for pills and rows. */
 export function formatInterestRate(rate: InterestRate): string {
-  const value = Number.isInteger(rate.value) ? String(rate.value) : rate.value.toFixed(2);
+  const value = String(Number(rate.value.toFixed(2)));
   return `${value}% ${rate.period === "YEARLY" ? "yearly" : "monthly"}`;
 }
 

@@ -145,14 +145,16 @@ export interface Transaction {
 }
 
 /**
- * A point-in-time statement of what an investment category is worth. Cost
- * basis and value are snapshots in `currency` at recording time, so history
- * stays truthful when rates or items change later.
+ * A point-in-time statement of what an account / pocket — or, for entries
+ * that predate accounts, a category — is worth. Exactly one of `accountId`
+ * and `categoryId` is set. Cost basis and value are snapshots in `currency`
+ * at recording time, so history stays truthful when rates or items change.
  */
 export interface InvestmentValuation {
   id?: string;
   userId: string;
-  categoryId: string;
+  accountId?: string;
+  categoryId?: string;
   asOf: Timestamp;
   /** 0 = break-even, 100 = doubled, -20 = lost a fifth. */
   gainPct: number;

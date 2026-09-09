@@ -6,34 +6,47 @@ import { Button } from "../../../components/atoms/Button";
 import { ErrorState } from "../../../components/atoms/ErrorState";
 import { FlowChart } from "../../../components/molecules/FlowChart";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
-import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
 import { useInvestmentValuations } from "../../../hooks/useInvestmentValuations";
-import { convert } from "../../../helpers/fx";
+import { formatInterestRate } from "../../../helpers/accounts";
 import type { MoneyContext } from "../../../helpers/aggregations";
-import { costBasisAt, gainFromValue, valuationSeries } from "../helpers/valuation";
+import { costBasisAt, currentValue, gainFromValue, valuationSeries } from "../helpers/valuation";
+import type { ValueSelector } from "../helpers/valuation";
 import { ValuationModal } from "./ValuationModal";
-import type { Currency, InvestmentValuation } from "../../../types";
+import type { Currency, InterestRate, InvestmentValuation, Transaction } from "../../../types";
 
 interface Props {
-  categoryId: string;
-  categoryName: string;
+  selector: ValueSelector;
+  /** Account name, or "{category} · no account" for pre-account entries. */
+  title: string;
+  /** The account's quoted rate, when it has one. */
+  rate?: InterestRate;
+  /** Inception-to-date rows of the domain; the parent subscribes once. */
+  transactions: Transaction[];
+  loading?: boolean;
   ctx: MoneyContext;
   currency: Currency;
+  accent?: string;
 }
 
-/** Cost basis needs the category's whole history, not the page's selected period. */
-const INCEPTION = new Date(2000, 0, 1);
 const CHART_MONTHS = 12;
 const DATE = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" });
 
 /**
- * What an investment category is worth versus what went into it. Only
- * mounted on the Investments page, so the inception-to-date listener it
- * needs runs nowhere else.
+ * What one position is worth versus what went into it: the latest value
+ * check carried forward — compounding at the account's rate when it quotes
+ * one — plus every deposit since; before any check, the interest estimate.
  */
-export function InvestmentValuePanel({ categoryId, categoryName, ctx, currency }: Props) {
-  const { transactions, loading: txLoading } = useDomainTransactions("INVESTMENT", INCEPTION);
-  const { valuations, loading, error, remove } = useInvestmentValuations(categoryId);
+export function InvestmentValuePanel({
+  selector,
+  title,
+  rate,
+  transactions,
+  loading: txLoading,
+  ctx,
+  currency,
+  accent = "var(--domain-investment)",
+}: Props) {
+  const { valuations, loading, error, remove } = useInvestmentValuations(selector);
   const [modal, setModal] = useState<{ open: boolean; editing?: InvestmentValuation }>({
     open: false,
   });
@@ -41,18 +54,27 @@ export function InvestmentValuePanel({ categoryId, categoryName, ctx, currency }
 
   const now = useMemo(() => new Date(), []);
   const invested = useMemo(
-    () => costBasisAt(transactions, categoryId, now, ctx),
-    [transactions, categoryId, now, ctx]
+    () => costBasisAt(transactions, selector, now, ctx),
+    [transactions, selector, now, ctx]
+  );
+  const value = useMemo(
+    () => currentValue(transactions, valuations, selector, rate, now, ctx),
+    [transactions, valuations, selector, rate, now, ctx]
   );
   const latest = valuations[0] ?? null;
-  const value = latest ? convert(latest.value, latest.currency, currency, ctx.rates) : invested;
   const gain = value - invested;
   const gainPct = gainFromValue(invested, value);
 
   const series = useMemo(
-    () => valuationSeries(transactions, valuations, categoryId, ctx, CHART_MONTHS, now),
-    [transactions, valuations, categoryId, ctx, now]
+    () => valuationSeries(transactions, valuations, selector, ctx, CHART_MONTHS, now, rate),
+    [transactions, valuations, selector, ctx, now, rate]
   );
+
+  const valueMeta = latest
+    ? `checked ${DATE.format(latest.asOf.toDate())}${rate ? `, ${formatInterestRate(rate)} since` : ""}`
+    : rate
+      ? `estimated at ${formatInterestRate(rate)}`
+      : "no value check yet";
 
   const del = async (id: string) => {
     setDeletingId(id);
@@ -66,11 +88,11 @@ export function InvestmentValuePanel({ categoryId, categoryName, ctx, currency }
   };
 
   return (
-    <Card accentColor="var(--domain-investment)">
+    <Card accentColor={accent}>
       <div className="head">
-        <SectionTitle title={`${categoryName} — value`} />
+        <SectionTitle title={`${title} — value`} />
         <Button variant="primary" size="sm" onClick={() => setModal({ open: true })}>
-          Record valuation
+          Record value
         </Button>
       </div>
 
@@ -87,11 +109,9 @@ export function InvestmentValuePanel({ categoryId, categoryName, ctx, currency }
             value={value}
             currency={currency}
             size="md"
-            approximate={!!latest && latest.currency !== currency}
+            approximate={Boolean(rate) || (!!latest && latest.currency !== currency)}
           />
-          <span className="meta">
-            {latest ? `as of ${DATE.format(latest.asOf.toDate())}` : "no valuation yet"}
-          </span>
+          <span className="meta">{valueMeta}</span>
         </div>
         <div>
           <span className="label">Gain</span>
@@ -112,7 +132,7 @@ export function InvestmentValuePanel({ categoryId, categoryName, ctx, currency }
         labelA="Invested"
         labelB="Value"
         colorA="var(--fg-2)"
-        colorB="var(--domain-investment)"
+        colorB={accent}
         height={200}
       />
 
@@ -148,8 +168,8 @@ export function InvestmentValuePanel({ categoryId, categoryName, ctx, currency }
 
       <ValuationModal
         open={modal.open}
-        categoryId={categoryId}
-        categoryName={categoryName}
+        selector={selector}
+        name={title}
         costBasis={invested}
         currency={currency}
         valuation={modal.editing}

@@ -6,13 +6,15 @@ import { formatAmount } from "../../../components/atoms/Amount";
 import { useInvestmentValuations } from "../../../hooks/useInvestmentValuations";
 import { toDateInputValue } from "../../../helpers/scheduleAnchor";
 import { gainFromValue, valueFromGain } from "../helpers/valuation";
+import type { ValueSelector } from "../helpers/valuation";
 import { CURRENCY_SYMBOL } from "../../../constants";
 import type { Currency, InvestmentValuation } from "../../../types";
 
 interface Props {
   open: boolean;
-  categoryId: string;
-  categoryName: string;
+  /** The account / pocket — or pre-account category — being valued. */
+  selector: ValueSelector;
+  name: string;
   /** What's been paid in so far, in `currency`. */
   costBasis: number;
   currency: Currency;
@@ -30,14 +32,14 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
  */
 export function ValuationModal({
   open,
-  categoryId,
-  categoryName,
+  selector,
+  name,
   costBasis,
   currency,
   valuation,
   onClose,
 }: Props) {
-  const { create, update } = useInvestmentValuations(categoryId);
+  const { create, update } = useInvestmentValuations(selector);
   const [date, setDate] = useState(toDateInputValue(new Date()));
   const [gain, setGain] = useState("0");
   const [value, setValue] = useState("");
@@ -92,7 +94,7 @@ export function ValuationModal({
         await update(valuation.id, { asOf, gainPct: pct, value: v, note: note.trim() || null });
       } else {
         await create({
-          categoryId,
+          ...selector,
           asOf,
           gainPct: pct,
           value: v,
@@ -113,7 +115,7 @@ export function ValuationModal({
   return (
     <Modal
       open={open}
-      title={valuation ? `Edit valuation — ${categoryName}` : `Value ${categoryName}`}
+      title={valuation ? `Edit valuation — ${name}` : `Value ${name}`}
       onClose={onClose}
     >
       <div className="form">

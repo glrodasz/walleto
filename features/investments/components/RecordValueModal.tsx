@@ -3,48 +3,67 @@ import { Modal } from "../../../components/molecules/Modal";
 import { Select } from "../../../components/atoms/Select";
 import { Button } from "../../../components/atoms/Button";
 import { formatAmount } from "../../../components/atoms/Amount";
+import { useAccounts } from "../../../hooks/useAccounts";
 import { useCategories } from "../../../hooks/useCategories";
 import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
-import { costBasisAt } from "../helpers/valuation";
+import { ACCOUNT_NOUN } from "../../../helpers/accounts";
+import { costBasisAt, selectorKey } from "../helpers/valuation";
+import type { ValueSelector } from "../helpers/valuation";
 import { ValuationModal } from "./ValuationModal";
+import type { AccountDomain } from "../../../types";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  /** Skip the picker when the caller already knows the category. */
-  categoryId?: string;
+  domain: AccountDomain;
 }
 
-/** Cost basis needs the category's whole history, not a page's window. */
+/** Cost basis needs the whole history, not a page's window. */
 const INCEPTION = new Date(2000, 0, 1);
 
 /**
- * "Record current value" from anywhere: pick the investment, see what has
- * gone into it, then the usual gain-% / value form. Mounted only while
- * open, so the inception-to-date listener it needs runs nowhere else.
+ * "Record current value" from anywhere: pick the account / pocket — or a
+ * category still holding entries filed under none — see what has gone into
+ * it, then the usual gain-% / value form. Mounted only while open, so the
+ * inception-to-date listener it needs runs nowhere else.
  */
-export function RecordValueModal({ open, onClose, categoryId: preset }: Props) {
+export function RecordValueModal({ open, onClose, domain }: Props) {
   const { ctx, target } = useMoneyContext();
-  const { categories } = useCategories("INVESTMENT");
-  const { transactions } = useDomainTransactions("INVESTMENT", INCEPTION);
-  const [picked, setPicked] = useState(preset ?? "");
-  const [step, setStep] = useState<"pick" | "value">(preset ? "value" : "pick");
-
-  const roots = categories.filter((c) => !c.parentId);
-  const category = categories.find((c) => c.id === picked) ?? null;
+  const { accounts } = useAccounts(domain);
+  const { categories } = useCategories(domain);
+  const { transactions } = useDomainTransactions(domain, INCEPTION);
+  const [picked, setPicked] = useState("");
+  const [step, setStep] = useState<"pick" | "value">("pick");
+  const noun = ACCOUNT_NOUN[domain].singular;
   const now = useMemo(() => new Date(), []);
+
+  const choices = useMemo(() => {
+    const byAccount = accounts
+      .filter((a) => a.id)
+      .map((a) => ({ selector: { accountId: a.id! } as ValueSelector, label: a.name }));
+    const unassigned = categories
+      .filter((c) => !c.parentId && c.id)
+      .map((c) => ({
+        selector: { categoryId: c.id! } as ValueSelector,
+        label: `${c.name} · no ${noun}`,
+      }))
+      .filter((c) => costBasisAt(transactions, c.selector, now, ctx) > 0);
+    return [...byAccount, ...unassigned].map((c) => ({ ...c, key: selectorKey(c.selector) }));
+  }, [accounts, categories, transactions, now, ctx, noun]);
+
+  const choice = choices.find((c) => c.key === picked) ?? null;
   const invested = useMemo(
-    () => (picked ? costBasisAt(transactions, picked, now, ctx) : 0),
-    [transactions, picked, now, ctx]
+    () => (choice ? costBasisAt(transactions, choice.selector, now, ctx) : 0),
+    [transactions, choice, now, ctx]
   );
 
-  if (step === "value" && category?.id) {
+  if (step === "value" && choice) {
     return (
       <ValuationModal
         open={open}
-        categoryId={category.id}
-        categoryName={category.name}
+        selector={choice.selector}
+        name={choice.label}
         costBasis={invested}
         currency={target}
         onClose={onClose}
@@ -52,26 +71,35 @@ export function RecordValueModal({ open, onClose, categoryId: preset }: Props) {
     );
   }
 
+  const label = noun.charAt(0).toUpperCase() + noun.slice(1);
+
   return (
     <Modal open={open} title="Record current value" onClose={onClose}>
       <div className="form">
-        <Select
-          label="Investment"
-          placeholder="Pick an investment"
-          options={roots.map((c) => ({ value: c.id!, label: c.name }))}
-          value={picked}
-          onValueChange={setPicked}
-        />
-        {picked && (
+        {choices.length === 0 ? (
           <p className="basis">
-            Invested so far: <strong>{formatAmount(invested, target)}</strong>
+            No {noun} to value yet — file a {domain === "SAVING" ? "deposit" : "contribution"} under
+            one first.
+          </p>
+        ) : (
+          <Select
+            label={label}
+            placeholder={`Pick ${domain === "SAVING" ? "a pocket" : "an account"}`}
+            options={choices.map((c) => ({ value: c.key, label: c.label }))}
+            value={picked}
+            onValueChange={setPicked}
+          />
+        )}
+        {choice && (
+          <p className="basis">
+            In so far: <strong>{formatAmount(invested, target)}</strong>
           </p>
         )}
         <div className="actions">
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={() => setStep("value")} disabled={!picked}>
+          <Button variant="primary" onClick={() => setStep("value")} disabled={!choice}>
             Continue
           </Button>
         </div>

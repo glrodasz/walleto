@@ -1,7 +1,10 @@
 import {
   costBasisAt,
+  currentValue,
   gainFromValue,
   latestValuationAt,
+  matchesSelector,
+  selectorKey,
   valueFromGain,
   valuationSeries,
 } from "./valuation";
@@ -15,6 +18,7 @@ const ts = (date: Date): Timestamp => ({
 });
 
 const ctx = { rates: IDENTITY_RATES, target: "USD" as Currency };
+const FUNDS = { categoryId: "funds" };
 
 const tx = (amount: number, date: Date, overrides: Partial<Transaction> = {}): Transaction => ({
   userId: "u1",
@@ -64,8 +68,8 @@ describe("costBasisAt", () => {
 
   it("sums PAID investment transactions of the category up to the date", () => {
     const list = [tx(100, march), tx(10, april), tx(10, may)];
-    expect(costBasisAt(list, "funds", new Date(2026, 3, 15), ctx)).toBe(110);
-    expect(costBasisAt(list, "funds", new Date(2026, 5, 1), ctx)).toBe(120);
+    expect(costBasisAt(list, FUNDS, new Date(2026, 3, 15), ctx)).toBe(110);
+    expect(costBasisAt(list, FUNDS, new Date(2026, 5, 1), ctx)).toBe(120);
   });
 
   it("ignores other categories, other domains and non-PAID rows", () => {
@@ -74,8 +78,55 @@ describe("costBasisAt", () => {
       tx(999, march, { categoryId: "crypto" }),
       tx(999, march, { domain: "EXPENSE" }),
       tx(999, march, { status: "SKIPPED" }),
+      tx(999, march, { accountId: "isk" }),
     ];
-    expect(costBasisAt(list, "funds", may, ctx)).toBe(100);
+    expect(costBasisAt(list, FUNDS, may, ctx)).toBe(100);
+  });
+
+  it("counts savings deposits too, and selects by account across categories", () => {
+    const list = [
+      tx(50, march, { domain: "SAVING", accountId: "seb", categoryId: "emergency" }),
+      tx(25, april, { domain: "SAVING", accountId: "seb", categoryId: "trip" }),
+      tx(999, march, { domain: "SAVING", categoryId: "emergency" }),
+    ];
+    expect(costBasisAt(list, { accountId: "seb" }, may, ctx)).toBe(75);
+  });
+});
+
+describe("selectors", () => {
+  it("keys accounts and categories apart", () => {
+    expect(selectorKey({ accountId: "a" })).toBe("acc:a");
+    expect(selectorKey({ categoryId: "c" })).toBe("cat:c");
+  });
+
+  it("matches a category only for rows without an account", () => {
+    expect(matchesSelector({ categoryId: "c" }, { categoryId: "c" })).toBe(true);
+    expect(matchesSelector({ categoryId: "c", accountId: "a" }, { categoryId: "c" })).toBe(false);
+    expect(matchesSelector({ categoryId: "c", accountId: "a" }, { accountId: "a" })).toBe(true);
+  });
+});
+
+describe("currentValue", () => {
+  it("estimates with the account's rate when nothing was recorded, and adds later deposits to a check", () => {
+    const start = new Date(2025, 0, 1);
+    const list = [tx(1000, start, { accountId: "seb", domain: "SAVING" })];
+    const rate = { value: 5, period: "YEARLY" as const };
+    const estimate = currentValue(list, [], { accountId: "seb" }, rate, new Date(2026, 0, 1), ctx);
+    expect(estimate).toBeCloseTo(1050, 0);
+
+    const checks = [
+      valuation(1030, new Date(2025, 6, 1), { accountId: "seb", categoryId: undefined }),
+    ];
+    const later = [...list, tx(100, new Date(2025, 9, 1), { accountId: "seb", domain: "SAVING" })];
+    const withCheck = currentValue(
+      later,
+      checks,
+      { accountId: "seb" },
+      undefined,
+      new Date(2026, 0, 1),
+      ctx
+    );
+    expect(withCheck).toBe(1130);
   });
 });
 
@@ -100,7 +151,7 @@ describe("valuationSeries", () => {
     ];
     const vals = [valuation(260, new Date(2026, 2, 20))];
 
-    const series = valuationSeries(list, vals, "funds", ctx, 6, now);
+    const series = valuationSeries(list, vals, FUNDS, ctx, 6, now);
 
     expect(series.map((p) => p.label)).toEqual(["Jan", "Feb", "Mar", "Apr", "May", "Jun"]);
     expect(series.map((p) => p.income)).toEqual([100, 110, 120, 120, 120, 120]);
@@ -115,7 +166,7 @@ describe("valuationSeries", () => {
       fetchedAt: "2026-06-01T00:00:00.000Z",
     };
     const vals = [valuation(100, new Date(2026, 4, 1), { currency: "EUR" })];
-    const series = valuationSeries([], vals, "funds", { rates, target: "USD" }, 2, now);
+    const series = valuationSeries([], vals, FUNDS, { rates, target: "USD" }, 2, now);
     expect(series[1].expense).toBe(200);
   });
 });

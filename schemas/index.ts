@@ -214,15 +214,21 @@ export const TransactionUpdateSchema = z
     refineChargedPair(v, ctx);
   });
 
-export const InvestmentValuationInputSchema = z.object({
-  categoryId: z.string().min(1),
-  asOf: z.iso.datetime(),
-  gainPct: z.number().finite(),
-  value: z.number().min(0),
-  costBasis: z.number().min(0),
-  currency: CurrencySchema,
-  note: z.string().max(200).trim().optional(),
-});
+export const InvestmentValuationInputSchema = z
+  .object({
+    accountId: z.string().min(1).optional(),
+    categoryId: z.string().min(1).optional(),
+    asOf: z.iso.datetime(),
+    gainPct: z.number().finite(),
+    value: z.number().min(0),
+    costBasis: z.number().min(0),
+    currency: CurrencySchema,
+    note: z.string().max(200).trim().optional(),
+  })
+  .refine((v) => Boolean(v.accountId) !== Boolean(v.categoryId), {
+    message: "Provide exactly one of accountId or categoryId",
+    path: ["accountId"],
+  });
 
 export const InvestmentValuationUpdateSchema = z
   .object({

@@ -5,6 +5,7 @@ import { db } from "../firebase/client";
 import { useFirebaseAuth } from "./useFirebaseAuth";
 import type { InvestmentValuation } from "../types";
 import type { InvestmentValuationInput, InvestmentValuationUpdate } from "../schemas";
+import type { ValueSelector } from "../features/investments/helpers/valuation";
 
 /** Standalone so the create modal can record one without subscribing. */
 export async function createInvestmentValuation(input: InvestmentValuationInput): Promise<string> {
@@ -24,11 +25,14 @@ function byAsOfDesc(a: InvestmentValuation, b: InvestmentValuation) {
 }
 
 /**
- * One investment category's valuation history. Equality filters only, sorted
- * in memory — a category accrues a handful of valuations a year, and this way
- * the query needs no composite index.
+ * One account's (or, for pre-account entries, one category's) valuation
+ * history. Equality filters only, sorted in memory — a position accrues a
+ * handful of valuations a year, and this way the query needs no composite
+ * index.
  */
-export function useInvestmentValuations(categoryId: string | null) {
+export function useInvestmentValuations(selector: ValueSelector | null) {
+  const field = selector && "accountId" in selector ? "accountId" : "categoryId";
+  const id = selector ? ("accountId" in selector ? selector.accountId : selector.categoryId) : null;
   const { user } = useUser();
   const { ready } = useFirebaseAuth();
   const [valuations, setValuations] = useState<InvestmentValuation[]>([]);
@@ -36,12 +40,12 @@ export function useInvestmentValuations(categoryId: string | null) {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!ready || !user?.sub || !categoryId) return;
+    if (!ready || !user?.sub || !id) return;
 
     const q = query(
       collection(db, "investmentValuations"),
       where("userId", "==", user.sub),
-      where("categoryId", "==", categoryId)
+      where(field, "==", id)
     );
 
     return onSnapshot(
@@ -59,7 +63,7 @@ export function useInvestmentValuations(categoryId: string | null) {
         setLoading(false);
       }
     );
-  }, [ready, user?.sub, categoryId]);
+  }, [ready, user?.sub, field, id]);
 
   const update = async (id: string, patch: InvestmentValuationUpdate) => {
     const res = await fetch(`/api/investment-valuations/${id}`, {

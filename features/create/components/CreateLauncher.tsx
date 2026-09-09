@@ -7,6 +7,7 @@ import {
 } from "../../transactions/components/QuickTransactionModal";
 import { RecurrentTransactionModal } from "../../domains/components/RecurrentTransactionModal";
 import { RecordValueModal } from "../../investments/components/RecordValueModal";
+import { isAccountDomain } from "../../../helpers/accounts";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import type { Domain } from "../../../types";
 
@@ -79,10 +80,13 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
             <strong>Add a recurring {singular}</strong>
             <span>Something that repeats: a subscription, a salary, rent</span>
           </button>
-          {domain === "INVESTMENT" && (
+          {isAccountDomain(domain) && (
             <button type="button" className="option" onClick={() => choose("value")}>
               <strong>Record current value</strong>
-              <span>What an investment is worth today, as a gain % or a value</span>
+              <span>
+                What {domain === "SAVING" ? "a pocket" : "an account"} is worth today, as a gain %
+                or a value
+              </span>
             </button>
           )}
         </div>
@@ -94,7 +98,9 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
       {kind === "recurring" && (
         <RecurrentTransactionModal open domain={domain} onClose={() => setKind(null)} />
       )}
-      {kind === "value" && <RecordValueModal open onClose={() => setKind(null)} />}
+      {kind === "value" && isAccountDomain(domain) && (
+        <RecordValueModal open domain={domain} onClose={() => setKind(null)} />
+      )}
 
       <style jsx>{`
         .fab {

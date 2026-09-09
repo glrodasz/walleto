@@ -3,10 +3,11 @@ import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { formatAmount } from "../../../components/atoms/Amount";
 import { useAllInvestmentValuations } from "../../../hooks/useInvestmentValuations";
-import type { Category, InvestmentValuation } from "../../../types";
+import type { Account, Category, InvestmentValuation } from "../../../types";
 
 interface Props {
   categories: Category[];
+  accounts: Account[];
   /** [start, end) of the month shown. */
   start: Date;
   end: Date;
@@ -30,7 +31,7 @@ export function valuationsInWindow(
  * not money moving, so they never count toward totals — they are listed so
  * the ledger tells the whole story of the month.
  */
-export function ValuationRows({ categories, start, end }: Props) {
+export function ValuationRows({ categories, accounts, start, end }: Props) {
   const { valuations } = useAllInvestmentValuations();
   const rows = useMemo(() => valuationsInWindow(valuations, start, end), [valuations, start, end]);
   if (rows.length === 0) return null;
@@ -44,7 +45,9 @@ export function ValuationRows({ categories, start, end }: Props) {
           <li key={v.id} className="row">
             <span className="main">
               <span className="name">
-                {categories.find((c) => c.id === v.categoryId)?.name ?? "Investment"}
+                {(v.accountId
+                  ? accounts.find((a) => a.id === v.accountId)?.name
+                  : categories.find((c) => c.id === v.categoryId)?.name) ?? "Value check"}
               </span>
               <span className="meta">
                 {DATE.format(v.asOf.toDate())} · value check

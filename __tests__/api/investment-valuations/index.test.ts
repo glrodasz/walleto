@@ -33,19 +33,28 @@ const mockRes = () => {
   return res;
 };
 
-const wire = (category: { exists: boolean; data?: Record<string, unknown> }) => {
+const wire = (
+  category: { exists: boolean; data?: Record<string, unknown> },
+  account: { exists: boolean; data?: Record<string, unknown> } = { exists: true }
+) => {
   const add = jest.fn().mockResolvedValue({ id: "val1" });
+  const docOf = (
+    target: { exists: boolean; data?: Record<string, unknown> },
+    fallback: object
+  ) => ({
+    doc: jest.fn().mockReturnValue({
+      get: jest.fn().mockResolvedValue({
+        exists: target.exists,
+        data: () => target.data ?? fallback,
+      }),
+    }),
+  });
   collectionMock.mockImplementation((name: string) =>
     name === "categories"
-      ? {
-          doc: jest.fn().mockReturnValue({
-            get: jest.fn().mockResolvedValue({
-              exists: category.exists,
-              data: () => category.data ?? { userId: "user1", domain: "INVESTMENT" },
-            }),
-          }),
-        }
-      : { add }
+      ? docOf(category, { userId: "user1", domain: "INVESTMENT" })
+      : name === "accounts"
+        ? docOf(account, { userId: "user1", domain: "SAVING" })
+        : { add }
   );
   return add;
 };
@@ -106,11 +115,46 @@ describe("POST /api/investment-valuations", () => {
     expect(res.status).toHaveBeenCalledWith(403);
   });
 
-  it("rejects a non-investment category", async () => {
+  it("rejects a category outside investments and savings", async () => {
     wire({ exists: true, data: { userId: "user1", domain: "EXPENSE" } });
     const res = mockRes();
     await handler({ method: "POST", body } as NextApiRequest, res);
     expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it("accepts a savings category", async () => {
+    wire({ exists: true, data: { userId: "user1", domain: "SAVING" } });
+    const res = mockRes();
+    await handler({ method: "POST", body } as NextApiRequest, res);
+    expect(res.status).toHaveBeenCalledWith(201);
+  });
+
+  it("records a valuation on an account instead of a category", async () => {
+    const add = wire({ exists: false });
+    const res = mockRes();
+    const { categoryId: _omit, ...rest } = body;
+    await handler({ method: "POST", body: { ...rest, accountId: "seb" } } as NextApiRequest, res);
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(add).toHaveBeenCalledWith(expect.objectContaining({ accountId: "seb" }));
+    expect(add.mock.calls[0][0]).not.toHaveProperty("categoryId");
+  });
+
+  it("rejects someone else's account", async () => {
+    wire({ exists: false }, { exists: true, data: { userId: "intruder", domain: "SAVING" } });
+    const res = mockRes();
+    const { categoryId: _omit, ...rest } = body;
+    await handler({ method: "POST", body: { ...rest, accountId: "seb" } } as NextApiRequest, res);
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+
+  it("rejects both or neither target", async () => {
+    wire({ exists: true });
+    const res = mockRes();
+    await handler({ method: "POST", body: { ...body, accountId: "seb" } } as NextApiRequest, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    const { categoryId: _omit, ...rest } = body;
+    await handler({ method: "POST", body: rest } as NextApiRequest, res);
+    expect(res.status).toHaveBeenLastCalledWith(400);
   });
 
   it("returns 405 for other methods", async () => {

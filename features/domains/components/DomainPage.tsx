@@ -15,9 +15,10 @@ import { RecurringChecklist } from "./RecurringChecklist";
 import { RecurrentTransactionModal } from "./RecurrentTransactionModal";
 import { QuickTransactionModal } from "../../transactions/components/QuickTransactionModal";
 import { SubscriptionInsights } from "../../insights/components/SubscriptionInsights";
-import { InvestmentValuePanel } from "../../investments/components/InvestmentValuePanel";
-import { InvestmentValueList } from "../../investments/components/InvestmentValueList";
+import { AccountValuePanels } from "../../investments/components/AccountValuePanels";
+import { AccountValueList } from "../../investments/components/AccountValueList";
 import { ValuationRows } from "../../investments/components/ValuationRows";
+import { isAccountDomain } from "../../../helpers/accounts";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import {
   expectedForMonth,
@@ -30,6 +31,7 @@ import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
 import { useCategories } from "../../../hooks/useCategories";
 import { useRecurrentTransactions, markItemPaid } from "../../../hooks/useRecurrentTransactions";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
+import { useAccounts } from "../../../hooks/useAccounts";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
 import { deleteTransaction, updateTransaction } from "../../../hooks/useTransactions";
 import { toDate } from "../../../helpers/chartData";
@@ -75,6 +77,9 @@ export function DomainPage({ domain }: Props) {
   const config = DOMAIN_CONFIG[domain];
   const { ctx, target } = useMoneyContext();
   const currency: Currency = target;
+  // Investments and savings sit in accounts / pockets, which carry value.
+  const accountDomain = isAccountDomain(domain) ? domain : null;
+  const { accounts } = useAccounts(accountDomain);
 
   // One clock per mount: the windows, "still planned" and the checklist all
   // agree on what "now" is, and the transactions query keeps one start date.
@@ -231,11 +236,11 @@ export function DomainPage({ domain }: Props) {
                   currency={currency}
                 />
               )}
-              {domain === "INVESTMENT" && drillCategory.id && (
-                <InvestmentValuePanel
+              {accountDomain && (
+                <AccountValuePanels
                   key={drillCategory.id}
-                  categoryId={drillCategory.id}
-                  categoryName={drillCategory.name}
+                  domain={accountDomain}
+                  category={drillCategory}
                   ctx={ctx}
                   currency={currency}
                 />
@@ -271,19 +276,21 @@ export function DomainPage({ domain }: Props) {
           deletingId={deletingTxId}
           now={now}
         />
-        {domain === "INVESTMENT" && (
-          <ValuationRows categories={categories} start={window.start} end={window.end} />
+        {accountDomain && (
+          <ValuationRows
+            categories={categories}
+            accounts={accounts}
+            start={window.start}
+            end={window.end}
+          />
         )}
       </>
-    ) : view === "value" ? (
-      <InvestmentValueList
+    ) : view === "value" && accountDomain ? (
+      <AccountValueList
+        domain={accountDomain}
         categories={categories}
         ctx={ctx}
         currency={currency}
-        onOpen={(categoryId) => {
-          setView("categories");
-          setDrillCategoryId(categoryId);
-        }}
       />
     ) : (
       <RecurringChecklist
@@ -349,7 +356,7 @@ export function DomainPage({ domain }: Props) {
               setDrillCategoryId(null);
             }}
             accent={config.accent}
-            showValue={domain === "INVESTMENT"}
+            showValue={Boolean(accountDomain)}
           />
           {panel}
         </div>

@@ -1,8 +1,30 @@
 import { convertedAmount } from "../../../helpers/aggregations";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { convert } from "../../../helpers/fx";
+import { isAccountDomain } from "../../../helpers/accounts";
 import type { FlowPoint } from "../../../helpers/chartData";
-import type { InvestmentValuation, Transaction } from "../../../types";
+import type { InterestRate, InvestmentValuation, Transaction } from "../../../types";
+import { valueAt } from "./interest";
+import type { Deposit, ValuePoint } from "./interest";
+
+/**
+ * What a value is *of*: an account / pocket, or — for entries that were
+ * never filed under one — a category's unassigned rows. Old valuations that
+ * predate accounts live on their category and match the second form.
+ */
+export type ValueSelector = { accountId: string } | { categoryId: string };
+
+export function selectorKey(s: ValueSelector): string {
+  return "accountId" in s ? `acc:${s.accountId}` : `cat:${s.categoryId}`;
+}
+
+export function matchesSelector(
+  row: { categoryId?: string; accountId?: string },
+  s: ValueSelector
+): boolean {
+  if ("accountId" in s) return row.accountId === s.accountId;
+  return row.categoryId === s.categoryId && !row.accountId;
+}
 
 /** Value implied by a gain: 0% leaves the basis alone, +100% doubles it. */
 export function valueFromGain(costBasis: number, gainPct: number): number {
@@ -20,25 +42,45 @@ function occurred(t: Transaction): Date {
 }
 
 /**
- * Everything paid into one investment category up to `asOf`, converted into
- * the reporting currency. Only PAID transactions count — a skipped or pending
- * contribution never left the account.
+ * Every PAID contribution matching the selector, converted into the
+ * reporting currency, oldest first. A skipped or pending row never left
+ * the account.
  */
+export function depositsFor(
+  transactions: Transaction[],
+  selector: ValueSelector,
+  ctx: MoneyContext
+): Deposit[] {
+  return transactions
+    .filter((t) => isAccountDomain(t.domain) && t.status === "PAID" && matchesSelector(t, selector))
+    .map((t) => ({ amount: convertedAmount(t, ctx), at: occurred(t) }))
+    .sort((a, b) => a.at.getTime() - b.at.getTime());
+}
+
+/** Everything paid in up to `asOf`, in the reporting currency. */
 export function costBasisAt(
   transactions: Transaction[],
-  categoryId: string,
+  selector: ValueSelector,
   asOf: Date,
   ctx: MoneyContext
 ): number {
-  return transactions
-    .filter(
-      (t) =>
-        t.domain === "INVESTMENT" &&
-        t.categoryId === categoryId &&
-        t.status === "PAID" &&
-        occurred(t) <= asOf
-    )
-    .reduce((sum, t) => sum + convertedAmount(t, ctx), 0);
+  return depositsFor(transactions, selector, ctx)
+    .filter((d) => d.at <= asOf)
+    .reduce((sum, d) => sum + d.amount, 0);
+}
+
+/** The selector's value checks converted into the reporting currency. */
+export function valueChecks(
+  valuations: InvestmentValuation[],
+  selector: ValueSelector,
+  ctx: MoneyContext
+): ValuePoint[] {
+  return valuations
+    .filter((v) => matchesSelector(v, selector))
+    .map((v) => ({
+      value: convert(v.value, v.currency, ctx.target, ctx.rates),
+      asOf: v.asOf.toDate(),
+    }));
 }
 
 /** The most recent valuation at or before `asOf`, or null. */
@@ -54,30 +96,53 @@ export function latestValuationAt(
   return best;
 }
 
+/**
+ * What the position is worth at `asOf` in the reporting currency: the
+ * latest recorded check carried forward (with interest, when the account
+ * quotes a rate) plus what went in since — see `interest.valueAt`.
+ */
+export function currentValue(
+  transactions: Transaction[],
+  valuations: InvestmentValuation[],
+  selector: ValueSelector,
+  rate: InterestRate | undefined,
+  asOf: Date,
+  ctx: MoneyContext
+): number {
+  return valueAt(
+    depositsFor(transactions, selector, ctx),
+    valueChecks(valuations, selector, ctx),
+    rate,
+    asOf
+  );
+}
+
 const MONTH_LABEL = new Intl.DateTimeFormat("en", { month: "short" });
 
 /**
  * Invested vs value, one point per month for the last `months` months, for
  * FlowChart (`income` = invested, `expense` = value — the caller relabels).
- * Value carries the latest valuation forward; before any valuation exists it
- * simply equals the basis, so the two lines start together and split where
+ * Before any valuation exists value is the interest estimate — or simply the
+ * basis without a rate — so the two lines start together and split where
  * the user first told us what the position was really worth.
  */
 export function valuationSeries(
   transactions: Transaction[],
   valuations: InvestmentValuation[],
-  categoryId: string,
+  selector: ValueSelector,
   ctx: MoneyContext,
   months: number,
-  now: Date = new Date()
+  now: Date = new Date(),
+  rate?: InterestRate
 ): FlowPoint[] {
+  const deposits = depositsFor(transactions, selector, ctx);
+  const checks = valueChecks(valuations, selector, ctx);
   const points: FlowPoint[] = [];
   for (let i = months - 1; i >= 0; i--) {
     const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const monthEnd = i === 0 ? now : new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59);
-    const invested = costBasisAt(transactions, categoryId, monthEnd, ctx);
-    const latest = latestValuationAt(valuations, monthEnd);
-    const value = latest ? convert(latest.value, latest.currency, ctx.target, ctx.rates) : invested;
+    const invested = deposits.filter((d) => d.at <= monthEnd).reduce((s, d) => s + d.amount, 0);
+    const value = valueAt(deposits, checks, rate, monthEnd);
     points.push({ label: MONTH_LABEL.format(monthStart), income: invested, expense: value });
   }
   return points;

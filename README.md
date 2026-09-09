@@ -24,21 +24,26 @@ rates into a per-user display currency.
   views of the selected month: Categories (totals, share, planned vs actual,
   drilldown with subcategories), Transactions (grouped by day) and Recurring
   (the month's bills as overdue / due / paid, with mark-paid, edit, stop).
-  Expenses' Subscriptions category surfaces subscription cost insights;
-  Investments adds a valuation panel per category (invested vs value, gain-%
-  history, chart).
+  Expenses' Subscriptions category surfaces subscription cost insights.
+  Investments and Savings file entries under **accounts / pockets** (an
+  optional "where the money sits" next to the category) and add a Value
+  view per account: invested vs value, gain-% history, chart. A savings
+  pocket can quote an interest rate (monthly or yearly); its value is then
+  estimated by compounding every deposit monthly, and any recorded value
+  check takes over from its date. Entries hidden from the dashboard carry a
+  visible pill on these pages.
 - **Prospect** (`/prospect`) — a what-if simulator: check any recurring
   expense, investment or saving to see the monthly/annual amount it would
   free and how your net would change, projected 6 or 12 months out.
 - **Methods** (`/methods`) — payment methods CRUD (cards, wallets, bank
-  transfers, cash, crypto).
-- **Settings** (`/settings`) — account info, main reporting currency, redo
-  onboarding.
+  transfers, cash, crypto), grouped by type and sorted by name.
+- **Settings** (`/settings`) — account info, main reporting currency,
+  root categories per domain (rename, add, archive), redo onboarding.
 
 One-off transactions (a coffee, an invoice) are recorded through the create
 button — the header's New buttons on desktop, the floating "+" on phones —
 which asks whether you mean a single dated payment, a recurring item or, for
-investments, a value check. Choosing "One time" for a recurring item records a
+investments and savings, a value check. Choosing "One time" for a recurring item records a
 plain transaction, never a plan. Each
 domain page lists what was recorded in the selected period, with delete.
 Six months of synthetic PAID transaction history is backfilled from active
