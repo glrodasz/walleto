@@ -3,13 +3,18 @@ import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { Amount, formatAmount } from "../../../components/atoms/Amount";
 import { Button } from "../../../components/atoms/Button";
-import { ErrorState } from "../../../components/atoms/ErrorState";
 import { FlowChart } from "../../../components/molecules/FlowChart";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
-import { useInvestmentValuations } from "../../../hooks/useInvestmentValuations";
+import { removeInvestmentValuation } from "../../../hooks/useInvestmentValuations";
 import { formatInterestRate } from "../../../helpers/accounts";
 import type { MoneyContext } from "../../../helpers/aggregations";
-import { costBasisAt, currentValue, gainFromValue, valuationSeries } from "../helpers/valuation";
+import {
+  costBasisAt,
+  currentValue,
+  gainFromValue,
+  matchesSelector,
+  valuationSeries,
+} from "../helpers/valuation";
 import type { ValueSelector } from "../helpers/valuation";
 import { ValuationModal } from "./ValuationModal";
 import type { Currency, InterestRate, InvestmentValuation, Transaction } from "../../../types";
@@ -22,6 +27,8 @@ interface Props {
   rate?: InterestRate;
   /** Inception-to-date rows of the domain; the parent subscribes once. */
   transactions: Transaction[];
+  /** Every valuation, domains filled in (`withDomain`); the panel picks its own. */
+  valuations: InvestmentValuation[];
   loading?: boolean;
   ctx: MoneyContext;
   currency: Currency;
@@ -41,12 +48,19 @@ export function InvestmentValuePanel({
   title,
   rate,
   transactions,
-  loading: txLoading,
+  valuations: allValuations,
+  loading,
   ctx,
   currency,
   accent = "var(--domain-investment)",
 }: Props) {
-  const { valuations, loading, error, remove } = useInvestmentValuations(selector);
+  const valuations = useMemo(
+    () =>
+      allValuations
+        .filter((v) => matchesSelector(v, selector))
+        .sort((a, b) => b.asOf.toDate().getTime() - a.asOf.toDate().getTime()),
+    [allValuations, selector]
+  );
   const [modal, setModal] = useState<{ open: boolean; editing?: InvestmentValuation }>({
     open: false,
   });
@@ -79,7 +93,7 @@ export function InvestmentValuePanel({
   const del = async (id: string) => {
     setDeletingId(id);
     try {
-      await remove(id);
+      await removeInvestmentValuation(id);
     } catch (err) {
       console.error("Failed to delete valuation:", err);
     } finally {
@@ -95,8 +109,6 @@ export function InvestmentValuePanel({
           Record value
         </Button>
       </div>
-
-      {error && <ErrorState error={error} />}
 
       <div className="figures">
         <div>
@@ -128,7 +140,7 @@ export function InvestmentValuePanel({
       <FlowChart
         data={series}
         currency={currency}
-        loading={txLoading || loading}
+        loading={Boolean(loading)}
         labelA="Invested"
         labelB="Value"
         colorA="var(--fg-2)"

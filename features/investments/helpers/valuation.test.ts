@@ -5,6 +5,7 @@ import {
   latestValuationAt,
   matchesSelector,
   selectorKey,
+  valuationDomain,
   valueFromGain,
   valuationSeries,
 } from "./valuation";
@@ -18,7 +19,7 @@ const ts = (date: Date): Timestamp => ({
 });
 
 const ctx = { rates: IDENTITY_RATES, target: "USD" as Currency };
-const FUNDS = { categoryId: "funds" };
+const FUNDS = { domain: "INVESTMENT" as const };
 
 const tx = (amount: number, date: Date, overrides: Partial<Transaction> = {}): Transaction => ({
   userId: "u1",
@@ -35,7 +36,7 @@ const tx = (amount: number, date: Date, overrides: Partial<Transaction> = {}): T
 const valuation = (value: number, date: Date, overrides: Partial<InvestmentValuation> = {}) =>
   ({
     userId: "u1",
-    categoryId: "funds",
+    domain: "INVESTMENT",
     asOf: ts(date),
     gainPct: 0,
     value,
@@ -72,15 +73,15 @@ describe("costBasisAt", () => {
     expect(costBasisAt(list, FUNDS, new Date(2026, 5, 1), ctx)).toBe(120);
   });
 
-  it("ignores other categories, other domains and non-PAID rows", () => {
+  it("pools every unassigned row of the domain, skipping other domains, accounts and non-PAID rows", () => {
     const list = [
       tx(100, march),
-      tx(999, march, { categoryId: "crypto" }),
+      tx(50, march, { categoryId: "crypto" }),
       tx(999, march, { domain: "EXPENSE" }),
       tx(999, march, { status: "SKIPPED" }),
       tx(999, march, { accountId: "isk" }),
     ];
-    expect(costBasisAt(list, FUNDS, may, ctx)).toBe(100);
+    expect(costBasisAt(list, FUNDS, may, ctx)).toBe(150);
   });
 
   it("counts savings deposits too, and selects by account across categories", () => {
@@ -94,15 +95,24 @@ describe("costBasisAt", () => {
 });
 
 describe("selectors", () => {
-  it("keys accounts and categories apart", () => {
+  it("keys accounts and domain buckets apart", () => {
     expect(selectorKey({ accountId: "a" })).toBe("acc:a");
-    expect(selectorKey({ categoryId: "c" })).toBe("cat:c");
+    expect(selectorKey({ domain: "SAVING" })).toBe("dom:SAVING");
   });
 
-  it("matches a category only for rows without an account", () => {
-    expect(matchesSelector({ categoryId: "c" }, { categoryId: "c" })).toBe(true);
-    expect(matchesSelector({ categoryId: "c", accountId: "a" }, { categoryId: "c" })).toBe(false);
-    expect(matchesSelector({ categoryId: "c", accountId: "a" }, { accountId: "a" })).toBe(true);
+  it("matches the bucket only for rows of the domain without an account", () => {
+    expect(matchesSelector({ domain: "SAVING" }, { domain: "SAVING" })).toBe(true);
+    expect(matchesSelector({ domain: "SAVING", accountId: "a" }, { domain: "SAVING" })).toBe(false);
+    expect(matchesSelector({ domain: "INVESTMENT" }, { domain: "SAVING" })).toBe(false);
+    expect(matchesSelector({ domain: "SAVING", accountId: "a" }, { accountId: "a" })).toBe(true);
+  });
+
+  it("resolves a legacy valuation's domain through its category, defaulting to investments", () => {
+    const cats = [{ id: "emergency", domain: "SAVING" as const }];
+    expect(valuationDomain({ domain: "SAVING" }, [])).toBe("SAVING");
+    expect(valuationDomain({ categoryId: "emergency" }, cats)).toBe("SAVING");
+    expect(valuationDomain({ categoryId: "funds" }, cats)).toBe("INVESTMENT");
+    expect(valuationDomain({}, [])).toBe("INVESTMENT");
   });
 });
 
@@ -114,9 +124,7 @@ describe("currentValue", () => {
     const estimate = currentValue(list, [], { accountId: "seb" }, rate, new Date(2026, 0, 1), ctx);
     expect(estimate).toBeCloseTo(1050, 0);
 
-    const checks = [
-      valuation(1030, new Date(2025, 6, 1), { accountId: "seb", categoryId: undefined }),
-    ];
+    const checks = [valuation(1030, new Date(2025, 6, 1), { accountId: "seb" })];
     const later = [...list, tx(100, new Date(2025, 9, 1), { accountId: "seb", domain: "SAVING" })];
     const withCheck = currentValue(
       later,

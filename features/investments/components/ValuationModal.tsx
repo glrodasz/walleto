@@ -3,7 +3,10 @@ import { Modal } from "../../../components/molecules/Modal";
 import { TextField } from "../../../components/atoms/TextField";
 import { Button } from "../../../components/atoms/Button";
 import { formatAmount } from "../../../components/atoms/Amount";
-import { useInvestmentValuations } from "../../../hooks/useInvestmentValuations";
+import {
+  createInvestmentValuation,
+  updateInvestmentValuation,
+} from "../../../hooks/useInvestmentValuations";
 import { toDateInputValue } from "../../../helpers/scheduleAnchor";
 import { gainFromValue, valueFromGain } from "../helpers/valuation";
 import type { ValueSelector } from "../helpers/valuation";
@@ -39,7 +42,6 @@ export function ValuationModal({
   valuation,
   onClose,
 }: Props) {
-  const { create, update } = useInvestmentValuations(selector);
   const [date, setDate] = useState(toDateInputValue(new Date()));
   const [gain, setGain] = useState("0");
   const [value, setValue] = useState("");
@@ -91,9 +93,14 @@ export function ValuationModal({
       const [y, m, d] = date.split("-").map(Number);
       const asOf = new Date(y, m - 1, d, 12).toISOString();
       if (valuation?.id) {
-        await update(valuation.id, { asOf, gainPct: pct, value: v, note: note.trim() || null });
+        await updateInvestmentValuation(valuation.id, {
+          asOf,
+          gainPct: pct,
+          value: v,
+          note: note.trim() || null,
+        });
       } else {
-        await create({
+        await createInvestmentValuation({
           ...selector,
           asOf,
           gainPct: pct,

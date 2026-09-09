@@ -13,6 +13,9 @@ let accounts: unknown[] = [];
 jest.mock("../../../hooks/useAccounts", () => ({
   useAccounts: () => ({ accounts, loading: false, error: null }),
 }));
+jest.mock("../../../hooks/useInvestmentValuations", () => ({
+  useAllInvestmentValuations: () => ({ valuations: [], loading: false, error: null }),
+}));
 let categories: unknown[] = [];
 jest.mock("../../../hooks/useCategories", () => ({
   useCategories: () => ({ categories }),
@@ -62,13 +65,13 @@ beforeEach(() => {
 });
 
 describe("RecordValueModal", () => {
-  it("offers accounts and categories with unassigned entries, shows what went in, then hands off", () => {
+  it("offers accounts and the No-account bucket, shows what went in, then hands off", () => {
     render(<RecordValueModal open domain="INVESTMENT" onClose={jest.fn()} />);
     const select = screen.getByLabelText("Account") as HTMLSelectElement;
     expect(Array.from(select.options).map((o) => o.textContent)).toEqual([
       "Pick an account",
       "Avanza ISK",
-      "Index funds · no account",
+      "No account",
     ]);
     expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
 

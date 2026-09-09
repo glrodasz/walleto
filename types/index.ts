@@ -145,15 +145,19 @@ export interface Transaction {
 }
 
 /**
- * A point-in-time statement of what an account / pocket — or, for entries
- * that predate accounts, a category — is worth. Exactly one of `accountId`
- * and `categoryId` is set. Cost basis and value are snapshots in `currency`
- * at recording time, so history stays truthful when rates or items change.
+ * A point-in-time statement of what an account / pocket — or the domain's
+ * "No account" bucket — is worth. `domain` is always written; `accountId`
+ * names the account, absent for the bucket. `categoryId` only survives on
+ * valuations written before accounts existed (no `domain` on those). Cost
+ * basis and value are snapshots in `currency` at recording time, so history
+ * stays truthful when rates or items change later.
  */
 export interface InvestmentValuation {
   id?: string;
   userId: string;
+  domain?: AccountDomain;
   accountId?: string;
+  /** Legacy: the category a pre-account valuation was recorded on. */
   categoryId?: string;
   asOf: Timestamp;
   /** 0 = break-even, 100 = doubled, -20 = lost a fifth. */

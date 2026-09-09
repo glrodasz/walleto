@@ -93,7 +93,7 @@ beforeEach(() => {
 });
 
 describe("AccountValueList", () => {
-  it("lists every pocket plus categories with unassigned entries, opens a panel and records", () => {
+  it("lists every pocket plus the No-pocket bucket, opens a panel and records", () => {
     render(<AccountValueList domain="SAVING" categories={categories} ctx={ctx} currency="USD" />);
 
     const seb = screen.getByRole("button", { name: /SEB savings/ });
@@ -103,8 +103,9 @@ describe("AccountValueList", () => {
     const amounts = screen.getAllByText(/^\$1,0\d\d\.\d\d$/);
     expect(amounts.length).toBeGreaterThan(0);
 
-    const legacy = screen.getByRole("button", { name: /Emergency/ });
-    expect(legacy).toHaveTextContent("No pocket · In $130.00 · checked Sep 2");
+    // The pre-account valuation on the "Emergency" savings category lands in the bucket.
+    const bucket = screen.getByRole("button", { name: /No pocket/ });
+    expect(bucket).toHaveTextContent("In $130.00 · checked Sep 2");
     expect(screen.getByText("$260.00")).toBeInTheDocument();
     expect(screen.getByText("+100.0%")).toBeInTheDocument();
 
@@ -122,7 +123,7 @@ describe("AccountValueList", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: "Record value" })[1]);
     expect(valuationModalMock).toHaveBeenCalledWith(
-      expect.objectContaining({ selector: { categoryId: "emergency" }, costBasis: 130 })
+      expect.objectContaining({ selector: { domain: "SAVING" }, costBasis: 130 })
     );
   });
 });

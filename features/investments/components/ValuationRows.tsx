@@ -3,6 +3,8 @@ import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { formatAmount } from "../../../components/atoms/Amount";
 import { useAllInvestmentValuations } from "../../../hooks/useInvestmentValuations";
+import { ACCOUNT_NOUN, accountLabel } from "../../../helpers/accounts";
+import { valuationDomain } from "../helpers/valuation";
 import type { Account, Category, InvestmentValuation } from "../../../types";
 
 interface Props {
@@ -45,9 +47,12 @@ export function ValuationRows({ categories, accounts, start, end }: Props) {
           <li key={v.id} className="row">
             <span className="main">
               <span className="name">
-                {(v.accountId
-                  ? accounts.find((a) => a.id === v.accountId)?.name
-                  : categories.find((c) => c.id === v.categoryId)?.name) ?? "Value check"}
+                {(() => {
+                  const account = v.accountId && accounts.find((a) => a.id === v.accountId);
+                  return account
+                    ? accountLabel(account)
+                    : `No ${ACCOUNT_NOUN[valuationDomain(v, categories)].singular}`;
+                })()}
               </span>
               <span className="meta">
                 {DATE.format(v.asOf.toDate())} · value check

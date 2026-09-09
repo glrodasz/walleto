@@ -3,27 +3,56 @@ import type { MoneyContext } from "../../../helpers/aggregations";
 import { convert } from "../../../helpers/fx";
 import { isAccountDomain } from "../../../helpers/accounts";
 import type { FlowPoint } from "../../../helpers/chartData";
-import type { InterestRate, InvestmentValuation, Transaction } from "../../../types";
+import type {
+  AccountDomain,
+  Category,
+  InterestRate,
+  InvestmentValuation,
+  Transaction,
+} from "../../../types";
 import { valueAt } from "./interest";
 import type { Deposit, ValuePoint } from "./interest";
 
 /**
- * What a value is *of*: an account / pocket, or — for entries that were
- * never filed under one — a category's unassigned rows. Old valuations that
- * predate accounts live on their category and match the second form.
+ * What a value is *of*: an account / pocket, or the domain's "No account"
+ * bucket — every entry filed under none. Valuations that predate accounts
+ * (a `categoryId`, no `domain`) fall into the bucket of their category's
+ * domain; see `valuationDomain`.
  */
-export type ValueSelector = { accountId: string } | { categoryId: string };
+export type ValueSelector = { accountId: string } | { domain: AccountDomain };
 
 export function selectorKey(s: ValueSelector): string {
-  return "accountId" in s ? `acc:${s.accountId}` : `cat:${s.categoryId}`;
+  return "accountId" in s ? `acc:${s.accountId}` : `dom:${s.domain}`;
 }
 
 export function matchesSelector(
-  row: { categoryId?: string; accountId?: string },
+  row: { accountId?: string; domain?: string },
   s: ValueSelector
 ): boolean {
   if ("accountId" in s) return row.accountId === s.accountId;
-  return row.categoryId === s.categoryId && !row.accountId;
+  return !row.accountId && row.domain === s.domain;
+}
+
+/**
+ * The domain a valuation belongs to. New ones carry it; the ones written
+ * before accounts existed only name a category — resolve through it, and
+ * fall back to INVESTMENT, the only domain that had valuations back then.
+ */
+export function valuationDomain(
+  v: Pick<InvestmentValuation, "domain" | "categoryId">,
+  categories: Pick<Category, "id" | "domain">[] = []
+): AccountDomain {
+  if (v.domain) return v.domain;
+  const viaCategory = categories.find((c) => c.id === v.categoryId)?.domain;
+  return viaCategory === "SAVING" ? "SAVING" : "INVESTMENT";
+}
+
+/** Every valuation with its domain filled in, so selectors can match it. */
+export function withDomain(
+  valuations: InvestmentValuation[],
+  categories: Pick<Category, "id" | "domain">[] = []
+): InvestmentValuation[] {
+  return valuations.map((v) => (v.domain ? v : { ...v, domain: valuationDomain(v, categories) }));
 }
 
 /** Value implied by a gain: 0% leaves the basis alone, +100% doubles it. */

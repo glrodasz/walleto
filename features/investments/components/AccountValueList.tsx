@@ -17,6 +17,7 @@ import {
   latestValuationAt,
   matchesSelector,
   selectorKey,
+  withDomain,
 } from "../helpers/valuation";
 import type { ValueSelector } from "../helpers/valuation";
 import { InvestmentValuePanel } from "./InvestmentValuePanel";
@@ -54,15 +55,20 @@ const DATE = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
 
 /**
  * Every account / pocket of the domain at a glance — what went in, what it
- * is worth, the gain — plus one row per category that still holds entries
- * filed under no account. Tapping a row opens its full panel underneath;
- * "Record value" goes straight to the value form. Mounted only on the Value
- * view, so its inception-to-date listener runs nowhere else.
+ * is worth, the gain — plus one "No account" row for whatever is filed under
+ * none (including valuations from before accounts existed). Tapping a row
+ * opens its full panel underneath; "Record value" goes straight to the value
+ * form. Mounted only on the Value view, so its inception-to-date listener
+ * runs nowhere else.
  */
 export function AccountValueList({ domain, categories, ctx, currency }: Props) {
   const { accounts, loading: accLoading, error: accError } = useAccounts(domain);
   const { transactions, loading: txLoading } = useDomainTransactions(domain, INCEPTION);
-  const { valuations, loading, error } = useAllInvestmentValuations();
+  const { valuations: rawValuations, loading, error } = useAllInvestmentValuations();
+  const valuations = useMemo(
+    () => withDomain(rawValuations, categories),
+    [rawValuations, categories]
+  );
   const [selected, setSelected] = useState<string | null>(null);
   const [recording, setRecording] = useState<Row | null>(null);
   const now = useMemo(() => new Date(), []);
@@ -99,15 +105,12 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
       .filter((a) => a.id)
       .map((a) => build({ accountId: a.id! }, a.name, a.provider, a.interestRate));
 
-    // Entries that predate accounts, or were filed under none: one row per
-    // category, only where there is something to show.
-    const unassigned = categories
-      .filter((c) => !c.parentId && c.id)
-      .map((c) => build({ categoryId: c.id! }, c.name, `No ${noun}`, undefined))
-      .filter((r) => r.invested > 0 || r.latest);
+    // Whatever was filed under no account — one bucket, only when it holds something.
+    const bucket = build({ domain }, `No ${noun}`, undefined, undefined);
+    const unassigned = bucket.invested > 0 || bucket.latest ? [bucket] : [];
 
     return [...byAccount, ...unassigned].sort((a, b) => b.value - a.value);
-  }, [accounts, categories, transactions, valuations, now, ctx, noun]);
+  }, [accounts, domain, transactions, valuations, now, ctx, noun]);
 
   const open = rows.find((r) => r.key === selected) ?? null;
   const busy = accLoading || txLoading || loading;
@@ -174,7 +177,8 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
           title={open.name}
           rate={open.rate}
           transactions={transactions}
-          loading={txLoading}
+          valuations={valuations}
+          loading={txLoading || loading}
           ctx={ctx}
           currency={currency}
           accent={accent}

@@ -261,6 +261,7 @@ export function DomainPage({ domain }: Props) {
                   key={drillCategory.id}
                   domain={accountDomain}
                   category={drillCategory}
+                  categories={categories}
                   ctx={ctx}
                   currency={currency}
                 />

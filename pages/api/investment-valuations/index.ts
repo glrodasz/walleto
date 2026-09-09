@@ -16,37 +16,27 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
-    const { accountId, categoryId, asOf, gainPct, value, costBasis, currency, note } = parsed.data;
+    const { accountId, asOf, gainPct, value, costBasis, currency, note } = parsed.data;
 
-    // Whichever the value is of must exist, be the caller's, and sit in a
-    // domain that holds value — investments or savings.
+    // An account must exist and be the caller's; its domain is the record's.
+    // Without one the valuation is the domain's "No account" bucket.
+    let domain = parsed.data.domain;
     if (accountId) {
       const accSnap = await db.collection("accounts").doc(accountId).get();
       if (!accSnap.exists) {
         return res.status(400).json({ error: "Account not found" });
       }
-      if (accSnap.data()?.userId !== userId) {
+      const acc = accSnap.data()!;
+      if (acc.userId !== userId) {
         return res.status(403).json({ error: "Forbidden" });
       }
-    } else {
-      const catSnap = await db.collection("categories").doc(categoryId!).get();
-      if (!catSnap.exists) {
-        return res.status(400).json({ error: "Category not found" });
-      }
-      const cat = catSnap.data()!;
-      if (cat.userId !== userId) {
-        return res.status(403).json({ error: "Forbidden" });
-      }
-      if (cat.domain !== "INVESTMENT" && cat.domain !== "SAVING") {
-        return res
-          .status(400)
-          .json({ error: "Valuations apply to investment and savings categories only" });
-      }
+      domain = acc.domain;
     }
 
     const ref = await db.collection("investmentValuations").add({
       userId,
-      ...(accountId ? { accountId } : { categoryId }),
+      domain,
+      ...(accountId ? { accountId } : {}),
       asOf: admin.firestore.Timestamp.fromDate(new Date(asOf)),
       gainPct,
       value,

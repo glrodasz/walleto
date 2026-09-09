@@ -30,15 +30,17 @@ rates into a per-user display currency.
   view per account: invested vs value, gain-% history, chart. A savings
   pocket can quote an interest rate (monthly or yearly); its value is then
   estimated by compounding every deposit monthly, and any recorded value
-  check takes over from its date. Entries hidden from the dashboard carry a
-  visible pill on these pages.
+  check takes over from its date. Entries filed under no account share one
+  "No account" bucket per domain. Hidden recurring items and categories
+  hidden from the chart stay out of the bars unless "Show hidden" is on.
 - **Prospect** (`/prospect`) — a what-if simulator: check any recurring
   expense, investment or saving to see the monthly/annual amount it would
   free and how your net would change, projected 6 or 12 months out.
 - **Methods** (`/methods`) — payment methods CRUD (cards, wallets, bank
   transfers, cash, crypto), grouped by type and sorted by name.
 - **Settings** (`/settings`) — account info, main reporting currency,
-  root categories per domain (rename, add, archive), redo onboarding.
+  root categories per domain (rename, add, archive), investment accounts
+  and savings pockets (edit, archive), redo onboarding.
 
 One-off transactions (a coffee, an invoice) are recorded through the create
 button — the header's New buttons on desktop, the floating "+" on phones —

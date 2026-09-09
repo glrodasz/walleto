@@ -266,7 +266,7 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
         // category's live basis and the user can re-value there any time.
         if (gainPct !== null) {
           await createInvestmentValuation({
-            categoryId: form.categoryId,
+            ...(form.accountId ? { accountId: form.accountId } : { domain: "INVESTMENT" }),
             asOf: new Date().toISOString(),
             gainPct,
             value: valueFromGain(amount, gainPct),
@@ -379,8 +379,8 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
               onValueChange={(v) => patch({ gainPct: v.replace(/[^\d.-]/g, "") })}
             />
             <p className="field-hint">
-              0 = break-even, 100 = doubled. Records a first valuation for this category; you can
-              refine it on the Investments page.
+              0 = break-even, 100 = doubled. Records a first value check for the account (or the
+              &ldquo;No account&rdquo; bucket); refine it on the Investments page any time.
             </p>
           </div>
         )}

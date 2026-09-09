@@ -60,7 +60,7 @@ const wire = (
 };
 
 const body = {
-  categoryId: "funds",
+  domain: "INVESTMENT",
   asOf: "2026-06-01T12:00:00.000Z",
   gainPct: 100,
   value: 260,
@@ -81,24 +81,16 @@ describe("POST /api/investment-valuations", () => {
     expect(res.status).toHaveBeenCalledWith(401);
   });
 
-  it("records a valuation for an owned investment category", async () => {
+  it("records a bucket valuation with its domain", async () => {
     const add = wire({ exists: true });
     const res = mockRes();
-    await handler({ method: "POST", body: { ...body, note: "Q2" } } as NextApiRequest, res);
-
+    await handler({ method: "POST", body } as NextApiRequest, res);
     expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith({ id: "val1" });
     expect(add).toHaveBeenCalledWith(
-      expect.objectContaining({
-        userId: "user1",
-        categoryId: "funds",
-        gainPct: 100,
-        value: 260,
-        costBasis: 130,
-        currency: "USD",
-        note: "Q2",
-        asOf: { __ts: "2026-06-01T12:00:00.000Z" },
-      })
+      expect.objectContaining({ userId: "user1", domain: "INVESTMENT", gainPct: 100, value: 260 })
     );
+    expect(add.mock.calls[0][0]).not.toHaveProperty("accountId");
   });
 
   it("rejects a negative value", async () => {
@@ -108,51 +100,33 @@ describe("POST /api/investment-valuations", () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  it("rejects someone else's category", async () => {
-    wire({ exists: true, data: { userId: "intruder", domain: "INVESTMENT" } });
+  it("records a valuation on an account, taking the account's domain", async () => {
+    const add = wire(
+      { exists: false },
+      { exists: true, data: { userId: "user1", domain: "SAVING" } }
+    );
     const res = mockRes();
-    await handler({ method: "POST", body } as NextApiRequest, res);
-    expect(res.status).toHaveBeenCalledWith(403);
-  });
-
-  it("rejects a category outside investments and savings", async () => {
-    wire({ exists: true, data: { userId: "user1", domain: "EXPENSE" } });
-    const res = mockRes();
-    await handler({ method: "POST", body } as NextApiRequest, res);
-    expect(res.status).toHaveBeenCalledWith(400);
-  });
-
-  it("accepts a savings category", async () => {
-    wire({ exists: true, data: { userId: "user1", domain: "SAVING" } });
-    const res = mockRes();
-    await handler({ method: "POST", body } as NextApiRequest, res);
-    expect(res.status).toHaveBeenCalledWith(201);
-  });
-
-  it("records a valuation on an account instead of a category", async () => {
-    const add = wire({ exists: false });
-    const res = mockRes();
-    const { categoryId: _omit, ...rest } = body;
+    const { domain: _omit, ...rest } = body;
     await handler({ method: "POST", body: { ...rest, accountId: "seb" } } as NextApiRequest, res);
     expect(res.status).toHaveBeenCalledWith(201);
-    expect(add).toHaveBeenCalledWith(expect.objectContaining({ accountId: "seb" }));
-    expect(add.mock.calls[0][0]).not.toHaveProperty("categoryId");
+    expect(add).toHaveBeenCalledWith(
+      expect.objectContaining({ accountId: "seb", domain: "SAVING" })
+    );
   });
 
   it("rejects someone else's account", async () => {
     wire({ exists: false }, { exists: true, data: { userId: "intruder", domain: "SAVING" } });
     const res = mockRes();
-    const { categoryId: _omit, ...rest } = body;
-    await handler({ method: "POST", body: { ...rest, accountId: "seb" } } as NextApiRequest, res);
+    await handler({ method: "POST", body: { ...body, accountId: "seb" } } as NextApiRequest, res);
     expect(res.status).toHaveBeenCalledWith(403);
   });
 
-  it("rejects both or neither target", async () => {
-    wire({ exists: true });
+  it("rejects a missing account and a payload with neither target", async () => {
+    wire({ exists: false }, { exists: false });
     const res = mockRes();
-    await handler({ method: "POST", body: { ...body, accountId: "seb" } } as NextApiRequest, res);
+    await handler({ method: "POST", body: { ...body, accountId: "gone" } } as NextApiRequest, res);
     expect(res.status).toHaveBeenCalledWith(400);
-    const { categoryId: _omit, ...rest } = body;
+    const { domain: _omit, ...rest } = body;
     await handler({ method: "POST", body: rest } as NextApiRequest, res);
     expect(res.status).toHaveBeenLastCalledWith(400);
   });

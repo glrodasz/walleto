@@ -216,8 +216,10 @@ export const TransactionUpdateSchema = z
 
 export const InvestmentValuationInputSchema = z
   .object({
+    /** The account being valued; omit for the domain's "No account" bucket. */
     accountId: z.string().min(1).optional(),
-    categoryId: z.string().min(1).optional(),
+    /** Required without an account: which bucket. Ignored with one (the account's domain wins). */
+    domain: AccountDomainSchema.optional(),
     asOf: z.iso.datetime(),
     gainPct: z.number().finite(),
     value: z.number().min(0),
@@ -225,8 +227,8 @@ export const InvestmentValuationInputSchema = z
     currency: CurrencySchema,
     note: z.string().max(200).trim().optional(),
   })
-  .refine((v) => Boolean(v.accountId) !== Boolean(v.categoryId), {
-    message: "Provide exactly one of accountId or categoryId",
+  .refine((v) => Boolean(v.accountId) || Boolean(v.domain), {
+    message: "Provide an accountId or a domain",
     path: ["accountId"],
   });
 

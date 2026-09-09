@@ -8,7 +8,8 @@ import { useCategories } from "../../../hooks/useCategories";
 import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
 import { ACCOUNT_NOUN, accountLabel } from "../../../helpers/accounts";
-import { costBasisAt, selectorKey } from "../helpers/valuation";
+import { useAllInvestmentValuations } from "../../../hooks/useInvestmentValuations";
+import { costBasisAt, matchesSelector, selectorKey, withDomain } from "../helpers/valuation";
 import type { ValueSelector } from "../helpers/valuation";
 import { ValuationModal } from "./ValuationModal";
 import type { AccountDomain } from "../../../types";
@@ -23,8 +24,8 @@ interface Props {
 const INCEPTION = new Date(2000, 0, 1);
 
 /**
- * "Record current value" from anywhere: pick the account / pocket — or a
- * category still holding entries filed under none — see what has gone into
+ * "Record current value" from anywhere: pick the account / pocket — or the
+ * "No account" bucket, when something sits in it — see what has gone into
  * it, then the usual gain-% / value form. Mounted only while open, so the
  * inception-to-date listener it needs runs nowhere else.
  */
@@ -33,6 +34,7 @@ export function RecordValueModal({ open, onClose, domain }: Props) {
   const { accounts } = useAccounts(domain);
   const { categories } = useCategories(domain);
   const { transactions } = useDomainTransactions(domain, INCEPTION);
+  const { valuations: rawValuations } = useAllInvestmentValuations();
   const [picked, setPicked] = useState("");
   const [step, setStep] = useState<"pick" | "value">("pick");
   const noun = ACCOUNT_NOUN[domain].singular;
@@ -42,15 +44,14 @@ export function RecordValueModal({ open, onClose, domain }: Props) {
     const byAccount = accounts
       .filter((a) => a.id)
       .map((a) => ({ selector: { accountId: a.id! } as ValueSelector, label: accountLabel(a) }));
-    const unassigned = categories
-      .filter((c) => !c.parentId && c.id)
-      .map((c) => ({
-        selector: { categoryId: c.id! } as ValueSelector,
-        label: `${c.name} · no ${noun}`,
-      }))
-      .filter((c) => costBasisAt(transactions, c.selector, now, ctx) > 0);
+    const bucket: ValueSelector = { domain };
+    const valuations = withDomain(rawValuations, categories);
+    const hasBucket =
+      costBasisAt(transactions, bucket, now, ctx) > 0 ||
+      valuations.some((v) => matchesSelector(v, bucket));
+    const unassigned = hasBucket ? [{ selector: bucket, label: `No ${noun}` }] : [];
     return [...byAccount, ...unassigned].map((c) => ({ ...c, key: selectorKey(c.selector) }));
-  }, [accounts, categories, transactions, now, ctx, noun]);
+  }, [accounts, categories, domain, rawValuations, transactions, now, ctx, noun]);
 
   const choice = choices.find((c) => c.key === picked) ?? null;
   const invested = useMemo(
