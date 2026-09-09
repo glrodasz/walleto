@@ -3,7 +3,7 @@ import { Select } from "../atoms/Select";
 import { TextField } from "../atoms/TextField";
 import { Button } from "../atoms/Button";
 import { Chip } from "../atoms/Chip";
-import { ACCOUNT_NOUN } from "../../helpers/accounts";
+import { ACCOUNT_NOUN, accountLabel } from "../../helpers/accounts";
 import { SELECTABLE_CURRENCIES, CURRENCY_SYMBOL } from "../../constants";
 import type { Account, AccountDomain, Currency, InterestPeriod } from "../../types";
 import type { AccountInput } from "../../schemas";
@@ -63,7 +63,7 @@ export function AccountField({
 
   const options = [
     { value: "", label: `No ${noun}` },
-    ...accounts.map((a) => ({ value: a.id!, label: a.name })),
+    ...accounts.map((a) => ({ value: a.id!, label: accountLabel(a) })),
   ];
 
   const open = () => {

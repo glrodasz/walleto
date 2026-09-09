@@ -37,7 +37,7 @@ describe("PaymentMethodField", () => {
     fireEvent.change(screen.getByLabelText("Type"), { target: { value: "BANK_TRANSFER" } });
     // Controlled combobox: every keystroke reports the text; <select>s share the role.
     fireEvent.change(screen.getByLabelText("Method"), { target: { value: "Autogiro" } });
-    fireEvent.change(screen.getByLabelText("Method name"), { target: { value: "Bancolombia" } });
+    fireEvent.change(screen.getByLabelText("Alias"), { target: { value: "Bancolombia" } });
     fireEvent.click(screen.getByRole("button", { name: "Save method" }));
 
     await waitFor(() => expect(onChange).toHaveBeenCalledWith("new1"));
@@ -64,7 +64,7 @@ describe("PaymentMethodField", () => {
 
     fireEvent.change(screen.getByLabelText("Type"), { target: { value: "CREDIT_CARD" } });
     expect(screen.getByLabelText("Last 4 numbers")).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Method name"), { target: { value: "Chase" } });
+    fireEvent.change(screen.getByLabelText("Alias"), { target: { value: "Chase" } });
     fireEvent.click(screen.getByRole("button", { name: "Save method" }));
 
     await waitFor(() =>

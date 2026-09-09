@@ -135,7 +135,7 @@ export function PaymentMethodField({
           />
         )}
         <TextField
-          label="Method name"
+          label="Alias"
           placeholder="Ex: Chase Sapphire"
           value={draft.name}
           disabled={busy}

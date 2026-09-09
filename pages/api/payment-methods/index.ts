@@ -45,26 +45,29 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       return res.status(400).json({ error: "defaultCurrency must be one of currencies" });
     }
 
-    // A duplicate is the same *type* with the same name, case-insensitively:
-    // a "Bancolombia" debit card and a "Bancolombia" bank transfer are two
-    // different methods. Firestore compares strings exactly, so the name
-    // check runs in memory over the (few) methods of that type.
+    // A duplicate is the same type, the same network or provider *and* the
+    // same alias, case-insensitively: two "Salary" bank transfers at SEB and
+    // Nordea are two methods, and so are two SEB transfers with different
+    // aliases. Firestore compares strings exactly, so the check runs in
+    // memory over the (few) methods of that type.
     const sameType = await db
       .collection("paymentMethods")
       .where("userId", "==", userId)
       .where("type", "==", type)
       .where("archived", "==", false)
       .get();
-    const wanted = name.trim().toLowerCase();
+    const fold = (v: unknown) =>
+      String(v ?? "")
+        .trim()
+        .toLowerCase();
     const clash = (sameType.docs ?? []).some(
-      (d) =>
-        String(d.data()?.name ?? "")
-          .trim()
-          .toLowerCase() === wanted
+      (d) => fold(d.data()?.name) === fold(name) && fold(d.data()?.network) === fold(network)
     );
     if (clash) {
       return res.status(409).json({
-        error: `You already have a ${PAYMENT_METHOD_TYPE_LABELS[type]} called "${name}"`,
+        error: `You already have a ${PAYMENT_METHOD_TYPE_LABELS[type]} called "${name}"${
+          network ? ` at ${network}` : ""
+        }`,
       });
     }
 

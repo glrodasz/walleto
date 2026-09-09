@@ -76,6 +76,7 @@ function setup(overrides: Partial<React.ComponentProps<typeof RecurringChecklist
       items={[rent, netflix, gym, insurance]}
       transactions={[paidNetflix]}
       paymentMethods={methods}
+      categories={[{ id: "c1", userId: "u1", domain: "EXPENSE", name: "Housing" }] as never}
       ctx={ctx}
       currency="USD"
       window={sep}
@@ -102,7 +103,9 @@ describe("RecurringChecklist", () => {
     expect(within(overdue).getByText("Overdue")).toBeInTheDocument();
     const due = screen.getByText("Rent").closest("li")!;
     expect(within(due).getByText("Due")).toBeInTheDocument();
-    expect(within(due).getByText(/Sep 25 · Monthly · Chase - 4242/)).toBeInTheDocument();
+    expect(
+      within(due).getByText(/Sep 25 · Monthly · Housing · Chase ••4242 \(Credit card\)/)
+    ).toBeInTheDocument();
     const paid = screen.getByText("Netflix").closest("li")!;
     expect(within(paid).getByText("Paid")).toBeInTheDocument();
 

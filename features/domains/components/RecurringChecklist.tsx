@@ -6,12 +6,13 @@ import { KebabMenu } from "../../../components/molecules/KebabMenu";
 import type { KebabAction } from "../../../components/molecules/KebabMenu";
 import { sumMonthly } from "../../../helpers/aggregations";
 import type { MoneyContext } from "../../../helpers/aggregations";
-import { paymentMethodLabel } from "../../../helpers/paymentMethodLabel";
+import { paymentMethodOptionLabel } from "../../../helpers/paymentMethodLabel";
 import { monthOccurrences } from "../helpers/months";
 import type { MonthWindow, OccurrenceStatus } from "../helpers/months";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import { FREQUENCY_LABELS } from "../../../constants";
 import type {
+  Category,
   Currency,
   Domain,
   PaymentMethod,
@@ -25,6 +26,7 @@ interface Props {
   /** The selected month's PAID transactions. */
   transactions: Transaction[];
   paymentMethods: PaymentMethod[];
+  categories: Category[];
   ctx: MoneyContext;
   currency: Currency;
   window: MonthWindow;
@@ -225,6 +227,7 @@ export function RecurringChecklist({
   items,
   transactions,
   paymentMethods,
+  categories,
   ctx,
   currency,
   window,
@@ -242,9 +245,15 @@ export function RecurringChecklist({
     [items, transactions, ctx, window, now]
   );
   const runRate = useMemo(() => sumMonthly(items, ctx), [items, ctx]);
-  const methodName = (id?: string) => {
-    const m = paymentMethods.find((pm) => pm.id === id);
-    return m ? paymentMethodLabel(m) : null;
+  // Where it is filed and how it is paid, both in full — the row is the one
+  // place that answers "which card, which bucket" at a glance.
+  const details = (item: RecurrentTransaction) => {
+    const category = categories.find((c) => c.id === item.categoryId)?.name;
+    const method = paymentMethods.find((pm) => pm.id === item.paymentMethodId);
+    return [category, method ? paymentMethodOptionLabel(method) : null]
+      .filter(Boolean)
+      .map((part) => ` · ${part}`)
+      .join("");
   };
 
   return (
@@ -271,14 +280,11 @@ export function RecurringChecklist({
                   {rows.map((o) => {
                     const id = o.item.id!;
                     const busy = busyId === id;
-                    const method = methodName(o.item.paymentMethodId);
                     return (
                       <OccurrenceRow
                         key={`${id}_${o.occurredAt.toISOString()}`}
                         name={o.item.name}
-                        meta={`${DATE.format(o.occurredAt)} · ${FREQUENCY_LABELS[o.item.frequency]}${
-                          method ? ` · ${method}` : ""
-                        }`}
+                        meta={`${DATE.format(o.occurredAt)} · ${FREQUENCY_LABELS[o.item.frequency]}${details(o.item)}`}
                         tags={hiddenTags(o.item)}
                         muted={Boolean(o.item.hiddenFromDashboard)}
                         amount={formatNative(o.item.amount, o.item.currency, currency)}

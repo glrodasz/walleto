@@ -27,7 +27,10 @@ export default function MethodsPage() {
     setError(null);
     setSavedCount(null);
     try {
-      setSavedCount(await draftState.save());
+      const created = await draftState.save();
+      setSavedCount(created);
+      // The list below now shows them; the form goes back to one blank row.
+      if (created > 0) draftState.reset();
     } catch (err) {
       console.error("Failed to save payment methods:", err);
       setError("Couldn't save — try again");
@@ -48,7 +51,7 @@ export default function MethodsPage() {
   };
 
   return (
-    <PageLayout title="Payment methods">
+    <PageLayout title="Payment methods" hideCurrency>
       <Card>
         <SectionTitle title="Add a method" />
         <p className="hint">Cards, bank accounts and wallets you use for incomes and expenses.</p>

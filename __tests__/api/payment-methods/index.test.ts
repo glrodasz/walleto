@@ -128,6 +128,55 @@ describe("POST /api/payment-methods", () => {
     });
   });
 
+  it("allows the same alias for the same type at a different network", async () => {
+    getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
+    const add = jest.fn().mockResolvedValue({ id: "pm-nordea" });
+    buildChain({
+      get: jest.fn().mockResolvedValue({
+        empty: false,
+        docs: [
+          { id: "seb", data: () => ({ name: "Salary", type: "BANK_TRANSFER", network: "SEB" }) },
+        ],
+      }),
+      add,
+    });
+    const res = mockRes();
+    await handler(
+      {
+        method: "POST",
+        query: {},
+        body: { name: "Salary", type: "BANK_TRANSFER", currencies: ["SEK"], network: "Nordea" },
+      } as NextApiRequest,
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(201);
+  });
+
+  it("names the network in the 409 when both match", async () => {
+    getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
+    buildChain({
+      get: jest.fn().mockResolvedValue({
+        empty: false,
+        docs: [
+          { id: "seb", data: () => ({ name: "salary", type: "BANK_TRANSFER", network: "seb" }) },
+        ],
+      }),
+    });
+    const res = mockRes();
+    await handler(
+      {
+        method: "POST",
+        query: {},
+        body: { name: "Salary", type: "BANK_TRANSFER", currencies: ["SEK"], network: "SEB" },
+      } as NextApiRequest,
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'You already have a Bank transfer called "Salary" at SEB',
+    });
+  });
+
   it("allows the same name for a different type", async () => {
     getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
     const add = jest.fn().mockResolvedValue({ id: "pm-transfer" });

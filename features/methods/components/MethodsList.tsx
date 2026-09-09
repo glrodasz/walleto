@@ -41,6 +41,7 @@ export function MethodsList({ methods, loading, archivingId, onEdit, onArchive }
               <tr className="group">
                 <th colSpan={5} scope="rowgroup">
                   {group.label}
+                  <span className="count">{group.methods.length}</span>
                 </th>
               </tr>
               {group.methods.map((m) => (
@@ -98,12 +99,18 @@ export function MethodsList({ methods, loading, archivingId, onEdit, onArchive }
         }
 
         .group th {
-          padding: 16px 0 6px;
-          font-size: 0.7rem;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          color: var(--fg-2);
+          padding: 20px 0 8px;
+          font-size: 0.9rem;
+          font-weight: 700;
+          color: var(--fg-0);
           border-bottom: none;
+        }
+
+        .group .count {
+          margin-left: 8px;
+          font-size: 0.72rem;
+          font-weight: 600;
+          color: var(--fg-2);
         }
 
         tbody:first-of-type .group th {

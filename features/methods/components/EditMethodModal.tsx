@@ -79,7 +79,7 @@ export function EditMethodModal({ method, onClose }: Props) {
     <Modal open title={`Edit ${method.name}`} onClose={onClose}>
       <div className="form">
         <TextField
-          label="Name"
+          label="Alias"
           placeholder="Ex: Chase Sapphire"
           value={name}
           onValueChange={setName}

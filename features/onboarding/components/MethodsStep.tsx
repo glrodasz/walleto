@@ -79,7 +79,7 @@ export function MethodsStep({ state }: Props) {
               )}
 
               <TextField
-                label="Name"
+                label="Alias"
                 placeholder="Ex: Chase Sapphire"
                 value={row.name}
                 disabled={disabled}

@@ -1,4 +1,10 @@
-import { ACCOUNT_NOUN, formatInterestRate, isAccountDomain, sortAccountsByName } from "./accounts";
+import {
+  ACCOUNT_NOUN,
+  accountLabel,
+  formatInterestRate,
+  isAccountDomain,
+  sortAccountsByLabel,
+} from "./accounts";
 
 describe("isAccountDomain", () => {
   it("is true for investments and savings only", () => {
@@ -22,11 +28,16 @@ describe("formatInterestRate", () => {
   });
 });
 
-describe("sortAccountsByName", () => {
-  it("sorts case-insensitively without mutating the input", () => {
-    const input = [{ name: "zeta" }, { name: "Alpha" }, { name: "beta" }];
-    const out = sortAccountsByName(input);
-    expect(out.map((a) => a.name)).toEqual(["Alpha", "beta", "zeta"]);
+describe("accountLabel / sortAccountsByLabel", () => {
+  it("prefixes the bank or broker when there is one", () => {
+    expect(accountLabel({ name: "ISK", provider: "Avanza" })).toBe("Avanza - ISK");
+    expect(accountLabel({ name: "Emergency fund" })).toBe("Emergency fund");
+  });
+
+  it("sorts by label, case-insensitively, without mutating the input", () => {
+    const input = [{ name: "zeta" }, { name: "Alpha", provider: "SEB" }, { name: "beta" }];
+    const out = sortAccountsByLabel(input);
+    expect(out.map(accountLabel)).toEqual(["beta", "SEB - Alpha", "zeta"]);
     expect(input[0].name).toBe("zeta");
   });
 });

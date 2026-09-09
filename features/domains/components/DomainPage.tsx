@@ -43,31 +43,6 @@ interface Props {
 
 const MONTHS = 7;
 
-function NewItemButton({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button type="button" className="new-btn" onClick={onClick}>
-      + {label}
-      <style jsx>{`
-        .new-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 8px 16px;
-          border-radius: var(--r-md);
-          border: none;
-          background: var(--fg-0);
-          color: var(--bg-0);
-          font-family: inherit;
-          font-size: 0.85rem;
-          font-weight: 700;
-          cursor: pointer;
-          white-space: nowrap;
-        }
-      `}</style>
-    </button>
-  );
-}
-
 /**
  * Month-first page shared by the four domains. One month is selected at a
  * time; the header, the bars and the panel below all speak about it. The
@@ -165,10 +140,6 @@ export function DomainPage({ domain }: Props) {
     setDrillCategoryId(null);
   };
 
-  const openCreate = () => {
-    setEditingItem(undefined);
-    setModalOpen(true);
-  };
   const openEdit = (item: RecurrentTransaction) => {
     setEditingItem(item);
     setModalOpen(true);
@@ -298,6 +269,7 @@ export function DomainPage({ domain }: Props) {
         items={items}
         transactions={monthTransactions}
         paymentMethods={methods}
+        categories={categories}
         ctx={ctx}
         currency={currency}
         window={window}
@@ -311,13 +283,7 @@ export function DomainPage({ domain }: Props) {
     );
 
   return (
-    <PageLayout
-      title={config.title}
-      domain={domain}
-      actions={
-        <NewItemButton label={`New ${config.noun.replace(/s$/, "")}`} onClick={openCreate} />
-      }
-    >
+    <PageLayout title={config.title} domain={domain}>
       {error && <ErrorState error={error} />}
 
       <div className="layout">

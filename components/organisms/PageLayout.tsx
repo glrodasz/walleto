@@ -8,9 +8,10 @@ import type { Domain } from "../../types";
 
 interface Props {
   title: string;
-  actions?: ReactNode;
-  /** The page's domain, so the mobile create button skips the domain question. */
+  /** The page's domain, so the create button skips the domain question. */
   domain?: Domain;
+  /** Pages with no money on them (Methods) skip the display-currency switcher. */
+  hideCurrency?: boolean;
   children: ReactNode;
 }
 
@@ -19,7 +20,7 @@ interface Props {
  * the mobile create launcher must exist on every page, and every page is
  * built on this layout.
  */
-export function PageLayout({ title, actions, domain, children }: Props) {
+export function PageLayout({ title, domain, hideCurrency, children }: Props) {
   // The display currency is a property of the whole app, so its switcher
   // lives in every page header, not only on the dashboard.
   const { target, setDisplayCurrency } = useMoneyContext();
@@ -38,9 +39,8 @@ export function PageLayout({ title, actions, domain, children }: Props) {
           <header className="header">
             <div className="header-left">
               <h1 className="page-title">{title}</h1>
-              <CurrencySelector value={target} onChange={setDisplayCurrency} />
+              {!hideCurrency && <CurrencySelector value={target} onChange={setDisplayCurrency} />}
             </div>
-            {actions && <div className="header-actions">{actions}</div>}
           </header>
 
           <main className="main">{children}</main>
@@ -89,12 +89,6 @@ export function PageLayout({ title, actions, domain, children }: Props) {
           text-overflow: ellipsis;
         }
 
-        .header-actions {
-          display: flex;
-          gap: 8px;
-          flex-shrink: 0;
-        }
-
         .main {
           padding: 24px 28px 96px;
           display: flex;
@@ -109,10 +103,6 @@ export function PageLayout({ title, actions, domain, children }: Props) {
 
           .page-title {
             font-size: 1rem;
-          }
-
-          .header-actions {
-            display: none;
           }
 
           .main {

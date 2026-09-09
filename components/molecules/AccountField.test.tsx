@@ -4,7 +4,7 @@ import type { Account } from "../../types";
 
 const accounts = [
   { id: "a1", userId: "u", domain: "SAVING", name: "Emergency fund", currency: "USD" },
-  { id: "a2", userId: "u", domain: "SAVING", name: "Trip", currency: "EUR" },
+  { id: "a2", userId: "u", domain: "SAVING", name: "Trip", provider: "Revolut", currency: "EUR" },
 ] as Account[];
 
 function setup(
@@ -34,7 +34,7 @@ describe("AccountField", () => {
     expect(Array.from(select.options).map((o) => o.textContent)).toEqual([
       "No pocket",
       "Emergency fund",
-      "Trip",
+      "Revolut - Trip",
     ]);
     fireEvent.change(select, { target: { value: "a2" } });
     expect(onChange).toHaveBeenCalledWith("a2");

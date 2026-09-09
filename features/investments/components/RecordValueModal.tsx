@@ -7,7 +7,7 @@ import { useAccounts } from "../../../hooks/useAccounts";
 import { useCategories } from "../../../hooks/useCategories";
 import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
-import { ACCOUNT_NOUN } from "../../../helpers/accounts";
+import { ACCOUNT_NOUN, accountLabel } from "../../../helpers/accounts";
 import { costBasisAt, selectorKey } from "../helpers/valuation";
 import type { ValueSelector } from "../helpers/valuation";
 import { ValuationModal } from "./ValuationModal";
@@ -41,7 +41,7 @@ export function RecordValueModal({ open, onClose, domain }: Props) {
   const choices = useMemo(() => {
     const byAccount = accounts
       .filter((a) => a.id)
-      .map((a) => ({ selector: { accountId: a.id! } as ValueSelector, label: a.name }));
+      .map((a) => ({ selector: { accountId: a.id! } as ValueSelector, label: accountLabel(a) }));
     const unassigned = categories
       .filter((c) => !c.parentId && c.id)
       .map((c) => ({

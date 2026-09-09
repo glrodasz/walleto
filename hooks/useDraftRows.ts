@@ -48,5 +48,8 @@ export function useDraftRows<T extends DraftRow>(
       return next.length ? next : [blank()];
     });
 
-  return { rows, setRows, add, update, removeAt };
+  /** Back to one blank row — after the rows were persisted and listed elsewhere. */
+  const reset = () => setRows([blank()]);
+
+  return { rows, setRows, add, update, removeAt, reset };
 }

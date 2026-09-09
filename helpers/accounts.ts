@@ -17,9 +17,16 @@ export function formatInterestRate(rate: InterestRate): string {
   return `${value}% ${rate.period === "YEARLY" ? "yearly" : "monthly"}`;
 }
 
-/** Locale-aware, case-insensitive; returns a new array. */
-export function sortAccountsByName<T extends { name: string }>(accounts: T[]): T[] {
+/** "Avanza - ISK" when the account names its bank or broker, the bare name otherwise. */
+export function accountLabel(account: { name: string; provider?: string }): string {
+  return account.provider ? `${account.provider} - ${account.name}` : account.name;
+}
+
+/** By label, locale-aware and case-insensitive; returns a new array. */
+export function sortAccountsByLabel<T extends { name: string; provider?: string }>(
+  accounts: T[]
+): T[] {
   return [...accounts].sort((a, b) =>
-    a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+    accountLabel(a).localeCompare(accountLabel(b), undefined, { sensitivity: "base" })
   );
 }

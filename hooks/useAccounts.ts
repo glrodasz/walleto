@@ -3,7 +3,7 @@ import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { db } from "../firebase/client";
 import { useFirebaseAuth } from "./useFirebaseAuth";
-import { sortAccountsByName } from "../helpers/accounts";
+import { sortAccountsByLabel } from "../helpers/accounts";
 import type { Account, AccountDomain } from "../types";
 import type { AccountInput, AccountUpdate } from "../schemas";
 
@@ -56,7 +56,7 @@ export function useAccounts(domain: AccountDomain | "ALL" | null) {
       q,
       (snap) => {
         setAccounts(
-          sortAccountsByName(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Account))
+          sortAccountsByLabel(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Account))
         );
         setError(null);
         setLoading(false);
