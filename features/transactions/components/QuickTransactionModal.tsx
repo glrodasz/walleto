@@ -2,14 +2,17 @@ import { useEffect, useMemo, useState } from "react";
 import { Modal } from "../../../components/molecules/Modal";
 import { CategoryField } from "../../../components/molecules/CategoryField";
 import { PaymentMethodField } from "../../../components/molecules/PaymentMethodField";
+import { AccountField } from "../../../components/molecules/AccountField";
 import { Select } from "../../../components/atoms/Select";
 import { TextField } from "../../../components/atoms/TextField";
 import { Button } from "../../../components/atoms/Button";
 import { useCategories } from "../../../hooks/useCategories";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
+import { useAccounts } from "../../../hooks/useAccounts";
 import { useUserDoc } from "../../../hooks/useUserDoc";
 import { createTransaction, updateTransaction } from "../../../hooks/useTransactions";
 import { anchorStartDate, toDateInputValue } from "../../../helpers/scheduleAnchor";
+import { isAccountDomain } from "../../../helpers/accounts";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import { SELECTABLE_CURRENCIES, CURRENCY_SYMBOL } from "../../../constants";
 import type { Currency, Domain, Transaction } from "../../../types";
@@ -46,6 +49,8 @@ const CURRENCY_OPTIONS = SELECTABLE_CURRENCIES.map((c) => ({
 
 interface FormState {
   categoryId: string;
+  /** INVESTMENT / SAVING only. */
+  accountId: string;
   name: string;
   amount: string;
   currency: Currency | "";
@@ -66,12 +71,15 @@ export function QuickTransactionModal({ open, onClose, domain: pageDomain, trans
   const { userDoc } = useUserDoc();
   const { categories, create: createCategory } = useCategories(domain);
   const { methods, create: createMethod } = usePaymentMethods();
+  const hasAccounts = isAccountDomain(domain);
+  const { accounts, create: createAccount } = useAccounts(hasAccounts ? domain : null);
 
   const initial: FormState = useMemo(
     () =>
       transaction
         ? {
             categoryId: transaction.categoryId,
+            accountId: transaction.accountId ?? "",
             name: transaction.name,
             amount: String(transaction.amount),
             currency: transaction.currency,
@@ -80,6 +88,7 @@ export function QuickTransactionModal({ open, onClose, domain: pageDomain, trans
           }
         : {
             categoryId: "",
+            accountId: "",
             name: "",
             amount: "",
             currency: "",
@@ -103,9 +112,18 @@ export function QuickTransactionModal({ open, onClose, domain: pageDomain, trans
 
   const effectiveCurrency: Currency =
     form.currency ||
+    accounts.find((a) => a.id === form.accountId)?.currency ||
     methods.find((m) => m.id === form.paymentMethodId)?.defaultCurrency ||
     userDoc?.mainCurrency ||
     "USD";
+
+  const onSelectAccount = (accountId: string) => {
+    const account = accounts.find((a) => a.id === accountId);
+    patch({
+      accountId,
+      ...(form.currency === "" && account ? { currency: account.currency } : {}),
+    });
+  };
 
   const onSelectMethod = (paymentMethodId: string) => {
     const method = methods.find((m) => m.id === paymentMethodId);
@@ -119,7 +137,7 @@ export function QuickTransactionModal({ open, onClose, domain: pageDomain, trans
 
   const switchDomain = (next: Domain) => {
     setDomain(next);
-    patch({ categoryId: "" });
+    patch({ categoryId: "", accountId: "" });
   };
 
   const submit = async () => {
@@ -138,8 +156,10 @@ export function QuickTransactionModal({ open, onClose, domain: pageDomain, trans
         const name = form.name.trim();
         const dateChanged = toDateInputValue(transaction.occurredAt.toDate()) !== form.date;
         const methodBefore = transaction.paymentMethodId ?? "";
+        const accountBefore = transaction.accountId ?? "";
         await updateTransaction(transaction.id, {
           ...(form.categoryId !== transaction.categoryId ? { categoryId: form.categoryId } : {}),
+          ...(form.accountId !== accountBefore ? { accountId: form.accountId || null } : {}),
           ...(name !== transaction.name ? { name } : {}),
           ...(amount !== transaction.amount ? { amount } : {}),
           ...(effectiveCurrency !== transaction.currency ? { currency: effectiveCurrency } : {}),
@@ -152,6 +172,7 @@ export function QuickTransactionModal({ open, onClose, domain: pageDomain, trans
         await createTransaction({
           domain,
           categoryId: form.categoryId,
+          ...(form.accountId ? { accountId: form.accountId } : {}),
           name: form.name.trim(),
           amount,
           currency: effectiveCurrency,
@@ -205,6 +226,18 @@ export function QuickTransactionModal({ open, onClose, domain: pageDomain, trans
           newLabel={`New ${config.title.toLowerCase()} category`}
           onError={setFormError}
         />
+
+        {hasAccounts && (
+          <AccountField
+            domain={domain}
+            accounts={accounts}
+            value={form.accountId}
+            onChange={onSelectAccount}
+            createAccount={createAccount}
+            defaultCurrency={effectiveCurrency}
+            onError={setFormError}
+          />
+        )}
 
         <TextField
           label="Name"

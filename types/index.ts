@@ -64,11 +64,41 @@ export interface PaymentMethod {
   createdAt: Timestamp;
 }
 
+/** Domains whose entries can be filed under an account / pocket. */
+export type AccountDomain = "INVESTMENT" | "SAVING";
+export type InterestPeriod = "MONTHLY" | "YEARLY";
+
+/** A rate as quoted by the bank or broker; `helpers/interest` normalises it. */
+export interface InterestRate {
+  value: number;
+  period: InterestPeriod;
+}
+
+/**
+ * An investment account or a savings pocket ("Avanza ISK", "Emergency fund").
+ * Categories classify; accounts are *where* the money sits, so valuations and
+ * interest attach here, not to the category.
+ */
+export interface Account {
+  id?: string;
+  userId: string;
+  domain: AccountDomain;
+  name: string;
+  /** Bank or broker, free text. */
+  provider?: string;
+  currency: Currency;
+  interestRate?: InterestRate;
+  archived?: boolean;
+  createdAt?: Timestamp;
+}
+
 export interface RecurrentTransaction {
   id?: string;
   userId: string;
   domain: Domain;
   categoryId: string;
+  /** INVESTMENT / SAVING only: the account or pocket the money goes into. */
+  accountId?: string;
   name: string;
   amount: number;
   currency: Currency;
@@ -99,6 +129,8 @@ export interface Transaction {
   domain: Domain;
   recurrentTransactionId?: string;
   categoryId: string;
+  /** INVESTMENT / SAVING only: inherited from the item or picked on the form. */
+  accountId?: string;
   name: string;
   amount: number;
   currency: Currency;

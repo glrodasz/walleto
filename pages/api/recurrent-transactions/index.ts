@@ -38,6 +38,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
     const {
       domain,
       categoryId,
+      accountId,
       name,
       amount,
       currency,
@@ -75,6 +76,21 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       }
     }
 
+    // And the account, when one is supplied: the caller's, in the same domain.
+    if (accountId) {
+      const accSnap = await db.collection("accounts").doc(accountId).get();
+      if (!accSnap.exists) {
+        return res.status(400).json({ error: "Account not found" });
+      }
+      const acc = accSnap.data()!;
+      if (acc.userId !== userId) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      if (acc.domain !== domain) {
+        return res.status(400).json({ error: "Account domain mismatch" });
+      }
+    }
+
     const start = startDate ? new Date(startDate) : new Date();
     const twiceMonthly = frequency === "BIWEEKLY" ? secondDayOfMonth : undefined;
     const next = nextOccurrenceFrom(start, frequency, undefined, {
@@ -85,6 +101,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       userId,
       domain,
       categoryId,
+      ...(accountId ? { accountId } : {}),
       name,
       amount,
       currency,

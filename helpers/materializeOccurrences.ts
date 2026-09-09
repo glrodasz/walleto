@@ -58,6 +58,7 @@ export function occurrenceToTransaction(item: RecurrentTransaction, occurredAt: 
     domain: item.domain,
     recurrentTransactionId: item.id!,
     categoryId: item.categoryId,
+    ...(item.accountId ? { accountId: item.accountId } : {}),
     name: item.name,
     amount: item.amount,
     currency: item.currency,

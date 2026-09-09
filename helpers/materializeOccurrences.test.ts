@@ -137,7 +137,12 @@ describe("occurrenceToTransaction", () => {
   it("copies money fields verbatim and links back to the item", () => {
     const occurredAt = new Date("2026-03-15T12:00:00.000Z");
     const doc = occurrenceToTransaction(
-      item({ chargedAmount: 60000, chargedCurrency: "COP", paymentMethodId: "pm1" }),
+      item({
+        chargedAmount: 60000,
+        chargedCurrency: "COP",
+        paymentMethodId: "pm1",
+        accountId: "acc1",
+      }),
       occurredAt
     );
 
@@ -146,6 +151,7 @@ describe("occurrenceToTransaction", () => {
       domain: "EXPENSE",
       recurrentTransactionId: "item1",
       categoryId: "cat1",
+      accountId: "acc1",
       name: "Netflix",
       amount: 15,
       currency: "USD",
@@ -161,5 +167,6 @@ describe("occurrenceToTransaction", () => {
     expect(doc).not.toHaveProperty("chargedAmount");
     expect(doc).not.toHaveProperty("chargedCurrency");
     expect(doc).not.toHaveProperty("paymentMethodId");
+    expect(doc).not.toHaveProperty("accountId");
   });
 });

@@ -42,6 +42,7 @@ const mockRes = () => {
 const wireCollections = (opts: {
   category?: { exists: boolean; data?: Record<string, unknown> };
   paymentMethod?: { exists: boolean; data?: Record<string, unknown> };
+  account?: { exists: boolean; data?: Record<string, unknown> };
   add?: jest.Mock;
   listDocs?: { id: string; data: () => Record<string, unknown> }[];
 }) => {
@@ -54,6 +55,16 @@ const wireCollections = (opts: {
           get: jest.fn().mockResolvedValue({
             exists: opts.category?.exists ?? true,
             data: () => opts.category?.data ?? { userId: "user1", domain: "INCOME" },
+          }),
+        }),
+      };
+    }
+    if (name === "accounts") {
+      return {
+        doc: jest.fn().mockReturnValue({
+          get: jest.fn().mockResolvedValue({
+            exists: opts.account?.exists ?? true,
+            data: () => opts.account?.data ?? { userId: "user1", domain: "SAVING" },
           }),
         }),
       };
@@ -204,5 +215,32 @@ describe("unsupported methods", () => {
     const res = mockRes();
     await handler({ method: "PUT", query: {} } as NextApiRequest, res);
     expect(res.status).toHaveBeenCalledWith(405);
+  });
+});
+
+describe("POST /api/recurrent-transactions — accounts", () => {
+  const savingBody = { ...validBody, domain: "SAVING", accountId: "acc1" };
+
+  it("stores the accountId on the item", async () => {
+    getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
+    const add = wireCollections({
+      category: { exists: true, data: { userId: "user1", domain: "SAVING" } },
+    });
+    const res = mockRes();
+    await handler({ method: "POST", query: {}, body: savingBody } as NextApiRequest, res);
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(add).toHaveBeenCalledWith(expect.objectContaining({ accountId: "acc1" }));
+  });
+
+  it("rejects a missing account", async () => {
+    getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
+    wireCollections({
+      category: { exists: true, data: { userId: "user1", domain: "SAVING" } },
+      account: { exists: false },
+    });
+    const res = mockRes();
+    await handler({ method: "POST", query: {}, body: savingBody } as NextApiRequest, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: "Account not found" });
   });
 });

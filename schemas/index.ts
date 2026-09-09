@@ -106,10 +106,38 @@ export const PaymentMethodUpdateSchema = z.object({
   archived: z.boolean().optional(),
 });
 
+export const AccountDomainSchema = z.enum(["INVESTMENT", "SAVING"]);
+export const InterestPeriodSchema = z.enum(["MONTHLY", "YEARLY"]);
+
+export const InterestRateSchema = z.object({
+  value: z.number().min(0).max(100),
+  period: InterestPeriodSchema,
+});
+
+export const AccountInputSchema = z.object({
+  domain: AccountDomainSchema,
+  name: z.string().min(1).max(60).trim(),
+  provider: z.string().max(60).trim().optional(),
+  currency: CurrencySchema,
+  interestRate: InterestRateSchema.optional(),
+});
+
+export const AccountUpdateSchema = z
+  .object({
+    name: z.string().min(1).max(60).trim().optional(),
+    // null clears the field (FieldValue.delete() server-side).
+    provider: z.string().max(60).trim().nullable().optional(),
+    currency: CurrencySchema.optional(),
+    interestRate: InterestRateSchema.nullable().optional(),
+    archived: z.boolean().optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: "At least one field is required" });
+
 export const RecurrentTransactionInputSchema = z
   .object({
     domain: DomainSchema,
     categoryId: z.string().min(1),
+    accountId: z.string().min(1).optional(),
     name: z.string().min(1).max(100).trim(),
     amount: z.number().positive(),
     currency: CurrencySchema,
@@ -135,6 +163,7 @@ export const RecurrentTransactionUpdateSchema = z
     frequency: FrequencySchema.optional(),
     secondDayOfMonth: z.number().int().min(1).max(31).nullable().optional(),
     categoryId: z.string().min(1).optional(),
+    accountId: z.string().min(1).nullable().optional(),
     paymentMethodId: z.string().min(1).nullable().optional(),
     type: RecurrentTransactionTypeSchema.nullable().optional(),
     startDate: z.iso.datetime().optional(),
@@ -152,6 +181,7 @@ export const TransactionInputSchema = z
   .object({
     domain: DomainSchema,
     categoryId: z.string().min(1),
+    accountId: z.string().min(1).optional(),
     name: z.string().min(1).max(100).trim(),
     amount: z.number().positive(),
     currency: CurrencySchema,
@@ -167,6 +197,7 @@ export const TransactionUpdateSchema = z
   .object({
     status: TransactionStatusSchema.optional(),
     categoryId: z.string().min(1).optional(),
+    accountId: z.string().min(1).nullable().optional(),
     name: z.string().min(1).max(100).trim().optional(),
     amount: z.number().positive().optional(),
     currency: CurrencySchema.optional(),
@@ -214,6 +245,8 @@ export const UserUpdateSchema = z
     message: "At least one field is required",
   });
 
+export type AccountInput = z.infer<typeof AccountInputSchema>;
+export type AccountUpdate = z.infer<typeof AccountUpdateSchema>;
 export type CategoryInput = z.infer<typeof CategoryInputSchema>;
 export type CategoryUpdate = z.infer<typeof CategoryUpdateSchema>;
 export type PaymentMethodInput = z.infer<typeof PaymentMethodInputSchema>;

@@ -4,17 +4,20 @@ import { ScheduleFields } from "../../../components/molecules/ScheduleFields";
 import type { ScheduleValue } from "../../../components/molecules/ScheduleFields";
 import { CategoryField } from "../../../components/molecules/CategoryField";
 import { PaymentMethodField } from "../../../components/molecules/PaymentMethodField";
+import { AccountField } from "../../../components/molecules/AccountField";
 import { Select } from "../../../components/atoms/Select";
 import { TextField } from "../../../components/atoms/TextField";
 import { Button } from "../../../components/atoms/Button";
 import { useCategories } from "../../../hooks/useCategories";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
+import { useAccounts } from "../../../hooks/useAccounts";
 import { useRecurrentTransactions } from "../../../hooks/useRecurrentTransactions";
 import { useUserDoc } from "../../../hooks/useUserDoc";
 import { materializeNow } from "../../../hooks/useMaterialize";
 import { createTransaction } from "../../../hooks/useTransactions";
 import { createInvestmentValuation } from "../../../hooks/useInvestmentValuations";
 import { valueFromGain } from "../../investments/helpers/valuation";
+import { isAccountDomain } from "../../../helpers/accounts";
 import {
   BACKFILL_MONTHS,
   anchorStartDate,
@@ -45,6 +48,8 @@ interface Props {
 
 interface FormState extends ScheduleValue {
   categoryId: string;
+  /** INVESTMENT / SAVING only. */
+  accountId: string;
   name: string;
   amount: string;
   currency: Currency | "";
@@ -65,11 +70,14 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
   const { userDoc } = useUserDoc();
   const { categories, create: createCategory } = useCategories(domain);
   const { methods, create: createMethod } = usePaymentMethods();
+  const hasAccounts = isAccountDomain(domain);
+  const { accounts, create: createAccount } = useAccounts(hasAccounts ? domain : null);
   const { create, update } = useRecurrentTransactions(domain);
 
   const empty: FormState = useMemo(
     () => ({
       categoryId: "",
+      accountId: "",
       name: "",
       amount: "",
       currency: "",
@@ -107,6 +115,7 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
     );
     setForm({
       categoryId: item.categoryId,
+      accountId: item.accountId ?? "",
       name: item.name,
       amount: String(item.amount),
       currency: item.currency,
@@ -126,13 +135,22 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
 
   const patch = (p: Partial<FormState>) => setForm((f) => ({ ...f, ...p }));
 
-  // Per-item currency default: the chosen method's defaultCurrency when it
-  // has one, the user's main currency otherwise.
+  // Per-item currency default: the account's currency, then the chosen
+  // method's defaultCurrency, then the user's main currency.
   const effectiveCurrency: Currency =
     form.currency ||
+    accounts.find((a) => a.id === form.accountId)?.currency ||
     methods.find((m) => m.id === form.paymentMethodId)?.defaultCurrency ||
     userDoc?.mainCurrency ||
     "USD";
+
+  const onSelectAccount = (accountId: string) => {
+    const account = accounts.find((a) => a.id === accountId);
+    patch({
+      accountId,
+      ...(form.currency === "" && account ? { currency: account.currency } : {}),
+    });
+  };
 
   const onSelectMethod = (paymentMethodId: string) => {
     const method = methods.find((m) => m.id === paymentMethodId);
@@ -185,6 +203,7 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
           twiceMonthly !== (item.secondDayOfMonth ?? null);
         await update(item.id, {
           categoryId: form.categoryId,
+          ...(hasAccounts ? { accountId: form.accountId || null } : {}),
           name: form.name.trim(),
           amount,
           currency: effectiveCurrency,
@@ -209,6 +228,7 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
         await createTransaction({
           domain,
           categoryId: form.categoryId,
+          ...(form.accountId ? { accountId: form.accountId } : {}),
           name: form.name.trim(),
           amount,
           currency: effectiveCurrency,
@@ -223,6 +243,7 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
         await create({
           domain,
           categoryId: form.categoryId,
+          ...(form.accountId ? { accountId: form.accountId } : {}),
           name: form.name.trim(),
           amount,
           currency: effectiveCurrency,
@@ -275,6 +296,18 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
           newLabel={`New ${config.title.toLowerCase()} category`}
           onError={setFormError}
         />
+
+        {hasAccounts && (
+          <AccountField
+            domain={domain}
+            accounts={accounts}
+            value={form.accountId}
+            onChange={onSelectAccount}
+            createAccount={createAccount}
+            defaultCurrency={effectiveCurrency}
+            onError={setFormError}
+          />
+        )}
 
         <TextField
           label="Name"

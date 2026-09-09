@@ -38,6 +38,7 @@ const mockRes = () => {
 const wireCollections = (opts: {
   category?: { exists: boolean; data?: Record<string, unknown> };
   paymentMethod?: { exists: boolean; data?: Record<string, unknown> };
+  account?: { exists: boolean; data?: Record<string, unknown> };
   add?: jest.Mock;
 }) => {
   const add = opts.add ?? jest.fn().mockResolvedValue({ id: "new-tx" });
@@ -49,6 +50,16 @@ const wireCollections = (opts: {
           get: jest.fn().mockResolvedValue({
             exists: opts.category?.exists ?? true,
             data: () => opts.category?.data ?? { userId: "user1", domain: "EXPENSE" },
+          }),
+        }),
+      };
+    }
+    if (name === "accounts") {
+      return {
+        doc: jest.fn().mockReturnValue({
+          get: jest.fn().mockResolvedValue({
+            exists: opts.account?.exists ?? true,
+            data: () => opts.account?.data ?? { userId: "user1", domain: "SAVING" },
           }),
         }),
       };
@@ -168,5 +179,43 @@ describe("POST /api/transactions", () => {
     await handler({ method: "GET" } as NextApiRequest, res);
     expect(res.setHeader).toHaveBeenCalledWith("Allow", "POST");
     expect(res.status).toHaveBeenCalledWith(405);
+  });
+});
+
+describe("POST /api/transactions — accounts", () => {
+  const savingBody = { ...validBody, domain: "SAVING", accountId: "acc1" };
+
+  it("stores the accountId when the account is the caller's and in the domain", async () => {
+    getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
+    const add = wireCollections({
+      category: { exists: true, data: { userId: "user1", domain: "SAVING" } },
+    });
+    const res = mockRes();
+    await handler({ method: "POST", query: {}, body: savingBody } as NextApiRequest, res);
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(add).toHaveBeenCalledWith(expect.objectContaining({ accountId: "acc1" }));
+  });
+
+  it("rejects an account from another domain", async () => {
+    getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
+    wireCollections({
+      category: { exists: true, data: { userId: "user1", domain: "SAVING" } },
+      account: { exists: true, data: { userId: "user1", domain: "INVESTMENT" } },
+    });
+    const res = mockRes();
+    await handler({ method: "POST", query: {}, body: savingBody } as NextApiRequest, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: "Account domain mismatch" });
+  });
+
+  it("rejects someone else's account", async () => {
+    getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
+    wireCollections({
+      category: { exists: true, data: { userId: "user1", domain: "SAVING" } },
+      account: { exists: true, data: { userId: "intruder", domain: "SAVING" } },
+    });
+    const res = mockRes();
+    await handler({ method: "POST", query: {}, body: savingBody } as NextApiRequest, res);
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 });

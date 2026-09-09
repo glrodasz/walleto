@@ -35,6 +35,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
     const {
       status,
       categoryId,
+      accountId,
       name,
       amount,
       currency,
@@ -77,10 +78,26 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       }
     }
 
+    // And the account, when one is supplied: the caller's, in the same domain.
+    if (accountId) {
+      const accSnap = await db.collection("accounts").doc(accountId).get();
+      if (!accSnap.exists) {
+        return res.status(400).json({ error: "Account not found" });
+      }
+      const acc = accSnap.data()!;
+      if (acc.userId !== userId) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      if (acc.domain !== existing.domain) {
+        return res.status(400).json({ error: "Account domain mismatch" });
+      }
+    }
+
     const del = admin.firestore.FieldValue.delete();
     await ref.update({
       ...(status ? { status } : {}),
       ...(categoryId ? { categoryId } : {}),
+      ...(accountId !== undefined ? { accountId: accountId ?? del } : {}),
       ...(name !== undefined ? { name } : {}),
       ...(amount !== undefined ? { amount } : {}),
       ...(currency ? { currency } : {}),

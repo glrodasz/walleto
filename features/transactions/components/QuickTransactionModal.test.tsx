@@ -21,6 +21,15 @@ jest.mock("../../../hooks/usePaymentMethods", () => ({
     ],
   }),
 }));
+let accounts: unknown[] = [];
+jest.mock("../../../hooks/useAccounts", () => ({
+  useAccounts: (domain: string | null) => ({
+    accounts: domain ? accounts : [],
+    loading: false,
+    error: null,
+    create: jest.fn(),
+  }),
+}));
 jest.mock("../../../hooks/useUserDoc", () => ({
   useUserDoc: () => ({ userDoc: { mainCurrency: "USD" } }),
 }));
@@ -32,6 +41,7 @@ beforeEach(() => {
   fetchMock.mockReset();
   createCategory.mockReset();
   categories = [{ id: "c1", userId: "u", domain: "EXPENSE", name: "Groceries", archived: false }];
+  accounts = [];
 });
 
 function fill(name: string, amount: string) {
@@ -80,6 +90,29 @@ describe("QuickTransactionModal", () => {
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.currency).toBe("EUR");
     expect(body.paymentMethodId).toBe("m1");
+  });
+
+  it("offers a pocket for savings, takes its currency, and sends the accountId", async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ id: "t1" }) });
+    categories = [{ id: "c1", userId: "u", domain: "SAVING", name: "Emergency", archived: false }];
+    accounts = [{ id: "a1", userId: "u", domain: "SAVING", name: "SEB savings", currency: "SEK" }];
+    const onClose = jest.fn();
+    render(<QuickTransactionModal open domain="SAVING" onClose={onClose} />);
+
+    fireEvent.change(screen.getByLabelText("Pocket"), { target: { value: "a1" } });
+    expect(screen.getByLabelText("Currency")).toHaveValue("SEK");
+    fill("Monthly transfer", "1000");
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body).toMatchObject({ domain: "SAVING", accountId: "a1", currency: "SEK" });
+  });
+
+  it("does not offer an account for expenses", () => {
+    render(<QuickTransactionModal open domain="EXPENSE" onClose={jest.fn()} />);
+    expect(screen.queryByLabelText("Account")).toBeNull();
+    expect(screen.queryByLabelText("Pocket")).toBeNull();
   });
 
   it("blocks an empty amount and surfaces a failed save", async () => {
