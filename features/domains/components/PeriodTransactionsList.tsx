@@ -82,9 +82,9 @@ export function PeriodTransactionsList({
                   amount={t.amount}
                   currency={t.currency}
                   displayCurrency={displayCurrency}
-                  meta={`${t.recurrentTransactionId ? "recurring" : "one-off"}${
-                    t.hiddenFromDashboard ? " · hidden on dashboard" : ""
-                  }`}
+                  meta={t.recurrentTransactionId ? "recurring" : "one-off"}
+                  tags={t.hiddenFromDashboard ? ["Hidden on dashboard"] : undefined}
+                  muted={Boolean(t.hiddenFromDashboard)}
                   trailing={
                     <KebabMenu
                       aria-label={`Actions for ${t.name}`}

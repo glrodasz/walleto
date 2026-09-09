@@ -7,6 +7,7 @@ import type { RecurrentRow } from "../hooks/useRecurrentStep";
 import { CADENCE_SECTIONS, sectionFor } from "../helpers/cadenceSections";
 import type { CadenceSection } from "../helpers/cadenceSections";
 import { paymentMethodOptionLabel } from "../../../helpers/paymentMethodLabel";
+import { sortByName } from "../../../helpers/paymentMethodOptions";
 import { BACKFILL_MONTHS } from "../../../helpers/scheduleAnchor";
 import { ScheduleFields } from "../../../components/molecules/ScheduleFields";
 import { CURRENCY_SYMBOL, FREQUENCY_LABELS, SELECTABLE_CURRENCIES } from "../../../constants";
@@ -29,7 +30,7 @@ export function RecurrentStep({ state, showPaymentMethod = false }: Props) {
     .filter((c) => !c.parentId)
     .map((c) => ({ value: c.id!, label: c.name }));
 
-  const methodOptions = methods.map((m) => ({
+  const methodOptions = sortByName(methods).map((m) => ({
     value: m.id!,
     label: paymentMethodOptionLabel(m),
   }));

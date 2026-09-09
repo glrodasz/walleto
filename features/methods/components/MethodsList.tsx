@@ -2,7 +2,7 @@ import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
 import { EmptyState } from "../../../components/atoms/EmptyState";
-import { PAYMENT_METHOD_TYPE_LABELS } from "../../../constants";
+import { groupMethodsByType } from "../../../helpers/paymentMethodOptions";
 import type { PaymentMethod } from "../../../types";
 
 interface Props {
@@ -30,38 +30,43 @@ export function MethodsList({ methods, loading, archivingId, onEdit, onArchive }
           <thead>
             <tr>
               <th>Name</th>
-              <th>Type</th>
               <th>Network</th>
               <th>Last 4</th>
               <th>Default currency</th>
               <th />
             </tr>
           </thead>
-          <tbody>
-            {methods.map((m) => (
-              <tr key={m.id}>
-                <td>{m.name}</td>
-                <td className="muted">{PAYMENT_METHOD_TYPE_LABELS[m.type]}</td>
-                <td className="muted">{m.network || "—"}</td>
-                <td className="muted mono">{m.last4 ? `••${m.last4}` : "—"}</td>
-                <td className="muted">{m.defaultCurrency ?? "—"}</td>
-                <td className="actions">
-                  <KebabMenu
-                    aria-label={`Actions for ${m.name}`}
-                    actions={[
-                      { label: "Edit", onSelect: () => onEdit(m) },
-                      {
-                        label: archivingId === m.id ? "Archiving…" : "Archive",
-                        onSelect: () => m.id && onArchive(m.id),
-                        danger: true,
-                        disabled: archivingId === m.id,
-                      },
-                    ]}
-                  />
-                </td>
+          {groupMethodsByType(methods).map((group) => (
+            <tbody key={group.type}>
+              <tr className="group">
+                <th colSpan={5} scope="rowgroup">
+                  {group.label}
+                </th>
               </tr>
-            ))}
-          </tbody>
+              {group.methods.map((m) => (
+                <tr key={m.id}>
+                  <td>{m.name}</td>
+                  <td className="muted">{m.network || "—"}</td>
+                  <td className="muted mono">{m.last4 ? `••${m.last4}` : "—"}</td>
+                  <td className="muted">{m.defaultCurrency ?? "—"}</td>
+                  <td className="actions">
+                    <KebabMenu
+                      aria-label={`Actions for ${m.name}`}
+                      actions={[
+                        { label: "Edit", onSelect: () => onEdit(m) },
+                        {
+                          label: archivingId === m.id ? "Archiving…" : "Archive",
+                          onSelect: () => m.id && onArchive(m.id),
+                          danger: true,
+                          disabled: archivingId === m.id,
+                        },
+                      ]}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          ))}
         </table>
       )}
 
@@ -90,6 +95,19 @@ export function MethodsList({ methods, loading, archivingId, onEdit, onArchive }
 
         .table th:last-child {
           padding-right: 0;
+        }
+
+        .group th {
+          padding: 16px 0 6px;
+          font-size: 0.7rem;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          color: var(--fg-2);
+          border-bottom: none;
+        }
+
+        tbody:first-of-type .group th {
+          padding-top: 10px;
         }
 
         .table td {
@@ -122,10 +140,10 @@ export function MethodsList({ methods, loading, archivingId, onEdit, onArchive }
         }
 
         @media (max-width: 700px) {
-          .table th:nth-child(3),
-          .table td:nth-child(3),
-          .table th:nth-child(5),
-          .table td:nth-child(5) {
+          .table thead th:nth-child(2),
+          .table td:nth-child(2),
+          .table thead th:nth-child(4),
+          .table td:nth-child(4) {
             display: none;
           }
         }

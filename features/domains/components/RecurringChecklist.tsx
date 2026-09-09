@@ -51,7 +51,8 @@ const hiddenAction = (
       ]
     : [];
 
-const HIDDEN_TAG = " · hidden on dashboard";
+const hiddenTags = (item: RecurrentTransaction) =>
+  item.hiddenFromDashboard ? ["Hidden on dashboard"] : undefined;
 
 const DATE = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
 const GROUPS: { status: OccurrenceStatus; title: string }[] = [
@@ -72,6 +73,9 @@ interface RowProps {
   status?: OccurrenceStatus;
   accent: string;
   actions: KebabAction[];
+  /** Small pills after the name ("Hidden on dashboard"). */
+  tags?: string[];
+  muted?: boolean;
 }
 
 /**
@@ -79,11 +83,20 @@ interface RowProps {
  * styled-jsx only stamps its scope class on the JSX a component returns
  * itself, so rows built by a helper function came out unstyled.
  */
-function OccurrenceRow({ name, meta, amount, status, accent, actions }: RowProps) {
+function OccurrenceRow({ name, meta, amount, status, accent, actions, tags, muted }: RowProps) {
   return (
-    <li className={`row${status ? ` ${status}` : ""}`}>
+    <li className={`row${status ? ` ${status}` : ""}${muted ? " muted" : ""}`}>
       <span className="main">
         <span className="name">{name}</span>
+        {tags && tags.length > 0 && (
+          <span className="tags">
+            {tags.map((t) => (
+              <span key={t} className="tag">
+                {t}
+              </span>
+            ))}
+          </span>
+        )}
         <span className="meta">{meta}</span>
       </span>
       <span className="right">
@@ -107,6 +120,27 @@ function OccurrenceRow({ name, meta, amount, status, accent, actions }: RowProps
 
         .row.paid .name {
           color: var(--fg-1);
+        }
+
+        .row.muted {
+          opacity: 0.55;
+        }
+
+        .tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 4px;
+        }
+
+        .tag {
+          font-size: 0.62rem;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          padding: 1px 6px;
+          border-radius: 999px;
+          border: 1px solid var(--accent-amber);
+          color: var(--accent-amber);
         }
 
         .main {
@@ -244,7 +278,9 @@ export function RecurringChecklist({
                         name={o.item.name}
                         meta={`${DATE.format(o.occurredAt)} · ${FREQUENCY_LABELS[o.item.frequency]}${
                           method ? ` · ${method}` : ""
-                        }${o.item.hiddenFromDashboard ? HIDDEN_TAG : ""}`}
+                        }`}
+                        tags={hiddenTags(o.item)}
+                        muted={Boolean(o.item.hiddenFromDashboard)}
                         amount={formatNative(o.item.amount, o.item.currency, currency)}
                         status={o.status}
                         accent={config.accent}
@@ -290,6 +326,8 @@ export function RecurringChecklist({
                     }`}
                     amount={formatNative(item.amount, item.currency, currency)}
                     accent={config.accent}
+                    tags={hiddenTags(item)}
+                    muted={Boolean(item.hiddenFromDashboard)}
                     actions={[
                       { label: "Edit", onSelect: () => onEdit(item) },
                       ...hiddenAction(item, onToggleHidden),

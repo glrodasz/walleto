@@ -29,6 +29,10 @@ jest.mock("../../hooks/useUserDoc", () => ({
 
 // The app shell mounts the mobile create launcher, whose forms reach the
 // Firebase client; this page test is about Settings, not about creating.
+jest.mock("../../features/settings/components/CategoriesSettings", () => ({
+  CategoriesSettings: () => null,
+}));
+
 jest.mock("../../features/create/components/CreateLauncher", () => ({
   CreateLauncher: () => null,
 }));

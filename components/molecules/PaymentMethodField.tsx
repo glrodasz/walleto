@@ -10,6 +10,7 @@ import {
   NETWORK_SUGGESTIONS,
   PAYMENT_METHOD_TYPE_OPTIONS,
   networkFieldLabel,
+  sortByName,
 } from "../../helpers/paymentMethodOptions";
 import type { PaymentMethodInput } from "../../schemas";
 import type { PaymentMethod, PaymentMethodType } from "../../types";
@@ -54,7 +55,10 @@ export function PaymentMethodField({
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [busy, setBusy] = useState(false);
 
-  const options = methods.map((m) => ({ value: m.id!, label: paymentMethodOptionLabel(m) }));
+  const options = sortByName(methods).map((m) => ({
+    value: m.id!,
+    label: paymentMethodOptionLabel(m),
+  }));
   const suggestions = draft.type ? NETWORK_SUGGESTIONS[draft.type] : undefined;
   const showNetwork = Boolean(suggestions);
   const showLast4 = draft.type ? CARD_TYPES.includes(draft.type) : false;

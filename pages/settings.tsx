@@ -8,6 +8,7 @@ import { SectionTitle } from "../components/atoms/SectionTitle";
 import { Button } from "../components/atoms/Button";
 import { Select } from "../components/atoms/Select";
 import { useUserDoc } from "../hooks/useUserDoc";
+import { CategoriesSettings } from "../features/settings/components/CategoriesSettings";
 import { SELECTABLE_CURRENCIES, CURRENCY_SYMBOL } from "../constants";
 import type { Currency } from "../types";
 
@@ -89,6 +90,8 @@ export default function SettingsPage() {
             />
           </div>
         </Card>
+
+        <CategoriesSettings />
 
         <Card>
           <SectionTitle title="Setup" />

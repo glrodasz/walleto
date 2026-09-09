@@ -64,3 +64,29 @@ export function networkFieldLabel(type: PaymentMethodType): string {
   if (type === "BANK_TRANSFER") return "Method";
   return "Card network";
 }
+
+interface Named {
+  name: string;
+}
+
+/** Locale-aware, case-insensitive name order for every methods dropdown. */
+export function sortByName<T extends Named>(methods: T[]): T[] {
+  return [...methods].sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+  );
+}
+
+interface Typed extends Named {
+  type: PaymentMethodType;
+}
+
+/** Methods grouped in PAYMENT_METHOD_TYPE_OPTIONS order, sorted by name inside each group. */
+export function groupMethodsByType<T extends Typed>(
+  methods: T[]
+): { type: PaymentMethodType; label: string; methods: T[] }[] {
+  return PAYMENT_METHOD_TYPE_OPTIONS.map(({ value, label }) => ({
+    type: value,
+    label,
+    methods: sortByName(methods.filter((m) => m.type === value)),
+  })).filter((g) => g.methods.length > 0);
+}

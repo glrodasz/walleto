@@ -59,10 +59,19 @@ export function useCategories(domain?: Domain) {
     return id;
   };
 
+  const rename = async (id: string, name: string) => {
+    const res = await fetch(`/api/categories/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+  };
+
   const remove = async (id: string) => {
     const res = await fetch(`/api/categories/${id}`, { method: "DELETE" });
     if (!res.ok) throw new Error(await res.text());
   };
 
-  return { categories, loading, error, create, remove };
+  return { categories, loading, error, create, rename, remove };
 }
