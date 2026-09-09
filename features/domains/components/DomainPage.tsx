@@ -13,7 +13,6 @@ import { CategoryDrilldown } from "./CategoryDrilldown";
 import { PeriodTransactionsList } from "./PeriodTransactionsList";
 import { RecurringChecklist } from "./RecurringChecklist";
 import { RecurrentTransactionModal } from "./RecurrentTransactionModal";
-import { QuickTransactionModal } from "../../transactions/components/QuickTransactionModal";
 import { SubscriptionInsights } from "../../insights/components/SubscriptionInsights";
 import { AccountValuePanels } from "../../investments/components/AccountValuePanels";
 import { AccountValueList } from "../../investments/components/AccountValueList";
@@ -402,7 +401,7 @@ export function DomainPage({ domain }: Props) {
         onClose={() => setModalOpen(false)}
       />
       {editingTx && (
-        <QuickTransactionModal
+        <RecurrentTransactionModal
           open
           domain={domain}
           transaction={editingTx}

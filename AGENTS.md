@@ -65,7 +65,6 @@ features/
                 AccountValueList (vista Value), AccountValuePanels (drilldown), RecordValueModal ("+")
   settings/     CategoriesSettings (categorías raíz) y AccountsSettings (cuentas / pockets) desde Settings
   prospect/     simulador what-if: qué pasa si cancelo X
-  transactions/ QuickTransactionModal — registrar un pago/ingreso puntual (POST /api/transactions)
   create/       CreateLauncher — el botón flotante "+" y su sheet (¿pago puntual, recurrente, o valor de una cuenta?)
 ```
 
@@ -237,14 +236,13 @@ El dashboard es el **run-rate de los recurrentes** (las cards y el neto lo dicen
 
 ### 3.3 Puntual vs recurrente
 
-Un `frequency: "ONE_TIME"` elegido en el modal de recurrentes o en la sección One-time del wizard **no crea un item recurrente**: escribe una transacción PAID directa (`POST /api/transactions`). El plan (recurrentTransactions) es solo lo que se repite; el ledger (transactions) es lo que pasó. Los items ONE_TIME antiguos siguen funcionando, pero no se crean más.
+Hay **un solo formulario** para todo lo que entra: `RecurrentTransactionModal`. "Record a payment" del "+" lo abre con `initialFrequency="ONE_TIME"`; editar una fila del ledger lo abre con `transaction` (frecuencia fija en One time, PATCH con solo lo que cambió). Un `frequency: "ONE_TIME"` elegido ahí o en la sección One-time del wizard **no crea un item recurrente**: escribe una transacción PAID directa (`POST /api/transactions`). El plan (recurrentTransactions) es solo lo que se repite; el ledger (transactions) es lo que pasó. Los items ONE_TIME antiguos siguen funcionando, pero no se crean más.
 
 ## 7. Deferido a propósito
 
 Decisiones explícitas de scope, no descuidos:
 
 - **Migración de producción**: no hay suite de migración en el repo. Cuando toque promover, el owner baja los datos de prod y se escribe un script local en ese momento — el schema actual de la DB es con el que se trabaja.
-- **Par charged en `QuickTransactionModal`**: el schema lo acepta (crear y editar), la UI del formulario puntual todavía no lo ofrece.
 - **Persistencia de escenarios what-if** (`features/prospect`): el estado vive en memoria (`useWhatIf`), se pierde al salir de la página.
 - **Entradas "Simulate cancel"** desde otras pantallas (tablas, insights) hacia un escenario de Prospect precargado — la página funciona standalone con su propio checklist.
 - **Presupuestos manuales** por dominio o categoría: la barra "gastado vs esperado" usa el plan (ocurrencias de los recurrentes hasta fin de mes, `features/domains/helpers/months.ts`), no un número tecleado.

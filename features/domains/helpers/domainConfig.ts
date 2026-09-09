@@ -15,6 +15,8 @@ interface DomainConfig {
   showPaymentMethod: boolean;
   /** Is a month-over-month increase good news for this domain? */
   upIsGood: boolean;
+  /** The one-off entry: the create option's title and the name placeholder. */
+  oneOff: { title: string; placeholder: string };
 }
 
 export const DOMAIN_CONFIG: Record<Domain, DomainConfig> = {
@@ -26,6 +28,7 @@ export const DOMAIN_CONFIG: Record<Domain, DomainConfig> = {
     accent: "var(--domain-income)",
     showPaymentMethod: false,
     upIsGood: true,
+    oneOff: { title: "Record an income", placeholder: "Freelance invoice" },
   },
   EXPENSE: {
     title: "Expenses",
@@ -35,6 +38,7 @@ export const DOMAIN_CONFIG: Record<Domain, DomainConfig> = {
     accent: "var(--domain-expense)",
     showPaymentMethod: true,
     upIsGood: false,
+    oneOff: { title: "Record a payment", placeholder: "Groceries" },
   },
   INVESTMENT: {
     title: "Investments",
@@ -44,6 +48,7 @@ export const DOMAIN_CONFIG: Record<Domain, DomainConfig> = {
     accent: "var(--domain-investment)",
     showPaymentMethod: false,
     upIsGood: true,
+    oneOff: { title: "Record a contribution", placeholder: "Index fund buy" },
   },
   SAVING: {
     title: "Savings",
@@ -53,5 +58,6 @@ export const DOMAIN_CONFIG: Record<Domain, DomainConfig> = {
     accent: "var(--domain-saving)",
     showPaymentMethod: false,
     upIsGood: true,
+    oneOff: { title: "Record a deposit", placeholder: "Emergency fund" },
   },
 };

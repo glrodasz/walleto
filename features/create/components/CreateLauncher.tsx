@@ -1,10 +1,6 @@
 import { useState } from "react";
 import { Modal } from "../../../components/molecules/Modal";
 import { Plus } from "../../../components/atoms/Icons";
-import {
-  QuickTransactionModal,
-  QUICK_COPY,
-} from "../../transactions/components/QuickTransactionModal";
 import { RecurrentTransactionModal } from "../../domains/components/RecurrentTransactionModal";
 import { RecordValueModal } from "../../investments/components/RecordValueModal";
 import { isAccountDomain } from "../../../helpers/accounts";
@@ -73,7 +69,7 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
           )}
 
           <button type="button" className="option" onClick={() => choose("quick")}>
-            <strong>{QUICK_COPY[domain].title}</strong>
+            <strong>{DOMAIN_CONFIG[domain].oneOff.title}</strong>
             <span>A single amount on a date, already paid</span>
           </button>
           <button type="button" className="option" onClick={() => choose("recurring")}>
@@ -93,7 +89,12 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
       </Modal>
 
       {kind === "quick" && (
-        <QuickTransactionModal open domain={domain} onClose={() => setKind(null)} />
+        <RecurrentTransactionModal
+          open
+          domain={domain}
+          initialFrequency="ONE_TIME"
+          onClose={() => setKind(null)}
+        />
       )}
       {kind === "recurring" && (
         <RecurrentTransactionModal open domain={domain} onClose={() => setKind(null)} />

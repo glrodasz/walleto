@@ -1,22 +1,22 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { CreateLauncher } from "./CreateLauncher";
 
-jest.mock("../../transactions/components/QuickTransactionModal", () => ({
-  QUICK_COPY: {
-    EXPENSE: { title: "Record a payment" },
-    INCOME: { title: "Record an income" },
-    INVESTMENT: { title: "Record a contribution" },
-    SAVING: { title: "Record a deposit" },
-  },
-  QuickTransactionModal: ({ domain, open }: { domain: string; open: boolean }) =>
-    open ? <div data-testid="quick">{domain}</div> : null,
-}));
 jest.mock("../../investments/components/RecordValueModal", () => ({
   RecordValueModal: () => <div data-testid="value" />,
 }));
 jest.mock("../../domains/components/RecurrentTransactionModal", () => ({
-  RecurrentTransactionModal: ({ domain, open }: { domain: string; open: boolean }) =>
-    open ? <div data-testid="recurring">{domain}</div> : null,
+  RecurrentTransactionModal: ({
+    domain,
+    open,
+    initialFrequency,
+  }: {
+    domain: string;
+    open: boolean;
+    initialFrequency?: string;
+  }) =>
+    open ? (
+      <div data-testid={initialFrequency === "ONE_TIME" ? "quick" : "recurring"}>{domain}</div>
+    ) : null,
 }));
 
 describe("CreateLauncher", () => {

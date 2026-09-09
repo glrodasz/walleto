@@ -14,7 +14,7 @@ import { useAccounts } from "../../../hooks/useAccounts";
 import { useRecurrentTransactions } from "../../../hooks/useRecurrentTransactions";
 import { useUserDoc } from "../../../hooks/useUserDoc";
 import { materializeNow } from "../../../hooks/useMaterialize";
-import { createTransaction } from "../../../hooks/useTransactions";
+import { createTransaction, updateTransaction } from "../../../hooks/useTransactions";
 import { createInvestmentValuation } from "../../../hooks/useInvestmentValuations";
 import { valueFromGain } from "../../investments/helpers/valuation";
 import { isAccountDomain } from "../../../helpers/accounts";
@@ -26,7 +26,13 @@ import {
 } from "../../../helpers/scheduleAnchor";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import { SELECTABLE_CURRENCIES, CURRENCY_SYMBOL, FREQUENCY_LABELS } from "../../../constants";
-import type { Currency, Domain, Frequency, RecurrentTransaction } from "../../../types";
+import type {
+  Currency,
+  Domain,
+  Frequency,
+  RecurrentTransaction,
+  Transaction,
+} from "../../../types";
 
 const FREQUENCY_OPTIONS = (Object.keys(FREQUENCY_LABELS) as Frequency[]).map((f) => ({
   value: f,
@@ -41,8 +47,12 @@ const CURRENCY_OPTIONS = SELECTABLE_CURRENCIES.map((c) => ({
 interface Props {
   domain: Domain;
   open: boolean;
-  /** Present = edit; absent = create. */
+  /** Present = edit this recurring item. */
   item?: RecurrentTransaction;
+  /** Present = edit this one-off transaction (the frequency stays "One time"). */
+  transaction?: Transaction;
+  /** Create only: what the frequency starts as ("Record a payment" opens on One time). */
+  initialFrequency?: Frequency;
   onClose: () => void;
 }
 
@@ -64,7 +74,14 @@ interface FormState extends ScheduleValue {
   chargedCurrency: Currency | "";
 }
 
-export function RecurrentTransactionModal({ domain, open, item, onClose }: Props) {
+export function RecurrentTransactionModal({
+  domain,
+  open,
+  item,
+  transaction,
+  initialFrequency = "MONTHLY",
+  onClose,
+}: Props) {
   const config = DOMAIN_CONFIG[domain];
   const noun = config.noun.replace(/s$/, "");
   const { userDoc } = useUserDoc();
@@ -81,7 +98,7 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
       name: "",
       amount: "",
       currency: "",
-      frequency: "MONTHLY",
+      frequency: initialFrequency,
       paymentMethodId: "",
       dayOfMonth: 1,
       secondDayOfMonth: 15,
@@ -93,7 +110,7 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
       chargedAmount: "",
       chargedCurrency: "",
     }),
-    []
+    [initialFrequency]
   );
 
   const [form, setForm] = useState<FormState>(empty);
@@ -104,6 +121,25 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
   useEffect(() => {
     if (!open) return;
     setFormError(null);
+    if (transaction) {
+      setForm({
+        ...empty,
+        categoryId: transaction.categoryId,
+        accountId: transaction.accountId ?? "",
+        name: transaction.name,
+        amount: String(transaction.amount),
+        currency: transaction.currency,
+        frequency: "ONE_TIME",
+        paymentMethodId: transaction.paymentMethodId ?? "",
+        date: toDateInputValue(transaction.occurredAt.toDate()),
+        backfill: false,
+        chargedEnabled: transaction.chargedAmount !== undefined,
+        chargedAmount:
+          transaction.chargedAmount !== undefined ? String(transaction.chargedAmount) : "",
+        chargedCurrency: transaction.chargedCurrency ?? "",
+      });
+      return;
+    }
     if (!item) {
       setForm(empty);
       return;
@@ -131,7 +167,7 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
       chargedAmount: item.chargedAmount !== undefined ? String(item.chargedAmount) : "",
       chargedCurrency: item.chargedCurrency ?? "",
     });
-  }, [open, item, empty]);
+  }, [open, item, transaction, empty]);
 
   const patch = (p: Partial<FormState>) => setForm((f) => ({ ...f, ...p }));
 
@@ -163,7 +199,8 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
   };
 
   const isRecurring = form.frequency !== "ONE_TIME";
-  const offersGain = !item && domain === "INVESTMENT" && !isRecurring;
+  const editing = Boolean(item || transaction);
+  const offersGain = !editing && domain === "INVESTMENT" && !isRecurring;
   const gainPct = offersGain && form.gainPct.trim() !== "" ? Number(form.gainPct) : null;
 
   const submit = async () => {
@@ -195,7 +232,39 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
     setBusy(true);
     setFormError(null);
     try {
-      if (item?.id) {
+      if (transaction?.id) {
+        // A one-off row: send only what changed, the API keeps the rest.
+        const name = form.name.trim();
+        const dateChanged = toDateInputValue(transaction.occurredAt.toDate()) !== form.date;
+        const methodBefore = transaction.paymentMethodId ?? "";
+        const accountBefore = transaction.accountId ?? "";
+        const chargedBefore = transaction.chargedAmount !== undefined;
+        const chargedChanged =
+          form.chargedEnabled !== chargedBefore ||
+          (form.chargedEnabled &&
+            (chargedAmount !== transaction.chargedAmount ||
+              form.chargedCurrency !== transaction.chargedCurrency));
+        const patch = {
+          ...(form.categoryId !== transaction.categoryId ? { categoryId: form.categoryId } : {}),
+          ...(hasAccounts && form.accountId !== accountBefore
+            ? { accountId: form.accountId || null }
+            : {}),
+          ...(name !== transaction.name ? { name } : {}),
+          ...(amount !== transaction.amount ? { amount } : {}),
+          ...(effectiveCurrency !== transaction.currency ? { currency: effectiveCurrency } : {}),
+          ...(dateChanged ? { occurredAt: startDate.toISOString() } : {}),
+          ...(form.paymentMethodId !== methodBefore
+            ? { paymentMethodId: form.paymentMethodId || null }
+            : {}),
+          ...(chargedChanged
+            ? {
+                chargedAmount: form.chargedEnabled ? chargedAmount! : null,
+                chargedCurrency: form.chargedEnabled ? (form.chargedCurrency as Currency) : null,
+              }
+            : {}),
+        };
+        if (Object.keys(patch).length > 0) await updateTransaction(transaction.id, patch);
+      } else if (item?.id) {
         const twiceMonthly = form.frequency === "BIWEEKLY" ? form.secondDayOfMonth : null;
         const scheduleChanged =
           form.frequency !== item.frequency ||
@@ -260,7 +329,7 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
           await materializeNow().catch((err) => console.error("materialize failed:", err));
         }
       }
-      if (!item) {
+      if (!editing) {
         // A past one-time investment can carry its performance so far. The
         // basis is this purchase alone; the Investments page recomputes the
         // category's live basis and the user can re-value there any time.
@@ -286,7 +355,13 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
   };
 
   return (
-    <Modal open={open} title={item ? `Edit ${form.name || noun}` : `New ${noun}`} onClose={onClose}>
+    <Modal
+      open={open}
+      title={
+        editing ? `Edit ${form.name || noun}` : isRecurring ? `New ${noun}` : config.oneOff.title
+      }
+      onClose={onClose}
+    >
       <div className="form">
         <CategoryField
           categories={categories}
@@ -311,7 +386,7 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
 
         <TextField
           label="Name"
-          placeholder="Name"
+          placeholder={isRecurring ? "Name" : config.oneOff.placeholder}
           value={form.name}
           onValueChange={(v) => patch({ name: v })}
         />
@@ -339,6 +414,7 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
             label="Frequency"
             options={FREQUENCY_OPTIONS}
             value={form.frequency}
+            disabled={Boolean(transaction)}
             onValueChange={(v) => patch({ frequency: v as Frequency })}
           />
           <PaymentMethodField
@@ -428,7 +504,7 @@ export function RecurrentTransactionModal({ domain, open, item, onClose }: Props
             Cancel
           </Button>
           <Button variant="primary" onClick={submit} disabled={busy}>
-            {busy ? "Saving…" : item ? "Save changes" : "Create"}
+            {busy ? "Saving…" : editing ? "Save changes" : isRecurring ? "Create" : "Save"}
           </Button>
         </div>
       </div>
