@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PageLayout } from "../../../components/organisms/PageLayout";
 import { ErrorState } from "../../../components/atoms/ErrorState";
 import { Card } from "../../../components/atoms/Card";
@@ -33,15 +33,31 @@ import { useRecurrentTransactions, markItemPaid } from "../../../hooks/useRecurr
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { useAccounts } from "../../../hooks/useAccounts";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
-import { deleteTransaction, updateTransaction } from "../../../hooks/useTransactions";
+import { deleteTransaction } from "../../../hooks/useTransactions";
 import { toDate } from "../../../helpers/chartData";
-import type { Currency, Domain, RecurrentTransaction, Transaction } from "../../../types";
+import {
+  hiddenCategoryIds,
+  hiddenItemIds,
+  isHiddenRow,
+  withoutHidden,
+} from "../../../helpers/hidden";
+import type { Category, Currency, Domain, RecurrentTransaction, Transaction } from "../../../types";
 
 interface Props {
   domain: Domain;
 }
 
 const MONTHS = 7;
+
+/** "Show hidden" is a per-domain preference, kept in the browser. */
+const showHiddenKey = (domain: Domain) => `waletto:showHidden:${domain}`;
+const readShowHidden = (domain: Domain) => {
+  try {
+    return typeof window !== "undefined" && localStorage.getItem(showHiddenKey(domain)) === "1";
+  } catch {
+    return false;
+  }
+};
 
 /**
  * Month-first page shared by the four domains. One month is selected at a
@@ -77,14 +93,47 @@ export function DomainPage({ domain }: Props) {
     error: txError,
   } = useDomainTransactions(domain, windows[0].start);
   const { items, error: itemsError, remove, update } = useRecurrentTransactions(domain);
-  const { categories, loading: catLoading, error: catError } = useCategories(domain);
+  const {
+    categories,
+    loading: catLoading,
+    error: catError,
+    update: updateCategory,
+  } = useCategories(domain);
   const { methods } = usePaymentMethods();
   const error = txError ?? itemsError ?? catError;
 
   const window = windows.find((w) => w.key === selectedKey) ?? windows[windows.length - 1];
+
+  // Hidden recurring items and hidden categories stay out of the bars and
+  // the month figure unless the owner flips "Show hidden"; the lists below
+  // always show everything, tagged.
+  const [showHidden, setShowHidden] = useState(() => readShowHidden(domain));
+  useEffect(() => {
+    try {
+      localStorage.setItem(showHiddenKey(domain), showHidden ? "1" : "0");
+    } catch {
+      // Private mode or storage off: the toggle just doesn't stick.
+    }
+  }, [domain, showHidden]);
+  const hiddenItems = useMemo(() => hiddenItemIds(items), [items]);
+  const hiddenCategories = useMemo(() => hiddenCategoryIds(categories), [categories]);
+  const anythingHidden = hiddenItems.size > 0 || hiddenCategories.size > 0;
+  const isHidden = (t: Transaction) => isHiddenRow(t, hiddenItems, hiddenCategories);
+  const chartTransactions = useMemo(
+    () => (showHidden ? transactions : withoutHidden(transactions, hiddenItems, hiddenCategories)),
+    [showHidden, transactions, hiddenItems, hiddenCategories]
+  );
+  const chartItems = useMemo(
+    () =>
+      showHidden
+        ? items
+        : items.filter((i) => !i.hiddenFromDashboard && !hiddenCategories.has(i.categoryId)),
+    [showHidden, items, hiddenCategories]
+  );
+
   const totals = useMemo(
-    () => monthTotals(transactions, ctx, windows),
-    [transactions, ctx, windows]
+    () => monthTotals(chartTransactions, ctx, windows),
+    [chartTransactions, ctx, windows]
   );
   const monthTransactions = useMemo(
     () =>
@@ -96,8 +145,8 @@ export function DomainPage({ domain }: Props) {
   );
   const realized = totals[window.key] ?? 0;
   const expected = useMemo(
-    () => expectedForMonth(window, realized, items, ctx, now),
-    [window, realized, items, ctx, now]
+    () => expectedForMonth(window, realized, chartItems, ctx, now),
+    [window, realized, chartItems, ctx, now]
   );
   const average = useMemo(() => trailingAverage(totals, windows), [totals, windows]);
   const hasForeign = useMemo(
@@ -108,8 +157,8 @@ export function DomainPage({ domain }: Props) {
   // One bar per month. With more than one currency in use the bar is stacked
   // by the currency each transaction was in, so the mix is visible at a glance.
   const byCurrency = useMemo(
-    () => monthTotalsByCurrency(transactions, ctx, windows),
-    [transactions, ctx, windows]
+    () => monthTotalsByCurrency(chartTransactions, ctx, windows),
+    [chartTransactions, ctx, windows]
   );
   const multiCurrency = byCurrency.currencies.length > 1;
   const series: BarSeries[] = useMemo(
@@ -161,10 +210,10 @@ export function DomainPage({ domain }: Props) {
       () => update(item.id!, { hiddenFromDashboard: !item.hiddenFromDashboard }),
       "update the item"
     );
-  const toggleTxHidden = (t: Transaction) =>
-    t.id &&
-    updateTransaction(t.id, { hiddenFromDashboard: !t.hiddenFromDashboard }).catch((err) =>
-      console.error("Failed to update transaction:", err)
+  const toggleCategoryHidden = (category: Category) =>
+    category.id &&
+    updateCategory(category.id, { hiddenFromChart: !category.hiddenFromChart }).catch((err) =>
+      console.error("Failed to update category:", err)
     );
   const deleteTx = async (transactionId: string) => {
     setDeletingTxId(transactionId);
@@ -194,7 +243,7 @@ export function DomainPage({ domain }: Props) {
           loading={txLoading}
           onBack={() => setDrillCategoryId(null)}
           onEdit={setEditingTx}
-          onToggleHidden={toggleTxHidden}
+          isHidden={isHidden}
           onDelete={deleteTx}
           deletingId={deletingTxId}
           extras={
@@ -231,6 +280,7 @@ export function DomainPage({ domain }: Props) {
           now={now}
           loading={txLoading || catLoading}
           onSelect={setDrillCategoryId}
+          onToggleHidden={toggleCategoryHidden}
         />
       )
     ) : view === "transactions" ? (
@@ -242,7 +292,7 @@ export function DomainPage({ domain }: Props) {
           ctx={ctx}
           loading={txLoading}
           onEdit={setEditingTx}
-          onToggleHidden={toggleTxHidden}
+          isHidden={isHidden}
           onDelete={deleteTx}
           deletingId={deletingTxId}
           now={now}
@@ -311,6 +361,22 @@ export function DomainPage({ domain }: Props) {
               onSelect={selectMonth}
               height={200}
             />
+            {anythingHidden && (
+              <label className="show-hidden">
+                <input
+                  type="checkbox"
+                  checked={showHidden}
+                  onChange={(e) => setShowHidden(e.currentTarget.checked)}
+                />
+                <span>
+                  Show hidden
+                  <span className="hint">
+                    {" "}
+                    — items hidden from the dashboard and categories hidden from the chart
+                  </span>
+                </span>
+              </label>
+            )}
           </Card>
         </div>
 
@@ -344,6 +410,25 @@ export function DomainPage({ domain }: Props) {
       )}
 
       <style jsx>{`
+        .show-hidden {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          font-size: 0.8rem;
+          color: var(--fg-1);
+          cursor: pointer;
+        }
+
+        .show-hidden input {
+          margin-top: 2px;
+          flex-shrink: 0;
+          accent-color: var(--accent);
+        }
+
+        .show-hidden .hint {
+          color: var(--fg-2);
+        }
+
         .layout {
           display: grid;
           gap: 20px;

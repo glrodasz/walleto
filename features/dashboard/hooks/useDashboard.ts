@@ -8,6 +8,9 @@ import { useMoneyContext } from "../../../hooks/useMoneyContext";
 import { groupByCategory, computeMoM, computeFlow, shareByCurrency } from "../../../helpers";
 import type { MoneyContext } from "../../../helpers";
 import { toFlowSeries } from "../../../helpers/chartData";
+import { hiddenItemIds, withoutHidden } from "../../../helpers/hidden";
+
+const RECENT = 5;
 
 function buildCategoryList(
   items: ReturnType<typeof useRecurrentTransactions>["items"],
@@ -40,7 +43,16 @@ export function useDashboard() {
   const investments = useMemo(() => visible(allInvestments), [allInvestments]);
   const savings = useMemo(() => visible(allSavings), [allSavings]);
   const { categories, loading: l4, error: e4 } = useCategories();
-  const { transactions: recentPayments, loading: l5, error: e5 } = useRecentTransactions(5);
+  // Hidden is a property of the recurring item; its ledger rows follow it.
+  const hiddenItems = useMemo(
+    () => hiddenItemIds([...allIncomes, ...allExpenses, ...allInvestments, ...allSavings]),
+    [allIncomes, allExpenses, allInvestments, allSavings]
+  );
+  const { transactions: recentRaw, loading: l5, error: e5 } = useRecentTransactions(RECENT * 3);
+  const recentPayments = useMemo(
+    () => withoutHidden(recentRaw, hiddenItems).slice(0, RECENT),
+    [recentRaw, hiddenItems]
+  );
   const { items: upcoming, loading: l6, error: e6, markPaid } = useUpcomingItems(5);
   // One window serves both consumers: the cash-flow chart wants the 6 months
   // the materializer backfills, and computeMoM slices its own current/previous
@@ -61,10 +73,13 @@ export function useDashboard() {
     error: e9,
   } = useDomainTransactions("INCOME", chartStart);
   const expenseTransactions = useMemo(
-    () => visible(allExpenseTransactions),
-    [allExpenseTransactions]
+    () => withoutHidden(allExpenseTransactions, hiddenItems),
+    [allExpenseTransactions, hiddenItems]
   );
-  const incomeTransactions = useMemo(() => visible(allIncomeTransactions), [allIncomeTransactions]);
+  const incomeTransactions = useMemo(
+    () => withoutHidden(allIncomeTransactions, hiddenItems),
+    [allIncomeTransactions, hiddenItems]
+  );
   const { ctx, target, fxStale, fxMissing, setDisplayCurrency } = useMoneyContext();
   const loading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9;
   const error = e1 ?? e2 ?? e3 ?? e4 ?? e5 ?? e6 ?? e7 ?? e8 ?? e9;

@@ -5,6 +5,7 @@ import { db } from "../firebase/client";
 import { useFirebaseAuth } from "./useFirebaseAuth";
 import { byCreatedAt } from "../utils/sortByCreatedAt";
 import type { Category, Domain } from "../types";
+import type { CategoryUpdate } from "../schemas";
 
 export function useCategories(domain?: Domain) {
   const { user } = useUser();
@@ -59,19 +60,21 @@ export function useCategories(domain?: Domain) {
     return id;
   };
 
-  const rename = async (id: string, name: string) => {
+  const update = async (id: string, patch: CategoryUpdate) => {
     const res = await fetch(`/api/categories/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify(patch),
     });
     if (!res.ok) throw new Error(await res.text());
   };
+
+  const rename = (id: string, name: string) => update(id, { name });
 
   const remove = async (id: string) => {
     const res = await fetch(`/api/categories/${id}`, { method: "DELETE" });
     if (!res.ok) throw new Error(await res.text());
   };
 
-  return { categories, loading, error, create, rename, remove };
+  return { categories, loading, error, create, update, rename, remove };
 }

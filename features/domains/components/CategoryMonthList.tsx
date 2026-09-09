@@ -3,6 +3,7 @@ import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { formatAmount } from "../../../components/atoms/Amount";
 import { ArrowRight } from "../../../components/atoms/Icons";
+import { KebabMenu } from "../../../components/molecules/KebabMenu";
 import { convertedAmount } from "../../../helpers/aggregations";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { plannedOccurrences } from "../helpers/months";
@@ -23,6 +24,8 @@ interface Props {
   now?: Date;
   loading?: boolean;
   onSelect: (categoryId: string) => void;
+  /** Flip the category's hiddenFromChart flag. */
+  onToggleHidden?: (category: Category) => void;
 }
 
 export interface CategoryMonthRow {
@@ -90,6 +93,7 @@ export function CategoryMonthList({
   now,
   loading,
   onSelect,
+  onToggleHidden,
 }: Props) {
   const config = DOMAIN_CONFIG[domain];
   const rows = useMemo(
@@ -111,14 +115,20 @@ export function CategoryMonthList({
             const expected = r.total + r.planned;
             const pct = expected > 0 ? Math.min(100, (r.total / expected) * 100) : 0;
             return (
-              <li key={r.category.id}>
+              <li
+                key={r.category.id}
+                className={`row${r.category.hiddenFromChart ? " muted" : ""}`}
+              >
                 <button
                   type="button"
-                  className="row"
+                  className="open"
                   onClick={() => r.category.id && onSelect(r.category.id)}
                 >
                   <span className="main">
-                    <span className="name">{r.category.name}</span>
+                    <span className="name">
+                      {r.category.name}
+                      {r.category.hiddenFromChart && <span className="tag">Hidden on chart</span>}
+                    </span>
                     <span className="meta">
                       {r.count} {r.count === 1 ? "transaction" : "transactions"}
                       {r.share > 0 ? ` · ${r.share.toFixed(0)}%` : ""}
@@ -135,6 +145,17 @@ export function CategoryMonthList({
                     <ArrowRight size={16} />
                   </span>
                 </button>
+                {onToggleHidden && (
+                  <KebabMenu
+                    aria-label={`Actions for ${r.category.name}`}
+                    actions={[
+                      {
+                        label: r.category.hiddenFromChart ? "Show on chart" : "Hide from chart",
+                        onSelect: () => onToggleHidden(r.category),
+                      },
+                    ]}
+                  />
+                )}
               </li>
             );
           })}
@@ -157,13 +178,28 @@ export function CategoryMonthList({
         }
 
         .row {
-          width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .row:last-child {
+          border-bottom: none;
+        }
+
+        .row.muted .open {
+          opacity: 0.55;
+        }
+
+        .open {
+          flex: 1;
+          min-width: 0;
           display: flex;
           align-items: center;
           gap: 12px;
           padding: 12px 0;
           border: none;
-          border-bottom: 1px solid var(--line);
           background: transparent;
           color: inherit;
           font-family: inherit;
@@ -171,8 +207,17 @@ export function CategoryMonthList({
           cursor: pointer;
         }
 
-        li:last-child .row {
-          border-bottom: none;
+        .tag {
+          margin-left: 8px;
+          font-size: 0.62rem;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          padding: 1px 6px;
+          border-radius: 999px;
+          border: 1px solid var(--accent-amber);
+          color: var(--accent-amber);
+          vertical-align: middle;
         }
 
         .main {

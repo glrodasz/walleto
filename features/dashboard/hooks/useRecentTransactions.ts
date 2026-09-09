@@ -15,25 +15,21 @@ export function useRecentTransactions(count: number = 10) {
   useEffect(() => {
     if (!ready || !user?.sub) return;
 
-    // Over-fetch so rows hidden from the dashboard can be dropped in memory
-    // and the list still shows `count`: a third filter would need a new index.
+    // Newest PAID rows, `count` of them. The dashboard over-reads so rows of
+    // hidden recurring items can be dropped in memory and the list still
+    // fills: a third filter would need a new index.
     const q = query(
       collection(db, "transactions"),
       where("userId", "==", user.sub),
       where("status", "==", "PAID"),
       orderBy("occurredAt", "desc"),
-      limit(count * 3)
+      limit(count)
     );
 
     return onSnapshot(
       q,
       (snap) => {
-        setTransactions(
-          snap.docs
-            .map((d) => ({ id: d.id, ...d.data() }) as Transaction)
-            .filter((t) => !t.hiddenFromDashboard)
-            .slice(0, count)
-        );
+        setTransactions(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Transaction));
         setError(null);
         setLoading(false);
       },

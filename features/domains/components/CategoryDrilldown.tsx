@@ -17,7 +17,7 @@ interface Props {
   loading?: boolean;
   onBack: () => void;
   onEdit?: (transaction: Transaction) => void;
-  onToggleHidden?: (transaction: Transaction) => void;
+  isHidden?: (transaction: Transaction) => boolean;
   onDelete: (transactionId: string) => void;
   deletingId: string | null;
   /** Domain-specific panels for this category (subscription insights, valuations). */
@@ -38,7 +38,7 @@ export function CategoryDrilldown({
   loading,
   onBack,
   onEdit,
-  onToggleHidden,
+  isHidden,
   onDelete,
   deletingId,
   extras,
@@ -80,7 +80,7 @@ export function CategoryDrilldown({
         ctx={ctx}
         loading={loading}
         onEdit={onEdit}
-        onToggleHidden={onToggleHidden}
+        isHidden={isHidden}
         onDelete={onDelete}
         deletingId={deletingId}
       />

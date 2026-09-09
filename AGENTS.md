@@ -233,7 +233,7 @@ Otras notas:
 
 ### 3.2 Ocultar del dashboard
 
-`hiddenFromDashboard` (en `recurrentTransactions` y en `transactions`) saca el doc de **todos** los números y listas del dashboard (`useDashboard` filtra con `visible()`, `useRecentTransactions` sobre-lee y descarta, `useUpcomingItems` filtra). Las páginas de dominio lo siguen mostrando con la etiqueta "hidden on dashboard". Se cambia desde el kebab de Recurring, Transactions y Next to expire.
+El dashboard es el **run-rate de los recurrentes** (las cards y el neto lo dicen con la etiqueta "Recurring"); por eso solo un item recurrente se oculta: `hiddenFromDashboard` en `recurrentTransactions` lo saca de todos los números y listas del dashboard, y sus filas del ledger lo siguen por `recurrentTransactionId` (`helpers/hidden.ts`: `hiddenItemIds`, `withoutHidden`). Las transacciones no tienen flag propio. En las páginas de dominio, además, una categoría raíz puede ocultarse de la gráfica (`Category.hiddenFromChart`, kebab en Categories; los hijos la siguen): barras y cifra del mes excluyen items ocultos y categorías ocultas salvo que el owner active "Show hidden" (preferencia por dominio en `localStorage`). Las listas siempre muestran todo, con la etiqueta "Hidden".
 
 ### 3.3 Puntual vs recurrente
 

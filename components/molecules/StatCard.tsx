@@ -16,6 +16,8 @@ interface Props {
   summary?: SummaryEntry[];
   /** Share per currency in use; shown only when more than one is in play. */
   byCurrency?: { currency: Currency; pct: number }[];
+  /** Small label at the top right, e.g. "Recurring" — what kind of number this is. */
+  tag?: string;
 }
 
 const DOMAIN_ACCENT: Record<Domain, string> = {
@@ -25,7 +27,16 @@ const DOMAIN_ACCENT: Record<Domain, string> = {
   SAVING: "var(--domain-saving)",
 };
 
-export function StatCard({ title, amount, currency, domain, delta, summary, byCurrency }: Props) {
+export function StatCard({
+  title,
+  amount,
+  currency,
+  domain,
+  delta,
+  summary,
+  byCurrency,
+  tag,
+}: Props) {
   const hasDelta = delta !== undefined && delta !== 0;
   const deltaPositive = (delta ?? 0) > 0;
   // Sentiment is domain-aware: spending less is good, earning less is not.
@@ -33,7 +44,10 @@ export function StatCard({ title, amount, currency, domain, delta, summary, byCu
 
   return (
     <Card accentColor={DOMAIN_ACCENT[domain]}>
-      <span className="title">{title}</span>
+      <span className="head">
+        <span className="title">{title}</span>
+        {tag && <span className="tag">{tag}</span>}
+      </span>
       <Amount value={amount} currency={currency} size="lg" />
       {summary && summary.length > 0 && (
         <span className="summary">
@@ -62,12 +76,31 @@ export function StatCard({ title, amount, currency, domain, delta, summary, byCu
         </span>
       )}
       <style jsx>{`
+        .head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+        }
+
         .title {
           font-size: 0.8rem;
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 0.06em;
           color: var(--fg-2);
+        }
+
+        .tag {
+          font-size: 0.62rem;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          padding: 1px 6px;
+          border-radius: 999px;
+          border: 1px solid var(--line-strong);
+          color: var(--fg-2);
+          white-space: nowrap;
         }
 
         .summary {

@@ -75,6 +75,7 @@ export const CategoryInputSchema = z.object({
 
 export const CategoryUpdateSchema = z.object({
   name: z.string().min(1).max(40).trim().optional(),
+  hiddenFromChart: z.boolean().optional(),
   archived: z.boolean().optional(),
 });
 
@@ -205,7 +206,6 @@ export const TransactionUpdateSchema = z
     chargedAmount: z.number().positive().nullable().optional(),
     chargedCurrency: CurrencySchema.nullable().optional(),
     paymentMethodId: z.string().min(1).nullable().optional(),
-    hiddenFromDashboard: z.boolean().optional(),
   })
   .superRefine((v, ctx) => {
     if (Object.keys(v).length === 0) {

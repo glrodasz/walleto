@@ -97,3 +97,30 @@ describe("CategoryMonthList", () => {
     expect(onSelect).toHaveBeenCalledWith("home");
   });
 });
+
+describe("CategoryMonthList — hidden categories", () => {
+  it("tags a hidden category and flips it through the kebab", () => {
+    const onToggleHidden = jest.fn();
+    const hiddenFood = categories.map((c) =>
+      c.id === "food" ? { ...c, hiddenFromChart: true } : c
+    );
+    render(
+      <CategoryMonthList
+        domain="EXPENSE"
+        categories={hiddenFood}
+        transactions={[tx("t1", "food", 20)]}
+        items={[]}
+        ctx={ctx}
+        currency="USD"
+        window={sep}
+        now={now}
+        onSelect={jest.fn()}
+        onToggleHidden={onToggleHidden}
+      />
+    );
+    expect(screen.getByText("Hidden on chart")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Actions for Food" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Show on chart" }));
+    expect(onToggleHidden).toHaveBeenCalledWith(expect.objectContaining({ id: "food" }));
+  });
+});

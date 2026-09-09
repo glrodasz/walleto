@@ -16,8 +16,8 @@ interface Props {
   ctx: MoneyContext;
   loading?: boolean;
   onEdit?: (transaction: Transaction) => void;
-  /** Flip the row's hiddenFromDashboard flag. */
-  onToggleHidden?: (transaction: Transaction) => void;
+  /** Rows written by a hidden recurring item (or a hidden category) get a pill and dim. */
+  isHidden?: (transaction: Transaction) => boolean;
   onDelete: (transactionId: string) => void;
   deletingId: string | null;
   /** Rows shown before the "and N more" line. A month is bounded; 60 covers it. */
@@ -37,7 +37,7 @@ export function PeriodTransactionsList({
   ctx,
   loading,
   onEdit,
-  onToggleHidden,
+  isHidden,
   onDelete,
   deletingId,
   limit = 60,
@@ -83,23 +83,13 @@ export function PeriodTransactionsList({
                   currency={t.currency}
                   displayCurrency={displayCurrency}
                   meta={t.recurrentTransactionId ? "recurring" : "one-off"}
-                  tags={t.hiddenFromDashboard ? ["Hidden on dashboard"] : undefined}
-                  muted={Boolean(t.hiddenFromDashboard)}
+                  tags={isHidden?.(t) ? ["Hidden"] : undefined}
+                  muted={Boolean(isHidden?.(t))}
                   trailing={
                     <KebabMenu
                       aria-label={`Actions for ${t.name}`}
                       actions={[
                         ...(onEdit ? [{ label: "Edit", onSelect: () => onEdit(t) }] : []),
-                        ...(onToggleHidden
-                          ? [
-                              {
-                                label: t.hiddenFromDashboard
-                                  ? "Show on dashboard"
-                                  : "Hide from dashboard",
-                                onSelect: () => onToggleHidden(t),
-                              },
-                            ]
-                          : []),
                         {
                           label: deletingId === t.id ? "Deleting…" : "Delete",
                           onSelect: () => t.id && onDelete(t.id),

@@ -67,6 +67,7 @@ export default function Dashboard() {
         {userDoc ? (
           <>
             <StatCard
+              tag="Recurring"
               title="Income"
               amount={totals.income}
               currency={currency}
@@ -75,6 +76,7 @@ export default function Dashboard() {
               byCurrency={currencyMix.income}
             />
             <StatCard
+              tag="Recurring"
               title="Expenses"
               amount={totals.expense}
               currency={currency}
@@ -84,6 +86,7 @@ export default function Dashboard() {
               byCurrency={currencyMix.expense}
             />
             <StatCard
+              tag="Recurring"
               title="Investments"
               amount={totals.investment}
               currency={currency}
@@ -92,6 +95,7 @@ export default function Dashboard() {
               byCurrency={currencyMix.investment}
             />
             <StatCard
+              tag="Recurring"
               title="Savings"
               amount={totals.saving}
               currency={currency}

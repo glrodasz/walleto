@@ -47,6 +47,8 @@ export interface Category {
   name: string;
   parentId?: string;
   isDefault?: boolean;
+  /** Root only: left out of the domain graph and month figure (children follow). */
+  hiddenFromChart?: boolean;
   archived?: boolean;
   createdAt: Timestamp;
 }
@@ -139,8 +141,6 @@ export interface Transaction {
   paymentMethodId?: string;
   occurredAt: Timestamp;
   status: TransactionStatus;
-  /** Kept out of every dashboard number and list; domain pages still show it. */
-  hiddenFromDashboard?: boolean;
   createdAt?: Timestamp;
 }
 
