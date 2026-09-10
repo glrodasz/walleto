@@ -1,8 +1,12 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AccountsSettings } from "./AccountsSettings";
 
+const create = jest.fn().mockResolvedValue("new1");
 const update = jest.fn().mockResolvedValue(undefined);
 const remove = jest.fn().mockResolvedValue(undefined);
+jest.mock("../../../hooks/useUserDoc", () => ({
+  useUserDoc: () => ({ userDoc: { mainCurrency: "SEK" } }),
+}));
 let lastDomain = "";
 jest.mock("../../../hooks/useAccounts", () => ({
   useAccounts: (domain: string) => {
@@ -24,6 +28,7 @@ jest.mock("../../../hooks/useAccounts", () => ({
           : [{ id: "isk", userId: "u", domain, name: "ISK", currency: "SEK" }],
       loading: false,
       error: null,
+      create,
       update,
       remove,
     };
@@ -31,6 +36,7 @@ jest.mock("../../../hooks/useAccounts", () => ({
 }));
 
 beforeEach(() => {
+  create.mockClear();
   update.mockClear();
   remove.mockClear();
 });
@@ -80,6 +86,25 @@ describe("AccountsSettings", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() =>
       expect(update).toHaveBeenCalledWith("seb", expect.objectContaining({ interestRate: null }))
+    );
+  });
+});
+
+describe("AccountsSettings — creating", () => {
+  it("creates a pocket from Settings with the main currency as default", async () => {
+    render(<AccountsSettings />);
+    fireEvent.click(screen.getByRole("tab", { name: "Savings" }));
+    fireEvent.click(screen.getByRole("button", { name: /Add pocket/ }));
+    expect(screen.getByLabelText("Currency")).toHaveValue("SEK");
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Trip fund" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add pocket" }));
+
+    await waitFor(() =>
+      expect(create).toHaveBeenCalledWith({ domain: "SAVING", name: "Trip fund", currency: "SEK" })
+    );
+    // Back to the list once created; the snapshot will list it.
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /Add pocket/ })).toBeInTheDocument()
     );
   });
 });

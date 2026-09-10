@@ -4,9 +4,12 @@ import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { TextField } from "../../../components/atoms/TextField";
 import { Select } from "../../../components/atoms/Select";
 import { Button } from "../../../components/atoms/Button";
+import { Chip } from "../../../components/atoms/Chip";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
+import { AccountCreator } from "../../../components/molecules/AccountCreator";
 import { ErrorState } from "../../../components/atoms/ErrorState";
 import { useAccounts } from "../../../hooks/useAccounts";
+import { useUserDoc } from "../../../hooks/useUserDoc";
 import { ACCOUNT_NOUN, accountLabel, formatInterestRate } from "../../../helpers/accounts";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import { SELECTABLE_CURRENCIES, CURRENCY_SYMBOL } from "../../../constants";
@@ -41,13 +44,15 @@ const draftOf = (a: Account): Draft => ({
 });
 
 /**
- * Investment accounts and savings pockets: rename, change the bank or
- * broker, the currency and the interest rate, or archive. New ones are
- * created from the entry forms, where they are needed.
+ * Investment accounts and savings pockets: create, rename, change the bank
+ * or broker, the currency and the interest rate, or archive. The entry
+ * forms offer the same creator inline.
  */
 export function AccountsSettings() {
   const [domain, setDomain] = useState<AccountDomain>("INVESTMENT");
-  const { accounts, loading, error, update, remove } = useAccounts(domain);
+  const { accounts, loading, error, create, update, remove } = useAccounts(domain);
+  const { userDoc } = useUserDoc();
+  const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -112,6 +117,7 @@ export function AccountsSettings() {
             onClick={() => {
               setDomain(d);
               setEditingId(null);
+              setCreating(false);
               setMessage(null);
             }}
           >
@@ -211,14 +217,33 @@ export function AccountsSettings() {
               )}
             </li>
           ))}
-          {accounts.length === 0 && (
-            <li className="hint">
-              No {noun}s yet — add one from a {domain === "SAVING" ? "deposit" : "contribution"}{" "}
-              form
-            </li>
-          )}
+          {accounts.length === 0 && <li className="hint">No {noun}s yet</li>}
         </ul>
       )}
+
+      <div className="add">
+        {creating ? (
+          <AccountCreator
+            domain={domain}
+            accounts={accounts}
+            defaultCurrency={userDoc?.mainCurrency ?? "USD"}
+            createAccount={create}
+            onCreated={() => setCreating(false)}
+            onCancel={() => setCreating(false)}
+            onError={setMessage}
+          />
+        ) : (
+          <Chip
+            variant="add"
+            onClick={() => {
+              setCreating(true);
+              setMessage(null);
+            }}
+          >
+            Add {noun}
+          </Chip>
+        )}
+      </div>
 
       {message && (
         <p className="message" role="alert">
@@ -312,6 +337,10 @@ export function AccountsSettings() {
           display: flex;
           justify-content: flex-end;
           gap: 8px;
+        }
+
+        .add {
+          margin-top: 12px;
         }
 
         .hint {
