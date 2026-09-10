@@ -161,3 +161,52 @@ describe("RecurrentTransactionModal — editing a transaction", () => {
     expect(updateTransaction).not.toHaveBeenCalled();
   });
 });
+
+describe("RecurrentTransactionModal — charged pair belongs to one-offs", () => {
+  const toggle = () => screen.queryByLabelText(/My card was charged a different amount/);
+
+  it("hides the toggle on a recurring schedule and never sends the pair", async () => {
+    const onClose = jest.fn();
+    render(<RecurrentTransactionModal domain="EXPENSE" open onClose={onClose} />);
+    expect(toggle()).toBeNull();
+    fill();
+    fireEvent.click(screen.getByRole("button", { name: "Create" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(createItem.mock.calls[0][0]).not.toHaveProperty("chargedAmount");
+  });
+
+  it("offers it on One time and on a ledger row", () => {
+    const { unmount } = render(
+      <RecurrentTransactionModal
+        domain="EXPENSE"
+        open
+        initialFrequency="ONE_TIME"
+        onClose={jest.fn()}
+      />
+    );
+    expect(toggle()).toBeInTheDocument();
+    unmount();
+    render(
+      <RecurrentTransactionModal
+        domain="EXPENSE"
+        open
+        transaction={{
+          id: "t1",
+          userId: "u",
+          domain: "EXPENSE",
+          categoryId: "c1",
+          name: "Bread",
+          amount: 5,
+          currency: "USD",
+          chargedAmount: 20000,
+          chargedCurrency: "COP",
+          occurredAt: { seconds: 0, nanoseconds: 0, toDate: () => new Date(2026, 8, 3, 12) },
+          status: "PAID",
+        }}
+        onClose={jest.fn()}
+      />
+    );
+    expect(toggle()).toBeChecked();
+    expect(screen.getByLabelText("Charged amount")).toHaveValue("20000");
+  });
+});

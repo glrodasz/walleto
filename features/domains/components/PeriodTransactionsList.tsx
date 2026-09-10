@@ -82,6 +82,11 @@ export function PeriodTransactionsList({
                   amount={t.amount}
                   currency={t.currency}
                   displayCurrency={displayCurrency}
+                  charged={
+                    t.chargedAmount !== undefined && t.chargedCurrency
+                      ? { amount: t.chargedAmount, currency: t.chargedCurrency }
+                      : undefined
+                  }
                   meta={t.recurrentTransactionId ? "recurring" : "one-off"}
                   tags={isHidden?.(t) ? ["Hidden"] : undefined}
                   muted={Boolean(isHidden?.(t))}

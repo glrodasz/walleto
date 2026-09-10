@@ -9,6 +9,8 @@ interface Props {
   currency: Currency;
   /** The reporting currency, so a foreign row can be written with its ISO code. */
   displayCurrency: Currency;
+  /** What the card was actually charged, when it differs from `amount`. */
+  charged?: { amount: number; currency: Currency };
   meta: string;
   /** Small pills after the name ("Hidden on dashboard"). */
   tags?: string[];
@@ -23,6 +25,7 @@ export function TransactionRow({
   amount,
   currency,
   displayCurrency,
+  charged,
   meta,
   tags,
   muted,
@@ -44,6 +47,11 @@ export function TransactionRow({
       </span>
       <span className="right">
         <span className="amount">{formatNative(amount, currency, displayCurrency)}</span>
+        {charged && (
+          <span className="charged">
+            charged {formatNative(charged.amount, charged.currency, displayCurrency)}
+          </span>
+        )}
         <span className="meta">{meta}</span>
       </span>
       {trailing}
@@ -108,6 +116,13 @@ export function TransactionRow({
           font-size: 0.85rem;
           font-weight: 600;
           color: var(--fg-0);
+        }
+
+        .charged {
+          font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
+          font-variant-numeric: tabular-nums;
+          font-size: 0.72rem;
+          color: var(--fg-1);
         }
 
         .meta {

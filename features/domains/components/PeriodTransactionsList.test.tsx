@@ -46,7 +46,11 @@ describe("PeriodTransactionsList", () => {
         transactions={[
           tx("a", "Old coffee", new Date(2026, 8, 3, 9)),
           tx("b", "Netflix", new Date(2026, 8, 6, 8), { recurrentTransactionId: "r1" }),
-          tx("c", "Bread", new Date(2026, 8, 6, 12), { amount: 5 }),
+          tx("c", "Bread", new Date(2026, 8, 6, 12), {
+            amount: 5,
+            chargedAmount: 20000,
+            chargedCurrency: "COP",
+          }),
         ]}
         onDelete={jest.fn()}
       />
@@ -58,7 +62,9 @@ describe("PeriodTransactionsList", () => {
 
     const items = screen.getAllByRole("listitem");
     expect(items[0]).toHaveTextContent("Bread");
+    expect(items[0]).toHaveTextContent("charged COP 20,000");
     expect(items[1]).toHaveTextContent("Netflix");
+    expect(items[1]).not.toHaveTextContent("charged");
     expect(items[1]).toHaveTextContent("recurring");
     expect(items[2]).toHaveTextContent("Old coffee");
     expect(items[2]).toHaveTextContent("one-off");

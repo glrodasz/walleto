@@ -163,9 +163,9 @@ export function RecurrentTransactionModal({
       date: schedule.date ?? empty.date,
       backfill: false,
       gainPct: "",
-      chargedEnabled: item.chargedAmount !== undefined,
-      chargedAmount: item.chargedAmount !== undefined ? String(item.chargedAmount) : "",
-      chargedCurrency: item.chargedCurrency ?? "",
+      chargedEnabled: false,
+      chargedAmount: "",
+      chargedCurrency: "",
     });
   }, [open, item, transaction, empty]);
 
@@ -200,6 +200,9 @@ export function RecurrentTransactionModal({
 
   const isRecurring = form.frequency !== "ONE_TIME";
   const editing = Boolean(item || transaction);
+  // A charged pair is what the card actually did on one payment, so it lives
+  // on ledger rows only: one-off create and transaction edit.
+  const offersCharged = !isRecurring && !item;
   const offersGain = !editing && domain === "INVESTMENT" && !isRecurring;
   const gainPct = offersGain && form.gainPct.trim() !== "" ? Number(form.gainPct) : null;
 
@@ -209,8 +212,9 @@ export function RecurrentTransactionModal({
     if (!form.name.trim()) return setFormError("Give it a name");
     if (!(amount > 0)) return setFormError("Amount must be greater than zero");
 
-    const chargedAmount = form.chargedEnabled ? Number(form.chargedAmount) : undefined;
-    if (form.chargedEnabled) {
+    const chargedAmount =
+      offersCharged && form.chargedEnabled ? Number(form.chargedAmount) : undefined;
+    if (offersCharged && form.chargedEnabled) {
       if (!(chargedAmount! > 0) || !form.chargedCurrency)
         return setFormError("Fill both charged fields or turn the toggle off");
       if (form.chargedCurrency === effectiveCurrency)
@@ -285,8 +289,11 @@ export function RecurrentTransactionModal({
               }
             : {}),
           paymentMethodId: form.paymentMethodId || null,
-          chargedAmount: form.chargedEnabled ? chargedAmount! : null,
-          chargedCurrency: form.chargedEnabled ? (form.chargedCurrency as Currency) : null,
+          // An old item may still carry a pair; only clear it when the new
+          // currency collides with it, which the API would otherwise refuse.
+          ...(item.chargedCurrency && item.chargedCurrency === effectiveCurrency
+            ? { chargedAmount: null, chargedCurrency: null }
+            : {}),
         });
         if (scheduleChanged && startDate < new Date()) {
           await materializeNow().catch((err) => console.error("materialize failed:", err));
@@ -320,9 +327,6 @@ export function RecurrentTransactionModal({
           ...(form.frequency === "BIWEEKLY" ? { secondDayOfMonth: form.secondDayOfMonth } : {}),
           startDate: startDate.toISOString(),
           ...(form.paymentMethodId ? { paymentMethodId: form.paymentMethodId } : {}),
-          ...(form.chargedEnabled
-            ? { chargedAmount: chargedAmount!, chargedCurrency: form.chargedCurrency as Currency }
-            : {}),
         });
         // Anything anchored in the past has occurrences to write.
         if (startDate < new Date()) {
@@ -461,40 +465,44 @@ export function RecurrentTransactionModal({
           </div>
         )}
 
-        <label className="toggle">
-          <input
-            type="checkbox"
-            checked={form.chargedEnabled}
-            onChange={(e) => patch({ chargedEnabled: e.currentTarget.checked })}
-          />
-          <span>
-            My card was charged a different amount
-            <span className="hint">
-              {" "}
-              — e.g. a $15.49 subscription billed as 62,700 COP. Records the real cost and the
-              exchange rate you actually paid.
-            </span>
-          </span>
-        </label>
+        {offersCharged && (
+          <>
+            <label className="toggle">
+              <input
+                type="checkbox"
+                checked={form.chargedEnabled}
+                onChange={(e) => patch({ chargedEnabled: e.currentTarget.checked })}
+              />
+              <span>
+                My card was charged a different amount
+                <span className="hint">
+                  {" "}
+                  — e.g. a $15.49 subscription billed as 62,700 COP. Records the real cost and the
+                  exchange rate you actually paid.
+                </span>
+              </span>
+            </label>
 
-        {form.chargedEnabled && (
-          <div className="pair">
-            <TextField
-              label="Charged amount"
-              placeholder="0"
-              inputMode="decimal"
-              align="right"
-              value={form.chargedAmount}
-              onValueChange={(v) => patch({ chargedAmount: v.replace(/[^\d.]/g, "") })}
-            />
-            <Select
-              label="Charged currency"
-              placeholder="Currency"
-              options={CURRENCY_OPTIONS.filter((c) => c.value !== effectiveCurrency)}
-              value={form.chargedCurrency}
-              onValueChange={(v) => patch({ chargedCurrency: v as Currency })}
-            />
-          </div>
+            {form.chargedEnabled && (
+              <div className="pair">
+                <TextField
+                  label="Charged amount"
+                  placeholder="0"
+                  inputMode="decimal"
+                  align="right"
+                  value={form.chargedAmount}
+                  onValueChange={(v) => patch({ chargedAmount: v.replace(/[^\d.]/g, "") })}
+                />
+                <Select
+                  label="Charged currency"
+                  placeholder="Currency"
+                  options={CURRENCY_OPTIONS.filter((c) => c.value !== effectiveCurrency)}
+                  value={form.chargedCurrency}
+                  onValueChange={(v) => patch({ chargedCurrency: v as Currency })}
+                />
+              </div>
+            )}
+          </>
         )}
 
         {formError && <p className="form-error">{formError}</p>}
