@@ -475,13 +475,6 @@ export function DomainPage({ domain }: Props) {
           gap: 16px;
           min-width: 0;
         }
-
-        @media (min-width: 1100px) {
-          .layout {
-            grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-            align-items: start;
-          }
-        }
       `}</style>
     </PageLayout>
   );
