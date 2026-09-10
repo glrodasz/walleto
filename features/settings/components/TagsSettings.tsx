@@ -6,6 +6,8 @@ import { Button } from "../../../components/atoms/Button";
 import { Chip } from "../../../components/atoms/Chip";
 import { Combobox } from "../../../components/atoms/Combobox";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
+import { Pager } from "../../../components/molecules/Pager";
+import { paginate } from "../../../utils/paginate";
 import { ErrorState } from "../../../components/atoms/ErrorState";
 import { useTags } from "../../../hooks/useTags";
 import { tagKey } from "../../../helpers/tags";
@@ -15,8 +17,12 @@ import { tagKey } from "../../../helpers/tags";
  * Rows keep tag ids, so a rename shows everywhere at once and an archived
  * tag simply stops appearing.
  */
+const PAGE_SIZE = 25;
+
 export function TagsSettings() {
   const { tags, loading, error, create, update, remove } = useTags();
+  const [page, setPage] = useState(1);
+  const paged = paginate(tags, page, PAGE_SIZE);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [adding, setAdding] = useState(false);
@@ -67,7 +73,7 @@ export function TagsSettings() {
         <p className="hint">Loading…</p>
       ) : (
         <ul className="list">
-          {tags.map((t) => (
+          {paged.rows.map((t) => (
             <li key={t.id} className="row">
               {editingId === t.id ? (
                 <form
@@ -119,6 +125,8 @@ export function TagsSettings() {
           {tags.length === 0 && <li className="hint">No tags yet</li>}
         </ul>
       )}
+
+      <Pager page={paged.page} pageCount={paged.pageCount} onChange={setPage} />
 
       <div className="add">
         {adding ? (

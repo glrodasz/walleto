@@ -6,6 +6,9 @@ import { Button } from "../../../components/atoms/Button";
 import { Chip } from "../../../components/atoms/Chip";
 import { Combobox } from "../../../components/atoms/Combobox";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
+import { TabStrip } from "../../../components/atoms/TabStrip";
+import { Pager } from "../../../components/molecules/Pager";
+import { paginate } from "../../../utils/paginate";
 import { ErrorState } from "../../../components/atoms/ErrorState";
 import { useCategories } from "../../../hooks/useCategories";
 import suggestions from "../../onboarding/data/categorySuggestions.json";
@@ -13,6 +16,7 @@ import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import type { Domain } from "../../../types";
 
 const DOMAINS: Domain[] = ["INCOME", "EXPENSE", "INVESTMENT", "SAVING"];
+const PAGE_SIZE = 25;
 const SUGGESTIONS = suggestions as Record<Domain, string[]>;
 
 /**
@@ -28,8 +32,10 @@ export function CategoriesSettings() {
   const [adding, setAdding] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const roots = categories.filter((c) => !c.parentId);
+  const paged = paginate(roots, page, PAGE_SIZE);
   const taken = new Set(roots.map((c) => c.name.trim().toLowerCase()));
   const available = SUGGESTIONS[domain].filter((s) => !taken.has(s.toLowerCase()));
 
@@ -73,26 +79,22 @@ export function CategoriesSettings() {
   return (
     <Card>
       <SectionTitle title="Categories" />
-      <div className="tabs" role="tablist" aria-label="Domain">
-        {DOMAINS.map((d) => (
-          <button
-            key={d}
-            type="button"
-            role="tab"
-            aria-selected={domain === d}
-            className={`tab${domain === d ? " is-active" : ""}`}
-            style={{ "--tab-accent": DOMAIN_CONFIG[d].accent } as React.CSSProperties}
-            onClick={() => {
-              setDomain(d);
-              setEditingId(null);
-              setAdding(false);
-              setMessage(null);
-            }}
-          >
-            {DOMAIN_CONFIG[d].title}
-          </button>
-        ))}
-      </div>
+      <TabStrip
+        label="Domain"
+        tabs={DOMAINS.map((d) => ({
+          key: d,
+          label: DOMAIN_CONFIG[d].title,
+          accent: DOMAIN_CONFIG[d].accent,
+        }))}
+        value={domain}
+        onChange={(d) => {
+          setDomain(d as Domain);
+          setPage(1);
+          setEditingId(null);
+          setAdding(false);
+          setMessage(null);
+        }}
+      />
 
       {error && <ErrorState error={error} />}
 
@@ -100,7 +102,7 @@ export function CategoriesSettings() {
         <p className="hint">Loading…</p>
       ) : (
         <ul className="list">
-          {roots.map((c) => (
+          {paged.rows.map((c) => (
             <li key={c.id} className="row">
               {editingId === c.id ? (
                 <form
@@ -148,6 +150,8 @@ export function CategoriesSettings() {
         </ul>
       )}
 
+      <Pager page={paged.page} pageCount={paged.pageCount} onChange={setPage} />
+
       <div className="add">
         {adding ? (
           <Combobox
@@ -172,31 +176,6 @@ export function CategoriesSettings() {
       )}
 
       <style jsx>{`
-        .tabs {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 4px;
-          margin-bottom: 12px;
-        }
-
-        .tab {
-          min-height: 36px;
-          border: 1px solid var(--line);
-          border-radius: var(--r-sm);
-          background: var(--bg-2);
-          color: var(--fg-2);
-          font-family: inherit;
-          font-size: 0.78rem;
-          font-weight: 600;
-          cursor: pointer;
-        }
-
-        .tab.is-active {
-          border-color: var(--tab-accent);
-          color: var(--tab-accent);
-          background: color-mix(in srgb, var(--tab-accent) 12%, transparent);
-        }
-
         .list {
           list-style: none;
           margin: 0;

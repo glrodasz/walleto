@@ -137,14 +137,9 @@ export function PeriodTransactionsList({
       <style jsx>{`
         .empty,
         .more {
-          margin: 0;
-          font-size: 0.85rem;
-          color: var(--fg-2);
-        }
-
-        .more {
-          margin-top: 10px;
+          margin: 10px 0 0;
           font-size: 0.75rem;
+          color: var(--fg-2);
         }
 
         .day {

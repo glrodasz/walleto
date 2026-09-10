@@ -36,7 +36,7 @@ jest.mock("../../features/settings/components/AccountsSettings", () => ({
   AccountsSettings: () => null,
 }));
 jest.mock("../../features/settings/components/TagsSettings", () => ({
-  TagsSettings: () => null,
+  TagsSettings: () => <div data-testid="tags-settings" />,
 }));
 
 jest.mock("../../features/create/components/CreateLauncher", () => ({
@@ -53,6 +53,32 @@ beforeEach(() => {
 });
 
 describe("SettingsPage", () => {
+  it("opens on General and switches sections through the strip, keeping the hash", () => {
+    render(<SettingsPage />);
+    const main = screen.getByRole("main");
+    expect(screen.getByRole("tab", { name: "General" })).toHaveAttribute("aria-selected", "true");
+    expect(within(main).getByText("Ada Lovelace")).toBeInTheDocument();
+    expect(screen.queryByTestId("tags-settings")).toBeNull();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Tags" }));
+    expect(screen.getByTestId("tags-settings")).toBeInTheDocument();
+    expect(within(main).queryByText("Ada Lovelace")).toBeNull();
+    expect(window.location.hash).toBe("#tags");
+
+    fireEvent.click(screen.getByRole("tab", { name: "General" }));
+    expect(window.location.hash).toBe("");
+  });
+
+  it("lands on the section named in the hash", () => {
+    window.location.hash = "#accounts";
+    render(<SettingsPage />);
+    expect(screen.getByRole("tab", { name: "Accounts & pockets" })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+    window.history.replaceState(null, "", window.location.pathname);
+  });
+
   it("renders account details", () => {
     render(<SettingsPage />);
     // The sidebar footer shows the same identity, so scope to the page's own

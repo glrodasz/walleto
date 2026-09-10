@@ -6,6 +6,9 @@ import { Select } from "../../../components/atoms/Select";
 import { Button } from "../../../components/atoms/Button";
 import { Chip } from "../../../components/atoms/Chip";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
+import { TabStrip } from "../../../components/atoms/TabStrip";
+import { Pager } from "../../../components/molecules/Pager";
+import { paginate } from "../../../utils/paginate";
 import { AccountCreator } from "../../../components/molecules/AccountCreator";
 import { ErrorState } from "../../../components/atoms/ErrorState";
 import { useAccounts } from "../../../hooks/useAccounts";
@@ -16,6 +19,7 @@ import { SELECTABLE_CURRENCIES, CURRENCY_SYMBOL } from "../../../constants";
 import type { Account, AccountDomain, Currency, InterestPeriod } from "../../../types";
 
 const DOMAINS: AccountDomain[] = ["INVESTMENT", "SAVING"];
+const PAGE_SIZE = 25;
 
 const CURRENCY_OPTIONS = SELECTABLE_CURRENCIES.map((c) => ({
   value: c.value,
@@ -57,7 +61,9 @@ export function AccountsSettings() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
   const noun = ACCOUNT_NOUN[domain].singular;
+  const paged = paginate(accounts, page, PAGE_SIZE);
 
   const run = async (id: string, action: () => Promise<void>, failure: string) => {
     setBusyId(id);
@@ -105,26 +111,22 @@ export function AccountsSettings() {
   return (
     <Card>
       <SectionTitle title="Accounts & pockets" />
-      <div className="tabs" role="tablist" aria-label="Domain">
-        {DOMAINS.map((d) => (
-          <button
-            key={d}
-            type="button"
-            role="tab"
-            aria-selected={domain === d}
-            className={`tab${domain === d ? " is-active" : ""}`}
-            style={{ "--tab-accent": DOMAIN_CONFIG[d].accent } as React.CSSProperties}
-            onClick={() => {
-              setDomain(d);
-              setEditingId(null);
-              setCreating(false);
-              setMessage(null);
-            }}
-          >
-            {DOMAIN_CONFIG[d].title}
-          </button>
-        ))}
-      </div>
+      <TabStrip
+        label="Domain"
+        tabs={DOMAINS.map((d) => ({
+          key: d,
+          label: DOMAIN_CONFIG[d].title,
+          accent: DOMAIN_CONFIG[d].accent,
+        }))}
+        value={domain}
+        onChange={(d) => {
+          setDomain(d as AccountDomain);
+          setPage(1);
+          setEditingId(null);
+          setCreating(false);
+          setMessage(null);
+        }}
+      />
 
       {error && <ErrorState error={error} />}
 
@@ -132,7 +134,7 @@ export function AccountsSettings() {
         <p className="hint">Loading…</p>
       ) : (
         <ul className="list">
-          {accounts.map((a) => (
+          {paged.rows.map((a) => (
             <li key={a.id} className="row">
               {editingId === a.id && draft ? (
                 <form
@@ -221,6 +223,8 @@ export function AccountsSettings() {
         </ul>
       )}
 
+      <Pager page={paged.page} pageCount={paged.pageCount} onChange={setPage} />
+
       <div className="add">
         {creating ? (
           <AccountCreator
@@ -252,31 +256,6 @@ export function AccountsSettings() {
       )}
 
       <style jsx>{`
-        .tabs {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 4px;
-          margin-bottom: 12px;
-        }
-
-        .tab {
-          min-height: 36px;
-          border: 1px solid var(--line);
-          border-radius: var(--r-sm);
-          background: var(--bg-2);
-          color: var(--fg-2);
-          font-family: inherit;
-          font-size: 0.78rem;
-          font-weight: 600;
-          cursor: pointer;
-        }
-
-        .tab.is-active {
-          border-color: var(--tab-accent);
-          color: var(--tab-accent);
-          background: color-mix(in srgb, var(--tab-accent) 12%, transparent);
-        }
-
         .list {
           list-style: none;
           margin: 0;

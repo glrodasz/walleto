@@ -4,12 +4,10 @@ import { TagsSettings } from "./TagsSettings";
 const create = jest.fn().mockResolvedValue("new1");
 const update = jest.fn().mockResolvedValue(undefined);
 const remove = jest.fn().mockResolvedValue(undefined);
+let tags: unknown[] = [];
 jest.mock("../../../hooks/useTags", () => ({
   useTags: () => ({
-    tags: [
-      { id: "trip", userId: "u", name: "Trip2026", key: "trip2026" },
-      { id: "work", userId: "u", name: "Work", key: "work" },
-    ],
+    tags,
     loading: false,
     error: null,
     create,
@@ -19,6 +17,10 @@ jest.mock("../../../hooks/useTags", () => ({
 }));
 
 beforeEach(() => {
+  tags = [
+    { id: "trip", userId: "u", name: "Trip2026", key: "trip2026" },
+    { id: "work", userId: "u", name: "Work", key: "work" },
+  ];
   create.mockClear();
   update.mockClear();
   remove.mockClear();
@@ -56,5 +58,25 @@ describe("TagsSettings", () => {
       'You already have a tag called "Trip2026"'
     );
     expect(update).not.toHaveBeenCalled();
+  });
+});
+
+describe("TagsSettings — paging", () => {
+  it("shows 25 rows per page and moves to the rest", () => {
+    tags = Array.from({ length: 30 }, (_, i) => ({
+      id: `t${i}`,
+      userId: "u",
+      name: `Tag${String(i).padStart(2, "0")}`,
+      key: `tag${i}`,
+    }));
+    render(<TagsSettings />);
+    expect(screen.getByText("Tag00")).toBeInTheDocument();
+    expect(screen.queryByText("Tag25")).toBeNull();
+    expect(screen.getByText("Page 1 of 2")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByText("Tag25")).toBeInTheDocument();
+    expect(screen.queryByText("Tag00")).toBeNull();
+    expect(screen.getByRole("button", { name: "Next" })).toBeDisabled();
   });
 });

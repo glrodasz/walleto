@@ -65,7 +65,8 @@ features/
   investments/  valor por cuenta / pocket (y por categoría para lo que no tiene cuenta): invertido vs valor,
                 % de ganancia, historial; helpers/interest.ts estima con la tasa de la cuenta;
                 AccountValueList (vista Value), AccountValuePanels (drilldown), RecordValueModal ("+")
-  settings/     CategoriesSettings (categorías raíz), TagsSettings y AccountsSettings (cuentas / pockets) desde Settings
+  settings/     Settings en una columna con pestañas de sección (General / Categories / Tags / Accounts & pockets,
+                la activa va en el hash de la URL); CategoriesSettings, TagsSettings y AccountsSettings paginan de a 25 (`Pager`)
   prospect/     simulador what-if: qué pasa si cancelo X
   create/       CreateLauncher — el botón flotante "+" y su sheet (¿pago puntual, recurrente, o valor de una cuenta?)
 ```
@@ -77,7 +78,7 @@ Cada una con la misma forma interna: `components/`, `hooks/`, `helpers/`, `data/
 - **Un solo consumidor** → baja a la feature.
 - **Dos o más** → sube a la raíz, aunque hoy "parezca" de una feature.
 
-Ejemplos reales: `Combobox` nació en el wizard y vive en `components/atoms/` porque es genérico; `helpers/aggregations` y `hooks/useMoneyContext` parecen de `domains` pero los usan también dashboard, insights y prospect, así que se quedan compartidos. `hooks/useDomainTransactions` nació en `expenses/` (dos consumidores después: dashboard y domains) y subió a `hooks/`.
+Ejemplos reales: `Combobox` nació en el wizard y vive en `components/atoms/` porque es genérico; `TabStrip` (pestañas outlined con acento) sirve a Settings y a sus tarjetas por dominio; `utils/paginate` + `components/molecules/Pager` son la paginación de cualquier lista; `helpers/aggregations` y `hooks/useMoneyContext` parecen de `domains` pero los usan también dashboard, insights y prospect, así que se quedan compartidos. `hooks/useDomainTransactions` nació en `expenses/` (dos consumidores después: dashboard y domains) y subió a `hooks/`.
 
 > Cuidado con los barrels: `helpers/index.ts` reexporta, así que un `grep` por el nombre del archivo **no** encuentra a quien lo importa como `from "../helpers"`. Cuenta consumidores mirando también los barrels, o te llevarás a una feature algo que usan tres.
 
