@@ -3,6 +3,7 @@ import { RecurrentTransactionModal } from "./RecurrentTransactionModal";
 import { anchorStartDate } from "../../../helpers/scheduleAnchor";
 
 const createItem = jest.fn().mockResolvedValue("item1");
+let recurringItems: unknown[] = [];
 const updateItem = jest.fn().mockResolvedValue(undefined);
 const createTransaction = jest.fn().mockResolvedValue("tx1");
 const updateTransaction = jest.fn().mockResolvedValue(undefined);
@@ -29,7 +30,11 @@ jest.mock("../../../hooks/useAccounts", () => ({
   useAccounts: () => ({ accounts: [], loading: false, error: null, create: jest.fn() }),
 }));
 jest.mock("../../../hooks/useRecurrentTransactions", () => ({
-  useRecurrentTransactions: () => ({ items: [], create: createItem, update: updateItem }),
+  useRecurrentTransactions: () => ({
+    items: recurringItems,
+    create: createItem,
+    update: updateItem,
+  }),
 }));
 jest.mock("../../../hooks/useTransactions", () => ({
   createTransaction: (...args: unknown[]) => createTransaction(...args),
@@ -43,6 +48,7 @@ jest.mock("../../../hooks/useInvestmentValuations", () => ({
 }));
 
 beforeEach(() => {
+  recurringItems = [];
   createItem.mockClear();
   updateItem.mockClear();
   createTransaction.mockClear();
@@ -273,5 +279,59 @@ describe("RecurrentTransactionModal — inheritance", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(updateItem.mock.calls[0][1]).not.toHaveProperty("applyToExisting");
+  });
+});
+
+describe("RecurrentTransactionModal — a row's recurring item", () => {
+  const netflix = {
+    id: "rt1",
+    userId: "u",
+    domain: "EXPENSE" as const,
+    categoryId: "c1",
+    name: "Netflix",
+    amount: 15,
+    currency: "USD" as const,
+    frequency: "MONTHLY" as const,
+    startDate: { seconds: 0, nanoseconds: 0, toDate: () => new Date(2026, 0, 15, 12) },
+    nextOccurrence: { seconds: 0, nanoseconds: 0, toDate: () => new Date(2026, 9, 15, 12) },
+    active: true,
+  };
+  const row = {
+    id: "t9",
+    userId: "u",
+    domain: "EXPENSE" as const,
+    recurrentTransactionId: "rt1",
+    categoryId: "c1",
+    name: "Netflix",
+    amount: 15,
+    currency: "USD" as const,
+    occurredAt: { seconds: 0, nanoseconds: 0, toDate: () => new Date(2026, 8, 15, 12) },
+    status: "PAID" as const,
+  };
+
+  it("names the item and hands off to its editor", () => {
+    recurringItems = [netflix];
+    const onOpenItem = jest.fn();
+    render(
+      <RecurrentTransactionModal
+        domain="EXPENSE"
+        open
+        transaction={row}
+        onOpenItem={onOpenItem}
+        onClose={jest.fn()}
+      />
+    );
+    expect(screen.getByText(/Part of the recurring item/)).toHaveTextContent(
+      "Netflix · Monthly · next Oct 15"
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Edit the recurring item" }));
+    expect(onOpenItem).toHaveBeenCalledWith(netflix);
+  });
+
+  it("says nothing when the item is gone", () => {
+    render(
+      <RecurrentTransactionModal domain="EXPENSE" open transaction={row} onClose={jest.fn()} />
+    );
+    expect(screen.queryByText(/Part of the recurring item/)).toBeNull();
   });
 });

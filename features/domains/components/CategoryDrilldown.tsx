@@ -4,7 +4,7 @@ import { Chip } from "../../../components/atoms/Chip";
 import { PeriodTransactionsList } from "./PeriodTransactionsList";
 import { categoryIdSet } from "./CategoryMonthList";
 import type { MoneyContext } from "../../../helpers/aggregations";
-import type { Category, Currency, Tag, Transaction } from "../../../types";
+import type { Category, Currency, RecurrentTransaction, Tag, Transaction } from "../../../types";
 
 interface Props {
   category: Category;
@@ -14,6 +14,7 @@ interface Props {
   currency: Currency;
   ctx: MoneyContext;
   tags?: Tag[];
+  items?: RecurrentTransaction[];
   monthLabel: string;
   loading?: boolean;
   onBack: () => void;
@@ -36,6 +37,7 @@ export function CategoryDrilldown({
   currency,
   ctx,
   tags,
+  items,
   monthLabel,
   loading,
   onBack,
@@ -81,6 +83,7 @@ export function CategoryDrilldown({
         displayCurrency={currency}
         ctx={ctx}
         tags={tags}
+        items={items}
         loading={loading}
         onEdit={onEdit}
         isHidden={isHidden}

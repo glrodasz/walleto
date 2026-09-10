@@ -241,6 +241,7 @@ export function DomainPage({ domain }: Props) {
           currency={currency}
           ctx={ctx}
           tags={tags}
+          items={items}
           monthLabel={window.label}
           loading={txLoading}
           onBack={() => setDrillCategoryId(null)}
@@ -294,6 +295,7 @@ export function DomainPage({ domain }: Props) {
           displayCurrency={currency}
           ctx={ctx}
           tags={tags}
+          items={items}
           loading={txLoading}
           onEdit={setEditingTx}
           isHidden={isHidden}
@@ -410,6 +412,10 @@ export function DomainPage({ domain }: Props) {
           open
           domain={domain}
           transaction={editingTx}
+          onOpenItem={(item) => {
+            setEditingTx(null);
+            openEdit(item);
+          }}
           onClose={() => setEditingTx(null)}
         />
       )}

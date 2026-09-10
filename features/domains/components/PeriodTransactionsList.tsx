@@ -7,7 +7,8 @@ import { KebabMenu } from "../../../components/molecules/KebabMenu";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { groupByDay } from "../helpers/months";
 import { tagNames } from "../../../helpers/tags";
-import type { Currency, Tag, Transaction } from "../../../types";
+import { FREQUENCY_LABELS } from "../../../constants";
+import type { Currency, RecurrentTransaction, Tag, Transaction } from "../../../types";
 
 interface Props {
   title: string;
@@ -17,6 +18,8 @@ interface Props {
   ctx: MoneyContext;
   /** The user's tags, to name a row's tag ids. */
   tags?: Tag[];
+  /** The domain's recurring items, to say which one wrote a row. */
+  items?: RecurrentTransaction[];
   loading?: boolean;
   onEdit?: (transaction: Transaction) => void;
   /** Rows written by a hidden recurring item (or a hidden category) get a pill and dim. */
@@ -39,6 +42,7 @@ export function PeriodTransactionsList({
   displayCurrency,
   ctx,
   tags = [],
+  items = [],
   loading,
   onEdit,
   isHidden,
@@ -48,6 +52,17 @@ export function PeriodTransactionsList({
   now,
 }: Props) {
   const groups = useMemo(() => groupByDay(transactions, ctx, now), [transactions, ctx, now]);
+
+  // "recurring · Monthly", plus the item's name when the row was renamed;
+  // a stopped item no longer resolves, so the row just says "recurring".
+  const origin = (t: Transaction) => {
+    if (!t.recurrentTransactionId) return "one-off";
+    const item = items.find((i) => i.id === t.recurrentTransactionId);
+    if (!item) return "recurring";
+    return `recurring · ${FREQUENCY_LABELS[item.frequency]}${
+      item.name !== t.name ? ` · ${item.name}` : ""
+    }`;
+  };
 
   // Cap by rows, keeping whole days intact where possible.
   const { shown, hidden } = useMemo(() => {
@@ -91,7 +106,7 @@ export function PeriodTransactionsList({
                       ? { amount: t.chargedAmount, currency: t.chargedCurrency }
                       : undefined
                   }
-                  meta={t.recurrentTransactionId ? "recurring" : "one-off"}
+                  meta={origin(t)}
                   tags={isHidden?.(t) ? ["Hidden"] : undefined}
                   labels={tagNames(t.tags, tags)}
                   note={t.note}

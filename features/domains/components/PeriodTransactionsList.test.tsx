@@ -46,18 +46,20 @@ describe("PeriodTransactionsList", () => {
         transactions={[
           tx("a", "Old coffee", new Date(2026, 8, 3, 9)),
           tx("b", "Netflix", new Date(2026, 8, 6, 8), { recurrentTransactionId: "r1" }),
+          tx("d", "Netflix (promo)", new Date(2026, 8, 6, 7), { recurrentTransactionId: "r1" }),
           tx("c", "Bread", new Date(2026, 8, 6, 12), {
             amount: 5,
             chargedAmount: 20000,
             chargedCurrency: "COP",
           }),
         ]}
+        items={[{ id: "r1", name: "Netflix", frequency: "MONTHLY" }] as never}
         onDelete={jest.fn()}
       />
     );
     const days = screen.getAllByRole("heading", { level: 3 });
     expect(days[0]).toHaveTextContent("Today");
-    expect(days[0]).toHaveTextContent("$15.00");
+    expect(days[0]).toHaveTextContent("$25.00");
     expect(days[1]).toHaveTextContent("3 days ago");
 
     const items = screen.getAllByRole("listitem");
@@ -65,9 +67,10 @@ describe("PeriodTransactionsList", () => {
     expect(items[0]).toHaveTextContent("charged COP 20,000");
     expect(items[1]).toHaveTextContent("Netflix");
     expect(items[1]).not.toHaveTextContent("charged");
-    expect(items[1]).toHaveTextContent("recurring");
-    expect(items[2]).toHaveTextContent("Old coffee");
-    expect(items[2]).toHaveTextContent("one-off");
+    expect(items[1]).toHaveTextContent("recurring · Monthly");
+    expect(items[2]).toHaveTextContent("recurring · Monthly · Netflix");
+    expect(items[3]).toHaveTextContent("Old coffee");
+    expect(items[3]).toHaveTextContent("one-off");
   });
 
   it("deletes through the kebab and shows the empty state", () => {

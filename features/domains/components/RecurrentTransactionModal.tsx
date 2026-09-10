@@ -42,6 +42,8 @@ const FREQUENCY_OPTIONS = (Object.keys(FREQUENCY_LABELS) as Frequency[]).map((f)
   label: FREQUENCY_LABELS[f],
 }));
 
+const NEXT_DATE = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
+
 const CURRENCY_OPTIONS = SELECTABLE_CURRENCIES.map((c) => ({
   value: c.value,
   label: `${CURRENCY_SYMBOL[c.value]} ${c.label}`,
@@ -56,6 +58,8 @@ interface Props {
   transaction?: Transaction;
   /** Create only: what the frequency starts as ("Record a payment" opens on One time). */
   initialFrequency?: Frequency;
+  /** Transaction mode: jump to the recurring item that wrote this row. */
+  onOpenItem?: (item: RecurrentTransaction) => void;
   onClose: () => void;
 }
 
@@ -91,6 +95,7 @@ export function RecurrentTransactionModal({
   item,
   transaction,
   initialFrequency = "MONTHLY",
+  onOpenItem,
   onClose,
 }: Props) {
   const config = DOMAIN_CONFIG[domain];
@@ -101,7 +106,12 @@ export function RecurrentTransactionModal({
   const hasAccounts = isAccountDomain(domain);
   const { accounts, create: createAccount } = useAccounts(hasAccounts ? domain : null);
   const { tags: allTags, create: createTag } = useTags();
-  const { create, update } = useRecurrentTransactions(domain);
+  const { items, create, update } = useRecurrentTransactions(domain);
+  // The row's recurring item — only active ones are listed, so a stopped
+  // item leaves the row with nothing to link to.
+  const parent = transaction?.recurrentTransactionId
+    ? items.find((i) => i.id === transaction.recurrentTransactionId)
+    : undefined;
 
   const empty: FormState = useMemo(
     () => ({
@@ -440,6 +450,23 @@ export function RecurrentTransactionModal({
           />
         )}
 
+        {parent && (
+          <div className="parent">
+            <span className="parent-text">
+              Part of the recurring item <strong>{parent.name}</strong> ·{" "}
+              {FREQUENCY_LABELS[parent.frequency]}
+              {parent.nextOccurrence
+                ? ` · next ${NEXT_DATE.format(parent.nextOccurrence.toDate())}`
+                : ""}
+            </span>
+            {onOpenItem && (
+              <Button variant="ghost" size="sm" onClick={() => onOpenItem(parent)}>
+                Edit the recurring item
+              </Button>
+            )}
+          </div>
+        )}
+
         <TextField
           label="Name"
           placeholder={isRecurring ? "Name" : config.oneOff.placeholder}
@@ -656,6 +683,22 @@ export function RecurrentTransactionModal({
           font-size: 0.78rem;
           color: var(--fg-2);
           align-self: center;
+        }
+
+        .parent {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          padding: 8px 12px;
+          border-radius: var(--r-sm);
+          background: var(--bg-2);
+          font-size: 0.8rem;
+          color: var(--fg-1);
+        }
+
+        .parent strong {
+          color: var(--fg-0);
         }
 
         .form-error {
