@@ -3,6 +3,9 @@ import type { NextApiRequest, NextApiResponse } from "next";
 const getSessionMock = jest.fn();
 const collectionMock = jest.fn();
 const getAllMock = jest.fn();
+const batchUpdateMock = jest.fn();
+const batchCommitMock = jest.fn().mockResolvedValue(undefined);
+let linkedRows: { ref: string }[] = [];
 
 jest.mock("../../../lib/auth0", () => ({
   __esModule: true,
@@ -18,6 +21,7 @@ jest.mock("../../../firebase/admin", () => ({
       jest.fn(() => ({
         collection: collectionMock,
         getAll: (...refs: unknown[]) => getAllMock(...refs),
+        batch: jest.fn(() => ({ update: batchUpdateMock, commit: batchCommitMock })),
       })),
       {
         FieldValue: {
@@ -78,6 +82,12 @@ const wireDoc = (opts: {
     }
     if (name === "tags") {
       return { doc: jest.fn((id: string) => ({ id })) };
+    }
+    if (name === "transactions") {
+      return {
+        where: jest.fn().mockReturnThis(),
+        get: jest.fn().mockResolvedValue({ docs: linkedRows }),
+      };
     }
     if (name === "paymentMethods") {
       return {
@@ -216,5 +226,48 @@ describe("DELETE /api/recurrent-transactions/[id]", () => {
     await handler({ method: "GET", query: { id: "rt1" } } as unknown as NextApiRequest, res);
     expect(res.setHeader).toHaveBeenCalledWith("Allow", "PATCH, DELETE");
     expect(res.status).toHaveBeenCalledWith(405);
+  });
+});
+
+describe("PATCH /api/recurrent-transactions/[id] — inheritance and backfill", () => {
+  const req = (body: unknown) =>
+    ({ method: "PATCH", query: { id: "rt1" }, body }) as unknown as NextApiRequest;
+
+  beforeEach(() => {
+    batchUpdateMock.mockClear();
+    batchCommitMock.mockClear();
+    linkedRows = [];
+  });
+
+  it("stores the inherit flags without touching the payments", async () => {
+    const update = wireDoc({});
+    const res = mockRes();
+    await handler(req({ inheritTags: true, inheritNote: false }), res);
+    expect(update).toHaveBeenCalledWith({ inheritTags: true, inheritNote: false });
+    expect(batchUpdateMock).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith({ id: "rt1", updated: 0 });
+  });
+
+  it("rewrites tags and note on every linked payment when asked, and never stores the flag", async () => {
+    linkedRows = [{ ref: "row1" }, { ref: "row2" }];
+    const update = wireDoc({});
+    getAllMock.mockResolvedValue([{ exists: true, data: () => ({ userId: "user1" }) }]);
+    const res = mockRes();
+    await handler(req({ tags: ["t1"], note: "", inheritTags: true, applyToExisting: true }), res);
+    expect(update).toHaveBeenCalledWith({ tags: ["t1"], note: "DELETE_FIELD", inheritTags: true });
+    expect(update.mock.calls[0][0]).not.toHaveProperty("applyToExisting");
+    expect(batchUpdateMock).toHaveBeenCalledTimes(2);
+    expect(batchUpdateMock).toHaveBeenCalledWith("row1", { tags: ["t1"], note: "DELETE_FIELD" });
+    expect(batchCommitMock).toHaveBeenCalledTimes(1);
+    expect(res.json).toHaveBeenCalledWith({ id: "rt1", updated: 2 });
+  });
+
+  it("ignores applyToExisting when neither tags nor note changed", async () => {
+    linkedRows = [{ ref: "row1" }];
+    wireDoc({});
+    const res = mockRes();
+    await handler(req({ name: "Renamed", applyToExisting: true }), res);
+    expect(batchUpdateMock).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith({ id: "rt1", updated: 0 });
   });
 });

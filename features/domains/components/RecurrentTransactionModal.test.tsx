@@ -3,6 +3,7 @@ import { RecurrentTransactionModal } from "./RecurrentTransactionModal";
 import { anchorStartDate } from "../../../helpers/scheduleAnchor";
 
 const createItem = jest.fn().mockResolvedValue("item1");
+const updateItem = jest.fn().mockResolvedValue(undefined);
 const createTransaction = jest.fn().mockResolvedValue("tx1");
 const updateTransaction = jest.fn().mockResolvedValue(undefined);
 const materializeNow = jest.fn().mockResolvedValue(undefined);
@@ -28,7 +29,7 @@ jest.mock("../../../hooks/useAccounts", () => ({
   useAccounts: () => ({ accounts: [], loading: false, error: null, create: jest.fn() }),
 }));
 jest.mock("../../../hooks/useRecurrentTransactions", () => ({
-  useRecurrentTransactions: () => ({ create: createItem, update: jest.fn() }),
+  useRecurrentTransactions: () => ({ items: [], create: createItem, update: updateItem }),
 }));
 jest.mock("../../../hooks/useTransactions", () => ({
   createTransaction: (...args: unknown[]) => createTransaction(...args),
@@ -43,6 +44,7 @@ jest.mock("../../../hooks/useInvestmentValuations", () => ({
 
 beforeEach(() => {
   createItem.mockClear();
+  updateItem.mockClear();
   createTransaction.mockClear();
   updateTransaction.mockClear();
   materializeNow.mockClear();
@@ -211,5 +213,65 @@ describe("RecurrentTransactionModal — charged pair belongs to one-offs", () =>
     );
     expect(toggle()).toBeChecked();
     expect(screen.getByLabelText("Charged amount")).toHaveValue("20000");
+  });
+});
+
+describe("RecurrentTransactionModal — inheritance", () => {
+  const existing = {
+    id: "rt1",
+    userId: "u",
+    domain: "EXPENSE" as const,
+    categoryId: "c1",
+    name: "Netflix",
+    amount: 15,
+    currency: "USD" as const,
+    frequency: "MONTHLY" as const,
+    startDate: { seconds: 0, nanoseconds: 0, toDate: () => new Date(2026, 0, 15, 12) },
+    active: true,
+    note: "Family plan",
+    inheritNote: false,
+  };
+
+  it("sends the inherit flags on create and hides them on One time", () => {
+    const { unmount } = render(
+      <RecurrentTransactionModal domain="EXPENSE" open onClose={jest.fn()} />
+    );
+    expect(screen.getByLabelText("Apply the note to each payment")).toBeInTheDocument();
+    unmount();
+    render(
+      <RecurrentTransactionModal
+        domain="EXPENSE"
+        open
+        initialFrequency="ONE_TIME"
+        onClose={jest.fn()}
+      />
+    );
+    expect(screen.queryByLabelText("Apply the note to each payment")).toBeNull();
+  });
+
+  it("offers to update existing payments when inheritance is switched on, and sends applyToExisting", async () => {
+    const onClose = jest.fn();
+    render(<RecurrentTransactionModal domain="EXPENSE" open item={existing} onClose={onClose} />);
+    expect(screen.queryByLabelText(/Also update the existing payments/)).toBeNull();
+
+    fireEvent.click(screen.getByLabelText("Apply the note to each payment"));
+    const also = screen.getByLabelText(/Also update the existing payments/);
+    fireEvent.click(also);
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(updateItem).toHaveBeenCalledWith(
+      "rt1",
+      expect.objectContaining({ note: "Family plan", inheritNote: true, applyToExisting: true })
+    );
+  });
+
+  it("does not send applyToExisting when the box is left unticked", async () => {
+    const onClose = jest.fn();
+    render(<RecurrentTransactionModal domain="EXPENSE" open item={existing} onClose={onClose} />);
+    fireEvent.click(screen.getByLabelText("Apply the note to each payment"));
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(updateItem.mock.calls[0][1]).not.toHaveProperty("applyToExisting");
   });
 });

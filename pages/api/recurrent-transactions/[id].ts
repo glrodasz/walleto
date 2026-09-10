@@ -6,6 +6,8 @@ import { nextOccurrenceFrom } from "../../../helpers/recurrence";
 
 import "../../../firebase/admin";
 
+const BATCH_LIMIT = 450;
+
 export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await auth0.getSession(req, res);
   if (!session?.user?.sub) {
@@ -44,6 +46,9 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       chargedCurrency,
       tags,
       note,
+      inheritTags,
+      inheritNote,
+      applyToExisting,
       frequency,
       secondDayOfMonth,
       categoryId,
@@ -141,6 +146,8 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       ...(chargedCurrency !== undefined ? { chargedCurrency: chargedCurrency ?? del } : {}),
       ...(tags !== undefined ? { tags: tags?.length ? Array.from(new Set(tags)) : del } : {}),
       ...(note !== undefined ? { note: note || del } : {}),
+      ...(inheritTags !== undefined ? { inheritTags } : {}),
+      ...(inheritNote !== undefined ? { inheritNote } : {}),
       ...(frequency !== undefined ? { frequency } : {}),
       ...(secondDayOfMonth !== undefined ? { secondDayOfMonth: secondDayOfMonth ?? del } : {}),
       ...(categoryId !== undefined ? { categoryId } : {}),
@@ -152,7 +159,29 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       ...occurrencePatch,
     });
 
-    return res.status(200).json({ id });
+    // "Also update the existing payments": rewrite tags / note on every row
+    // this item wrote. Two equality filters, no index; SKIPPED rows are
+    // rewritten too — harmless, and it avoids a third filter.
+    let updated = 0;
+    if (applyToExisting && (tags !== undefined || note !== undefined)) {
+      const rowPatch = {
+        ...(tags !== undefined ? { tags: tags?.length ? Array.from(new Set(tags)) : del } : {}),
+        ...(note !== undefined ? { note: note || del } : {}),
+      };
+      const rows = await db
+        .collection("transactions")
+        .where("userId", "==", userId)
+        .where("recurrentTransactionId", "==", id)
+        .get();
+      for (let i = 0; i < rows.docs.length; i += BATCH_LIMIT) {
+        const batch = db.batch();
+        for (const d of rows.docs.slice(i, i + BATCH_LIMIT)) batch.update(d.ref, rowPatch);
+        await batch.commit();
+      }
+      updated = rows.docs.length;
+    }
+
+    return res.status(200).json({ id, updated });
   }
 
   if (req.method === "DELETE") {

@@ -71,6 +71,11 @@ interface FormState extends ScheduleValue {
   /** Tag ids. */
   tags: string[];
   note: string;
+  /** Recurring only: copy tags / note onto each payment the item writes. */
+  inheritTags: boolean;
+  inheritNote: boolean;
+  /** Item edit only: also rewrite the payments already written. */
+  applyToExisting: boolean;
   /** Create only: anchor the schedule BACKFILL_MONTHS back so history gets written. */
   backfill: boolean;
   /** Create only, INVESTMENT + ONE_TIME: record how the purchase has done so far. */
@@ -109,6 +114,9 @@ export function RecurrentTransactionModal({
       paymentMethodId: "",
       tags: [],
       note: "",
+      inheritTags: false,
+      inheritNote: false,
+      applyToExisting: false,
       dayOfMonth: 1,
       secondDayOfMonth: 15,
       month: 0,
@@ -170,6 +178,9 @@ export function RecurrentTransactionModal({
       paymentMethodId: item.paymentMethodId ?? "",
       tags: item.tags ?? [],
       note: item.note ?? "",
+      inheritTags: Boolean(item.inheritTags),
+      inheritNote: Boolean(item.inheritNote),
+      applyToExisting: false,
       dayOfMonth: schedule.dayOfMonth ?? 1,
       secondDayOfMonth: schedule.secondDayOfMonth ?? 15,
       month: schedule.month ?? 0,
@@ -213,6 +224,17 @@ export function RecurrentTransactionModal({
 
   const isRecurring = form.frequency !== "ONE_TIME";
   const editing = Boolean(item || transaction);
+  // Editing an item's tags / note (or switching inheritance on) can also
+  // rewrite the payments it already wrote — offered, never silent.
+  const sameIds = (a: string[], b: string[]) =>
+    a.length === b.length && a.every((v, i) => v === b[i]);
+  const tagsChanged = Boolean(item) && !sameIds(form.tags, item?.tags ?? []);
+  const noteChanged = Boolean(item) && form.note.trim() !== (item?.note ?? "");
+  const offersBackfill =
+    Boolean(item) &&
+    isRecurring &&
+    ((form.inheritTags && (tagsChanged || !item?.inheritTags)) ||
+      (form.inheritNote && (noteChanged || !item?.inheritNote)));
   // A charged pair is what the card actually did on one payment, so it lives
   // on ledger rows only: one-off create and transaction edit.
   const offersCharged = !isRecurring && !item;
@@ -310,6 +332,9 @@ export function RecurrentTransactionModal({
           paymentMethodId: form.paymentMethodId || null,
           tags: form.tags.length ? form.tags : null,
           note: form.note.trim() || null,
+          inheritTags: form.inheritTags,
+          inheritNote: form.inheritNote,
+          ...(offersBackfill && form.applyToExisting ? { applyToExisting: true } : {}),
           // An old item may still carry a pair; only clear it when the new
           // currency collides with it, which the API would otherwise refuse.
           ...(item.chargedCurrency && item.chargedCurrency === effectiveCurrency
@@ -352,6 +377,8 @@ export function RecurrentTransactionModal({
           ...(form.paymentMethodId ? { paymentMethodId: form.paymentMethodId } : {}),
           ...(form.tags.length ? { tags: form.tags } : {}),
           ...(form.note.trim() ? { note: form.note.trim() } : {}),
+          ...(form.inheritTags ? { inheritTags: true } : {}),
+          ...(form.inheritNote ? { inheritNote: true } : {}),
         });
         // Anything anchored in the past has occurrences to write.
         if (startDate < new Date()) {
@@ -466,6 +493,16 @@ export function RecurrentTransactionModal({
           createTag={createTag}
           onError={setFormError}
         />
+        {isRecurring && (
+          <label className="toggle">
+            <input
+              type="checkbox"
+              checked={form.inheritTags}
+              onChange={(e) => patch({ inheritTags: e.currentTarget.checked })}
+            />
+            <span>Apply the tags to each payment</span>
+          </label>
+        )}
 
         <TextArea
           label="Note (optional)"
@@ -474,6 +511,30 @@ export function RecurrentTransactionModal({
           value={form.note}
           onValueChange={(v) => patch({ note: v })}
         />
+        {isRecurring && (
+          <label className="toggle">
+            <input
+              type="checkbox"
+              checked={form.inheritNote}
+              onChange={(e) => patch({ inheritNote: e.currentTarget.checked })}
+            />
+            <span>Apply the note to each payment</span>
+          </label>
+        )}
+
+        {offersBackfill && (
+          <label className="toggle">
+            <input
+              type="checkbox"
+              checked={form.applyToExisting}
+              onChange={(e) => patch({ applyToExisting: e.currentTarget.checked })}
+            />
+            <span>
+              Also update the existing payments of this item
+              <span className="hint"> — payments you edited by hand get overwritten</span>
+            </span>
+          </label>
+        )}
 
         {!item && isRecurring && (
           <label className="toggle">

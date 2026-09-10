@@ -123,6 +123,9 @@ export interface RecurrentTransaction {
   /** Tag ids (see `Tag`). */
   tags?: string[];
   note?: string;
+  /** Copy the tags / note onto every payment the item writes. */
+  inheritTags?: boolean;
+  inheritNote?: boolean;
   frequency: Frequency;
   /** BIWEEKLY only: twice a month, on startDate's day and this one. */
   secondDayOfMonth?: number;

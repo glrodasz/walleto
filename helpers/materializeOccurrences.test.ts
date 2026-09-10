@@ -162,6 +162,19 @@ describe("occurrenceToTransaction", () => {
     });
   });
 
+  it("copies tags and note only when the item says its payments inherit them", () => {
+    const at = new Date("2026-03-15T12:00:00.000Z");
+    const inherit = occurrenceToTransaction(
+      item({ tags: ["t1"], note: "Shared", inheritTags: true, inheritNote: true }),
+      at
+    );
+    expect(inherit).toEqual(expect.objectContaining({ tags: ["t1"], note: "Shared" }));
+
+    const keep = occurrenceToTransaction(item({ tags: ["t1"], note: "Private" }), at);
+    expect(keep).not.toHaveProperty("tags");
+    expect(keep).not.toHaveProperty("note");
+  });
+
   it("omits absent optional fields instead of writing undefined", () => {
     const doc = occurrenceToTransaction(item(), new Date("2026-03-15T12:00:00.000Z"));
     expect(doc).not.toHaveProperty("chargedAmount");

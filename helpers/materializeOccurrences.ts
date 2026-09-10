@@ -65,6 +65,8 @@ export function occurrenceToTransaction(item: RecurrentTransaction, occurredAt: 
     ...(item.chargedAmount !== undefined ? { chargedAmount: item.chargedAmount } : {}),
     ...(item.chargedCurrency ? { chargedCurrency: item.chargedCurrency } : {}),
     ...(item.paymentMethodId ? { paymentMethodId: item.paymentMethodId } : {}),
+    ...(item.inheritTags && item.tags?.length ? { tags: item.tags } : {}),
+    ...(item.inheritNote && item.note ? { note: item.note } : {}),
     occurredAt,
   };
 }
