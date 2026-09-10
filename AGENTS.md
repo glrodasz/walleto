@@ -33,7 +33,9 @@ helpers/materializeOccurrences.ts ocurrencias de un item recurrente en un rango,
 helpers/scheduleAnchor.ts         elección de fecha del usuario → startDate (incl. "backfill" = 6 meses atrás)
 helpers/paymentMethodLabel.ts     "name - last4" para tablas, "SEB - Autogiro (Bank transfer)" para dropdowns
 helpers/paymentMethodOptions.ts   tipos de método, sugerencias de red/proveedor, CARD_TYPES, sortByName/groupMethodsByType (wizard, Methods y PaymentMethodField)
-helpers/accounts.ts               isAccountDomain (INVESTMENT | SAVING), ACCOUNT_NOUN (account / pocket), formatInterestRate
+helpers/accounts.ts               isAccountDomain (INVESTMENT | SAVING), ACCOUNT_NOUN (account / pocket), accountLabel, formatInterestRate
+helpers/tags.ts                   normaliseTagName / tagKey (sin espacios; key en minúsculas), tagNames (ids → nombres)
+helpers/hidden.ts                 qué filas del ledger están ocultas (por su item recurrente o su categoría)
 helpers/recurrence.ts             próxima ocurrencia según Frequency
 helpers/seedDefaultCategories.ts  categorías por defecto
 ```
@@ -63,7 +65,7 @@ features/
   investments/  valor por cuenta / pocket (y por categoría para lo que no tiene cuenta): invertido vs valor,
                 % de ganancia, historial; helpers/interest.ts estima con la tasa de la cuenta;
                 AccountValueList (vista Value), AccountValuePanels (drilldown), RecordValueModal ("+")
-  settings/     CategoriesSettings (categorías raíz) y AccountsSettings (cuentas / pockets) desde Settings
+  settings/     CategoriesSettings (categorías raíz), TagsSettings y AccountsSettings (cuentas / pockets) desde Settings
   prospect/     simulador what-if: qué pasa si cancelo X
   create/       CreateLauncher — el botón flotante "+" y su sheet (¿pago puntual, recurrente, o valor de una cuenta?)
 ```
@@ -155,7 +157,8 @@ useEffect(() => {
 **Otras reglas**
 
 - **Cuentas / pockets** (`accounts`): solo para INVESTMENT y SAVING (`helpers/accounts.ts`). Las categorías clasifican; la cuenta es _dónde_ está la plata, así que las valoraciones y el interés cuelgan de ella. `accountId` es opcional en recurrentes y transacciones (las ocurrencias lo heredan del item vía `occurrenceToTransaction`); lo que no tiene cuenta cae en el bucket "No account" del dominio (`ValueSelector = { accountId } | { domain }`; el bucket solo casa filas **sin** cuenta para no contar doble). Toda valoración nueva lleva `domain`; las anteriores a las cuentas solo tienen `categoryId` y `valuationDomain()` las resuelve por la categoría (INVESTMENT si no hay). Las cuentas se editan/archivan en Settings (`features/settings/components/AccountsSettings`). `interestRate` se guarda como lo cotiza el banco (`{ value, period: MONTHLY | YEARLY }`); `features/investments/helpers/interest.ts` lo pasa a mensual y compone desde cada depósito; un value check registrado manda desde su fecha. `AccountField` es el patrón de `CategoryField` con creador inline.
-- Borrado suave: `archived: true` en categorías, métodos de pago y cuentas, `active: false` en transacciones recurrentes, `status: "SKIPPED"` en transacciones. Nunca `.delete()` sobre algo que otro doc referencia. La única excepción es `investmentValuations`: un punto de datos que nadie apunta, se borra de verdad.
+- **Tags** (`tags`): entidad global por usuario. `name` conserva mayúsculas pero sin espacios ("Trip 2026" → `Trip2026`); `key` es el `name` en minúsculas y es único por usuario (POST 409 si hay uno vivo con la misma key; si solo hay uno archivado, lo revive). Las filas (`recurrentTransactions`, `transactions`) guardan **ids** en `tags: string[]` y las rutas comprueban con `db.getAll` que sean del usuario; los nombres se resuelven al pintar con `tagNames` (`DomainPage` hace un solo `useTags()` y lo baja como `paymentMethods`). `TagsField` (chips + Combobox) reutiliza por key antes de crear. `note` es texto libre en ambas colecciones.
+- Borrado suave: `archived: true` en categorías, métodos de pago, cuentas y tags, `active: false` en transacciones recurrentes, `status: "SKIPPED"` en transacciones. Nunca `.delete()` sobre algo que otro doc referencia. La única excepción es `investmentValuations`: un punto de datos que nadie apunta, se borra de verdad.
 - **Fechas de un item recurrente**: la UI nunca escribe `startDate` a mano; pasa la elección del usuario (día de pago, mes+día, fecha) por `helpers/scheduleAnchor.ts`. "Backfill los últimos 6 meses" no es un campo: es el mismo `startDate` movido 6 meses atrás, y el materializador hace el resto. Tras crear algo con fecha en el pasado, llama `materializeNow()` para que el historial aparezca sin esperar otra sesión.
 - `createdAt` con `serverTimestamp()`. Llega **`null`** en el eco local antes de que el servidor lo resuelva: cualquier orden o formato tiene que tolerarlo.
 - Los campos opcionales se **omiten**, no se mandan como `null` en `POST`. En `PATCH`, en cambio, `null` significa "borrar este campo" (`FieldValue.delete()`) — así es como `chargedAmount`/`chargedCurrency`/`paymentMethodId` se limpian sin un endpoint aparte.

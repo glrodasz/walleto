@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 const getSessionMock = jest.fn();
 const collectionMock = jest.fn();
+const getAllMock = jest.fn();
 
 jest.mock("../../../lib/auth0", () => ({
   __esModule: true,
@@ -16,6 +17,7 @@ jest.mock("../../../firebase/admin", () => ({
     firestore: Object.assign(
       jest.fn(() => ({
         collection: collectionMock,
+        getAll: (...refs: unknown[]) => getAllMock(...refs),
       })),
       {
         FieldValue: {
@@ -46,6 +48,9 @@ const wireDoc = (opts: {
   const update = jest.fn().mockResolvedValue(undefined);
 
   collectionMock.mockImplementation((name: string) => {
+    if (name === "tags") {
+      return { doc: jest.fn((id: string) => ({ id })) };
+    }
     if (name === "paymentMethods") {
       return {
         doc: jest.fn().mockReturnValue({
@@ -243,5 +248,23 @@ describe("PATCH /api/transactions/[id] — category and currency", () => {
   it("rejects a new currency equal to the stored charged currency", async () => {
     wire({ exists: true });
     expect((await patch({ currency: "COP" })).status).toHaveBeenCalledWith(400);
+  });
+});
+
+describe("PATCH /api/transactions/[id] — tags and note", () => {
+  const mk = (method: string, body?: unknown) =>
+    ({ method, query: { id: "t1" }, body }) as unknown as NextApiRequest;
+  it("validates new tags and clears both with null or an empty list", async () => {
+    let update = wireDoc({});
+    getAllMock.mockResolvedValue([{ exists: true, data: () => ({ userId: "user1" }) }]);
+    let res = mockRes();
+    await handler(mk("PATCH", { tags: ["tag1"], note: "Paid late" }), res);
+    expect(update).toHaveBeenCalledWith({ tags: ["tag1"], note: "Paid late" });
+
+    update = wireDoc({});
+    res = mockRes();
+    await handler(mk("PATCH", { tags: [], note: null }), res);
+    expect(getAllMock).toHaveBeenCalledTimes(1);
+    expect(update).toHaveBeenCalledWith({ tags: "DELETE_FIELD", note: "DELETE_FIELD" });
   });
 });

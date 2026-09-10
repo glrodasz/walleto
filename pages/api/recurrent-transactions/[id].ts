@@ -42,6 +42,8 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       currency,
       chargedAmount,
       chargedCurrency,
+      tags,
+      note,
       frequency,
       secondDayOfMonth,
       categoryId,
@@ -100,6 +102,18 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       }
     }
 
+    // Tags must be the caller's; unknown ids would never resolve to a name.
+    if (tags && tags.length > 0) {
+      const tagRefs = Array.from(new Set(tags)).map((t) => db.collection("tags").doc(t));
+      const tagSnaps = await db.getAll(...tagRefs);
+      if (tagSnaps.some((s) => !s.exists)) {
+        return res.status(400).json({ error: "Tag not found" });
+      }
+      if (tagSnaps.some((s) => s.data()?.userId !== userId)) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+    }
+
     // A schedule change moves the next occurrence.
     let occurrencePatch: Record<string, unknown> = {};
     if (frequency !== undefined || startDate !== undefined || secondDayOfMonth !== undefined) {
@@ -125,6 +139,8 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       ...(currency !== undefined ? { currency } : {}),
       ...(chargedAmount !== undefined ? { chargedAmount: chargedAmount ?? del } : {}),
       ...(chargedCurrency !== undefined ? { chargedCurrency: chargedCurrency ?? del } : {}),
+      ...(tags !== undefined ? { tags: tags?.length ? Array.from(new Set(tags)) : del } : {}),
+      ...(note !== undefined ? { note: note || del } : {}),
       ...(frequency !== undefined ? { frequency } : {}),
       ...(secondDayOfMonth !== undefined ? { secondDayOfMonth: secondDayOfMonth ?? del } : {}),
       ...(categoryId !== undefined ? { categoryId } : {}),

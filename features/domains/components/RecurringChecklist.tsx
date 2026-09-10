@@ -7,6 +7,7 @@ import type { KebabAction } from "../../../components/molecules/KebabMenu";
 import { sumMonthly } from "../../../helpers/aggregations";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { paymentMethodOptionLabel } from "../../../helpers/paymentMethodLabel";
+import { tagNames } from "../../../helpers/tags";
 import { monthOccurrences } from "../helpers/months";
 import type { MonthWindow, OccurrenceStatus } from "../helpers/months";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
@@ -17,6 +18,7 @@ import type {
   Domain,
   PaymentMethod,
   RecurrentTransaction,
+  Tag,
   Transaction,
 } from "../../../types";
 
@@ -27,6 +29,8 @@ interface Props {
   transactions: Transaction[];
   paymentMethods: PaymentMethod[];
   categories: Category[];
+  /** The user's tags, to name an item's tag ids. */
+  tags?: Tag[];
   ctx: MoneyContext;
   currency: Currency;
   window: MonthWindow;
@@ -77,6 +81,8 @@ interface RowProps {
   actions: KebabAction[];
   /** Small pills after the name ("Hidden on dashboard"). */
   tags?: string[];
+  labels?: string[];
+  note?: string;
   muted?: boolean;
 }
 
@@ -85,20 +91,37 @@ interface RowProps {
  * styled-jsx only stamps its scope class on the JSX a component returns
  * itself, so rows built by a helper function came out unstyled.
  */
-function OccurrenceRow({ name, meta, amount, status, accent, actions, tags, muted }: RowProps) {
+function OccurrenceRow({
+  name,
+  meta,
+  amount,
+  status,
+  accent,
+  actions,
+  tags,
+  labels,
+  note,
+  muted,
+}: RowProps) {
   return (
     <li className={`row${status ? ` ${status}` : ""}${muted ? " muted" : ""}`}>
       <span className="main">
         <span className="name">{name}</span>
-        {tags && tags.length > 0 && (
+        {((tags && tags.length > 0) || (labels && labels.length > 0)) && (
           <span className="tags">
-            {tags.map((t) => (
-              <span key={t} className="tag">
+            {tags?.map((t) => (
+              <span key={`flag-${t}`} className="tag">
+                {t}
+              </span>
+            ))}
+            {labels?.map((t) => (
+              <span key={`label-${t}`} className="label">
                 {t}
               </span>
             ))}
           </span>
         )}
+        {note && <span className="note">{note}</span>}
         <span className="meta">{meta}</span>
       </span>
       <span className="right">
@@ -143,6 +166,23 @@ function OccurrenceRow({ name, meta, amount, status, accent, actions, tags, mute
           border-radius: 999px;
           border: 1px solid var(--accent-amber);
           color: var(--accent-amber);
+        }
+
+        .label {
+          font-size: 0.68rem;
+          font-weight: 600;
+          padding: 1px 7px;
+          border-radius: 999px;
+          border: 1px solid var(--line-strong);
+          color: var(--fg-1);
+        }
+
+        .note {
+          font-size: 0.72rem;
+          color: var(--fg-2);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .main {
@@ -228,6 +268,7 @@ export function RecurringChecklist({
   transactions,
   paymentMethods,
   categories,
+  tags = [],
   ctx,
   currency,
   window,
@@ -286,6 +327,8 @@ export function RecurringChecklist({
                         name={o.item.name}
                         meta={`${DATE.format(o.occurredAt)} · ${FREQUENCY_LABELS[o.item.frequency]}${details(o.item)}`}
                         tags={hiddenTags(o.item)}
+                        labels={tagNames(o.item.tags, tags)}
+                        note={o.item.note}
                         muted={Boolean(o.item.hiddenFromDashboard)}
                         amount={formatNative(o.item.amount, o.item.currency, currency)}
                         status={o.status}
@@ -333,6 +376,8 @@ export function RecurringChecklist({
                     amount={formatNative(item.amount, item.currency, currency)}
                     accent={config.accent}
                     tags={hiddenTags(item)}
+                    labels={tagNames(item.tags, tags)}
+                    note={item.note}
                     muted={Boolean(item.hiddenFromDashboard)}
                     actions={[
                       { label: "Edit", onSelect: () => onEdit(item) },

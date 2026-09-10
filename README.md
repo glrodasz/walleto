@@ -39,14 +39,16 @@ rates into a per-user display currency.
 - **Methods** (`/methods`) — payment methods CRUD (cards, wallets, bank
   transfers, cash, crypto), grouped by type and sorted by name.
 - **Settings** (`/settings`) — account info, main reporting currency,
-  root categories per domain (rename, add, archive), investment accounts
-  and savings pockets (edit, archive), redo onboarding.
+  root categories per domain (rename, add, archive), tags (rename, add,
+  archive), investment accounts and savings pockets (add, edit, archive),
+  redo onboarding.
 
 One-off transactions (a coffee, an invoice) are recorded through the create
 button — the header's New buttons on desktop, the floating "+" on phones —
 which asks whether you mean a single dated payment, a recurring item or, for
 investments and savings, a value check. Choosing "One time" for a recurring item records a
-plain transaction, never a plan. Each
+plain transaction, never a plan. Any entry can carry tags (global labels,
+case kept but no spaces) and a note. Each
 domain page lists what was recorded in the selected period, with delete.
 Six months of synthetic PAID transaction history is backfilled from active
 recurring items on first dashboard visit (`useMaterialize`), idempotently.

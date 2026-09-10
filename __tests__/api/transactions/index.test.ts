@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 const getSessionMock = jest.fn();
 const collectionMock = jest.fn();
+const getAllMock = jest.fn();
 
 jest.mock("../../../lib/auth0", () => ({
   __esModule: true,
@@ -16,6 +17,7 @@ jest.mock("../../../firebase/admin", () => ({
     firestore: Object.assign(
       jest.fn(() => ({
         collection: collectionMock,
+        getAll: (...refs: unknown[]) => getAllMock(...refs),
       })),
       {
         FieldValue: { serverTimestamp: jest.fn(() => "SERVER_TIMESTAMP") },
@@ -63,6 +65,9 @@ const wireCollections = (opts: {
           }),
         }),
       };
+    }
+    if (name === "tags") {
+      return { doc: jest.fn((id: string) => ({ id })) };
     }
     if (name === "paymentMethods") {
       return {
@@ -216,6 +221,43 @@ describe("POST /api/transactions — accounts", () => {
     });
     const res = mockRes();
     await handler({ method: "POST", query: {}, body: savingBody } as NextApiRequest, res);
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+});
+
+describe("POST /api/transactions — tags and note", () => {
+  const withTags = { ...validBody, tags: ["tag1", "tag1", "tag2"], note: "  Team lunch  " };
+
+  it("checks the tags are the caller's and stores them deduped with the note", async () => {
+    getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
+    const add = wireCollections({});
+    getAllMock.mockResolvedValue([
+      { exists: true, data: () => ({ userId: "user1" }) },
+      { exists: true, data: () => ({ userId: "user1" }) },
+    ]);
+    const res = mockRes();
+    await handler({ method: "POST", query: {}, body: withTags } as NextApiRequest, res);
+    expect(getAllMock).toHaveBeenCalledWith({ id: "tag1" }, { id: "tag2" });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(add).toHaveBeenCalledWith(
+      expect.objectContaining({ tags: ["tag1", "tag2"], note: "Team lunch" })
+    );
+  });
+
+  it("rejects an unknown or foreign tag", async () => {
+    getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
+    wireCollections({});
+    getAllMock.mockResolvedValue([{ exists: false }, { exists: true, data: () => ({}) }]);
+    let res = mockRes();
+    await handler({ method: "POST", query: {}, body: withTags } as NextApiRequest, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+
+    getAllMock.mockResolvedValue([
+      { exists: true, data: () => ({ userId: "user1" }) },
+      { exists: true, data: () => ({ userId: "intruder" }) },
+    ]);
+    res = mockRes();
+    await handler({ method: "POST", query: {}, body: withTags } as NextApiRequest, res);
     expect(res.status).toHaveBeenCalledWith(403);
   });
 });

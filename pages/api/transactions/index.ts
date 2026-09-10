@@ -25,6 +25,8 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       currency,
       chargedAmount,
       chargedCurrency,
+      tags,
+      note,
       paymentMethodId,
       occurredAt,
       status,
@@ -67,6 +69,18 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       }
     }
 
+    // Tags must be the caller's; unknown ids would never resolve to a name.
+    if (tags && tags.length > 0) {
+      const tagRefs = Array.from(new Set(tags)).map((t) => db.collection("tags").doc(t));
+      const tagSnaps = await db.getAll(...tagRefs);
+      if (tagSnaps.some((s) => !s.exists)) {
+        return res.status(400).json({ error: "Tag not found" });
+      }
+      if (tagSnaps.some((s) => s.data()?.userId !== userId)) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+    }
+
     const ref = await db.collection("transactions").add({
       userId,
       domain,
@@ -77,6 +91,8 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       currency,
       ...(chargedAmount !== undefined ? { chargedAmount } : {}),
       ...(chargedCurrency ? { chargedCurrency } : {}),
+      ...(tags?.length ? { tags: Array.from(new Set(tags)) } : {}),
+      ...(note ? { note } : {}),
       ...(paymentMethodId ? { paymentMethodId } : {}),
       occurredAt: admin.firestore.Timestamp.fromDate(new Date(occurredAt)),
       status: status ?? "PAID",

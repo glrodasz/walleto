@@ -107,6 +107,21 @@ export const PaymentMethodUpdateSchema = z.object({
   archived: z.boolean().optional(),
 });
 
+export const TagInputSchema = z.object({
+  name: z.string().trim().min(1).max(30),
+});
+
+export const TagUpdateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(30).optional(),
+    archived: z.boolean().optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: "At least one field is required" });
+
+/** Tag ids on a row; the routes check they belong to the caller. */
+const TagIdsSchema = z.array(z.string().min(1)).max(20);
+const NoteSchema = z.string().trim().max(500);
+
 export const AccountDomainSchema = z.enum(["INVESTMENT", "SAVING"]);
 export const InterestPeriodSchema = z.enum(["MONTHLY", "YEARLY"]);
 
@@ -144,6 +159,8 @@ export const RecurrentTransactionInputSchema = z
     currency: CurrencySchema,
     chargedAmount: z.number().positive().optional(),
     chargedCurrency: CurrencySchema.optional(),
+    tags: TagIdsSchema.optional(),
+    note: NoteSchema.optional(),
     frequency: FrequencySchema,
     secondDayOfMonth: z.number().int().min(1).max(31).optional(),
     type: RecurrentTransactionTypeSchema.optional(),
@@ -161,6 +178,8 @@ export const RecurrentTransactionUpdateSchema = z
     // null clears the field (FieldValue.delete() server-side).
     chargedAmount: z.number().positive().nullable().optional(),
     chargedCurrency: CurrencySchema.nullable().optional(),
+    tags: TagIdsSchema.nullable().optional(),
+    note: NoteSchema.nullable().optional(),
     frequency: FrequencySchema.optional(),
     secondDayOfMonth: z.number().int().min(1).max(31).nullable().optional(),
     categoryId: z.string().min(1).optional(),
@@ -188,6 +207,8 @@ export const TransactionInputSchema = z
     currency: CurrencySchema,
     chargedAmount: z.number().positive().optional(),
     chargedCurrency: CurrencySchema.optional(),
+    tags: TagIdsSchema.optional(),
+    note: NoteSchema.optional(),
     paymentMethodId: z.string().optional(),
     occurredAt: z.iso.datetime(),
     status: TransactionStatusSchema.optional(),
@@ -206,6 +227,8 @@ export const TransactionUpdateSchema = z
     chargedAmount: z.number().positive().nullable().optional(),
     chargedCurrency: CurrencySchema.nullable().optional(),
     paymentMethodId: z.string().min(1).nullable().optional(),
+    tags: TagIdsSchema.nullable().optional(),
+    note: NoteSchema.nullable().optional(),
   })
   .superRefine((v, ctx) => {
     if (Object.keys(v).length === 0) {
@@ -253,6 +276,8 @@ export const UserUpdateSchema = z
     message: "At least one field is required",
   });
 
+export type TagInput = z.infer<typeof TagInputSchema>;
+export type TagUpdate = z.infer<typeof TagUpdateSchema>;
 export type AccountInput = z.infer<typeof AccountInputSchema>;
 export type AccountUpdate = z.infer<typeof AccountUpdateSchema>;
 export type CategoryInput = z.infer<typeof CategoryInputSchema>;

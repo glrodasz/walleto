@@ -10,6 +10,7 @@ import { Select } from "../components/atoms/Select";
 import { useUserDoc } from "../hooks/useUserDoc";
 import { CategoriesSettings } from "../features/settings/components/CategoriesSettings";
 import { AccountsSettings } from "../features/settings/components/AccountsSettings";
+import { TagsSettings } from "../features/settings/components/TagsSettings";
 import { SELECTABLE_CURRENCIES, CURRENCY_SYMBOL } from "../constants";
 import type { Currency } from "../types";
 
@@ -93,6 +94,8 @@ export default function SettingsPage() {
         </Card>
 
         <CategoriesSettings />
+
+        <TagsSettings />
 
         <AccountsSettings />
 

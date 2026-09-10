@@ -21,6 +21,9 @@ jest.mock("../../../hooks/useCategories", () => ({
 jest.mock("../../../hooks/usePaymentMethods", () => ({
   usePaymentMethods: () => ({ methods: [], create: jest.fn() }),
 }));
+jest.mock("../../../hooks/useTags", () => ({
+  useTags: () => ({ tags: [], loading: false, error: null, create: jest.fn() }),
+}));
 jest.mock("../../../hooks/useAccounts", () => ({
   useAccounts: () => ({ accounts: [], loading: false, error: null, create: jest.fn() }),
 }));

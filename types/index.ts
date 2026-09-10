@@ -53,6 +53,20 @@ export interface Category {
   createdAt: Timestamp;
 }
 
+/**
+ * A label shared by every entry the user files under it. `name` keeps the
+ * case it was entered with (whitespace removed); `key` is its lowercase form
+ * and is unique per user, so "Trip2026" and "trip2026" are one tag.
+ */
+export interface Tag {
+  id?: string;
+  userId: string;
+  name: string;
+  key: string;
+  archived?: boolean;
+  createdAt?: Timestamp;
+}
+
 export interface PaymentMethod {
   id?: string;
   userId: string;
@@ -106,6 +120,9 @@ export interface RecurrentTransaction {
   currency: Currency;
   chargedAmount?: number;
   chargedCurrency?: Currency;
+  /** Tag ids (see `Tag`). */
+  tags?: string[];
+  note?: string;
   frequency: Frequency;
   /** BIWEEKLY only: twice a month, on startDate's day and this one. */
   secondDayOfMonth?: number;
@@ -138,6 +155,9 @@ export interface Transaction {
   currency: Currency;
   chargedAmount?: number;
   chargedCurrency?: Currency;
+  /** Tag ids (see `Tag`). */
+  tags?: string[];
+  note?: string;
   paymentMethodId?: string;
   occurredAt: Timestamp;
   status: TransactionStatus;

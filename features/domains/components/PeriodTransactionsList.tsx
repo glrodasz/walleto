@@ -6,7 +6,8 @@ import { TransactionRow } from "../../../components/molecules/TransactionRow";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { groupByDay } from "../helpers/months";
-import type { Currency, Transaction } from "../../../types";
+import { tagNames } from "../../../helpers/tags";
+import type { Currency, Tag, Transaction } from "../../../types";
 
 interface Props {
   title: string;
@@ -14,6 +15,8 @@ interface Props {
   transactions: Transaction[];
   displayCurrency: Currency;
   ctx: MoneyContext;
+  /** The user's tags, to name a row's tag ids. */
+  tags?: Tag[];
   loading?: boolean;
   onEdit?: (transaction: Transaction) => void;
   /** Rows written by a hidden recurring item (or a hidden category) get a pill and dim. */
@@ -35,6 +38,7 @@ export function PeriodTransactionsList({
   transactions,
   displayCurrency,
   ctx,
+  tags = [],
   loading,
   onEdit,
   isHidden,
@@ -89,6 +93,8 @@ export function PeriodTransactionsList({
                   }
                   meta={t.recurrentTransactionId ? "recurring" : "one-off"}
                   tags={isHidden?.(t) ? ["Hidden"] : undefined}
+                  labels={tagNames(t.tags, tags)}
+                  note={t.note}
                   muted={Boolean(isHidden?.(t))}
                   trailing={
                     <KebabMenu

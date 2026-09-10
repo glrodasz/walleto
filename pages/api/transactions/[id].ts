@@ -43,6 +43,8 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       chargedAmount,
       chargedCurrency,
       paymentMethodId,
+      tags,
+      note,
     } = parsed.data;
 
     // The charged pair must still differ from the doc's own currency —
@@ -92,6 +94,18 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       }
     }
 
+    // Tags must be the caller's; unknown ids would never resolve to a name.
+    if (tags && tags.length > 0) {
+      const tagRefs = Array.from(new Set(tags)).map((t) => db.collection("tags").doc(t));
+      const tagSnaps = await db.getAll(...tagRefs);
+      if (tagSnaps.some((s) => !s.exists)) {
+        return res.status(400).json({ error: "Tag not found" });
+      }
+      if (tagSnaps.some((s) => s.data()?.userId !== userId)) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+    }
+
     const del = admin.firestore.FieldValue.delete();
     await ref.update({
       ...(status ? { status } : {}),
@@ -106,6 +120,8 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       ...(chargedAmount !== undefined ? { chargedAmount: chargedAmount ?? del } : {}),
       ...(chargedCurrency !== undefined ? { chargedCurrency: chargedCurrency ?? del } : {}),
       ...(paymentMethodId !== undefined ? { paymentMethodId: paymentMethodId ?? del } : {}),
+      ...(tags !== undefined ? { tags: tags?.length ? Array.from(new Set(tags)) : del } : {}),
+      ...(note !== undefined ? { note: note || del } : {}),
     });
 
     return res.status(200).json({ id });

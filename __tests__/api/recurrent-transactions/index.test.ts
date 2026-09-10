@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 const getSessionMock = jest.fn();
 const collectionMock = jest.fn();
+const getAllMock = jest.fn();
 
 jest.mock("../../../lib/auth0", () => ({
   __esModule: true,
@@ -16,6 +17,7 @@ jest.mock("../../../firebase/admin", () => ({
     firestore: Object.assign(
       jest.fn(() => ({
         collection: collectionMock,
+        getAll: (...refs: unknown[]) => getAllMock(...refs),
       })),
       {
         FieldValue: { serverTimestamp: jest.fn(() => "SERVER_TIMESTAMP") },
@@ -68,6 +70,9 @@ const wireCollections = (opts: {
           }),
         }),
       };
+    }
+    if (name === "tags") {
+      return { doc: jest.fn((id: string) => ({ id })) };
     }
     if (name === "paymentMethods") {
       return {
@@ -242,5 +247,36 @@ describe("POST /api/recurrent-transactions — accounts", () => {
     await handler({ method: "POST", query: {}, body: savingBody } as NextApiRequest, res);
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({ error: "Account not found" });
+  });
+});
+
+describe("POST /api/recurrent-transactions — tags and note", () => {
+  it("stores deduped tags and the note after checking ownership", async () => {
+    getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
+    const add = wireCollections({});
+    getAllMock.mockResolvedValue([{ exists: true, data: () => ({ userId: "user1" }) }]);
+    const res = mockRes();
+    await handler(
+      {
+        method: "POST",
+        query: {},
+        body: { ...validBody, tags: ["t1", "t1"], note: "Shared" },
+      } as NextApiRequest,
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(add).toHaveBeenCalledWith(expect.objectContaining({ tags: ["t1"], note: "Shared" }));
+  });
+
+  it("rejects a foreign tag", async () => {
+    getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
+    wireCollections({});
+    getAllMock.mockResolvedValue([{ exists: true, data: () => ({ userId: "intruder" }) }]);
+    const res = mockRes();
+    await handler(
+      { method: "POST", query: {}, body: { ...validBody, tags: ["t1"] } } as NextApiRequest,
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 });

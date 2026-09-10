@@ -5,12 +5,15 @@ import type { ScheduleValue } from "../../../components/molecules/ScheduleFields
 import { CategoryField } from "../../../components/molecules/CategoryField";
 import { PaymentMethodField } from "../../../components/molecules/PaymentMethodField";
 import { AccountField } from "../../../components/molecules/AccountField";
+import { TagsField } from "../../../components/molecules/TagsField";
+import { TextArea } from "../../../components/atoms/TextArea";
 import { Select } from "../../../components/atoms/Select";
 import { TextField } from "../../../components/atoms/TextField";
 import { Button } from "../../../components/atoms/Button";
 import { useCategories } from "../../../hooks/useCategories";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { useAccounts } from "../../../hooks/useAccounts";
+import { useTags } from "../../../hooks/useTags";
 import { useRecurrentTransactions } from "../../../hooks/useRecurrentTransactions";
 import { useUserDoc } from "../../../hooks/useUserDoc";
 import { materializeNow } from "../../../hooks/useMaterialize";
@@ -65,6 +68,9 @@ interface FormState extends ScheduleValue {
   currency: Currency | "";
   frequency: Frequency;
   paymentMethodId: string;
+  /** Tag ids. */
+  tags: string[];
+  note: string;
   /** Create only: anchor the schedule BACKFILL_MONTHS back so history gets written. */
   backfill: boolean;
   /** Create only, INVESTMENT + ONE_TIME: record how the purchase has done so far. */
@@ -89,6 +95,7 @@ export function RecurrentTransactionModal({
   const { methods, create: createMethod } = usePaymentMethods();
   const hasAccounts = isAccountDomain(domain);
   const { accounts, create: createAccount } = useAccounts(hasAccounts ? domain : null);
+  const { tags: allTags, create: createTag } = useTags();
   const { create, update } = useRecurrentTransactions(domain);
 
   const empty: FormState = useMemo(
@@ -100,6 +107,8 @@ export function RecurrentTransactionModal({
       currency: "",
       frequency: initialFrequency,
       paymentMethodId: "",
+      tags: [],
+      note: "",
       dayOfMonth: 1,
       secondDayOfMonth: 15,
       month: 0,
@@ -131,6 +140,8 @@ export function RecurrentTransactionModal({
         currency: transaction.currency,
         frequency: "ONE_TIME",
         paymentMethodId: transaction.paymentMethodId ?? "",
+        tags: transaction.tags ?? [],
+        note: transaction.note ?? "",
         date: toDateInputValue(transaction.occurredAt.toDate()),
         backfill: false,
         chargedEnabled: transaction.chargedAmount !== undefined,
@@ -157,6 +168,8 @@ export function RecurrentTransactionModal({
       currency: item.currency,
       frequency: item.frequency,
       paymentMethodId: item.paymentMethodId ?? "",
+      tags: item.tags ?? [],
+      note: item.note ?? "",
       dayOfMonth: schedule.dayOfMonth ?? 1,
       secondDayOfMonth: schedule.secondDayOfMonth ?? 15,
       month: schedule.month ?? 0,
@@ -242,6 +255,10 @@ export function RecurrentTransactionModal({
         const dateChanged = toDateInputValue(transaction.occurredAt.toDate()) !== form.date;
         const methodBefore = transaction.paymentMethodId ?? "";
         const accountBefore = transaction.accountId ?? "";
+        const sameTags =
+          form.tags.length === (transaction.tags ?? []).length &&
+          form.tags.every((t, i) => t === (transaction.tags ?? [])[i]);
+        const noteBefore = transaction.note ?? "";
         const chargedBefore = transaction.chargedAmount !== undefined;
         const chargedChanged =
           form.chargedEnabled !== chargedBefore ||
@@ -260,6 +277,8 @@ export function RecurrentTransactionModal({
           ...(form.paymentMethodId !== methodBefore
             ? { paymentMethodId: form.paymentMethodId || null }
             : {}),
+          ...(sameTags ? {} : { tags: form.tags.length ? form.tags : null }),
+          ...(form.note.trim() !== noteBefore ? { note: form.note.trim() || null } : {}),
           ...(chargedChanged
             ? {
                 chargedAmount: form.chargedEnabled ? chargedAmount! : null,
@@ -289,6 +308,8 @@ export function RecurrentTransactionModal({
               }
             : {}),
           paymentMethodId: form.paymentMethodId || null,
+          tags: form.tags.length ? form.tags : null,
+          note: form.note.trim() || null,
           // An old item may still carry a pair; only clear it when the new
           // currency collides with it, which the API would otherwise refuse.
           ...(item.chargedCurrency && item.chargedCurrency === effectiveCurrency
@@ -311,6 +332,8 @@ export function RecurrentTransactionModal({
           occurredAt: startDate.toISOString(),
           status: "PAID",
           ...(form.paymentMethodId ? { paymentMethodId: form.paymentMethodId } : {}),
+          ...(form.tags.length ? { tags: form.tags } : {}),
+          ...(form.note.trim() ? { note: form.note.trim() } : {}),
           ...(form.chargedEnabled
             ? { chargedAmount: chargedAmount!, chargedCurrency: form.chargedCurrency as Currency }
             : {}),
@@ -327,6 +350,8 @@ export function RecurrentTransactionModal({
           ...(form.frequency === "BIWEEKLY" ? { secondDayOfMonth: form.secondDayOfMonth } : {}),
           startDate: startDate.toISOString(),
           ...(form.paymentMethodId ? { paymentMethodId: form.paymentMethodId } : {}),
+          ...(form.tags.length ? { tags: form.tags } : {}),
+          ...(form.note.trim() ? { note: form.note.trim() } : {}),
         });
         // Anything anchored in the past has occurrences to write.
         if (startDate < new Date()) {
@@ -433,6 +458,22 @@ export function RecurrentTransactionModal({
         <div className="pair">
           <ScheduleFields frequency={form.frequency} value={form} onChange={(p) => patch(p)} />
         </div>
+
+        <TagsField
+          tags={allTags}
+          value={form.tags}
+          onChange={(ids) => patch({ tags: ids })}
+          createTag={createTag}
+          onError={setFormError}
+        />
+
+        <TextArea
+          label="Note (optional)"
+          placeholder="Anything worth remembering about it"
+          rows={2}
+          value={form.note}
+          onValueChange={(v) => patch({ note: v })}
+        />
 
         {!item && isRecurring && (
           <label className="toggle">

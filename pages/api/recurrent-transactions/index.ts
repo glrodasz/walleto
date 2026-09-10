@@ -44,6 +44,8 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       currency,
       chargedAmount,
       chargedCurrency,
+      tags,
+      note,
       frequency,
       secondDayOfMonth,
       type,
@@ -91,6 +93,18 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       }
     }
 
+    // Tags must be the caller's; unknown ids would never resolve to a name.
+    if (tags && tags.length > 0) {
+      const tagRefs = Array.from(new Set(tags)).map((t) => db.collection("tags").doc(t));
+      const tagSnaps = await db.getAll(...tagRefs);
+      if (tagSnaps.some((s) => !s.exists)) {
+        return res.status(400).json({ error: "Tag not found" });
+      }
+      if (tagSnaps.some((s) => s.data()?.userId !== userId)) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+    }
+
     const start = startDate ? new Date(startDate) : new Date();
     const twiceMonthly = frequency === "BIWEEKLY" ? secondDayOfMonth : undefined;
     const next = nextOccurrenceFrom(start, frequency, undefined, {
@@ -107,6 +121,8 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       currency,
       ...(chargedAmount !== undefined ? { chargedAmount } : {}),
       ...(chargedCurrency ? { chargedCurrency } : {}),
+      ...(tags?.length ? { tags: Array.from(new Set(tags)) } : {}),
+      ...(note ? { note } : {}),
       frequency,
       ...(twiceMonthly !== undefined ? { secondDayOfMonth: twiceMonthly } : {}),
       ...(type ? { type } : {}),

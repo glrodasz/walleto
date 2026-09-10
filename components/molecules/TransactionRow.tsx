@@ -12,8 +12,11 @@ interface Props {
   /** What the card was actually charged, when it differs from `amount`. */
   charged?: { amount: number; currency: Currency };
   meta: string;
-  /** Small pills after the name ("Hidden on dashboard"). */
+  /** Flag pills after the name ("Hidden"), amber. */
   tags?: string[];
+  /** The row's own tags, neutral pills. */
+  labels?: string[];
+  note?: string;
   /** Dim the whole row — for entries that are hidden somewhere. */
   muted?: boolean;
   /** Optional trailing slot — a kebab menu, for rows that support actions. */
@@ -28,6 +31,8 @@ export function TransactionRow({
   charged,
   meta,
   tags,
+  labels,
+  note,
   muted,
   trailing,
 }: Props) {
@@ -35,15 +40,21 @@ export function TransactionRow({
     <li className={`row${muted ? " muted" : ""}`}>
       <span className="main">
         <span className="name">{name}</span>
-        {tags && tags.length > 0 && (
+        {((tags && tags.length > 0) || (labels && labels.length > 0)) && (
           <span className="tags">
-            {tags.map((t) => (
-              <span key={t} className="tag">
+            {tags?.map((t) => (
+              <span key={`flag-${t}`} className="tag">
+                {t}
+              </span>
+            ))}
+            {labels?.map((t) => (
+              <span key={`label-${t}`} className="label">
                 {t}
               </span>
             ))}
           </span>
         )}
+        {note && <span className="note">{note}</span>}
       </span>
       <span className="right">
         <span className="amount">{formatNative(amount, currency, displayCurrency)}</span>
@@ -100,6 +111,23 @@ export function TransactionRow({
           border-radius: 999px;
           border: 1px solid var(--accent-amber);
           color: var(--accent-amber);
+        }
+
+        .label {
+          font-size: 0.68rem;
+          font-weight: 600;
+          padding: 1px 7px;
+          border-radius: 999px;
+          border: 1px solid var(--line-strong);
+          color: var(--fg-1);
+        }
+
+        .note {
+          font-size: 0.72rem;
+          color: var(--fg-2);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .right {

@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 const getSessionMock = jest.fn();
 const collectionMock = jest.fn();
+const getAllMock = jest.fn();
 
 jest.mock("../../../lib/auth0", () => ({
   __esModule: true,
@@ -16,6 +17,7 @@ jest.mock("../../../firebase/admin", () => ({
     firestore: Object.assign(
       jest.fn(() => ({
         collection: collectionMock,
+        getAll: (...refs: unknown[]) => getAllMock(...refs),
       })),
       {
         FieldValue: {
@@ -73,6 +75,9 @@ const wireDoc = (opts: {
           }),
         }),
       };
+    }
+    if (name === "tags") {
+      return { doc: jest.fn((id: string) => ({ id })) };
     }
     if (name === "paymentMethods") {
       return {

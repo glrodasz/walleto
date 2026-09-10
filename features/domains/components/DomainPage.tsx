@@ -31,6 +31,7 @@ import { useCategories } from "../../../hooks/useCategories";
 import { useRecurrentTransactions, markItemPaid } from "../../../hooks/useRecurrentTransactions";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { useAccounts } from "../../../hooks/useAccounts";
+import { useTags } from "../../../hooks/useTags";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
 import { deleteTransaction } from "../../../hooks/useTransactions";
 import { toDate } from "../../../helpers/chartData";
@@ -99,6 +100,7 @@ export function DomainPage({ domain }: Props) {
     update: updateCategory,
   } = useCategories(domain);
   const { methods } = usePaymentMethods();
+  const { tags } = useTags();
   const error = txError ?? itemsError ?? catError;
 
   const window = windows.find((w) => w.key === selectedKey) ?? windows[windows.length - 1];
@@ -238,6 +240,7 @@ export function DomainPage({ domain }: Props) {
           transactions={monthTransactions}
           currency={currency}
           ctx={ctx}
+          tags={tags}
           monthLabel={window.label}
           loading={txLoading}
           onBack={() => setDrillCategoryId(null)}
@@ -290,6 +293,7 @@ export function DomainPage({ domain }: Props) {
           transactions={monthTransactions}
           displayCurrency={currency}
           ctx={ctx}
+          tags={tags}
           loading={txLoading}
           onEdit={setEditingTx}
           isHidden={isHidden}
@@ -320,6 +324,7 @@ export function DomainPage({ domain }: Props) {
         transactions={monthTransactions}
         paymentMethods={methods}
         categories={categories}
+        tags={tags}
         ctx={ctx}
         currency={currency}
         window={window}

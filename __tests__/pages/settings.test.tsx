@@ -35,6 +35,9 @@ jest.mock("../../features/settings/components/CategoriesSettings", () => ({
 jest.mock("../../features/settings/components/AccountsSettings", () => ({
   AccountsSettings: () => null,
 }));
+jest.mock("../../features/settings/components/TagsSettings", () => ({
+  TagsSettings: () => null,
+}));
 
 jest.mock("../../features/create/components/CreateLauncher", () => ({
   CreateLauncher: () => null,
