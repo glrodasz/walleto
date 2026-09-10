@@ -8,7 +8,8 @@ export interface MoneyContext {
   target: Currency;
 }
 
-const FREQ_TO_MONTHS: Record<RecurrentTransaction["frequency"], number> = {
+/** Occurrences per month of each cadence — the monthly run-rate factor. */
+export const FREQ_TO_MONTHS: Record<RecurrentTransaction["frequency"], number> = {
   ONE_TIME: 0,
   WEEKLY: 4.345,
   BIWEEKLY: 2,

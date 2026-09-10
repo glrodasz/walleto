@@ -271,3 +271,19 @@ describe("PATCH /api/recurrent-transactions/[id] — inheritance and backfill", 
     expect(res.json).toHaveBeenCalledWith({ id: "rt1", updated: 0 });
   });
 });
+
+describe("PATCH /api/recurrent-transactions/[id] — spread monthly", () => {
+  it("stores the flag either way", async () => {
+    const update = wireDoc({});
+    const res = mockRes();
+    await handler(
+      {
+        method: "PATCH",
+        query: { id: "rt1" },
+        body: { spreadMonthly: false },
+      } as unknown as NextApiRequest,
+      res
+    );
+    expect(update).toHaveBeenCalledWith({ spreadMonthly: false });
+  });
+});

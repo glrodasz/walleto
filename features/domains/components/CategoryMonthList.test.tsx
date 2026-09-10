@@ -124,3 +124,13 @@ describe("CategoryMonthList — hidden categories", () => {
     expect(onToggleHidden).toHaveBeenCalledWith(expect.objectContaining({ id: "food" }));
   });
 });
+
+describe("categoryMonthRows — synthetic slices", () => {
+  it("count toward the total but not the transaction count", () => {
+    const slice = { ...tx("slice", "food", 100), synthetic: true } as Transaction;
+    const rows = categoryMonthRows(categories, [tx("t1", "food", 20), slice], [], ctx, sep, now);
+    const food = rows.find((r) => r.category.id === "food")!;
+    expect(food.total).toBe(120);
+    expect(food.count).toBe(1);
+  });
+});

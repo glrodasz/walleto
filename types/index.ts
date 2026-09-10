@@ -126,6 +126,8 @@ export interface RecurrentTransaction {
   /** Copy the tags / note onto every payment the item writes. */
   inheritTags?: boolean;
   inheritNote?: boolean;
+  /** Non-monthly cadences: chart amount × FREQ_TO_MONTHS each month instead of the real spike. */
+  spreadMonthly?: boolean;
   frequency: Frequency;
   /** BIWEEKLY only: twice a month, on startDate's day and this one. */
   secondDayOfMonth?: number;

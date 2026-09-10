@@ -41,6 +41,7 @@ import {
   isHiddenRow,
   withoutHidden,
 } from "../../../helpers/hidden";
+import { spreadItemIds, spreadTransactions } from "../helpers/spread";
 import type { Category, Currency, Domain, RecurrentTransaction, Transaction } from "../../../types";
 
 interface Props {
@@ -120,16 +121,30 @@ export function DomainPage({ domain }: Props) {
   const hiddenCategories = useMemo(() => hiddenCategoryIds(categories), [categories]);
   const anythingHidden = hiddenItems.size > 0 || hiddenCategories.size > 0;
   const isHidden = (t: Transaction) => isHiddenRow(t, hiddenItems, hiddenCategories);
+  // Items asked to be "reflected monthly" chart as one slice per month in
+  // place of their real payment (which the ledger and checklist keep).
+  // Spread first, then hide: the slices carry the item id and category.
+  const spreadIds = useMemo(() => spreadItemIds(items), [items]);
+  const planRows = useMemo(
+    () => spreadTransactions(items, transactions, windows),
+    [items, transactions, windows]
+  );
   const chartTransactions = useMemo(
-    () => (showHidden ? transactions : withoutHidden(transactions, hiddenItems, hiddenCategories)),
-    [showHidden, transactions, hiddenItems, hiddenCategories]
+    () => (showHidden ? planRows : withoutHidden(planRows, hiddenItems, hiddenCategories)),
+    [showHidden, planRows, hiddenItems, hiddenCategories]
+  );
+  // The plan side: spread items are already inside the slices, so they must
+  // not be forecast a second time on top.
+  const planItems = useMemo(
+    () => items.filter((i) => !i.id || !spreadIds.has(i.id)),
+    [items, spreadIds]
   );
   const chartItems = useMemo(
     () =>
       showHidden
-        ? items
-        : items.filter((i) => !i.hiddenFromDashboard && !hiddenCategories.has(i.categoryId)),
-    [showHidden, items, hiddenCategories]
+        ? planItems
+        : planItems.filter((i) => !i.hiddenFromDashboard && !hiddenCategories.has(i.categoryId)),
+    [showHidden, planItems, hiddenCategories]
   );
 
   const totals = useMemo(
@@ -143,6 +158,14 @@ export function DomainPage({ domain }: Props) {
         return d >= window.start && d < window.end;
       }),
     [transactions, window]
+  );
+  const monthPlanRows = useMemo(
+    () =>
+      planRows.filter((t) => {
+        const d = toDate(t.occurredAt);
+        return d >= window.start && d < window.end;
+      }),
+    [planRows, window]
   );
   const realized = totals[window.key] ?? 0;
   const expected = useMemo(
@@ -276,8 +299,8 @@ export function DomainPage({ domain }: Props) {
         <CategoryMonthList
           domain={domain}
           categories={categories}
-          transactions={monthTransactions}
-          items={items}
+          transactions={monthPlanRows}
+          items={planItems}
           ctx={ctx}
           currency={currency}
           window={window}

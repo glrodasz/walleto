@@ -335,3 +335,23 @@ describe("RecurrentTransactionModal — a row's recurring item", () => {
     expect(screen.queryByText(/Part of the recurring item/)).toBeNull();
   });
 });
+
+describe("RecurrentTransactionModal — reflect monthly", () => {
+  it("offers the spread only for non-monthly cadences and sends the flag", async () => {
+    const onClose = jest.fn();
+    render(<RecurrentTransactionModal domain="EXPENSE" open onClose={onClose} />);
+    expect(screen.queryByLabelText(/Reflect it as a monthly amount/)).toBeNull();
+
+    fill();
+    fireEvent.change(screen.getByLabelText("Frequency"), { target: { value: "YEARLY" } });
+    const box = screen.getByLabelText(/Reflect it as a monthly amount/);
+    expect(box.closest("label")).toHaveTextContent("$166.67 a month");
+    fireEvent.click(box);
+    fireEvent.click(screen.getByRole("button", { name: "Create" }));
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(createItem).toHaveBeenCalledWith(
+      expect.objectContaining({ frequency: "YEARLY", spreadMonthly: true })
+    );
+  });
+});

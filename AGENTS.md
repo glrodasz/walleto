@@ -237,7 +237,11 @@ Otras notas:
 
 El dashboard es el **run-rate de los recurrentes** (las cards y el neto lo dicen con la etiqueta "Recurring"); por eso solo un item recurrente se oculta: `hiddenFromDashboard` en `recurrentTransactions` lo saca de todos los números y listas del dashboard, y sus filas del ledger lo siguen por `recurrentTransactionId` (`helpers/hidden.ts`: `hiddenItemIds`, `withoutHidden`). Las transacciones no tienen flag propio. En las páginas de dominio, además, una categoría raíz puede ocultarse de la gráfica (`Category.hiddenFromChart`, kebab en Categories; los hijos la siguen): barras y cifra del mes excluyen items ocultos y categorías ocultas salvo que el owner active "Show hidden" (preferencia por dominio en `localStorage`). Las listas siempre muestran todo, con la etiqueta "Hidden".
 
-### 3.3 Puntual vs recurrente
+### 3.3 Reflejar mensualmente (spread)
+
+Un item no mensual (anual, trimestral, semanal…) con `spreadMonthly` se pinta en la página de dominio como **una rebanada por mes** (`amount × FREQ_TO_MONTHS`, en su moneda) en lugar del pico real: `features/domains/helpers/spread.ts` (`spreadTransactions`) quita las filas reales del item y añade rebanadas sintéticas con `recurrentTransactionId` y `categoryId`, así que `helpers/hidden` las oculta igual que a cualquier fila. `DomainPage` las usa para barras, cifra del mes y Categories (`planItems` excluye esos items del plan para no sumarlos dos veces); el ledger y el checklist de Recurring siguen con las filas reales. El dashboard no cambia: sus cards ya normalizan con `toMonthlyAmount` y sus barras de cash flow muestran el pago real.
+
+### 3.4 Puntual vs recurrente
 
 Hay **un solo formulario** para todo lo que entra: `RecurrentTransactionModal`. "Record a payment" del "+" lo abre con `initialFrequency="ONE_TIME"`; editar una fila del ledger lo abre con `transaction` (frecuencia fija en One time, PATCH con solo lo que cambió). Un `frequency: "ONE_TIME"` elegido ahí o en la sección One-time del wizard **no crea un item recurrente**: escribe una transacción PAID directa (`POST /api/transactions`). El plan (recurrentTransactions) es solo lo que se repite; el ledger (transactions) es lo que pasó. Los items ONE_TIME antiguos siguen funcionando, pero no se crean más.
 

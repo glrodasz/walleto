@@ -163,6 +163,7 @@ export const RecurrentTransactionInputSchema = z
     note: NoteSchema.optional(),
     inheritTags: z.boolean().optional(),
     inheritNote: z.boolean().optional(),
+    spreadMonthly: z.boolean().optional(),
     frequency: FrequencySchema,
     secondDayOfMonth: z.number().int().min(1).max(31).optional(),
     type: RecurrentTransactionTypeSchema.optional(),
@@ -184,6 +185,7 @@ export const RecurrentTransactionUpdateSchema = z
     note: NoteSchema.nullable().optional(),
     inheritTags: z.boolean().optional(),
     inheritNote: z.boolean().optional(),
+    spreadMonthly: z.boolean().optional(),
     /** Rewrite tags / note on the payments this item already wrote. Never stored. */
     applyToExisting: z.boolean().optional(),
     frequency: FrequencySchema.optional(),

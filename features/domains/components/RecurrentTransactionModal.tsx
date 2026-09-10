@@ -20,6 +20,8 @@ import { materializeNow } from "../../../hooks/useMaterialize";
 import { createTransaction, updateTransaction } from "../../../hooks/useTransactions";
 import { createInvestmentValuation } from "../../../hooks/useInvestmentValuations";
 import { valueFromGain } from "../../investments/helpers/valuation";
+import { FREQ_TO_MONTHS } from "../../../helpers/aggregations";
+import { formatAmount } from "../../../components/atoms/Amount";
 import { isAccountDomain } from "../../../helpers/accounts";
 import {
   BACKFILL_MONTHS,
@@ -80,6 +82,8 @@ interface FormState extends ScheduleValue {
   inheritNote: boolean;
   /** Item edit only: also rewrite the payments already written. */
   applyToExisting: boolean;
+  /** Non-monthly cadences: chart amount ÷ N each month instead of the real spike. */
+  spreadMonthly: boolean;
   /** Create only: anchor the schedule BACKFILL_MONTHS back so history gets written. */
   backfill: boolean;
   /** Create only, INVESTMENT + ONE_TIME: record how the purchase has done so far. */
@@ -127,6 +131,7 @@ export function RecurrentTransactionModal({
       inheritTags: false,
       inheritNote: false,
       applyToExisting: false,
+      spreadMonthly: false,
       dayOfMonth: 1,
       secondDayOfMonth: 15,
       month: 0,
@@ -191,6 +196,7 @@ export function RecurrentTransactionModal({
       inheritTags: Boolean(item.inheritTags),
       inheritNote: Boolean(item.inheritNote),
       applyToExisting: false,
+      spreadMonthly: Boolean(item.spreadMonthly),
       dayOfMonth: schedule.dayOfMonth ?? 1,
       secondDayOfMonth: schedule.secondDayOfMonth ?? 15,
       month: schedule.month ?? 0,
@@ -249,6 +255,9 @@ export function RecurrentTransactionModal({
   // on ledger rows only: one-off create and transaction edit.
   const offersCharged = !isRecurring && !item;
   const offersGain = !editing && domain === "INVESTMENT" && !isRecurring;
+  // Yearly, quarterly, weekly…: the plan can show it as a monthly amount.
+  const offersSpread = isRecurring && form.frequency !== "MONTHLY";
+  const monthlySlice = (Number(form.amount) || 0) * FREQ_TO_MONTHS[form.frequency];
   const gainPct = offersGain && form.gainPct.trim() !== "" ? Number(form.gainPct) : null;
 
   const submit = async () => {
@@ -344,6 +353,7 @@ export function RecurrentTransactionModal({
           note: form.note.trim() || null,
           inheritTags: form.inheritTags,
           inheritNote: form.inheritNote,
+          spreadMonthly: offersSpread && form.spreadMonthly,
           ...(offersBackfill && form.applyToExisting ? { applyToExisting: true } : {}),
           // An old item may still carry a pair; only clear it when the new
           // currency collides with it, which the API would otherwise refuse.
@@ -389,6 +399,7 @@ export function RecurrentTransactionModal({
           ...(form.note.trim() ? { note: form.note.trim() } : {}),
           ...(form.inheritTags ? { inheritTags: true } : {}),
           ...(form.inheritNote ? { inheritNote: true } : {}),
+          ...(offersSpread && form.spreadMonthly ? { spreadMonthly: true } : {}),
         });
         // Anything anchored in the past has occurrences to write.
         if (startDate < new Date()) {
@@ -512,6 +523,24 @@ export function RecurrentTransactionModal({
         <div className="pair">
           <ScheduleFields frequency={form.frequency} value={form} onChange={(p) => patch(p)} />
         </div>
+
+        {offersSpread && (
+          <label className="toggle">
+            <input
+              type="checkbox"
+              checked={form.spreadMonthly}
+              onChange={(e) => patch({ spreadMonthly: e.currentTarget.checked })}
+            />
+            <span>
+              Reflect it as a monthly amount
+              <span className="hint">
+                {" "}
+                — the graph and the plan count {formatAmount(monthlySlice, effectiveCurrency)} a
+                month; the real payment stays in the list
+              </span>
+            </span>
+          </label>
+        )}
 
         <TagsField
           tags={allTags}

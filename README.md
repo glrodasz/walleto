@@ -33,6 +33,9 @@ rates into a per-user display currency.
   check takes over from its date. Entries filed under no account share one
   "No account" bucket per domain. Hidden recurring items and categories
   hidden from the chart stay out of the bars unless "Show hidden" is on.
+  A yearly (or quarterly, weekly) item can be "reflected monthly": the
+  bars and the plan then carry its monthly share while the real payment
+  stays in the Transactions list.
 - **Prospect** (`/prospect`) — a what-if simulator: check any recurring
   expense, investment or saving to see the monthly/annual amount it would
   free and how your net would change, projected 6 or 12 months out.

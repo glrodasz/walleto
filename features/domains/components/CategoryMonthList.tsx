@@ -7,6 +7,7 @@ import { KebabMenu } from "../../../components/molecules/KebabMenu";
 import { convertedAmount } from "../../../helpers/aggregations";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { plannedOccurrences } from "../helpers/months";
+import { isSyntheticRow } from "../helpers/spread";
 import type { MonthWindow } from "../helpers/months";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import type { Category, Currency, Domain, RecurrentTransaction, Transaction } from "../../../types";
@@ -69,7 +70,7 @@ export function categoryMonthRows(
       return {
         category,
         total,
-        count: mine.length,
+        count: mine.filter((t) => !isSyntheticRow(t)).length,
         share: monthTotal > 0 ? (total / monthTotal) * 100 : 0,
         planned: plannedHere,
       };
