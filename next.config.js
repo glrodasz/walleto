@@ -6,8 +6,14 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
 ];
 
+const { version } = require("./package.json");
+
 const nextConfig = {
   reactStrictMode: true,
+  env: {
+    // Shown in Settings › About; the same number as package.json.
+    NEXT_PUBLIC_APP_VERSION: version,
+  },
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },

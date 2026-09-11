@@ -1,0 +1,142 @@
+import { useMemo } from "react";
+import { Card } from "../../../components/atoms/Card";
+import { SectionTitle } from "../../../components/atoms/SectionTitle";
+import { formatAmount } from "../../../components/atoms/Amount";
+import { useAllInvestmentValuations } from "../../../hooks/useInvestmentValuations";
+import { ACCOUNT_NOUN, accountLabel } from "../../../helpers/accounts";
+import { valuationDomain } from "../helpers/valuation";
+import type { Account, Category, InvestmentValuation } from "../../../types";
+import { useDateFormat } from "../../../hooks/usePreferences";
+
+interface Props {
+  categories: Category[];
+  accounts: Account[];
+  /** [start, end) of the month shown. */
+  start: Date;
+  end: Date;
+}
+
+export function valuationsInWindow(
+  valuations: InvestmentValuation[],
+  start: Date,
+  end: Date
+): InvestmentValuation[] {
+  return valuations.filter((v) => {
+    const d = v.asOf.toDate();
+    return d >= start && d < end;
+  });
+}
+
+/**
+ * The month's value checks next to its transactions. They are statements,
+ * not money moving, so they never count toward totals — they are listed so
+ * the ledger tells the whole story of the month.
+ */
+export function ValuationRows({ categories, accounts, start, end }: Props) {
+  const { formatDate } = useDateFormat();
+  const { valuations } = useAllInvestmentValuations();
+  const rows = useMemo(() => valuationsInWindow(valuations, start, end), [valuations, start, end]);
+  if (rows.length === 0) return null;
+
+  return (
+    <Card>
+      <SectionTitle title="Value checks" />
+      <p className="note">Statements of value, not money moving — not counted in totals.</p>
+      <ul className="list">
+        {rows.map((v) => (
+          <li key={v.id} className="row">
+            <span className="main">
+              <span className="name">
+                {(() => {
+                  const account = v.accountId && accounts.find((a) => a.id === v.accountId);
+                  return account
+                    ? accountLabel(account)
+                    : `No ${ACCOUNT_NOUN[valuationDomain(v, categories)].singular}`;
+                })()}
+              </span>
+              <span className="meta">
+                {formatDate(v.asOf.toDate(), "day")} · value check
+                {v.note ? ` · ${v.note}` : ""}
+              </span>
+            </span>
+            <span className="right">
+              <span className="amount">{formatAmount(v.value, v.currency)}</span>
+              <span className={`gain ${v.gainPct >= 0 ? "up" : "down"}`}>
+                {v.gainPct >= 0 ? "+" : ""}
+                {v.gainPct.toFixed(1)}%
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      <style jsx>{`
+        .note {
+          margin: -4px 0 10px;
+          font-size: 0.75rem;
+          color: var(--fg-2);
+        }
+
+        .list {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .main {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .name {
+          font-size: 0.85rem;
+          color: var(--fg-1);
+        }
+
+        .meta {
+          font-size: 0.72rem;
+          color: var(--fg-2);
+        }
+
+        .right {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 1px;
+        }
+
+        .amount {
+          font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
+          font-variant-numeric: tabular-nums;
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: var(--fg-0);
+        }
+
+        .gain {
+          font-size: 0.72rem;
+        }
+
+        .up {
+          color: var(--accent);
+        }
+
+        .down {
+          color: var(--accent-hot);
+        }
+      `}</style>
+    </Card>
+  );
+}

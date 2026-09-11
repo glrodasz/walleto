@@ -1,0 +1,141 @@
+[
+  {
+    "name": "Netflix",
+    "domain": "EXPENSE",
+    "defaultCategoryHint": "Subscriptions",
+    "active": true,
+    "prices": {
+      "DEFAULT": [
+        { "tier": "Standard with Ads", "amount": 7.99, "currency": "USD", "frequency": "MONTHLY" },
+        { "tier": "Standard", "amount": 15.49, "currency": "USD", "frequency": "MONTHLY" },
+        { "tier": "Premium", "amount": 22.99, "currency": "USD", "frequency": "MONTHLY" }
+      ],
+      "CO": [
+        { "tier": "Standard with Ads", "amount": 11900, "currency": "COP", "frequency": "MONTHLY" },
+        { "tier": "Standard", "amount": 19900, "currency": "COP", "frequency": "MONTHLY" },
+        { "tier": "Premium", "amount": 27900, "currency": "COP", "frequency": "MONTHLY" }
+      ],
+      "MX": [
+        { "tier": "Standard with Ads", "amount": 99, "currency": "MXN", "frequency": "MONTHLY" },
+        { "tier": "Standard", "amount": 219, "currency": "MXN", "frequency": "MONTHLY" },
+        { "tier": "Premium", "amount": 299, "currency": "MXN", "frequency": "MONTHLY" }
+      ]
+    }
+  },
+  {
+    "name": "Spotify",
+    "domain": "EXPENSE",
+    "defaultCategoryHint": "Subscriptions",
+    "active": true,
+    "prices": {
+      "DEFAULT": [
+        { "tier": "Individual", "amount": 11.99, "currency": "USD", "frequency": "MONTHLY" },
+        { "tier": "Duo", "amount": 16.99, "currency": "USD", "frequency": "MONTHLY" },
+        { "tier": "Family", "amount": 19.99, "currency": "USD", "frequency": "MONTHLY" },
+        { "tier": "Student", "amount": 5.99, "currency": "USD", "frequency": "MONTHLY" }
+      ],
+      "CO": [
+        { "tier": "Individual", "amount": 17900, "currency": "COP", "frequency": "MONTHLY" },
+        { "tier": "Duo", "amount": 23900, "currency": "COP", "frequency": "MONTHLY" },
+        { "tier": "Family", "amount": 29900, "currency": "COP", "frequency": "MONTHLY" }
+      ]
+    }
+  },
+  {
+    "name": "Disney+",
+    "domain": "EXPENSE",
+    "defaultCategoryHint": "Subscriptions",
+    "active": true,
+    "prices": {
+      "DEFAULT": [
+        { "tier": "Basic (Ads)", "amount": 7.99, "currency": "USD", "frequency": "MONTHLY" },
+        { "tier": "Premium", "amount": 13.99, "currency": "USD", "frequency": "MONTHLY" },
+        { "tier": "Premium", "amount": 139.99, "currency": "USD", "frequency": "YEARLY" }
+      ]
+    }
+  },
+  {
+    "name": "Apple TV+",
+    "domain": "EXPENSE",
+    "defaultCategoryHint": "Subscriptions",
+    "active": true,
+    "prices": {
+      "DEFAULT": [
+        { "tier": "Individual", "amount": 9.99, "currency": "USD", "frequency": "MONTHLY" }
+      ]
+    }
+  },
+  {
+    "name": "Amazon Prime",
+    "domain": "EXPENSE",
+    "defaultCategoryHint": "Subscriptions",
+    "active": true,
+    "prices": {
+      "DEFAULT": [
+        { "tier": "Monthly", "amount": 14.99, "currency": "USD", "frequency": "MONTHLY" },
+        { "tier": "Annual", "amount": 139, "currency": "USD", "frequency": "YEARLY" }
+      ]
+    }
+  },
+  {
+    "name": "YouTube Premium",
+    "domain": "EXPENSE",
+    "defaultCategoryHint": "Subscriptions",
+    "active": true,
+    "prices": {
+      "DEFAULT": [
+        { "tier": "Individual", "amount": 13.99, "currency": "USD", "frequency": "MONTHLY" },
+        { "tier": "Family", "amount": 22.99, "currency": "USD", "frequency": "MONTHLY" }
+      ]
+    }
+  },
+  {
+    "name": "iCloud+",
+    "domain": "EXPENSE",
+    "defaultCategoryHint": "Subscriptions",
+    "active": true,
+    "prices": {
+      "DEFAULT": [
+        { "tier": "50 GB", "amount": 0.99, "currency": "USD", "frequency": "MONTHLY" },
+        { "tier": "200 GB", "amount": 2.99, "currency": "USD", "frequency": "MONTHLY" },
+        { "tier": "2 TB", "amount": 9.99, "currency": "USD", "frequency": "MONTHLY" }
+      ]
+    }
+  },
+  {
+    "name": "Google One",
+    "domain": "EXPENSE",
+    "defaultCategoryHint": "Subscriptions",
+    "active": true,
+    "prices": {
+      "DEFAULT": [
+        { "tier": "100 GB", "amount": 1.99, "currency": "USD", "frequency": "MONTHLY" },
+        { "tier": "200 GB", "amount": 2.99, "currency": "USD", "frequency": "MONTHLY" },
+        { "tier": "2 TB", "amount": 9.99, "currency": "USD", "frequency": "MONTHLY" }
+      ]
+    }
+  },
+  {
+    "name": "ChatGPT Plus",
+    "domain": "EXPENSE",
+    "defaultCategoryHint": "Subscriptions",
+    "active": true,
+    "prices": {
+      "DEFAULT": [
+        { "tier": "Plus", "amount": 20, "currency": "USD", "frequency": "MONTHLY" }
+      ]
+    }
+  },
+  {
+    "name": "GitHub",
+    "domain": "EXPENSE",
+    "defaultCategoryHint": "Subscriptions",
+    "active": true,
+    "prices": {
+      "DEFAULT": [
+        { "tier": "Pro", "amount": 4, "currency": "USD", "frequency": "MONTHLY" },
+        { "tier": "Team", "amount": 4, "currency": "USD", "frequency": "MONTHLY" }
+      ]
+    }
+  }
+]

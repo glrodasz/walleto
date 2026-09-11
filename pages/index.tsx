@@ -1,163 +1,232 @@
-import Head from "next/head";
-import auth0 from "../lib/auth0";
-
-import HomeSkeleton from "../components/HomeSkeleton";
-import SummaryHeader from "../components/SummaryHeader";
-import SubscriptionList from "../components/SubscriptionList";
-import TopNav from "../components/TopNav";
-
-import useCurrencyExchangeRates from "../hooks/useCurrencyExchangeRates";
-import useSubscriptions from "../hooks/useSubscriptions";
-import useSubscriptionFilters from "../hooks/useSubscriptionFilters";
-import useSubscriptionMutations from "../hooks/useSubscriptionMutations";
-import { useSummary } from "../hooks/useSummary";
 import { useUser } from "@auth0/nextjs-auth0/client";
-import { needsExchangeRates } from "../helpers";
+import { useRouter } from "next/router";
+import { withOnboardingGuard } from "../features/onboarding/helpers/onboardingGuard";
+import { PageLayout } from "../components/organisms/PageLayout";
+import { StatCard } from "../components/molecules/StatCard";
+import type { StatRow } from "../components/molecules/StatCard";
+import { CategoryBreakdown } from "../components/molecules/CategoryBreakdown";
+import { formatAmount } from "../components/atoms/Amount";
+import Skeleton from "../components/Skeleton";
+import { ErrorState } from "../components/atoms/ErrorState";
+import { NetFlowCard } from "../features/dashboard/components/NetFlowCard";
+import { CashFlowCard } from "../features/dashboard/components/CashFlowCard";
+import type { CashFlowPeriod } from "../features/dashboard/components/CashFlowCard";
+import { UpcomingPayments } from "../features/dashboard/components/UpcomingPayments";
+import { TipBanner } from "../features/dashboard/components/TipBanner";
+import { topWithOther } from "../features/dashboard/helpers/topWithOther";
+import type { CashFlowGroupBy } from "../features/dashboard/helpers/cashFlowSeries";
+import { useDashboard } from "../features/dashboard/hooks/useDashboard";
+import { useUserDoc } from "../hooks/useUserDoc";
+import { useMaterialize } from "../hooks/useMaterialize";
+import { useSelectedMonth } from "../hooks/useSelectedMonth";
+import { useLocalPreference } from "../hooks/useLocalPreference";
+import { greeting } from "../helpers/greeting";
+import type { Currency, Domain } from "../types";
 
-export const getServerSideProps = auth0.withPageAuthRequired();
+export const getServerSideProps = withOnboardingGuard();
 
-export default function Home() {
+interface CategoryAmount {
+  categoryId: string;
+  name: string;
+  amount: number;
+  percent: number;
+}
+
+/** Income shows amounts; the other cards show each category's share. */
+function cardRows(list: CategoryAmount[], domain: Domain, currency: Currency): StatRow[] {
+  return list.slice(0, 2).map((c) => ({
+    name: c.name,
+    value: domain === "INCOME" ? formatAmount(c.amount, currency) : `${c.percent.toFixed(0)}%`,
+  }));
+}
+
+export default function Dashboard() {
   const { user } = useUser();
+  const router = useRouter();
+  const { userDoc } = useUserDoc();
+  const { select } = useSelectedMonth();
+  useMaterialize();
+  const [period, setPeriod] = useLocalPreference<CashFlowPeriod>("waletto:dashboard:period", 6);
+  const [groupBy, setGroupBy] = useLocalPreference<CashFlowGroupBy>(
+    "waletto:dashboard:groupBy",
+    "domain"
+  );
   const {
-    subscriptions,
-    create,
-    remove,
-    update,
-    finishedFirstFetch,
-    error: subscriptionsError,
-  } = useSubscriptions();
-  const { rates, error: ratesError, isLoading: ratesLoading } = useCurrencyExchangeRates();
-
-  const {
-    time,
-    setTime,
     currency,
-    setCurrency,
-    sortBy,
-    setSortBy,
-    card,
-    setCard,
-    tags,
-    setTags,
-    tagOptions,
-    filteredSubscriptions,
-  } = useSubscriptionFilters(subscriptions, rates);
-  const mutations = useSubscriptionMutations(remove, update);
+    totals,
+    flow,
+    approximate,
+    fxUnavailable,
+    expensesByCategory,
+    incomesByCategory,
+    investmentsByCategory,
+    savingsByCategory,
+    currencyMix,
+    categories,
+    upcoming,
+    cashFlow,
+    selectedKey,
+    window,
+    loading,
+    error,
+  } = useDashboard({ period, groupBy });
 
-  const { cards } = useSummary(subscriptions, currency, time, rates);
-  const { summaryData, uniqueCurrencies, primaryTotal, secondaryTotal, primaryIsYearly } =
-    useSummary(filteredSubscriptions, currency, time, rates);
+  const firstName = (user?.name ?? user?.nickname ?? "there").split(" ")[0];
 
-  const isFiltered = Boolean(card) || tags.length > 0;
-  const clearFilters = () => {
-    setCard("");
-    setTags([]);
-  };
-
-  const ratesUnavailable =
-    needsExchangeRates(subscriptions) && !ratesLoading && (!!ratesError || !rates);
-
-  if (!finishedFirstFetch) {
-    return <HomeSkeleton />;
-  }
+  const cards: {
+    domain: Domain;
+    title: string;
+    href: string;
+    amount: number;
+    list: CategoryAmount[];
+    mix: { currency: Currency; pct: number }[];
+  }[] = [
+    {
+      domain: "INCOME",
+      title: "Income",
+      href: "/incomes",
+      amount: totals.income,
+      list: incomesByCategory,
+      mix: currencyMix.income,
+    },
+    {
+      domain: "EXPENSE",
+      title: "Expenses",
+      href: "/expenses",
+      amount: totals.expense,
+      list: expensesByCategory,
+      mix: currencyMix.expense,
+    },
+    {
+      domain: "INVESTMENT",
+      title: "Investments",
+      href: "/investments",
+      amount: totals.investment,
+      list: investmentsByCategory,
+      mix: currencyMix.investment,
+    },
+    {
+      domain: "SAVING",
+      title: "Savings",
+      href: "/savings",
+      amount: totals.saving,
+      list: savingsByCategory,
+      mix: currencyMix.saving,
+    },
+  ];
 
   return (
-    <>
-      <Head>
-        <title>Sublr</title>
-        <meta name="theme-color" content="#0A0A0F" />
-      </Head>
-      <TopNav
-        user={user}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-        currency={currency}
-        setCurrency={setCurrency}
-        time={time}
-        setTime={setTime}
-        card={card}
-        setCard={setCard}
-        tags={tags}
-        setTags={setTags}
-        tagOptions={tagOptions}
-        cards={cards}
-      />
-      <main className="container">
-        {subscriptionsError && (
-          <section className="load-error" role="alert">
-            <p className="load-error-title">Couldn&apos;t load your subscriptions</p>
-            <p className="load-error-body">
-              Something went wrong while connecting to the server. Refresh the page to try again.
-            </p>
-          </section>
+    <PageLayout
+      title={`${greeting()}, ${firstName}`}
+      subtitle={`Here's your financial overview for ${window.longLabel}.`}
+    >
+      {error && <ErrorState error={error} />}
+      {fxUnavailable && (
+        <ErrorState
+          title="Exchange rates unavailable"
+          description="Totals mix currencies without conversion right now. They'll correct themselves when rates load again."
+        />
+      )}
+
+      <section className="block">
+        {userDoc ? (
+          <NetFlowCard flow={flow} currency={currency} approximate={approximate} />
+        ) : (
+          <Skeleton.Box width="100%" height={160} />
         )}
-        <SummaryHeader
-          subscriptions={filteredSubscriptions}
-          time={time}
+      </section>
+
+      <section className="cards">
+        {userDoc
+          ? cards.map((c) => (
+              <StatCard
+                key={c.domain}
+                title={c.title}
+                href={c.href}
+                amount={c.amount}
+                currency={currency}
+                domain={c.domain}
+                rows={cardRows(c.list, c.domain, currency)}
+                categoryCount={c.list.length}
+                byCurrency={c.mix}
+                actions={[{ label: `Open ${c.title}`, onSelect: () => router.push(c.href) }]}
+              />
+            ))
+          : cards.map((c) => <Skeleton.Box key={c.domain} width="100%" height={180} />)}
+      </section>
+
+      <section className="block">
+        <CashFlowCard
+          data={cashFlow.data}
+          groups={cashFlow.groups}
           currency={currency}
-          primaryTotal={primaryTotal}
-          secondaryTotal={secondaryTotal}
-          primaryIsYearly={primaryIsYearly}
-          uniqueCurrencies={uniqueCurrencies}
-          summaryData={summaryData}
-          ratesUnavailable={ratesUnavailable}
-          isFiltered={isFiltered}
-          onClearFilters={clearFilters}
+          loading={loading}
+          period={period}
+          onPeriod={setPeriod}
+          groupBy={groupBy}
+          onGroupBy={setGroupBy}
+          selectedKey={selectedKey}
+          onSelect={select}
         />
-        <SubscriptionList
-          subscriptions={filteredSubscriptions}
-          user={user}
-          create={create}
-          mutations={mutations}
-          knownTags={tagOptions}
+      </section>
+
+      <section className="bottom">
+        <CategoryBreakdown
+          title="Top expense categories"
+          rows={topWithOther(expensesByCategory, 5)}
+          categories={categories}
+          domain="EXPENSE"
+          currency={currency}
+          href="/expenses"
+          loading={loading}
         />
-      </main>
+        <UpcomingPayments
+          items={upcoming}
+          categories={categories}
+          displayCurrency={currency}
+          loading={loading}
+        />
+      </section>
+
+      <TipBanner id="create">
+        You can add a new transaction or recurring item from the + button.
+      </TipBanner>
 
       <style jsx>{`
-        .container {
-          width: 100%;
-          max-width: 800px;
-          padding: 20px 20px 48px;
-          margin: 0 auto;
+        .block {
           display: flex;
-          flex-direction: column;
-          gap: 36px;
         }
 
-        .load-error {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-          padding: 16px 20px;
-          border: 1px solid var(--accent-hot, #ff3d68);
-          border-radius: var(--r-lg, 16px);
-          background: color-mix(in srgb, var(--accent-hot, #ff3d68) 12%, transparent);
+        .block > :global(*) {
+          flex: 1;
+          min-width: 0;
         }
 
-        .load-error-title {
-          margin: 0;
-          font-weight: 700;
-          color: var(--accent-hot, #ff3d68);
+        .cards {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 16px;
         }
 
-        .load-error-body {
-          margin: 0;
-          font-size: 0.85rem;
-          color: var(--fg-1, #b8b8c8);
+        .bottom {
+          display: grid;
+          grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+          gap: 16px;
         }
 
-        @media only screen and (min-width: 800px) {
-          .container {
-            max-width: 900px;
+        @media (max-width: 1100px) {
+          .cards {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
           }
         }
 
-        @media only screen and (min-width: 1000px) {
-          .container {
-            max-width: 1440px;
+        @media (max-width: 767px) {
+          .cards,
+          .bottom {
+            grid-template-columns: 1fr;
           }
         }
       `}</style>
-    </>
+    </PageLayout>
   );
 }

@@ -1,28 +1,193 @@
+/*
+ * Design tokens. Two palettes: light (the default, "glass over a landscape")
+ * and dark (the original fintech-noir). The active one is chosen by the
+ * `data-theme` attribute on <html>, which an inline script in _document sets
+ * before first paint and hooks/useTheme keeps in sync with the user's
+ * preference ("system" is resolved to light or dark in JS, so the tokens
+ * live in exactly these two blocks).
+ */
 :root {
+  color-scheme: light;
+
   --font-size-sm: clamp(1rem, -1.3438rem + 3.75vw, 1.375rem);
   --font-size-md: clamp(1.5625rem, -0.3906rem + 3.125vw, 1.875rem);
-  --e11d48-legacy: #e11d48;
   --input-height: 40px;
   --input-font-size: 16px;
 
-  /* Fintech-noir */
+  /* Surfaces */
+  --bg-0: #e9eef5;
+  --bg-1: #f7f9fc;
+  --bg-2: #eef2f7;
+  --bg-3: #e2e8f0;
+  --line: rgba(15, 23, 42, 0.1);
+  --line-strong: rgba(15, 23, 42, 0.2);
+
+  /* Text */
+  --fg-0: #0f172a;
+  --fg-1: #3b465a;
+  --fg-2: #6b7688;
+
+  /* Primary accent: navigation, focus rings, primary buttons. */
+  --accent: #2563eb;
+  --accent-soft: rgba(37, 99, 235, 0.12);
+  --on-accent: #ffffff;
+  --accent-hot: #e11d48;
+  --accent-amber: #d97706;
+  --accent-cyan: #0891b2;
+  --glow: rgba(37, 99, 235, 0.1);
+
+  /* Glass surfaces sit over the backdrop image. */
+  --glass: rgba(255, 255, 255, 0.64);
+  --glass-strong: rgba(255, 255, 255, 0.82);
+  --glass-blur: 18px;
+  --scrim: rgba(15, 23, 42, 0.45);
+  --shadow-lg: 0 24px 48px -16px rgba(15, 23, 42, 0.25);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --bg-image: url("/bg/backdrop-light.svg");
+  --bg-image-overlay: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(233, 238, 245, 0.92) 520px
+  );
+
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+
+  /* Domain accent colors */
+  --domain-income: #16a34a;
+  --domain-expense: #f43f5e;
+  --domain-investment: #0ea5e9;
+  --domain-saving: #f59e0b;
+  --domain-income-soft: color-mix(in srgb, var(--domain-income) 12%, var(--bg-1));
+  --domain-expense-soft: color-mix(in srgb, var(--domain-expense) 12%, var(--bg-1));
+  --domain-investment-soft: color-mix(in srgb, var(--domain-investment) 12%, var(--bg-1));
+  --domain-saving-soft: color-mix(in srgb, var(--domain-saving) 12%, var(--bg-1));
+
+  /* Categorical palette for "by currency" charts, in legend order. */
+  --palette-1: #16a34a;
+  --palette-2: #0ea5e9;
+  --palette-3: #f59e0b;
+  --palette-4: #7c3aed;
+  --palette-5: #db2777;
+  --palette-6: #2563eb;
+  --palette-7: #65a30d;
+  --palette-8: #ca8a04;
+
+  /* Stacking order. Overlays must beat the fixed mobile nav and the FAB,
+     otherwise a modal's footer sits under the nav and taps navigate away. */
+  --z-nav: 100;
+  --z-fab: 110;
+  --z-overlay: 200;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
   --bg-0: #0a0a0f;
   --bg-1: #14141b;
   --bg-2: #1c1c26;
   --bg-3: #242433;
   --line: #2a2a38;
   --line-strong: #3a3a4d;
+
   --fg-0: #f5f5fa;
   --fg-1: #b8b8c8;
   --fg-2: #6e6e85;
+
   --accent: #7cffb2;
+  --accent-soft: rgba(124, 255, 178, 0.14);
+  --on-accent: #0a0a0f;
   --accent-hot: #ff3d68;
   --accent-amber: #ffb84d;
   --accent-cyan: #5ee8ff;
   --glow: rgba(124, 255, 178, 0.12);
-  --r-sm: 6px;
-  --r-md: 10px;
-  --r-lg: 16px;
+
+  --glass: rgba(20, 20, 27, 0.68);
+  --glass-strong: rgba(20, 20, 27, 0.86);
+  --scrim: rgba(10, 10, 15, 0.7);
+  --shadow-lg: 0 25px 50px -12px rgb(0 0 0 / 0.5);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --bg-image: url("/bg/backdrop-dark.svg");
+  --bg-image-overlay: linear-gradient(
+    180deg,
+    rgba(10, 10, 15, 0.35) 0%,
+    rgba(10, 10, 15, 0.94) 520px
+  );
+
+  --domain-income: #7cffb2;
+  --domain-expense: #ff3d68;
+  --domain-investment: #5ee8ff;
+  --domain-saving: #ffb84d;
+  --domain-income-soft: color-mix(in srgb, var(--domain-income) 18%, var(--bg-1));
+  --domain-expense-soft: color-mix(in srgb, var(--domain-expense) 18%, var(--bg-1));
+  --domain-investment-soft: color-mix(in srgb, var(--domain-investment) 18%, var(--bg-1));
+  --domain-saving-soft: color-mix(in srgb, var(--domain-saving) 18%, var(--bg-1));
+
+  --palette-1: #7cffb2;
+  --palette-2: #5ee8ff;
+  --palette-3: #ffb84d;
+  --palette-4: #c58cff;
+  --palette-5: #ff8fb1;
+  --palette-6: #8ad6ff;
+  --palette-7: #d9f26b;
+  --palette-8: #ffd166;
+}
+
+/* Six-step tint ramps per domain, for bars stacked by category. Defined as
+   tokens (never as color-mix() strings in JS) so recharts can take var(--x). */
+:root,
+[data-theme="dark"] {
+  --tint-income-1: var(--domain-income);
+  --tint-income-2: color-mix(in srgb, var(--domain-income) 80%, var(--bg-1));
+  --tint-income-3: color-mix(in srgb, var(--domain-income) 62%, var(--bg-1));
+  --tint-income-4: color-mix(in srgb, var(--domain-income) 46%, var(--bg-1));
+  --tint-income-5: color-mix(in srgb, var(--domain-income) 32%, var(--bg-1));
+  --tint-income-6: color-mix(in srgb, var(--domain-income) 20%, var(--bg-1));
+  --tint-expense-1: var(--domain-expense);
+  --tint-expense-2: color-mix(in srgb, var(--domain-expense) 80%, var(--bg-1));
+  --tint-expense-3: color-mix(in srgb, var(--domain-expense) 62%, var(--bg-1));
+  --tint-expense-4: color-mix(in srgb, var(--domain-expense) 46%, var(--bg-1));
+  --tint-expense-5: color-mix(in srgb, var(--domain-expense) 32%, var(--bg-1));
+  --tint-expense-6: color-mix(in srgb, var(--domain-expense) 20%, var(--bg-1));
+  --tint-investment-1: var(--domain-investment);
+  --tint-investment-2: color-mix(in srgb, var(--domain-investment) 80%, var(--bg-1));
+  --tint-investment-3: color-mix(in srgb, var(--domain-investment) 62%, var(--bg-1));
+  --tint-investment-4: color-mix(in srgb, var(--domain-investment) 46%, var(--bg-1));
+  --tint-investment-5: color-mix(in srgb, var(--domain-investment) 32%, var(--bg-1));
+  --tint-investment-6: color-mix(in srgb, var(--domain-investment) 20%, var(--bg-1));
+  --tint-saving-1: var(--domain-saving);
+  --tint-saving-2: color-mix(in srgb, var(--domain-saving) 80%, var(--bg-1));
+  --tint-saving-3: color-mix(in srgb, var(--domain-saving) 62%, var(--bg-1));
+  --tint-saving-4: color-mix(in srgb, var(--domain-saving) 46%, var(--bg-1));
+  --tint-saving-5: color-mix(in srgb, var(--domain-saving) 32%, var(--bg-1));
+  --tint-saving-6: color-mix(in srgb, var(--domain-saving) 20%, var(--bg-1));
+}
+
+/* Without backdrop blur, translucent cards over the photo are unreadable. */
+@supports not (backdrop-filter: blur(1px)) {
+  :root,
+  [data-theme="dark"] {
+    --glass: var(--bg-1);
+    --glass-strong: var(--bg-1);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root,
+  [data-theme="dark"] {
+    --glass: var(--bg-1);
+    --glass-strong: var(--bg-1);
+    --glass-blur: 0px;
+  }
+}
+
+/* Phones: 44px is the minimum comfortable touch target. */
+@media (max-width: 767px) {
+  :root {
+    --input-height: 44px;
+  }
 }
 
 html,
@@ -32,18 +197,21 @@ body {
   margin: 0;
   font-family: var(--font-sans, "Inter", system-ui, sans-serif);
   background-color: var(--bg-0);
-  background-image:
-    radial-gradient(1200px 600px at 80% -10%, rgba(124, 255, 178, 0.06), transparent 60%),
-    linear-gradient(
-        0deg,
-        color-mix(in srgb, var(--line) 15%, transparent) 0,
-        color-mix(in srgb, var(--line) 15%, transparent) 1px,
-        transparent 1px
-      )
-      0 0 / 16px 16px;
   color: var(--fg-0);
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background-image: var(--bg-image-overlay), var(--bg-image);
+  background-position:
+    top center,
+    top center;
+  background-size:
+    100% 100%,
+    100% auto;
+  background-repeat: no-repeat;
+  background-attachment: fixed, fixed;
 }
 
 h1,
@@ -52,7 +220,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-display, "Space Grotesk", system-ui, sans-serif);
+  font-family: var(--font-display, var(--font-sans, "Inter", system-ui, sans-serif));
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -125,6 +293,20 @@ input:focus {
   box-shadow: 0 0 0 1px var(--accent);
 }
 
+/* Keyboard focus in the app's own accent — the browser default ring clashes
+   with both palettes (and shows up after a plain mouse click on the period
+   and category tabs, which reads as a rendering glitch). */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible) {
+  outline: none;
+}
+
 select option {
   background: var(--bg-1);
   color: var(--fg-0);
@@ -138,7 +320,7 @@ form[method="dialog"] {
 
 form[method="dialog"] button:first-of-type {
   background: var(--accent);
-  color: #0a0a0f;
+  color: var(--on-accent);
   border: 1px solid var(--accent);
   font-weight: 700;
 }
@@ -161,14 +343,14 @@ dialog {
   border-radius: var(--r-md);
   background: var(--bg-1);
   color: var(--fg-0);
-  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.5);
+  box-shadow: var(--shadow-lg);
   padding: 40px 36px;
   font-size: 1.125rem;
   max-width: min(100vw - 32px, 420px);
 }
 
 dialog::backdrop {
-  background: rgb(0 0 0 / 0.65);
+  background: var(--scrim);
 }
 
 dialog button {

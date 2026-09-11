@@ -12,10 +12,11 @@ const customJestConfig = {
   moduleDirectories: ["node_modules", "<rootDir>/"],
   testEnvironment: "jest-environment-jsdom",
   collectCoverageFrom: [
+    // Pure logic layers. Components, hooks and API routes are covered by their
+    // own tests but excluded here, since JSX and Firestore wiring skew the ratio.
+    "utils/**/*.ts",
     "helpers/**/*.ts",
-    "lib/request.ts",
-    "lib/normalizeTag.ts",
-    "lib/tagStyles.ts",
+    "features/**/helpers/**/*.ts",
     "!**/*.test.ts",
   ],
   coverageThreshold: {

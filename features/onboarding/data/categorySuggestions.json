@@ -1,0 +1,53 @@
+{
+  "INCOME": [
+    "Salary",
+    "Bonus",
+    "Rent",
+    "Pension",
+    "Side projects",
+    "Freelance",
+    "Consulting",
+    "Dividends",
+    "Interest",
+    "Refunds",
+    "Gifts",
+    "Extra"
+  ],
+  "EXPENSE": [
+    "Home & Family",
+    "Rent",
+    "Mortgage",
+    "Groceries",
+    "Utilities",
+    "Subscriptions",
+    "Credits",
+    "Insurances",
+    "Health",
+    "Transport",
+    "Dining",
+    "Shopping",
+    "Education",
+    "Travel",
+    "Pets",
+    "Taxes",
+    "Variable"
+  ],
+  "INVESTMENT": [
+    "Crypto",
+    "Banking",
+    "Real estate",
+    "Stocks",
+    "ETFs",
+    "Bonds",
+    "Retirement fund",
+    "Business"
+  ],
+  "SAVING": [
+    "Banking",
+    "Emergency fund",
+    "Vacation fund",
+    "Home deposit",
+    "Car fund",
+    "Education fund"
+  ]
+}

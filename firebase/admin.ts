@@ -1,6 +1,11 @@
+import { config as loadEnv } from "dotenv";
 import fs from "fs";
 import path from "path";
 import admin from "firebase-admin";
+
+// Scripts (seed, migrate) import this module directly; Next.js loads .env.local itself.
+// dotenv does not override vars already set in the environment.
+loadEnv({ path: path.join(process.cwd(), ".env.local") });
 
 function loadServiceAccount(): Record<string, unknown> | null {
   const b64 = process.env.FIREBASE_SERVICE_ACCOUNT_B64;

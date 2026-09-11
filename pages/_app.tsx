@@ -1,8 +1,11 @@
 import "../styles/globals.css";
 import ErrorBoundary from "../components/ErrorBoundary";
 import { UserProvider } from "@auth0/nextjs-auth0/client";
-import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
-import Head from "next/head";
+import { Inter, Instrument_Serif, JetBrains_Mono } from "next/font/google";
+import type { AppProps } from "next/app";
+import { ThemeProvider } from "../hooks/useTheme";
+import { MonthProvider } from "../hooks/useSelectedMonth";
+import { PreferencesProvider } from "../hooks/PreferencesProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -10,10 +13,12 @@ const inter = Inter({
   display: "swap",
 });
 
-const spaceGrotesk = Space_Grotesk({
+// Only the dashboard quote is set in serif; one weight is enough.
+const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  variable: "--font-display",
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-serif",
   display: "swap",
 });
 
@@ -23,22 +28,23 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-import type { AppProps } from "next/app";
-
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <UserProvider>
-      <Head>
-        <meta name="theme-color" content="#0A0A0F" />
-      </Head>
-      <div
-        className={`${inter.className} ${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
-        style={{ minHeight: "100%" }}
-      >
-        <ErrorBoundary>
-          <Component {...pageProps} />
-        </ErrorBoundary>
-      </div>
+      <ThemeProvider>
+        <MonthProvider>
+          <PreferencesProvider>
+            <div
+              className={`${inter.className} ${inter.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable}`}
+              style={{ minHeight: "100%" }}
+            >
+              <ErrorBoundary>
+                <Component {...pageProps} />
+              </ErrorBoundary>
+            </div>
+          </PreferencesProvider>
+        </MonthProvider>
+      </ThemeProvider>
     </UserProvider>
   );
 }

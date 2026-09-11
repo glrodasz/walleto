@@ -1,0 +1,6 @@
+{
+  "INCOME": ["Salary", "Rent", "Pension", "Side projects", "Extra"],
+  "EXPENSE": ["Home & Family", "Subscriptions", "Credits", "Insurances", "Variable"],
+  "INVESTMENT": ["Crypto", "Banking", "Real estate"],
+  "SAVING": ["Banking", "Emergency fund"]
+}
