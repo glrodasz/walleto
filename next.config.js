@@ -13,6 +13,10 @@ const nextConfig = {
   env: {
     // Shown in Settings › About; the same number as package.json.
     NEXT_PUBLIC_APP_VERSION: version,
+    // Which build this is, read from Vercel's system env vars at build time.
+    // Neither exists locally, so `next dev` resolves to the development badge.
+    NEXT_PUBLIC_APP_ENV: process.env.VERCEL_ENV ?? "development",
+    NEXT_PUBLIC_COMMIT_SHA: process.env.VERCEL_GIT_COMMIT_SHA ?? "",
   },
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];

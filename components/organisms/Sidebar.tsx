@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import type { ComponentType } from "react";
 import { Modal } from "../molecules/Modal";
+import { BuildBadge } from "../atoms/BuildBadge";
 import {
   ArrowDown,
   ArrowUp,
@@ -93,6 +94,7 @@ export function Sidebar() {
             <Waves size={22} />
           </span>
           Waletto
+          <BuildBadge />
         </div>
 
         <nav className="nav" aria-label="Main navigation">
@@ -167,6 +169,9 @@ export function Sidebar() {
               </Link>
             );
           })}
+          <div className="more-build">
+            <BuildBadge />
+          </div>
           <div className="more-account">
             <span className="avatar" aria-hidden="true">
               {initial}
@@ -407,6 +412,12 @@ export function Sidebar() {
         .more :global(.more-item.is-active) {
           color: var(--accent);
           background: var(--accent-soft);
+        }
+
+        .more-build {
+          display: flex;
+          justify-content: center;
+          padding-top: 14px;
         }
 
         .more-account {
