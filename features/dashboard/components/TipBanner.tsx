@@ -13,7 +13,7 @@ export function TipBanner({ id, children }: Props) {
   const [dismissed, setDismissed] = useLocalPreference(`waletto:tip:${id}`, false);
   if (dismissed) return null;
   return (
-    <div className="tip" role="note">
+    <div className="glass tip" role="note">
       <span className="icon" aria-hidden="true">
         <Lightbulb size={16} />
       </span>
@@ -35,8 +35,6 @@ export function TipBanner({ id, children }: Props) {
           gap: 12px;
           padding: 10px 14px;
           border-radius: var(--r-lg);
-          border: 1px solid var(--line);
-          background: var(--glass);
         }
 
         .icon {
@@ -70,7 +68,7 @@ export function TipBanner({ id, children }: Props) {
 
         .close:hover {
           color: var(--fg-0);
-          background: var(--bg-2);
+          background: var(--glass-hover);
         }
       `}</style>
     </div>

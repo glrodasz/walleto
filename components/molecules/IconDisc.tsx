@@ -37,7 +37,7 @@ export function IconDisc({ children, domain, color, size = 40 }: Props) {
           height: var(--disc-size);
           border-radius: 50%;
           color: var(--disc-color);
-          background: color-mix(in srgb, var(--disc-color) 14%, var(--bg-1));
+          background: color-mix(in srgb, var(--disc-color) 18%, var(--glass-inset));
         }
       `}</style>
     </span>

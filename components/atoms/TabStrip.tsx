@@ -22,7 +22,7 @@ interface Props {
  */
 export function TabStrip({ tabs, value, onChange, label, accent }: Props) {
   return (
-    <div className="tabs" role="tablist" aria-label={label}>
+    <div className="glass tabs" role="tablist" aria-label={label}>
       {tabs.map((t) => (
         <button
           key={t.key}
@@ -44,10 +44,6 @@ export function TabStrip({ tabs, value, onChange, label, accent }: Props) {
           gap: 4px;
           padding: 4px;
           border-radius: var(--r-lg);
-          border: 1px solid var(--line);
-          background: var(--glass);
-          backdrop-filter: blur(var(--glass-blur));
-          -webkit-backdrop-filter: blur(var(--glass-blur));
         }
 
         .tab {
@@ -55,6 +51,7 @@ export function TabStrip({ tabs, value, onChange, label, accent }: Props) {
           padding: 0 12px;
           border: none;
           border-radius: var(--r-md);
+          -webkit-tap-highlight-color: transparent;
           background: transparent;
           color: var(--fg-1);
           font-family: inherit;
@@ -71,14 +68,19 @@ export function TabStrip({ tabs, value, onChange, label, accent }: Props) {
 
         .tab:hover {
           color: var(--fg-0);
+          background: var(--glass-hover);
         }
 
+        /* The selected tab is a second, brighter pane raised out of the strip
+           — lit along its top edge, with the accent underlining it. */
         .tab.is-active {
-          background: var(--bg-1);
+          background-color: var(--glass-raised);
+          background-image: var(--glass-sheen);
           color: var(--tab-accent);
           box-shadow:
+            inset 0 1px 0 var(--glass-edge),
             inset 0 -2px 0 var(--tab-accent),
-            var(--shadow-sm);
+            var(--glass-shadow);
         }
 
         @media (max-width: 600px) {

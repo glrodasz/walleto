@@ -117,9 +117,9 @@ export function CashFlowCard({
         }
 
         .group details {
-          border: 1px solid var(--line);
+          border: 1px solid var(--glass-rim);
           border-radius: var(--r-md);
-          background: var(--bg-1);
+          background: var(--glass-inset);
           padding: 8px 12px;
         }
 

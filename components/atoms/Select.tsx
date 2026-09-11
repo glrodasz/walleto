@@ -79,15 +79,22 @@ export function Select({
 
         /* Scoped through .control so this beats the blanket select rule in
            globals.css, which also paints its own chevron background-image. */
+        /* Scoped to beat globals.css, then re-states the same material so the
+           control matches every other field. */
         .control .select {
           width: 100%;
           min-width: 0;
           height: 40px;
           padding: 0 34px 0 12px;
           border-radius: var(--r-md);
-          border: 1px solid var(--line);
-          background: var(--bg-2);
+          border: 1px solid var(--glass-rim);
+          background-color: var(--glass-field);
           background-image: none;
+          backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+          -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+          box-shadow:
+            inset 0 1px 2px rgba(15, 23, 42, 0.06),
+            0 1px 0 var(--glass-edge);
           color: var(--fg-0);
           font-family: inherit;
           font-size: 16px;
@@ -98,7 +105,7 @@ export function Select({
         .control .select:focus {
           outline: none;
           border-color: var(--accent);
-          box-shadow: none;
+          box-shadow: 0 0 0 3px var(--accent-soft);
         }
 
         .control .select:disabled {

@@ -44,9 +44,9 @@ export function IconPicker({ value, onChange, label = "Icon", disabled }: Props)
           align-items: center;
           justify-content: center;
           height: 40px;
-          border: 1px solid var(--line);
+          border: 1px solid var(--glass-rim);
           border-radius: var(--r-md);
-          background: var(--bg-2);
+          background: var(--glass-inset);
           color: var(--fg-1);
           cursor: pointer;
           transition:

@@ -35,7 +35,7 @@ export function Modal({ open, title, onClose, children }: Props) {
   return (
     <div className="overlay" onClick={onClose}>
       <div
-        className="panel"
+        className="glass glass--strong glass--raised panel"
         role="dialog"
         aria-modal="true"
         aria-label={title}
@@ -43,7 +43,12 @@ export function Modal({ open, title, onClose, children }: Props) {
       >
         <header className="head">
           <h2 className="title">{title}</h2>
-          <button type="button" className="close" onClick={onClose} aria-label="Close">
+          <button
+            type="button"
+            className="glass glass--tap close"
+            onClick={onClose}
+            aria-label="Close"
+          >
             <Close size={20} />
           </button>
         </header>
@@ -51,12 +56,15 @@ export function Modal({ open, title, onClose, children }: Props) {
       </div>
 
       <style jsx>{`
+        /* The scrim is part of the material too: the page behind a sheet is
+           pushed out of focus rather than merely dimmed. */
         .overlay {
           position: fixed;
           inset: 0;
           z-index: var(--z-overlay, 200);
           background: var(--scrim);
-          backdrop-filter: blur(2px);
+          backdrop-filter: blur(var(--scrim-blur)) saturate(1.2);
+          -webkit-backdrop-filter: blur(var(--scrim-blur)) saturate(1.2);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -70,9 +78,7 @@ export function Modal({ open, title, onClose, children }: Props) {
           max-height: calc(100dvh - 32px);
           overflow-y: auto;
           overscroll-behavior: contain;
-          background: var(--bg-1);
-          border: 1px solid var(--line-strong);
-          border-radius: var(--r-lg);
+          border-radius: var(--r-xl);
         }
 
         /* Phones: a bottom sheet. Full width, anchored to the bottom edge,
@@ -87,7 +93,7 @@ export function Modal({ open, title, onClose, children }: Props) {
             max-width: none;
             max-height: 92vh;
             max-height: 92dvh;
-            border-radius: var(--r-lg) var(--r-lg) 0 0;
+            border-radius: var(--r-2xl) var(--r-2xl) 0 0;
             border-bottom: none;
             padding-bottom: env(safe-area-inset-bottom, 0px);
           }
@@ -113,15 +119,12 @@ export function Modal({ open, title, onClose, children }: Props) {
           justify-content: center;
           width: 32px;
           height: 32px;
-          border: none;
-          border-radius: var(--r-sm);
-          background: transparent;
+          border-radius: var(--r-pill);
           color: var(--fg-2);
           cursor: pointer;
         }
 
         .close:hover {
-          background: var(--bg-2);
           color: var(--fg-0);
         }
 

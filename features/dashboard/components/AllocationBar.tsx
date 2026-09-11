@@ -44,7 +44,8 @@ export function AllocationBar({ flow }: Props) {
           width: 100%;
           height: 10px;
           border-radius: 999px;
-          background: var(--bg-2);
+          background: var(--glass-inset);
+          box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
           overflow: hidden;
         }
 

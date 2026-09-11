@@ -146,7 +146,12 @@ export function Combobox({
       />
 
       {showList && (
-        <ul className="list" id={listId} role="listbox" aria-label={label}>
+        <ul
+          className="glass glass--strong glass--raised list"
+          id={listId}
+          role="listbox"
+          aria-label={label}
+        >
           {options.map((option, i) => (
             <li
               key={`${option}-${i}`}
@@ -200,9 +205,12 @@ export function Combobox({
           min-height: 34px;
           height: 34px;
           padding: 0 14px;
-          border-radius: 999px;
+          border-radius: var(--r-pill);
           border: 1px solid var(--accent);
-          background: var(--bg-2);
+          background-color: var(--glass-field);
+          backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+          -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+          box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
           color: var(--fg-0);
           font-family: inherit;
           font-size: 16px;
@@ -211,13 +219,13 @@ export function Combobox({
         .combobox.full-width .input {
           height: 40px;
           border-radius: var(--r-md);
-          border-color: var(--line);
+          border-color: var(--glass-rim);
         }
 
         .combobox .input:focus {
           outline: none;
           border-color: var(--accent);
-          box-shadow: none;
+          box-shadow: 0 0 0 3px var(--accent-soft);
         }
 
         .combobox .input::placeholder {
@@ -239,10 +247,7 @@ export function Combobox({
           width: 240px;
           max-height: 220px;
           overflow-y: auto;
-          background: var(--bg-2);
-          border: 1px solid var(--line-strong);
-          border-radius: var(--r-md);
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+          border-radius: var(--r-lg);
         }
 
         .option {
@@ -257,7 +262,7 @@ export function Combobox({
         }
 
         .option.highlighted {
-          background: var(--bg-3);
+          background: var(--glass-hover);
           color: var(--fg-0);
         }
       `}</style>

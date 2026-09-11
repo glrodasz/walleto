@@ -47,7 +47,7 @@ export function KebabMenu({ actions, "aria-label": ariaLabel = "More options" }:
       </button>
 
       {open && (
-        <div className="menu" role="menu">
+        <div className="glass glass--strong glass--raised menu" role="menu">
           {actions.map((action) => (
             <button
               key={action.label}
@@ -80,7 +80,7 @@ export function KebabMenu({ actions, "aria-label": ariaLabel = "More options" }:
           color: var(--fg-2);
           font-size: 1.1rem;
           cursor: pointer;
-          border-radius: var(--r-sm);
+          border-radius: var(--r-pill);
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -90,24 +90,21 @@ export function KebabMenu({ actions, "aria-label": ariaLabel = "More options" }:
         }
 
         .trigger:hover {
-          background: var(--bg-2);
+          background: var(--glass-hover);
           color: var(--fg-1);
         }
 
         .menu {
           position: absolute;
-          top: calc(100% + 4px);
+          top: calc(100% + 6px);
           right: 0;
           /* Above the floating create button, below modal overlays. */
           z-index: calc(var(--z-fab, 110) + 1);
           min-width: 160px;
-          background: var(--bg-1);
-          border: 1px solid var(--line-strong);
-          border-radius: var(--r-md);
+          border-radius: var(--r-lg);
           padding: 4px;
           display: flex;
           flex-direction: column;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
         }
 
         .item {
@@ -123,7 +120,7 @@ export function KebabMenu({ actions, "aria-label": ariaLabel = "More options" }:
         }
 
         .item:hover:not(:disabled) {
-          background: var(--bg-2);
+          background: var(--glass-hover);
           color: var(--fg-0);
         }
 

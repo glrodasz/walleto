@@ -36,34 +36,74 @@
   --accent-cyan: #0891b2;
   --glow: rgba(37, 99, 235, 0.1);
 
-  /* Glass surfaces sit over the backdrop image. */
-  --glass: rgba(255, 255, 255, 0.64);
-  --glass-strong: rgba(255, 255, 255, 0.82);
-  --glass-blur: 18px;
-  --scrim: rgba(15, 23, 42, 0.45);
+  /*
+   * Liquid glass. A glass surface is five things at once: a translucent
+   * fill, a blurred and saturated view of what is behind it, a bright
+   * specular rim along the lit (top) edge, a sheen falling off from that
+   * edge, and a shadow that lifts it off the backdrop. These tokens are the
+   * parts; the `.glass` class further down assembles them.
+   */
+  --glass: rgba(255, 255, 255, 0.55);
+  --glass-strong: rgba(255, 255, 255, 0.72);
+  --glass-hover: rgba(255, 255, 255, 0.8);
+  /* Fills for what sits *on* glass: fields, and the raised pill of a
+     segmented control. Translucent too, so the stack never goes flat. */
+  --glass-field: rgba(255, 255, 255, 0.5);
+  --glass-raised: rgba(255, 255, 255, 0.85);
+  /* A pane nested inside a pane — a stats block on a card, a progress track.
+     No blur of its own: what is behind it is already blurred glass. */
+  --glass-inset: rgba(255, 255, 255, 0.45);
+  --glass-blur: 20px;
+  --glass-blur-lg: 34px;
+  --glass-saturate: 1.7;
+  --glass-rim: rgba(255, 255, 255, 0.7);
+  --glass-edge: rgba(255, 255, 255, 0.95);
+  --glass-edge-low: rgba(255, 255, 255, 0.3);
+  --glass-sheen: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.14) 24%,
+    rgba(255, 255, 255, 0) 58%
+  );
+  --glass-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 10px 24px -14px rgba(15, 23, 42, 0.3);
+  --glass-shadow-lg:
+    0 2px 8px -4px rgba(15, 23, 42, 0.16), 0 28px 60px -22px rgba(15, 23, 42, 0.42);
+
+  --scrim: rgba(15, 23, 42, 0.28);
+  /* How far out of focus the page goes behind an overlay. */
+  --scrim-blur: 10px;
   --shadow-lg: 0 24px 48px -16px rgba(15, 23, 42, 0.25);
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
   --bg-image: url("/bg/backdrop-light.svg");
+  /* Kept deliberately short of opaque: glass with nothing behind it is just
+     a grey box, so the landscape has to stay faintly visible down the page. */
   --bg-image-overlay: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.35) 0%,
-    rgba(233, 238, 245, 0.92) 520px
+    rgba(255, 255, 255, 0.25) 0%,
+    rgba(233, 238, 245, 0.74) 520px
   );
+  /* Ambient light pooled behind everything, fixed to the viewport, so a card
+     below the fold still has colour to refract. */
+  --ambient-1: rgba(37, 99, 235, 0.18);
+  --ambient-2: rgba(14, 165, 233, 0.16);
+  --ambient-3: rgba(244, 63, 94, 0.1);
 
-  --r-sm: 6px;
-  --r-md: 10px;
-  --r-lg: 16px;
-  --r-xl: 20px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --r-2xl: 32px;
+  --r-pill: 999px;
 
   /* Domain accent colors */
   --domain-income: #16a34a;
   --domain-expense: #f43f5e;
   --domain-investment: #0ea5e9;
   --domain-saving: #f59e0b;
-  --domain-income-soft: color-mix(in srgb, var(--domain-income) 12%, var(--bg-1));
-  --domain-expense-soft: color-mix(in srgb, var(--domain-expense) 12%, var(--bg-1));
-  --domain-investment-soft: color-mix(in srgb, var(--domain-investment) 12%, var(--bg-1));
-  --domain-saving-soft: color-mix(in srgb, var(--domain-saving) 12%, var(--bg-1));
+  --domain-income-soft: color-mix(in srgb, var(--domain-income) 16%, transparent);
+  --domain-expense-soft: color-mix(in srgb, var(--domain-expense) 16%, transparent);
+  --domain-investment-soft: color-mix(in srgb, var(--domain-investment) 16%, transparent);
+  --domain-saving-soft: color-mix(in srgb, var(--domain-saving) 16%, transparent);
 
   /* Categorical palette for "by currency" charts, in legend order. */
   --palette-1: #16a34a;
@@ -104,26 +144,51 @@
   --accent-cyan: #5ee8ff;
   --glow: rgba(124, 255, 178, 0.12);
 
-  --glass: rgba(20, 20, 27, 0.68);
-  --glass-strong: rgba(20, 20, 27, 0.86);
-  --scrim: rgba(10, 10, 15, 0.7);
+  /* Dark glass is smoked, not frosted: a darker fill, a rim that reads as a
+     thin catch of light rather than a white line. */
+  --glass: rgba(26, 26, 36, 0.58);
+  --glass-strong: rgba(20, 20, 28, 0.78);
+  --glass-hover: rgba(38, 38, 52, 0.72);
+  --glass-field: rgba(255, 255, 255, 0.06);
+  --glass-raised: rgba(52, 52, 70, 0.82);
+  --glass-inset: rgba(255, 255, 255, 0.05);
+  --glass-blur: 20px;
+  --glass-blur-lg: 34px;
+  --glass-saturate: 1.4;
+  --glass-rim: rgba(255, 255, 255, 0.1);
+  --glass-edge: rgba(255, 255, 255, 0.16);
+  --glass-edge-low: rgba(255, 255, 255, 0.04);
+  --glass-sheen: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.03) 26%,
+    rgba(255, 255, 255, 0) 60%
+  );
+  --glass-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 24px -14px rgba(0, 0, 0, 0.7);
+  --glass-shadow-lg: 0 2px 8px -4px rgba(0, 0, 0, 0.5), 0 28px 60px -22px rgba(0, 0, 0, 0.8);
+
+  --scrim: rgba(5, 5, 10, 0.55);
+  --scrim-blur: 10px;
   --shadow-lg: 0 25px 50px -12px rgb(0 0 0 / 0.5);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --bg-image: url("/bg/backdrop-dark.svg");
   --bg-image-overlay: linear-gradient(
     180deg,
-    rgba(10, 10, 15, 0.35) 0%,
-    rgba(10, 10, 15, 0.94) 520px
+    rgba(10, 10, 15, 0.3) 0%,
+    rgba(10, 10, 15, 0.82) 520px
   );
+  --ambient-1: rgba(124, 255, 178, 0.12);
+  --ambient-2: rgba(94, 232, 255, 0.12);
+  --ambient-3: rgba(197, 140, 255, 0.1);
 
   --domain-income: #7cffb2;
   --domain-expense: #ff3d68;
   --domain-investment: #5ee8ff;
   --domain-saving: #ffb84d;
-  --domain-income-soft: color-mix(in srgb, var(--domain-income) 18%, var(--bg-1));
-  --domain-expense-soft: color-mix(in srgb, var(--domain-expense) 18%, var(--bg-1));
-  --domain-investment-soft: color-mix(in srgb, var(--domain-investment) 18%, var(--bg-1));
-  --domain-saving-soft: color-mix(in srgb, var(--domain-saving) 18%, var(--bg-1));
+  --domain-income-soft: color-mix(in srgb, var(--domain-income) 18%, transparent);
+  --domain-expense-soft: color-mix(in srgb, var(--domain-expense) 18%, transparent);
+  --domain-investment-soft: color-mix(in srgb, var(--domain-investment) 18%, transparent);
+  --domain-saving-soft: color-mix(in srgb, var(--domain-saving) 18%, transparent);
 
   --palette-1: #7cffb2;
   --palette-2: #5ee8ff;
@@ -165,12 +230,79 @@
   --tint-saving-6: color-mix(in srgb, var(--domain-saving) 20%, var(--bg-1));
 }
 
-/* Without backdrop blur, translucent cards over the photo are unreadable. */
-@supports not (backdrop-filter: blur(1px)) {
+/*
+ * ── The material ────────────────────────────────────────────────────────
+ * `.glass` is the single implementation of the liquid-glass surface, and
+ * every floating thing in the app wears it — cards, the sidebar, the tab
+ * bar, menus, sheets, pills, fields — so they all refract the backdrop the
+ * same way. It lives here as a global class rather than in styled-jsx
+ * because the alternative is copying six declarations into twenty
+ * components and watching them drift apart.
+ *
+ * The sheen is a background *image* layered over the fill, never a
+ * pseudo-element: a ::before would become a flex item in half these
+ * components and would need a z-index fight with their content.
+ */
+.glass {
+  background-color: var(--glass);
+  background-image: var(--glass-sheen);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-rim);
+  box-shadow:
+    inset 0 1px 0 var(--glass-edge),
+    inset 0 -1px 0 var(--glass-edge-low),
+    var(--glass-shadow);
+}
+
+/* Chrome that has to stay readable over anything that scrolls under it. */
+.glass--strong {
+  background-color: var(--glass-strong);
+  backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
+}
+
+/* Floating above the page rather than sitting in it: sheets, menus, the FAB. */
+.glass--raised {
+  box-shadow:
+    inset 0 1px 0 var(--glass-edge),
+    inset 0 -1px 0 var(--glass-edge-low),
+    var(--glass-shadow-lg);
+}
+
+/* Glass you can touch: it brightens under the pointer and sinks when pressed,
+   which is most of what makes the material feel liquid rather than printed. */
+.glass--tap {
+  transition:
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.glass--tap:hover:not(:disabled) {
+  background-color: var(--glass-hover);
+}
+
+.glass--tap:active:not(:disabled) {
+  transform: scale(0.985);
+  box-shadow:
+    inset 0 1px 2px var(--glass-edge-low),
+    var(--glass-shadow);
+}
+
+/*
+ * Degradations. Both leave the geometry alone and take away only the
+ * translucency, so a surface that cannot blur is still a surface.
+ */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   :root,
   [data-theme="dark"] {
     --glass: var(--bg-1);
     --glass-strong: var(--bg-1);
+    --glass-hover: var(--bg-2);
+    --glass-field: var(--bg-1);
+    --glass-raised: var(--bg-1);
+    --glass-inset: var(--bg-2);
   }
 }
 
@@ -179,7 +311,22 @@
   [data-theme="dark"] {
     --glass: var(--bg-1);
     --glass-strong: var(--bg-1);
+    --glass-hover: var(--bg-2);
+    --glass-field: var(--bg-1);
+    --glass-raised: var(--bg-1);
+    --glass-inset: var(--bg-2);
     --glass-blur: 0px;
+    --glass-blur-lg: 0px;
+    --scrim-blur: 0px;
+    --glass-saturate: 1;
+    --glass-sheen: none;
+    --glass-edge: transparent;
+    --glass-edge-low: transparent;
+    --glass-rim: var(--line);
+  }
+
+  body::before {
+    display: none;
   }
 }
 
@@ -214,6 +361,25 @@ body {
   background-attachment: fixed, fixed;
 }
 
+/*
+ * Ambient light, fixed to the viewport and painted behind the app (#__next
+ * is z-index auto, so a negative-z pseudo-element sits under it). The
+ * landscape runs out after the first screen; without this, every card below
+ * the fold would be frosting a flat grey and the material would read as a
+ * plain panel.
+ */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -10%;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(42vw 42vw at 12% 8%, var(--ambient-1), transparent 70%),
+    radial-gradient(38vw 38vw at 88% 26%, var(--ambient-2), transparent 70%),
+    radial-gradient(46vw 46vw at 62% 88%, var(--ambient-3), transparent 72%);
+}
+
 h1,
 h2,
 h3,
@@ -245,21 +411,32 @@ a {
 }
 
 select,
-input:not([type="checkbox"]):not([type="radio"]) {
+input:not([type="checkbox"]):not([type="radio"]),
+textarea {
   font-family: var(--font-sans, "Inter", system-ui, sans-serif);
-  height: var(--input-height);
   line-height: 1.2;
   font-size: var(--input-font-size);
   width: 100%;
-  border-radius: var(--r-sm);
-  border: 1px solid var(--line-strong);
-  background: var(--bg-1);
+  border-radius: var(--r-md);
+  border: 1px solid var(--glass-rim);
+  /* A field is a well cut into the glass: same material, lit from the top
+     inside instead of the top outside, so it reads as depth not as a tile. */
+  background-color: var(--glass-field);
   color: var(--fg-0);
   padding: 8px 14px;
   vertical-align: middle;
+  box-shadow:
+    inset 0 1px 2px rgba(15, 23, 42, 0.06),
+    0 1px 0 var(--glass-edge);
   transition:
     border-color 0.15s ease,
+    background-color 0.15s ease,
     box-shadow 0.15s ease;
+}
+
+select,
+input:not([type="checkbox"]):not([type="radio"]) {
+  height: var(--input-height);
 }
 
 input.mono,
@@ -287,10 +464,14 @@ select {
 }
 
 select:focus,
-input:focus {
+input:focus,
+textarea:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
+  background-color: var(--glass-hover);
+  box-shadow:
+    0 0 0 1px var(--accent),
+    0 0 0 4px var(--accent-soft);
 }
 
 /* Keyboard focus in the app's own accent — the browser default ring clashes
@@ -307,6 +488,8 @@ a:focus:not(:focus-visible) {
   outline: none;
 }
 
+/* The native popup cannot be glass — it is drawn by the OS — so it gets the
+   solid surface rather than a translucent one it would render as grey. */
 select option {
   background: var(--bg-1);
   color: var(--fg-0);
@@ -337,13 +520,21 @@ form[method="dialog"] > p {
   font-size: 1.125rem;
 }
 
+/* The native confirm dialog carries the material inline: it is a browser
+   element, so there is no JSX to hang the .glass class on. */
 dialog {
   min-height: 200px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-md);
-  background: var(--bg-1);
+  border-radius: var(--r-xl);
+  background-color: var(--glass-strong);
+  background-image: var(--glass-sheen);
+  backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-rim);
+  box-shadow:
+    inset 0 1px 0 var(--glass-edge),
+    inset 0 -1px 0 var(--glass-edge-low),
+    var(--glass-shadow-lg);
   color: var(--fg-0);
-  box-shadow: var(--shadow-lg);
   padding: 40px 36px;
   font-size: 1.125rem;
   max-width: min(100vw - 32px, 420px);
@@ -351,10 +542,12 @@ dialog {
 
 dialog::backdrop {
   background: var(--scrim);
+  backdrop-filter: blur(var(--scrim-blur)) saturate(1.2);
+  -webkit-backdrop-filter: blur(var(--scrim-blur)) saturate(1.2);
 }
 
 dialog button {
-  border-radius: var(--r-sm);
+  border-radius: var(--r-md);
   padding: 10px 24px;
   font-size: 1rem;
   font-family: inherit;

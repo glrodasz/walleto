@@ -19,22 +19,23 @@ const TINT: Record<Domain, string> = {
   SAVING: "var(--domain-saving-soft)",
 };
 
-/** A frosted surface over the backdrop. Everything on a page sits in one. */
+/** A pane of glass over the backdrop. Everything on a page sits in one. */
 export function Card({ children, tint, padding = "md", className }: Props) {
   return (
     <div
-      className={`card card--${padding}${className ? ` ${className}` : ""}`}
-      style={tint ? { background: TINT[tint] } : undefined}
+      className={`glass card card--${padding}${className ? ` ${className}` : ""}`}
+      style={tint ? ({ "--card-tint": TINT[tint] } as React.CSSProperties) : undefined}
     >
       {children}
       <style jsx>{`
+        /* Fill, blur, rim and sheen come from .glass in globals.css. The tint
+           is an extra wash *between* the sheen and the fill, so a domain card
+           is still glass with a colour behind it — never a flat colour tile. */
         .card {
-          background: var(--glass);
-          backdrop-filter: blur(var(--glass-blur)) saturate(1.3);
-          -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.3);
-          border: 1px solid var(--line);
           border-radius: var(--r-xl);
-          box-shadow: var(--shadow-sm);
+          background-image:
+            var(--glass-sheen),
+            linear-gradient(var(--card-tint, transparent), var(--card-tint, transparent));
           display: flex;
           flex-direction: column;
           gap: 16px;

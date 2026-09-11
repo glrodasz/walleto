@@ -114,7 +114,33 @@ constants.ts                            constantes y mapas de presentación
 
 - **styled-jsx** dentro del componente (`<style jsx>{\`…\`}</style>`). No usamos CSS Modules.
 - Siempre **design tokens**, nunca hex a mano: `var(--bg-1)`, `var(--accent)`, `var(--r-md)`. Los tokens están en `styles/globals.css`.
-- **Dos paletas**: clara por defecto ("glass" sobre un fondo de paisaje) y oscura (la "Fintech-noir" original), elegidas por `data-theme` en `<html>`. Un script inline en `_document` la fija antes del primer paint y `hooks/useTheme` la sigue (preferencia en el user doc, `"system"` se resuelve en JS con `matchMedia`; los tokens viven solo en esos dos bloques). Texto sobre el acento: `--on-accent`. Superficies: `--glass` / `--glass-strong` (Card, Sidebar, header), `--scrim` (overlays), `--shadow-sm/lg`.
+- **Dos paletas**: clara por defecto ("glass" sobre un fondo de paisaje) y oscura (la "Fintech-noir" original), elegidas por `data-theme` en `<html>`. Un script inline en `_document` la fija antes del primer paint y `hooks/useTheme` la sigue (preferencia en el user doc, `"system"` se resuelve en JS con `matchMedia`; los tokens viven solo en esos dos bloques). Texto sobre el acento: `--on-accent`.
+
+### Liquid glass: el material (importante)
+
+Toda superficie que flota —Card, Sidebar, la barra inferior, menús, sheets, pills, chips, campos— es **la misma pieza de vidrio**, y esa pieza se implementa **una sola vez**: la clase global `.glass` en `styles/globals.css`.
+
+```jsx
+<div className="glass card">           {/* vidrio + lo propio del componente */}
+<nav className="glass glass--strong glass--raised waletto-bnav">
+<button className="glass glass--tap btn btn--secondary">
+```
+
+- `.glass` — relleno translúcido (`--glass`), `backdrop-filter: blur() saturate()`, borde `--glass-rim`, brillo especular en el canto superior (`--glass-edge`, `--glass-edge-low`) y el barrido de luz `--glass-sheen`, más `--glass-shadow`.
+- `.glass--strong` — cromo que tiene que seguir legible con contenido pasando por debajo (sidebar, barra inferior, sheets, la fila sticky de acciones de un formulario).
+- `.glass--raised` — sombra grande, para lo que flota sobre la página (menús, el sheet del modal, el FAB).
+- `.glass--tap` — reacciona al puntero: aclara al hover, se hunde al `:active`. Va en todo lo que se pueda tocar.
+
+**Es una clase global a propósito.** La alternativa era copiar seis declaraciones en veinte componentes y verlas divergir. styled-jsx sigue siendo el sitio de la geometría (radio, padding, grid) y de cualquier cosa específica del componente.
+
+El resto del vocabulario, por si algo no puede llevar la clase (un `<dialog>` nativo, un `::before`): `--glass-field` (campos: un pozo excavado en el vidrio, no una baldosa), `--glass-inset` (un panel dentro de otro panel: el bloque de stats de una card, la pista de una barra de progreso — sin blur propio, lo que tiene detrás ya está borroso), `--glass-raised` (la pastilla levantada de un TabStrip / SegmentedControl), `--glass-hover`, `--scrim` + `--scrim-blur` (overlays), `--shadow-sm/lg`.
+
+**Nunca pongas `background: var(--bg-1|2|3)` en una superficie visible.** Ese es el modo en que el material se rompe: una baldosa opaca sobre el vidrio. Los `--bg-*` quedan para el fondo de la página y para lo que el navegador dibuja por su cuenta (`select option`).
+
+El fondo importa tanto como el vidrio: el paisaje de `--bg-image` nunca llega a taparse del todo y `body::before` deja una luz ambiental fija al viewport (`--ambient-1..3`), para que una card por debajo del fold también tenga color que refractar. Sin eso el material se lee como un panel gris.
+
+Dos degradaciones, ambas en `globals.css` y ambas solo quitan translucidez (la geometría no cambia): `@supports not (backdrop-filter)` y `prefers-reduced-transparency: reduce` vuelven `--glass*` opacos, y la segunda además apaga `sheen`, cantos, blur y `--scrim-blur`.
+
 - Los acentos por dominio: `--domain-income`, `--domain-expense`, `--domain-investment`, `--domain-saving`, sus tintes suaves `--domain-*-soft` y las rampas `--tint-{domain}-1..6` para barras apiladas por categoría. **Nunca** metas `color-mix()` en un string de JS (recharts no lo entiende en atributos SVG): define el token en CSS y pasa `var(--x)`.
 - Iconos: `components/atoms/Icons.tsx` (trazo Feather). Los de categoría se eligen por key (`constants.ICON_KEYS`) en `CategoryIcon`; sin pick, `helpers/categoryIcons` decide por el nombre.
 

@@ -93,9 +93,10 @@ export function OnboardingLayout({
       </div>
 
       <style jsx>{`
+        /* No background of its own: the wizard sits on the same backdrop as
+           the app, so the glass it is made of has something to refract. */
         .layout {
           min-height: 100vh;
-          background: var(--bg-0);
           display: flex;
           justify-content: center;
           padding: 48px 24px 64px;
@@ -133,7 +134,7 @@ export function OnboardingLayout({
         }
 
         .back:hover {
-          background: var(--bg-2);
+          background: var(--glass-hover);
         }
 
         .title {
@@ -183,7 +184,7 @@ export function OnboardingLayout({
         }
 
         .tab-btn:hover:not(:disabled) {
-          background: var(--bg-2);
+          background: var(--glass-hover);
           color: var(--fg-0);
         }
 
@@ -269,8 +270,12 @@ export function OnboardingLayout({
             z-index: var(--z-nav, 100);
             margin-top: 0;
             padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
-            background: var(--bg-1);
-            border-top: 1px solid var(--line);
+            background-color: var(--glass-strong);
+            background-image: var(--glass-sheen);
+            backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
+            -webkit-backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
+            border-top: 1px solid var(--glass-rim);
+            box-shadow: inset 0 1px 0 var(--glass-edge);
           }
         }
       `}</style>

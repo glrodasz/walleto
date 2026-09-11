@@ -234,7 +234,7 @@ function OccurrenceRow({
           text-transform: uppercase;
           padding: 2px 7px;
           border-radius: 999px;
-          background: var(--bg-3);
+          background: var(--glass-inset);
           color: var(--fg-2);
         }
 

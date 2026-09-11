@@ -26,7 +26,7 @@ export function MonthPicker({ value, windows, onChange, onStep }: Props) {
   };
 
   return (
-    <div className="picker">
+    <div className="glass picker">
       <button
         type="button"
         className="arrow"
@@ -63,10 +63,7 @@ export function MonthPicker({ value, windows, onChange, onStep }: Props) {
           align-items: center;
           gap: 2px;
           padding: 2px;
-          border-radius: var(--r-md);
-          border: 1px solid var(--line);
-          background: var(--glass-strong);
-          box-shadow: var(--shadow-sm);
+          border-radius: var(--r-pill);
         }
 
         .arrow {
@@ -76,14 +73,17 @@ export function MonthPicker({ value, windows, onChange, onStep }: Props) {
           width: 30px;
           height: 34px;
           border: none;
-          border-radius: var(--r-sm);
+          border-radius: var(--r-pill);
           background: transparent;
           color: var(--fg-2);
           cursor: pointer;
+          transition:
+            background 150ms ease,
+            color 150ms ease;
         }
 
         .arrow:hover:not(:disabled) {
-          background: var(--bg-2);
+          background: var(--glass-hover);
           color: var(--fg-0);
         }
 
@@ -103,10 +103,15 @@ export function MonthPicker({ value, windows, onChange, onStep }: Props) {
           min-width: 150px;
         }
 
+        /* Inside the picker the select is flat: the picker itself is the glass,
+           and a second pane inside it would read as a box in a box. */
         .select :global(.select) {
           height: 34px;
           border-color: transparent;
-          background: transparent;
+          background-color: transparent;
+          backdrop-filter: none;
+          -webkit-backdrop-filter: none;
+          box-shadow: none;
           font-weight: 600;
           font-size: 0.875rem;
         }

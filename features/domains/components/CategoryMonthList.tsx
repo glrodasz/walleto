@@ -247,7 +247,7 @@ export function CategoryMonthList({
           height: 4px;
           max-width: 180px;
           border-radius: 999px;
-          background: var(--bg-3);
+          background: var(--glass-inset);
           overflow: hidden;
         }
 

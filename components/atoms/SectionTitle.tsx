@@ -82,9 +82,9 @@ export function SectionTitle({
           align-items: center;
           min-height: 32px;
           padding: 0 12px;
-          border: 1px solid var(--line);
-          border-radius: var(--r-md);
-          background: var(--bg-1);
+          border: 1px solid var(--glass-rim);
+          border-radius: var(--r-pill);
+          background: var(--glass-inset);
           color: var(--fg-1);
           font-family: inherit;
           font-size: 0.78rem;

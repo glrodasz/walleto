@@ -161,7 +161,7 @@ export function MethodsStep({ state }: Props) {
 
         .remove:hover {
           color: var(--accent-hot);
-          background: var(--bg-2);
+          background: var(--glass-hover);
         }
 
         .remove:focus-visible {

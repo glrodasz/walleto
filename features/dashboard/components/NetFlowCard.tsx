@@ -113,8 +113,8 @@ export function NetFlowCard({ flow, currency, approximate = false }: Props) {
           gap: 14px;
           padding: 16px 18px;
           border-radius: var(--r-lg);
-          background: var(--bg-1);
-          border: 1px solid var(--line);
+          background: var(--glass-inset);
+          border: 1px solid var(--glass-rim);
         }
 
         .grid {
