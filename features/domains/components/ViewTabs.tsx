@@ -1,24 +1,33 @@
 import { TabStrip } from "../../../components/atoms/TabStrip";
 
-export type DomainView = "categories" | "transactions" | "recurring" | "value";
+export type DomainView = "transactions" | "recurring" | "categories" | "tags" | "methods" | "value";
 
 interface Props {
   value: DomainView;
   onChange: (view: DomainView) => void;
   accent: string;
-  /** Investments add a fourth view: what each category is worth. */
+  /** Investments and savings add a view: what each account is worth. */
   showValue?: boolean;
+  /** Domains without payment methods (income, accounts) skip that view. */
+  showMethods?: boolean;
 }
 
 const VIEWS: { key: DomainView; label: string }[] = [
-  { key: "categories", label: "Categories" },
   { key: "transactions", label: "Transactions" },
   { key: "recurring", label: "Recurring" },
+  { key: "categories", label: "Categories" },
+  { key: "tags", label: "Tags" },
+  { key: "methods", label: "Payment methods" },
+  { key: "value", label: "Value" },
 ];
 
-/** Three views of the same month: aggregated, raw, and the plan (+ value for investments). */
-export function ViewTabs({ value, onChange, accent, showValue }: Props) {
-  const views = showValue ? [...VIEWS, { key: "value" as DomainView, label: "Value" }] : VIEWS;
+export const isDomainView = (s: string): s is DomainView => VIEWS.some((v) => v.key === s);
+
+/** The same month, sliced six ways: raw, the plan, and grouped by category, tag, method or account. */
+export function ViewTabs({ value, onChange, accent, showValue, showMethods = true }: Props) {
+  const views = VIEWS.filter(
+    (v) => (v.key !== "value" || showValue) && (v.key !== "methods" || showMethods)
+  );
   return (
     <TabStrip
       label="View"

@@ -1,10 +1,18 @@
 import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { Chip } from "../../../components/atoms/Chip";
-import { PeriodTransactionsList } from "./PeriodTransactionsList";
-import { categoryIdSet } from "./CategoryMonthList";
+import { TransactionsTable } from "../../../components/molecules/TransactionsTable";
+import { categoryIdSet } from "../../../helpers/categoryTree";
+import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import type { MoneyContext } from "../../../helpers/aggregations";
-import type { Category, Currency, RecurrentTransaction, Tag, Transaction } from "../../../types";
+import type {
+  Category,
+  Currency,
+  PaymentMethod,
+  RecurrentTransaction,
+  Tag,
+  Transaction,
+} from "../../../types";
 
 interface Props {
   category: Category;
@@ -14,6 +22,7 @@ interface Props {
   currency: Currency;
   ctx: MoneyContext;
   tags?: Tag[];
+  methods?: PaymentMethod[];
   items?: RecurrentTransaction[];
   monthLabel: string;
   loading?: boolean;
@@ -37,6 +46,7 @@ export function CategoryDrilldown({
   currency,
   ctx,
   tags,
+  methods,
   items,
   monthLabel,
   loading,
@@ -77,18 +87,23 @@ export function CategoryDrilldown({
         </div>
       )}
 
-      <PeriodTransactionsList
+      <TransactionsTable
         title={`${category.name} · ${monthLabel}`}
-        transactions={rows}
-        displayCurrency={currency}
-        ctx={ctx}
+        rows={rows}
+        domain={category.domain}
+        categories={categories}
+        methods={methods}
         tags={tags}
         items={items}
+        displayCurrency={currency}
+        ctx={ctx}
         loading={loading}
         onEdit={onEdit}
         isHidden={isHidden}
         onDelete={onDelete}
         deletingId={deletingId}
+        showMethod={DOMAIN_CONFIG[category.domain].showPaymentMethod}
+        showCategoryFilter={false}
       />
 
       {extras}

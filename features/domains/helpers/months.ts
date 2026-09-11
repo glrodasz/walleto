@@ -4,7 +4,15 @@ import { bucketStart, toDate } from "../../../helpers/chartData";
 import { materializeOccurrences, occurrenceId } from "../../../helpers/materializeOccurrences";
 import { formatRelativeDay } from "../../../helpers/formatRelativeDay";
 import { formatDate, monthKey } from "../../../helpers/dates";
-import type { Currency, RecurrentTransaction, Transaction } from "../../../types";
+import { paymentMethodLabel } from "../../../helpers/paymentMethodLabel";
+import type { GroupedTotal } from "../../../components/molecules/GroupedTotalsList";
+import type {
+  Currency,
+  PaymentMethod,
+  RecurrentTransaction,
+  Tag,
+  Transaction,
+} from "../../../types";
 
 /** One calendar month on the page: [start, end). */
 export interface MonthWindow {
@@ -255,4 +263,100 @@ export function groupByDay(
     group.rows.push(t);
   }
   return Array.from(groups.values());
+}
+
+export interface MonthDelta {
+  current: number;
+  previous: number;
+  /** Percentage change from the previous month, or null when it had nothing. */
+  deltaPct: number | null;
+  previousKey: string | null;
+}
+
+/** The selected month against the one before it, from the same totals the bars use. */
+export function monthDelta(
+  totals: Record<string, number>,
+  windows: MonthWindow[],
+  key: string
+): MonthDelta {
+  const index = windows.findIndex((w) => w.key === key);
+  const previous = index > 0 ? windows[index - 1] : null;
+  const current = totals[key] ?? 0;
+  const before = previous ? (totals[previous.key] ?? 0) : 0;
+  return {
+    current,
+    previous: before,
+    deltaPct: previous && before > 0 ? ((current - before) / before) * 100 : null,
+    previousKey: previous?.key ?? null,
+  };
+}
+
+export const NO_TAG = "__none";
+export const NO_METHOD_KEY = "__none";
+
+function toGroupedTotals(
+  buckets: Map<string, { label: string; total: number; count: number }>,
+  whole: number
+): GroupedTotal[] {
+  return Array.from(buckets.entries())
+    .map(([key, b]) => ({
+      key,
+      label: b.label,
+      total: b.total,
+      count: b.count,
+      share: whole > 0 ? b.total / whole : 0,
+    }))
+    .sort((a, b) => b.total - a.total);
+}
+
+/**
+ * The month by tag. A row with two tags counts under both, so shares can add
+ * up to more than 100% — the view says so. Untagged rows form "No tag".
+ */
+export function groupByTag(
+  transactions: Transaction[],
+  tags: Pick<Tag, "id" | "name">[],
+  ctx: MoneyContext
+): GroupedTotal[] {
+  const names = new Map(tags.map((t) => [t.id ?? "", t.name]));
+  const buckets = new Map<string, { label: string; total: number; count: number }>();
+  let whole = 0;
+  for (const t of transactions) {
+    const value = convertedAmount(t, ctx);
+    whole += value;
+    const keys = (t.tags ?? []).filter((id) => names.has(id));
+    for (const key of keys.length > 0 ? keys : [NO_TAG]) {
+      const b = buckets.get(key) ?? { label: names.get(key) ?? "No tag", total: 0, count: 0 };
+      b.total += value;
+      b.count += 1;
+      buckets.set(key, b);
+    }
+  }
+  return toGroupedTotals(buckets, whole);
+}
+
+/** The month by payment method; rows without one form "No method". */
+export function groupByMethod(
+  transactions: Transaction[],
+  methods: PaymentMethod[],
+  ctx: MoneyContext
+): GroupedTotal[] {
+  const byId = new Map(methods.map((m) => [m.id ?? "", m]));
+  const buckets = new Map<string, { label: string; total: number; count: number }>();
+  let whole = 0;
+  for (const t of transactions) {
+    const value = convertedAmount(t, ctx);
+    whole += value;
+    const key =
+      t.paymentMethodId && byId.has(t.paymentMethodId) ? t.paymentMethodId : NO_METHOD_KEY;
+    const b = buckets.get(key) ?? {
+      label: key === NO_METHOD_KEY ? "No method" : paymentMethodLabel(byId.get(key)),
+      total: 0,
+      count: 0,
+    };
+    b.total += value;
+    b.count += 1;
+    buckets.set(key, b);
+  }
+  return toGroupedTotals(buckets, whole);
 }

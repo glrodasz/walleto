@@ -3,6 +3,8 @@ import type { Domain } from "../../../types";
 interface DomainConfig {
   /** Page title and nav label ("Expenses"). */
   title: string;
+  /** One line under the title saying what the page is for. */
+  subtitle: string;
   /** Lowercase noun for inline copy ("expenses by Housing: $X"). */
   noun: string;
   /** Verb for the month figure ("Spent in September"). */
@@ -22,6 +24,7 @@ interface DomainConfig {
 export const DOMAIN_CONFIG: Record<Domain, DomainConfig> = {
   INCOME: {
     title: "Incomes",
+    subtitle: "See what comes in, month by month, and where it comes from.",
     noun: "incomes",
     spentLabel: "Received",
     runRateLabel: "Planned monthly income",
@@ -32,6 +35,7 @@ export const DOMAIN_CONFIG: Record<Domain, DomainConfig> = {
   },
   EXPENSE: {
     title: "Expenses",
+    subtitle: "Track what you spend, see your patterns, and stay in control.",
     noun: "expenses",
     spentLabel: "Spent",
     runRateLabel: "Planned monthly expenses",
@@ -42,6 +46,7 @@ export const DOMAIN_CONFIG: Record<Domain, DomainConfig> = {
   },
   INVESTMENT: {
     title: "Investments",
+    subtitle: "Follow what you put aside to grow, and what it is worth.",
     noun: "investments",
     spentLabel: "Invested",
     runRateLabel: "Planned monthly investments",
@@ -52,6 +57,7 @@ export const DOMAIN_CONFIG: Record<Domain, DomainConfig> = {
   },
   SAVING: {
     title: "Savings",
+    subtitle: "Watch your pockets fill up, one deposit at a time.",
     noun: "savings",
     spentLabel: "Saved",
     runRateLabel: "Planned monthly savings",

@@ -1,6 +1,9 @@
 import {
   expectedForMonth,
   groupByDay,
+  groupByMethod,
+  groupByTag,
+  monthDelta,
   monthKey,
   monthOccurrences,
   monthTotals,
@@ -213,5 +216,55 @@ describe("monthTotalsByCurrency", () => {
     expect(totals["2026-08"]).toEqual({ SEK: 5_765, USD: 100 });
     expect(totals["2026-09"]).toEqual({ EUR: 100 });
     expect(currencies).toEqual(["SEK", "USD", "EUR"]);
+  });
+});
+
+describe("monthDelta", () => {
+  it("compares the selected month with the one before it", () => {
+    const windows = monthWindows(3, now); // Jul, Aug, Sep
+    const totals = { "2026-07": 100, "2026-08": 80, "2026-09": 100 };
+    expect(monthDelta(totals, windows, "2026-09")).toEqual({
+      current: 100,
+      previous: 80,
+      deltaPct: 25,
+      previousKey: "2026-08",
+    });
+    expect(monthDelta(totals, windows, "2026-07").deltaPct).toBeNull();
+    expect(monthDelta({ "2026-09": 5 }, windows, "2026-09").deltaPct).toBeNull();
+  });
+});
+
+describe("groupByTag / groupByMethod", () => {
+  const rows = [
+    tx("a", 100, new Date(2026, 8, 1), { tags: ["t1"], paymentMethodId: "m1" }),
+    tx("b", 50, new Date(2026, 8, 2), { tags: ["t1", "t2"] }),
+    tx("c", 25, new Date(2026, 8, 3), { tags: ["ghost"], paymentMethodId: "m2" }),
+  ];
+  const tags = [
+    { id: "t1", name: "Trip" },
+    { id: "t2", name: "Work" },
+  ];
+  const methods = [
+    { id: "m1", name: "SEB", type: "BANK_TRANSFER" },
+    { id: "m2", name: "Visa", type: "CREDIT_CARD", last4: "4242" },
+  ] as never;
+
+  it("counts a row under each of its tags and buckets the untagged", () => {
+    const groups = groupByTag(rows, tags, ctx);
+    expect(groups.map((g) => [g.key, g.label, g.total, g.count])).toEqual([
+      ["t1", "Trip", 150, 2],
+      ["t2", "Work", 50, 1],
+      ["__none", "No tag", 25, 1],
+    ]);
+    expect(groups[0].share).toBeCloseTo(150 / 175);
+  });
+
+  it("groups by payment method with the table label", () => {
+    const groups = groupByMethod(rows, methods, ctx);
+    expect(groups.map((g) => [g.key, g.label, g.total])).toEqual([
+      ["m1", "SEB", 100],
+      ["__none", "No method", 50],
+      ["m2", "Visa - 4242", 25],
+    ]);
   });
 });

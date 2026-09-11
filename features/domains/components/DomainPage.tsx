@@ -2,15 +2,22 @@ import { useEffect, useMemo, useState } from "react";
 import { PageLayout } from "../../../components/organisms/PageLayout";
 import { ErrorState } from "../../../components/atoms/ErrorState";
 import { Card } from "../../../components/atoms/Card";
+import { SectionTitle } from "../../../components/atoms/SectionTitle";
+import { CategoryIcon } from "../../../components/atoms/CategoryIcon";
+import { CreditCard, Tag as TagIcon } from "../../../components/atoms/Icons";
 import { MonthlyBarsChart } from "../../../components/molecules/MonthlyBarsChart";
 import type { BarSeries, MonthBar } from "../../../components/molecules/MonthlyBarsChart";
+import { CategoryBreakdown } from "../../../components/molecules/CategoryBreakdown";
+import { GroupedTotalsList } from "../../../components/molecules/GroupedTotalsList";
+import { TransactionsTable } from "../../../components/molecules/TransactionsTable";
 import { CURRENCY_COLORS } from "../../../constants";
-import { MonthHeader } from "./MonthHeader";
-import { ViewTabs } from "./ViewTabs";
+import { MonthSummary } from "./MonthSummary";
+import { ChartControls } from "./ChartControls";
+import type { ChartPeriod, StackMode } from "./ChartControls";
+import { ViewTabs, isDomainView } from "./ViewTabs";
 import type { DomainView } from "./ViewTabs";
-import { CategoryMonthList } from "./CategoryMonthList";
+import { CategoryMonthList, categoryMonthRows } from "./CategoryMonthList";
 import { CategoryDrilldown } from "./CategoryDrilldown";
-import { PeriodTransactionsList } from "./PeriodTransactionsList";
 import { RecurringChecklist } from "./RecurringChecklist";
 import { RecurrentTransactionModal } from "./RecurrentTransactionModal";
 import { SubscriptionInsights } from "../../insights/components/SubscriptionInsights";
@@ -21,11 +28,15 @@ import { isAccountDomain } from "../../../helpers/accounts";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import {
   expectedForMonth,
+  groupByMethod,
+  groupByTag,
+  monthDelta,
   monthTotals,
   monthTotalsByCurrency,
   monthWindows,
   trailingAverage,
 } from "../helpers/months";
+import { monthTotalsByCategory } from "../../../helpers/stacks";
 import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
 import { useCategories } from "../../../hooks/useCategories";
 import { useRecurrentTransactions, markItemPaid } from "../../../hooks/useRecurrentTransactions";
@@ -33,6 +44,8 @@ import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { useAccounts } from "../../../hooks/useAccounts";
 import { useTags } from "../../../hooks/useTags";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
+import { useSelectedMonth } from "../../../hooks/useSelectedMonth";
+import { useLocalPreference } from "../../../hooks/useLocalPreference";
 import { deleteTransaction } from "../../../hooks/useTransactions";
 import { toDate } from "../../../helpers/chartData";
 import {
@@ -42,28 +55,17 @@ import {
   withoutHidden,
 } from "../../../helpers/hidden";
 import { spreadItemIds, spreadTransactions } from "../helpers/spread";
+import type { TransactionFilters } from "../helpers/transactionFilters";
 import type { Category, Currency, Domain, RecurrentTransaction, Transaction } from "../../../types";
 
 interface Props {
   domain: Domain;
 }
 
-const MONTHS = 7;
-
-/** "Show hidden" is a per-domain preference, kept in the browser. */
-const showHiddenKey = (domain: Domain) => `waletto:showHidden:${domain}`;
-const readShowHidden = (domain: Domain) => {
-  try {
-    return typeof window !== "undefined" && localStorage.getItem(showHiddenKey(domain)) === "1";
-  } catch {
-    return false;
-  }
-};
-
 /**
- * Month-first page shared by the four domains. One month is selected at a
- * time; the header, the bars and the panel below all speak about it. The
- * month in progress carries what the plan still owes before month end.
+ * Month-first page shared by the four domains. The month comes from the
+ * header picker; the summary, the bars and the panel below all speak about
+ * it. The month in progress carries what the plan still owes before month end.
  */
 export function DomainPage({ domain }: Props) {
   const config = DOMAIN_CONFIG[domain];
@@ -73,20 +75,45 @@ export function DomainPage({ domain }: Props) {
   const accountDomain = isAccountDomain(domain) ? domain : null;
   const { accounts } = useAccounts(accountDomain);
 
-  // One clock per mount: the windows, "still planned" and the checklist all
-  // agree on what "now" is, and the transactions query keeps one start date.
-  const now = useMemo(() => new Date(), []);
-  const windows = useMemo(() => monthWindows(MONTHS, now), [now]);
-  const currentKey = windows[windows.length - 1].key;
+  // One clock for the whole app: the windows, "still planned" and the
+  // checklist all agree on what "now" is.
+  const { now, selectedKey, select } = useSelectedMonth();
+  const [period, setPeriod] = useLocalPreference<ChartPeriod>(`waletto:chart:${domain}:period`, 7);
+  const [mode, setMode] = useLocalPreference<StackMode>(`waletto:chart:${domain}:mode`, "category");
+  const [showHidden, setShowHidden] = useLocalPreference(`waletto:showHidden:${domain}`, false);
+  const windows = useMemo(() => monthWindows(period, now), [period, now]);
 
-  const [selectedKey, setSelectedKey] = useState(currentKey);
-  const [view, setView] = useState<DomainView>("categories");
+  // The bars always end with the current month; a month older than the
+  // window clamps to its first bar, and the header follows.
+  const effectiveKey = selectedKey < windows[0].key ? windows[0].key : selectedKey;
+  useEffect(() => {
+    if (effectiveKey !== selectedKey) select(effectiveKey);
+  }, [effectiveKey, selectedKey, select]);
+  const window = windows.find((w) => w.key === effectiveKey) ?? windows[windows.length - 1];
+  const windowIndex = windows.indexOf(window);
+  const previousWindow = windowIndex > 0 ? windows[windowIndex - 1] : null;
+
+  const [view, setView] = useState<DomainView>("transactions");
   const [drillCategoryId, setDrillCategoryId] = useState<string | null>(null);
+  const [preset, setPreset] = useState<Partial<TransactionFilters> | undefined>(undefined);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<RecurrentTransaction | undefined>(undefined);
   const [busyItemId, setBusyItemId] = useState<string | null>(null);
   const [deletingTxId, setDeletingTxId] = useState<string | null>(null);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+
+  // The active view lives in the URL hash so a link can point at it.
+  useEffect(() => {
+    const fromHash = globalThis.location?.hash.slice(1);
+    if (fromHash && isDomainView(fromHash)) setView(fromHash);
+  }, []);
+  const changeView = (next: DomainView) => {
+    setView(next);
+    setDrillCategoryId(null);
+    if (next !== "transactions") setPreset(undefined);
+    const base = globalThis.location.pathname + globalThis.location.search;
+    globalThis.history.replaceState(null, "", next === "transactions" ? base : `${base}#${next}`);
+  };
 
   const {
     transactions,
@@ -104,19 +131,9 @@ export function DomainPage({ domain }: Props) {
   const { tags } = useTags();
   const error = txError ?? itemsError ?? catError;
 
-  const window = windows.find((w) => w.key === selectedKey) ?? windows[windows.length - 1];
-
   // Hidden recurring items and hidden categories stay out of the bars and
   // the month figure unless the owner flips "Show hidden"; the lists below
   // always show everything, tagged.
-  const [showHidden, setShowHidden] = useState(() => readShowHidden(domain));
-  useEffect(() => {
-    try {
-      localStorage.setItem(showHiddenKey(domain), showHidden ? "1" : "0");
-    } catch {
-      // Private mode or storage off: the toggle just doesn't stick.
-    }
-  }, [domain, showHidden]);
   const hiddenItems = useMemo(() => hiddenItemIds(items), [items]);
   const hiddenCategories = useMemo(() => hiddenCategoryIds(categories), [categories]);
   const anythingHidden = hiddenItems.size > 0 || hiddenCategories.size > 0;
@@ -151,20 +168,18 @@ export function DomainPage({ domain }: Props) {
     () => monthTotals(chartTransactions, ctx, windows),
     [chartTransactions, ctx, windows]
   );
+  const inWindow = (t: Transaction) => {
+    const d = toDate(t.occurredAt);
+    return d >= window.start && d < window.end;
+  };
   const monthTransactions = useMemo(
-    () =>
-      transactions.filter((t) => {
-        const d = toDate(t.occurredAt);
-        return d >= window.start && d < window.end;
-      }),
+    () => transactions.filter(inWindow),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [transactions, window]
   );
   const monthPlanRows = useMemo(
-    () =>
-      planRows.filter((t) => {
-        const d = toDate(t.occurredAt);
-        return d >= window.start && d < window.end;
-      }),
+    () => planRows.filter(inWindow),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [planRows, window]
   );
   const realized = totals[window.key] ?? 0;
@@ -173,45 +188,69 @@ export function DomainPage({ domain }: Props) {
     [window, realized, chartItems, ctx, now]
   );
   const average = useMemo(() => trailingAverage(totals, windows), [totals, windows]);
+  const delta = useMemo(
+    () => monthDelta(totals, windows, window.key),
+    [totals, windows, window.key]
+  );
   const hasForeign = useMemo(
     () => monthTransactions.some((t) => t.currency !== currency),
     [monthTransactions, currency]
   );
 
-  // One bar per month. With more than one currency in use the bar is stacked
-  // by the currency each transaction was in, so the mix is visible at a glance.
-  const byCurrency = useMemo(
-    () => monthTotalsByCurrency(chartTransactions, ctx, windows),
-    [chartTransactions, ctx, windows]
-  );
-  const multiCurrency = byCurrency.currencies.length > 1;
-  const series: BarSeries[] = useMemo(
-    () =>
-      multiCurrency
-        ? byCurrency.currencies.map((c) => ({ key: c, label: c, color: CURRENCY_COLORS[c] }))
-        : [{ key: "amount", label: config.spentLabel, color: config.accent }],
-    [multiCurrency, byCurrency.currencies, config.spentLabel, config.accent]
-  );
+  // One bar per month, stacked by the top categories or by currency.
+  const stacks = useMemo(() => {
+    if (mode === "currency") {
+      const byCurrency = monthTotalsByCurrency(chartTransactions, ctx, windows);
+      return {
+        totals: byCurrency.totals as Record<string, Record<string, number>>,
+        series: byCurrency.currencies.map((c) => ({ key: c, label: c, color: CURRENCY_COLORS[c] })),
+      };
+    }
+    return monthTotalsByCategory(chartTransactions, categories, ctx, windows, { domain, top: 5 });
+  }, [mode, chartTransactions, categories, ctx, windows, domain]);
+  const series: BarSeries[] =
+    stacks.series.length > 0
+      ? stacks.series
+      : [{ key: "amount", label: config.spentLabel, color: config.accent }];
   const bars: MonthBar[] = useMemo(
     () =>
       windows.map((w) => ({
         key: w.key,
         label: w.label,
         isCurrent: w.isCurrent,
-        ...(multiCurrency
+        ...(stacks.series.length > 0
           ? Object.fromEntries(
-              byCurrency.currencies.map((c) => [c, byCurrency.totals[w.key]?.[c] ?? 0])
+              stacks.series.map((s) => [s.key, stacks.totals[w.key]?.[s.key] ?? 0])
             )
           : { amount: totals[w.key] ?? 0 }),
         ...(w.isCurrent && expected > realized ? { planned: expected - realized } : {}),
       })),
-    [windows, totals, expected, realized, multiCurrency, byCurrency]
+    [windows, stacks, totals, expected, realized]
   );
 
-  const selectMonth = (key: string) => {
-    setSelectedKey(key);
-    setDrillCategoryId(null);
-  };
+  // The selected month by category, for the side card and the Categories view.
+  const categoryRows = useMemo(
+    () => categoryMonthRows(categories, monthPlanRows, planItems, ctx, window, now),
+    [categories, monthPlanRows, planItems, ctx, window, now]
+  );
+  const topCategories = useMemo(
+    () =>
+      categoryRows.slice(0, 6).map((r) => ({
+        categoryId: r.category.id ?? r.category.name,
+        name: r.category.name,
+        amount: r.total,
+        percent: r.share,
+      })),
+    [categoryRows]
+  );
+  const byTag = useMemo(
+    () => groupByTag(monthTransactions, tags, ctx),
+    [monthTransactions, tags, ctx]
+  );
+  const byMethod = useMemo(
+    () => groupByMethod(monthTransactions, methods, ctx),
+    [monthTransactions, methods, ctx]
+  );
 
   const openEdit = (item: RecurrentTransaction) => {
     setEditingItem(item);
@@ -249,6 +288,12 @@ export function DomainPage({ domain }: Props) {
       setDeletingTxId(null);
     }
   };
+  /** A group row (tag, method) narrows the ledger to it. */
+  const narrowTo = (filters: Partial<TransactionFilters>) => {
+    setPreset(filters);
+    setView("transactions");
+    setDrillCategoryId(null);
+  };
 
   const drillCategory = categories.find((c) => c.id === drillCategoryId) ?? null;
   const drillIsSubscriptions =
@@ -264,6 +309,7 @@ export function DomainPage({ domain }: Props) {
           currency={currency}
           ctx={ctx}
           tags={tags}
+          methods={methods}
           items={items}
           monthLabel={window.label}
           loading={txLoading}
@@ -312,19 +358,25 @@ export function DomainPage({ domain }: Props) {
       )
     ) : view === "transactions" ? (
       <>
-        <PeriodTransactionsList
-          title={`${config.title} · ${window.label}`}
-          transactions={monthTransactions}
-          displayCurrency={currency}
-          ctx={ctx}
+        <TransactionsTable
+          title="Transactions"
+          subtitle={`All ${config.noun.replace(/s$/, "")} transactions in ${window.longLabel}.`}
+          rows={monthTransactions}
+          domain={domain}
+          categories={categories}
+          methods={methods}
           tags={tags}
           items={items}
+          displayCurrency={currency}
+          ctx={ctx}
           loading={txLoading}
           onEdit={setEditingTx}
           isHidden={isHidden}
           onDelete={deleteTx}
           deletingId={deletingTxId}
-          now={now}
+          showMethod={config.showPaymentMethod}
+          initialFilters={preset}
+          resetKey={window.key}
         />
         {accountDomain && (
           <ValuationRows
@@ -335,6 +387,42 @@ export function DomainPage({ domain }: Props) {
           />
         )}
       </>
+    ) : view === "tags" ? (
+      <Card>
+        <SectionTitle
+          title="Tags"
+          subtitle="A payment with several tags counts under each of them."
+        />
+        <GroupedTotalsList
+          groups={byTag}
+          currency={currency}
+          color={config.accent}
+          loading={txLoading}
+          emptyLabel="Nothing recorded in this period"
+          icon={() => <TagIcon size={16} />}
+          onSelect={(key) =>
+            narrowTo({
+              search: key === "__none" ? "" : (tags.find((t) => t.id === key)?.name ?? ""),
+            })
+          }
+        />
+      </Card>
+    ) : view === "methods" ? (
+      <Card>
+        <SectionTitle
+          title="Payment methods"
+          subtitle={`What was charged where in ${window.longLabel}.`}
+        />
+        <GroupedTotalsList
+          groups={byMethod}
+          currency={currency}
+          color={config.accent}
+          loading={txLoading}
+          emptyLabel="Nothing recorded in this period"
+          icon={() => <CreditCard size={16} />}
+          onSelect={(key) => narrowTo({ paymentMethodId: key })}
+        />
+      </Card>
     ) : view === "value" && accountDomain ? (
       <AccountValueList
         domain={accountDomain}
@@ -363,65 +451,76 @@ export function DomainPage({ domain }: Props) {
     );
 
   return (
-    <PageLayout title={config.title} domain={domain}>
+    <PageLayout title={config.title} subtitle={config.subtitle} domain={domain}>
       {error && <ErrorState error={error} />}
 
-      <div className="layout">
-        <div className="overview">
-          <Card accentColor={config.accent}>
-            <MonthHeader
-              domain={domain}
-              windows={windows}
-              selectedKey={selectedKey}
-              onSelect={selectMonth}
-              realized={realized}
-              expected={expected}
-              average={average}
-              currency={currency}
-              approximate={hasForeign}
-            />
-            <MonthlyBarsChart
-              data={bars}
-              series={series}
-              stacked={multiCurrency}
-              currency={currency}
-              loading={txLoading}
-              average={average}
-              selectedKey={selectedKey}
-              onSelect={selectMonth}
-              height={200}
-            />
-            {anythingHidden && (
-              <label className="show-hidden">
-                <input
-                  type="checkbox"
-                  checked={showHidden}
-                  onChange={(e) => setShowHidden(e.currentTarget.checked)}
-                />
-                <span>
-                  Show hidden
-                  <span className="hint">
-                    {" "}
-                    — items hidden from the dashboard and categories hidden from the chart
-                  </span>
-                </span>
-              </label>
-            )}
-          </Card>
-        </div>
+      <MonthSummary
+        domain={domain}
+        window={window}
+        realized={realized}
+        expected={expected}
+        delta={delta}
+        previousLabel={previousWindow?.longLabel ?? null}
+        currency={currency}
+        approximate={hasForeign}
+      />
 
-        <div className="detail">
-          <ViewTabs
-            value={view}
-            onChange={(v) => {
-              setView(v);
-              setDrillCategoryId(null);
-            }}
-            accent={config.accent}
-            showValue={Boolean(accountDomain)}
+      <div className="charts">
+        <Card>
+          <SectionTitle
+            title={`Monthly ${config.noun}`}
+            subtitle={`Actual ${config.noun}, split by ${mode === "category" ? "category" : "currency"}.`}
+          >
+            <ChartControls period={period} onPeriod={setPeriod} mode={mode} onMode={setMode} />
+          </SectionTitle>
+          <MonthlyBarsChart
+            data={bars}
+            series={series}
+            stacked={stacks.series.length > 1}
+            currency={currency}
+            loading={txLoading}
+            average={average}
+            selectedKey={window.key}
+            onSelect={select}
+            height={220}
           />
-          {panel}
-        </div>
+          {anythingHidden && (
+            <label className="show-hidden">
+              <input
+                type="checkbox"
+                checked={showHidden}
+                onChange={(e) => setShowHidden(e.currentTarget.checked)}
+              />
+              <span>
+                Show hidden
+                <span className="hint">
+                  {" "}
+                  — items hidden from the dashboard and categories hidden from the chart
+                </span>
+              </span>
+            </label>
+          )}
+        </Card>
+        <CategoryBreakdown
+          title="Top categories"
+          rows={topCategories}
+          categories={categories}
+          domain={domain}
+          currency={currency}
+          onViewAll={() => changeView("categories")}
+          loading={txLoading || catLoading}
+        />
+      </div>
+
+      <div className="detail">
+        <ViewTabs
+          value={view}
+          onChange={changeView}
+          accent={config.accent}
+          showValue={Boolean(accountDomain)}
+          showMethods={config.showPaymentMethod}
+        />
+        {panel}
       </div>
 
       <RecurrentTransactionModal
@@ -463,17 +562,24 @@ export function DomainPage({ domain }: Props) {
           color: var(--fg-2);
         }
 
-        .layout {
+        .charts {
           display: grid;
-          gap: 20px;
+          grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+          gap: 16px;
+          align-items: stretch;
         }
 
-        .overview,
         .detail {
           display: flex;
           flex-direction: column;
           gap: 16px;
           min-width: 0;
+        }
+
+        @media (max-width: 900px) {
+          .charts {
+            grid-template-columns: 1fr;
+          }
         }
       `}</style>
     </PageLayout>

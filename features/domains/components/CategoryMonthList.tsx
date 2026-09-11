@@ -1,4 +1,6 @@
 import { categoryIdSet } from "../../../helpers/categoryTree";
+import { CategoryIcon } from "../../../components/atoms/CategoryIcon";
+import { IconDisc } from "../../../components/molecules/IconDisc";
 import { useMemo } from "react";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
@@ -122,6 +124,9 @@ export function CategoryMonthList({
                   className="open"
                   onClick={() => r.category.id && onSelect(r.category.id)}
                 >
+                  <IconDisc domain={domain} size={36}>
+                    <CategoryIcon category={r.category} size={16} />
+                  </IconDisc>
                   <span className="main">
                     <span className="name">
                       {r.category.name}
