@@ -46,6 +46,11 @@ function formatter(style: DateStyle, format: DateFormat): Intl.DateTimeFormat {
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
+/** "2026-09" — the stable identity of a calendar month. */
+export function monthKey(date: Date): string {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}`;
+}
+
 export function formatDate(
   date: Date,
   style: DateStyle,

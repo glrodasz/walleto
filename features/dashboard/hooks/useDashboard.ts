@@ -1,16 +1,23 @@
 import { useMemo } from "react";
 import { useRecurrentTransactions } from "../../../hooks/useRecurrentTransactions";
 import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
-import { useRecentTransactions } from "./useRecentTransactions";
 import { useUpcomingItems } from "./useUpcomingItems";
 import { useCategories } from "../../../hooks/useCategories";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
+import { useSelectedMonth } from "../../../hooks/useSelectedMonth";
 import { groupByCategory, computeMoM, computeFlow, shareByCurrency } from "../../../helpers";
 import type { MoneyContext } from "../../../helpers";
-import { toFlowSeries } from "../../../helpers/chartData";
 import { hiddenItemIds, withoutHidden } from "../../../helpers/hidden";
+import { monthWindows } from "../../domains/helpers/months";
+import { cashFlowSeries } from "../helpers/cashFlowSeries";
+import type { CashFlowGroupBy } from "../helpers/cashFlowSeries";
+import type { Domain, Transaction } from "../../../types";
 
-const RECENT = 5;
+interface Options {
+  /** Months on the cash-flow chart, ending with the current one. */
+  period: number;
+  groupBy: CashFlowGroupBy;
+}
 
 function buildCategoryList(
   items: ReturnType<typeof useRecurrentTransactions>["items"],
@@ -33,7 +40,8 @@ function buildCategoryList(
 const visible = <T extends { hiddenFromDashboard?: boolean }>(rows: T[]) =>
   rows.filter((r) => !r.hiddenFromDashboard);
 
-export function useDashboard() {
+export function useDashboard({ period, groupBy }: Options) {
+  const { now, selectedKey, window } = useSelectedMonth();
   const { items: allIncomes, loading: l1, error: e1 } = useRecurrentTransactions("INCOME");
   const { items: allExpenses, loading: l2, error: e2 } = useRecurrentTransactions("EXPENSE");
   const { items: allInvestments, loading: l3, error: e3 } = useRecurrentTransactions("INVESTMENT");
@@ -48,41 +56,57 @@ export function useDashboard() {
     () => hiddenItemIds([...allIncomes, ...allExpenses, ...allInvestments, ...allSavings]),
     [allIncomes, allExpenses, allInvestments, allSavings]
   );
-  const { transactions: recentRaw, loading: l5, error: e5 } = useRecentTransactions(RECENT * 3);
-  const recentPayments = useMemo(
-    () => withoutHidden(recentRaw, hiddenItems).slice(0, RECENT),
-    [recentRaw, hiddenItems]
-  );
   const { items: upcoming, loading: l6, error: e6, markPaid } = useUpcomingItems(5);
-  // One window serves both consumers: the cash-flow chart wants the 6 months
-  // the materializer backfills, and computeMoM slices its own current/previous
-  // months out of the same set — so the previous month is never truncated and
-  // other domains never pollute the delta.
-  const chartStart = useMemo(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth() - 6, 1);
-  }, []);
-  const {
-    transactions: allExpenseTransactions,
-    loading: l8,
-    error: e8,
-  } = useDomainTransactions("EXPENSE", chartStart);
-  const {
-    transactions: allIncomeTransactions,
-    loading: l9,
-    error: e9,
-  } = useDomainTransactions("INCOME", chartStart);
-  const expenseTransactions = useMemo(
-    () => withoutHidden(allExpenseTransactions, hiddenItems),
-    [allExpenseTransactions, hiddenItems]
+
+  // The chart's months always end with the current one; the selected month
+  // is highlighted, and the query reaches back far enough to include it.
+  const windows = useMemo(() => monthWindows(period, now), [period, now]);
+  const chartStart = useMemo(
+    () => (window.start < windows[0].start ? window.start : windows[0].start),
+    [window.start, windows]
   );
-  const incomeTransactions = useMemo(
-    () => withoutHidden(allIncomeTransactions, hiddenItems),
-    [allIncomeTransactions, hiddenItems]
+  const income = useDomainTransactions("INCOME", chartStart);
+  const expense = useDomainTransactions("EXPENSE", chartStart);
+  const investment = useDomainTransactions("INVESTMENT", chartStart);
+  const saving = useDomainTransactions("SAVING", chartStart);
+  const txByDomain = useMemo<Record<Domain, Transaction[]>>(
+    () => ({
+      INCOME: withoutHidden(income.transactions, hiddenItems),
+      EXPENSE: withoutHidden(expense.transactions, hiddenItems),
+      INVESTMENT: withoutHidden(investment.transactions, hiddenItems),
+      SAVING: withoutHidden(saving.transactions, hiddenItems),
+    }),
+    [
+      income.transactions,
+      expense.transactions,
+      investment.transactions,
+      saving.transactions,
+      hiddenItems,
+    ]
   );
   const { ctx, target, fxStale, fxMissing, setDisplayCurrency } = useMoneyContext();
-  const loading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9;
-  const error = e1 ?? e2 ?? e3 ?? e4 ?? e5 ?? e6 ?? e7 ?? e8 ?? e9;
+  const loading =
+    l1 ||
+    l2 ||
+    l3 ||
+    l4 ||
+    l6 ||
+    l7 ||
+    income.loading ||
+    expense.loading ||
+    investment.loading ||
+    saving.loading;
+  const error =
+    e1 ??
+    e2 ??
+    e3 ??
+    e4 ??
+    e6 ??
+    e7 ??
+    income.error ??
+    expense.error ??
+    investment.error ??
+    saving.error;
 
   // "≈" only means something when conversion actually happened: at least one
   // item lives in a currency other than the reporting target.
@@ -113,17 +137,14 @@ export function useDashboard() {
     () => buildCategoryList(expenses, categories, ctx),
     [expenses, categories, ctx]
   );
-
   const incomesByCategory = useMemo(
     () => buildCategoryList(incomes, categories, ctx),
     [incomes, categories, ctx]
   );
-
   const investmentsByCategory = useMemo(
     () => buildCategoryList(investments, categories, ctx),
     [investments, categories, ctx]
   );
-
   const savingsByCategory = useMemo(
     () => buildCategoryList(savings, categories, ctx),
     [savings, categories, ctx]
@@ -140,33 +161,13 @@ export function useDashboard() {
   );
 
   const momDelta = useMemo(
-    () => computeMoM(expenseTransactions, { ...ctx, domain: "EXPENSE" }),
-    [expenseTransactions, ctx]
+    () => computeMoM(txByDomain.EXPENSE, { ...ctx, domain: "EXPENSE", now }),
+    [txByDomain.EXPENSE, ctx, now]
   );
 
-  // One bar per month. The month in progress is flagged so the chart draws
-  // it lighter: with a salary on the 23rd it holds almost nothing until
-  // then, and a line through that point read as income collapsing.
-  const flowSeries = useMemo(
-    () =>
-      toFlowSeries([...incomeTransactions, ...expenseTransactions], {
-        ...ctx,
-        from: chartStart,
-        bucket: "month",
-      }).map((point, i) => {
-        const start = new Date(chartStart.getFullYear(), chartStart.getMonth() + i, 1);
-        const key = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}`;
-        const nextStart = new Date(start.getFullYear(), start.getMonth() + 1, 1);
-        return {
-          key,
-          label: point.label,
-          income: point.income,
-          expense: point.expense,
-          net: point.income - point.expense,
-          isCurrent: nextStart > new Date(),
-        };
-      }),
-    [incomeTransactions, expenseTransactions, ctx, chartStart]
+  const cashFlow = useMemo(
+    () => cashFlowSeries(txByDomain, categories, ctx, windows, { groupBy, top: 5 }),
+    [txByDomain, categories, ctx, windows, groupBy]
   );
 
   return {
@@ -184,11 +185,13 @@ export function useDashboard() {
     savingsByCategory,
     currencyMix,
     categories,
-    recentPayments,
     upcoming,
     markPaid,
     momDelta,
-    flowSeries,
+    cashFlow,
+    windows,
+    selectedKey,
+    window,
     loading,
     error,
   };

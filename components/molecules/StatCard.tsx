@@ -1,10 +1,18 @@
+import Link from "next/link";
+import type { ComponentType } from "react";
 import type { Currency, Domain } from "../../types";
 import { Card } from "../atoms/Card";
-import { Amount, formatAmount } from "../atoms/Amount";
+import { Amount } from "../atoms/Amount";
+import { ArrowDown, ArrowUpRight, ChevronRight, Circle, TrendingUp } from "../atoms/Icons";
+import type { IconProps } from "../atoms/Icons";
+import { IconDisc } from "./IconDisc";
+import { KebabMenu } from "./KebabMenu";
+import type { KebabAction } from "./KebabMenu";
 
-interface SummaryEntry {
+export interface StatRow {
   name: string;
-  amount: number;
+  /** Already formatted: an amount or a percentage. */
+  value: string;
 }
 
 interface Props {
@@ -12,53 +20,63 @@ interface Props {
   amount: number;
   currency: Currency;
   domain: Domain;
-  delta?: number;
-  summary?: SummaryEntry[];
+  /** The domain page; the whole header links there. */
+  href: string;
+  /** Up to two lines under the figure ("Salary · $57,000"). */
+  rows?: StatRow[];
+  categoryCount?: number;
   /** Share per currency in use; shown only when more than one is in play. */
   byCurrency?: { currency: Currency; pct: number }[];
-  /** Small label at the top right, e.g. "Recurring" — what kind of number this is. */
-  tag?: string;
+  actions?: KebabAction[];
 }
 
-const DOMAIN_ACCENT: Record<Domain, string> = {
-  INCOME: "var(--domain-income)",
-  EXPENSE: "var(--domain-expense)",
-  INVESTMENT: "var(--domain-investment)",
-  SAVING: "var(--domain-saving)",
+const ICON: Record<Domain, ComponentType<IconProps>> = {
+  INCOME: ArrowUpRight,
+  EXPENSE: ArrowDown,
+  INVESTMENT: TrendingUp,
+  SAVING: Circle,
 };
 
+/** A domain's monthly figure on the dashboard, tinted in its colour. */
 export function StatCard({
   title,
   amount,
   currency,
   domain,
-  delta,
-  summary,
+  href,
+  rows = [],
+  categoryCount,
   byCurrency,
-  tag,
+  actions,
 }: Props) {
-  const hasDelta = delta !== undefined && delta !== 0;
-  const deltaPositive = (delta ?? 0) > 0;
-  // Sentiment is domain-aware: spending less is good, earning less is not.
-  const deltaGood = domain === "EXPENSE" ? !deltaPositive : deltaPositive;
-
+  const Icon = ICON[domain];
   return (
-    <Card accentColor={DOMAIN_ACCENT[domain]}>
-      <span className="head">
-        <span className="title">{title}</span>
-        {tag && <span className="tag">{tag}</span>}
-      </span>
+    <Card tint={domain}>
+      <div className="head">
+        <Link href={href} className="stat-head" aria-label={`Open ${title}`}>
+          <IconDisc domain={domain} size={42}>
+            <Icon size={18} />
+          </IconDisc>
+          <span className="title">{title}</span>
+          <span className="chevron">
+            <ChevronRight size={18} />
+          </span>
+        </Link>
+      </div>
+
       <Amount value={amount} currency={currency} size="lg" />
-      {summary && summary.length > 0 && (
-        <span className="summary">
-          {summary.map((s, i) => (
-            <span key={s.name}>
-              {i > 0 && <span className="sep"> · </span>}
-              {s.name}: {formatAmount(s.amount, currency)}
-            </span>
+
+      {rows.length > 0 && (
+        <ul className="rows">
+          {rows.map((r) => (
+            <li key={r.name} className="row">
+              <span className="row-name">{r.name}</span>
+              <span className="row-value">{r.value}</span>
+            </li>
           ))}
-        </span>
+        </ul>
       )}
+
       {byCurrency && byCurrency.length > 1 && (
         <span className="currencies" aria-label="By currency">
           {byCurrency.map((c, i) => (
@@ -69,48 +87,72 @@ export function StatCard({
           ))}
         </span>
       )}
-      {hasDelta && (
-        <span className={`delta ${deltaGood ? "good" : "bad"}`}>
-          {deltaPositive ? "▲" : "▼"} {Math.abs(delta ?? 0).toFixed(1)}%{" "}
-          {deltaPositive ? "more" : "less"} than last month to date
+
+      <div className="foot">
+        <span className="count">
+          {categoryCount === undefined
+            ? ""
+            : `${categoryCount} categor${categoryCount === 1 ? "y" : "ies"}`}
         </span>
-      )}
+        {actions && actions.length > 0 && (
+          <KebabMenu aria-label={`Actions for ${title}`} actions={actions} />
+        )}
+      </div>
+
       <style jsx>{`
-        .head {
+        /* Link is a child component: its className carries no scope hash. */
+        .head :global(.stat-head) {
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          gap: 8px;
+          gap: 10px;
+          color: inherit;
+          text-decoration: none;
+        }
+
+        .head :global(.stat-head:hover .chevron) {
+          color: var(--fg-0);
         }
 
         .title {
-          font-size: 0.8rem;
+          flex: 1;
+          font-size: 0.95rem;
           font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.06em;
+          color: var(--fg-0);
+        }
+
+        .chevron {
+          display: inline-flex;
           color: var(--fg-2);
         }
 
-        .tag {
-          font-size: 0.62rem;
-          font-weight: 700;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
-          padding: 1px 6px;
-          border-radius: 999px;
-          border: 1px solid var(--line-strong);
-          color: var(--fg-2);
+        .rows {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .row {
+          display: flex;
+          justify-content: space-between;
+          gap: 10px;
+          font-size: 0.8rem;
+        }
+
+        .row-name {
+          color: var(--fg-1);
+          overflow: hidden;
+          text-overflow: ellipsis;
           white-space: nowrap;
         }
 
-        .summary {
-          font-size: 0.78rem;
-          color: var(--fg-2);
-          line-height: 1.5;
-        }
-
-        .sep {
-          color: var(--line-strong);
+        .row-value {
+          font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
+          font-variant-numeric: tabular-nums;
+          color: var(--fg-0);
+          white-space: nowrap;
         }
 
         .currencies {
@@ -120,17 +162,20 @@ export function StatCard({
           color: var(--fg-2);
         }
 
-        .delta {
-          font-size: 0.78rem;
-          margin-top: 2px;
+        .sep {
+          color: var(--line-strong);
         }
 
-        .good {
-          color: var(--accent);
-        }
-
-        .bad {
-          color: var(--accent-hot);
+        .foot {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-top: auto;
+          padding-top: 10px;
+          border-top: 1px solid var(--line);
+          font-size: 0.75rem;
+          color: var(--fg-2);
+          min-height: 28px;
         }
       `}</style>
     </Card>

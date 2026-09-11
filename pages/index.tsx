@@ -1,28 +1,56 @@
 import { useUser } from "@auth0/nextjs-auth0/client";
+import { useRouter } from "next/router";
 import { withOnboardingGuard } from "../features/onboarding/helpers/onboardingGuard";
 import { PageLayout } from "../components/organisms/PageLayout";
 import { StatCard } from "../components/molecules/StatCard";
+import type { StatRow } from "../components/molecules/StatCard";
 import { CategoryBreakdown } from "../components/molecules/CategoryBreakdown";
-import { RecentPayments } from "../features/dashboard/components/RecentPayments";
-import { UpcomingExpirations } from "../features/dashboard/components/UpcomingExpirations";
+import { formatAmount } from "../components/atoms/Amount";
 import Skeleton from "../components/Skeleton";
 import { ErrorState } from "../components/atoms/ErrorState";
 import { NetFlowCard } from "../features/dashboard/components/NetFlowCard";
+import { CashFlowCard } from "../features/dashboard/components/CashFlowCard";
+import type { CashFlowPeriod } from "../features/dashboard/components/CashFlowCard";
+import { UpcomingPayments } from "../features/dashboard/components/UpcomingPayments";
+import { TipBanner } from "../features/dashboard/components/TipBanner";
 import { topWithOther } from "../features/dashboard/helpers/topWithOther";
-import { Card } from "../components/atoms/Card";
-import { SectionTitle } from "../components/atoms/SectionTitle";
-import { MonthlyBarsChart } from "../components/molecules/MonthlyBarsChart";
+import type { CashFlowGroupBy } from "../features/dashboard/helpers/cashFlowSeries";
 import { useDashboard } from "../features/dashboard/hooks/useDashboard";
 import { useUserDoc } from "../hooks/useUserDoc";
 import { useMaterialize } from "../hooks/useMaterialize";
-import { updateRecurrentItem } from "../hooks/useRecurrentTransactions";
+import { useSelectedMonth } from "../hooks/useSelectedMonth";
+import { useLocalPreference } from "../hooks/useLocalPreference";
+import { greeting } from "../helpers/greeting";
+import type { Currency, Domain } from "../types";
 
 export const getServerSideProps = withOnboardingGuard();
 
+interface CategoryAmount {
+  categoryId: string;
+  name: string;
+  amount: number;
+  percent: number;
+}
+
+/** Income shows amounts; the other cards show each category's share. */
+function cardRows(list: CategoryAmount[], domain: Domain, currency: Currency): StatRow[] {
+  return list.slice(0, 2).map((c) => ({
+    name: c.name,
+    value: domain === "INCOME" ? formatAmount(c.amount, currency) : `${c.percent.toFixed(0)}%`,
+  }));
+}
+
 export default function Dashboard() {
   const { user } = useUser();
+  const router = useRouter();
   const { userDoc } = useUserDoc();
+  const { select } = useSelectedMonth();
   useMaterialize();
+  const [period, setPeriod] = useLocalPreference<CashFlowPeriod>("waletto:dashboard:period", 6);
+  const [groupBy, setGroupBy] = useLocalPreference<CashFlowGroupBy>(
+    "waletto:dashboard:groupBy",
+    "domain"
+  );
   const {
     currency,
     totals,
@@ -35,19 +63,63 @@ export default function Dashboard() {
     savingsByCategory,
     currencyMix,
     categories,
-    recentPayments,
     upcoming,
-    markPaid,
-    momDelta,
-    flowSeries,
+    cashFlow,
+    selectedKey,
+    window,
     loading,
     error,
-  } = useDashboard();
+  } = useDashboard({ period, groupBy });
 
   const firstName = (user?.name ?? user?.nickname ?? "there").split(" ")[0];
 
+  const cards: {
+    domain: Domain;
+    title: string;
+    href: string;
+    amount: number;
+    list: CategoryAmount[];
+    mix: { currency: Currency; pct: number }[];
+  }[] = [
+    {
+      domain: "INCOME",
+      title: "Income",
+      href: "/incomes",
+      amount: totals.income,
+      list: incomesByCategory,
+      mix: currencyMix.income,
+    },
+    {
+      domain: "EXPENSE",
+      title: "Expenses",
+      href: "/expenses",
+      amount: totals.expense,
+      list: expensesByCategory,
+      mix: currencyMix.expense,
+    },
+    {
+      domain: "INVESTMENT",
+      title: "Investments",
+      href: "/investments",
+      amount: totals.investment,
+      list: investmentsByCategory,
+      mix: currencyMix.investment,
+    },
+    {
+      domain: "SAVING",
+      title: "Savings",
+      href: "/savings",
+      amount: totals.saving,
+      list: savingsByCategory,
+      mix: currencyMix.saving,
+    },
+  ];
+
   return (
-    <PageLayout title={`Welcome back, ${firstName}`}>
+    <PageLayout
+      title={`${greeting()}, ${firstName}`}
+      subtitle={`Here's your financial overview for ${window.longLabel}.`}
+    >
       {error && <ErrorState error={error} />}
       {fxUnavailable && (
         <ErrorState
@@ -56,82 +128,49 @@ export default function Dashboard() {
         />
       )}
 
-      <section className="row">
+      <section className="block">
         {userDoc ? (
           <NetFlowCard flow={flow} currency={currency} approximate={approximate} />
         ) : (
-          <Skeleton.Box width="100%" height={140} />
+          <Skeleton.Box width="100%" height={160} />
         )}
       </section>
 
-      <section className="row">
-        {userDoc ? (
-          <>
-            <StatCard
-              tag="Recurring"
-              title="Income"
-              amount={totals.income}
-              currency={currency}
-              domain="INCOME"
-              summary={incomesByCategory.slice(0, 2)}
-              byCurrency={currencyMix.income}
-            />
-            <StatCard
-              tag="Recurring"
-              title="Expenses"
-              amount={totals.expense}
-              currency={currency}
-              domain="EXPENSE"
-              delta={momDelta.deltaPct}
-              summary={expensesByCategory.slice(0, 2)}
-              byCurrency={currencyMix.expense}
-            />
-            <StatCard
-              tag="Recurring"
-              title="Investments"
-              amount={totals.investment}
-              currency={currency}
-              domain="INVESTMENT"
-              summary={investmentsByCategory.slice(0, 2)}
-              byCurrency={currencyMix.investment}
-            />
-            <StatCard
-              tag="Recurring"
-              title="Savings"
-              amount={totals.saving}
-              currency={currency}
-              domain="SAVING"
-              summary={savingsByCategory.slice(0, 2)}
-              byCurrency={currencyMix.saving}
-            />
-          </>
-        ) : (
-          <>
-            <Skeleton.Box width="100%" height={120} />
-            <Skeleton.Box width="100%" height={120} />
-            <Skeleton.Box width="100%" height={120} />
-            <Skeleton.Box width="100%" height={120} />
-          </>
-        )}
+      <section className="cards">
+        {userDoc
+          ? cards.map((c) => (
+              <StatCard
+                key={c.domain}
+                title={c.title}
+                href={c.href}
+                amount={c.amount}
+                currency={currency}
+                domain={c.domain}
+                rows={cardRows(c.list, c.domain, currency)}
+                categoryCount={c.list.length}
+                byCurrency={c.mix}
+                actions={[{ label: `Open ${c.title}`, onSelect: () => router.push(c.href) }]}
+              />
+            ))
+          : cards.map((c) => <Skeleton.Box key={c.domain} width="100%" height={180} />)}
       </section>
 
-      <section className="row">
-        <Card>
-          <SectionTitle title="Cash flow" />
-          <p className="panel-note">Monthly totals · this month is still in progress.</p>
-          <MonthlyBarsChart
-            data={flowSeries}
-            series={[
-              { key: "income", label: "Income", color: "var(--domain-income)" },
-              { key: "expense", label: "Expenses", color: "var(--domain-expense)" },
-            ]}
-            currency={currency}
-            loading={loading}
-          />
-        </Card>
+      <section className="block">
+        <CashFlowCard
+          data={cashFlow.data}
+          groups={cashFlow.groups}
+          currency={currency}
+          loading={loading}
+          period={period}
+          onPeriod={setPeriod}
+          groupBy={groupBy}
+          onGroupBy={setGroupBy}
+          selectedKey={selectedKey}
+          onSelect={select}
+        />
       </section>
 
-      <section className="row">
+      <section className="bottom">
         <CategoryBreakdown
           title="Top expense categories"
           rows={topWithOther(expensesByCategory, 5)}
@@ -141,54 +180,50 @@ export default function Dashboard() {
           href="/expenses"
           loading={loading}
         />
-        <RecentPayments
-          transactions={recentPayments}
-          displayCurrency={currency}
-          loading={loading}
-        />
-        <UpcomingExpirations
+        <UpcomingPayments
           items={upcoming}
+          categories={categories}
           displayCurrency={currency}
           loading={loading}
-          onMarkPaid={markPaid}
-          onHide={(id) => updateRecurrentItem(id, { hiddenFromDashboard: true })}
         />
       </section>
 
+      <TipBanner id="create">
+        You can add a new transaction or recurring item from the + button.
+      </TipBanner>
+
       <style jsx>{`
-        .panel-note {
-          margin: -4px 0 4px;
-          font-size: 0.78rem;
-          color: var(--fg-2);
-        }
-
-        .row {
+        .block {
           display: flex;
-          gap: 16px;
         }
 
-        .row > :global(*) {
+        .block > :global(*) {
           flex: 1;
           min-width: 0;
         }
 
-        @media (max-width: 1100px) {
-          .row {
-            flex-wrap: wrap;
-          }
+        .cards {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 16px;
+        }
 
-          .row > :global(*) {
-            flex-basis: calc(50% - 8px);
+        .bottom {
+          display: grid;
+          grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+          gap: 16px;
+        }
+
+        @media (max-width: 1100px) {
+          .cards {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
           }
         }
 
-        @media (max-width: 640px) {
-          .row {
-            flex-direction: column;
-          }
-
-          .row > :global(*) {
-            flex-basis: auto;
+        @media (max-width: 767px) {
+          .cards,
+          .bottom {
+            grid-template-columns: 1fr;
           }
         }
       `}</style>

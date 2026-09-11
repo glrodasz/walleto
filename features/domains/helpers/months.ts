@@ -3,7 +3,7 @@ import type { MoneyContext, MoneyFields } from "../../../helpers/aggregations";
 import { bucketStart, toDate } from "../../../helpers/chartData";
 import { materializeOccurrences, occurrenceId } from "../../../helpers/materializeOccurrences";
 import { formatRelativeDay } from "../../../helpers/formatRelativeDay";
-import { formatDate } from "../../../helpers/dates";
+import { formatDate, monthKey } from "../../../helpers/dates";
 import type { Currency, RecurrentTransaction, Transaction } from "../../../types";
 
 /** One calendar month on the page: [start, end). */
@@ -19,9 +19,8 @@ export interface MonthWindow {
   isCurrent: boolean;
 }
 
-export function monthKey(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
+// The key lives with the date helpers so root-level helpers can use it too.
+export { monthKey };
 
 /**
  * The last `count` months ending with the current one, oldest first. Built
