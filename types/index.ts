@@ -5,7 +5,8 @@ export interface Timestamp {
   toDate(): Date;
 }
 
-import type { CURRENCIES } from "../constants";
+import type { CURRENCIES, ICON_KEYS } from "../constants";
+export type IconKey = (typeof ICON_KEYS)[number];
 
 export type Currency = (typeof CURRENCIES)[number];
 export type Domain = "INCOME" | "EXPENSE" | "INVESTMENT" | "SAVING";
@@ -58,6 +59,8 @@ export interface Category {
   name: string;
   parentId?: string;
   isDefault?: boolean;
+  /** Picked by the user; without one the name decides (helpers/categoryIcons). */
+  icon?: IconKey;
   /** Root only: left out of the domain graph and month figure (children follow). */
   hiddenFromChart?: boolean;
   archived?: boolean;

@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Select } from "../atoms/Select";
 import { Chip } from "../atoms/Chip";
 import { Combobox } from "../atoms/Combobox";
-import type { Category } from "../../types";
+import { IconPicker } from "./IconPicker";
+import type { Category, IconKey } from "../../types";
 
 interface Props {
   /** Every category of the domain; only roots are offered. */
@@ -10,7 +11,7 @@ interface Props {
   value: string;
   onChange: (categoryId: string) => void;
   /** Resolves to the new category's id, which is selected immediately. */
-  createCategory: (name: string) => Promise<string>;
+  createCategory: (name: string, icon?: IconKey) => Promise<string>;
   /** Label for the inline creator ("New expense category"). */
   newLabel: string;
   onError?: (message: string) => void;
@@ -20,7 +21,8 @@ interface Props {
 /**
  * Category select with an inline "New category" creator, shared by every form
  * that files something under a category. Typing an existing name selects it
- * instead of creating a duplicate.
+ * instead of creating a duplicate. A picked icon travels with the new
+ * category; without one the name decides.
  */
 export function CategoryField({
   categories,
@@ -32,19 +34,22 @@ export function CategoryField({
   disabled,
 }: Props) {
   const [creating, setCreating] = useState(false);
+  const [icon, setIcon] = useState<IconKey | undefined>(undefined);
   const roots = categories.filter((c) => !c.parentId);
   const options = roots.map((c) => ({ value: c.id!, label: c.name }));
 
   const commit = async (raw: string) => {
     const name = raw.trim();
     setCreating(false);
+    const picked = icon;
+    setIcon(undefined);
     const existing = roots.find((c) => c.name.toLowerCase() === name.toLowerCase());
     if (existing?.id) {
       onChange(existing.id);
       return;
     }
     try {
-      onChange(await createCategory(name));
+      onChange(await createCategory(name, picked));
     } catch (err) {
       console.error("Failed to create category:", err);
       onError?.(`Couldn't create the category "${name}"`);
@@ -53,14 +58,43 @@ export function CategoryField({
 
   if (creating) {
     return (
-      <Combobox
-        autoFocus
-        label={newLabel}
-        placeholder="Type a name"
-        suggestions={[]}
-        onSelect={commit}
-        onCancel={() => setCreating(false)}
-      />
+      <div className="creator">
+        <Combobox
+          autoFocus
+          label={newLabel}
+          placeholder="Type a name"
+          suggestions={[]}
+          onSelect={commit}
+          onCancel={() => {
+            setCreating(false);
+            setIcon(undefined);
+          }}
+        />
+        <details className="icons">
+          <summary>Pick an icon (optional)</summary>
+          <div className="picker">
+            <IconPicker value={icon} onChange={setIcon} />
+          </div>
+        </details>
+
+        <style jsx>{`
+          .creator {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+          }
+
+          .icons summary {
+            font-size: 0.8rem;
+            color: var(--fg-2);
+            cursor: pointer;
+          }
+
+          .picker {
+            margin-top: 8px;
+          }
+        `}</style>
+      </div>
     );
   }
 

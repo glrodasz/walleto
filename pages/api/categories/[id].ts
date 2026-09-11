@@ -36,6 +36,8 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
     }
 
     const update: Record<string, unknown> = { ...parsed.data };
+    // null means "forget the pick": the field is removed, not stored as null
+    if (parsed.data.icon === null) update.icon = admin.firestore.FieldValue.delete();
     // Renaming a default category promotes it to user-owned
     if (parsed.data.name !== undefined) {
       update.isDefault = false;

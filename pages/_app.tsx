@@ -5,6 +5,7 @@ import { Inter, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import type { AppProps } from "next/app";
 import { ThemeProvider } from "../hooks/useTheme";
 import { MonthProvider } from "../hooks/useSelectedMonth";
+import { PreferencesProvider } from "../hooks/PreferencesProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -32,14 +33,16 @@ function MyApp({ Component, pageProps }: AppProps) {
     <UserProvider>
       <ThemeProvider>
         <MonthProvider>
-          <div
-            className={`${inter.className} ${inter.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable}`}
-            style={{ minHeight: "100%" }}
-          >
-            <ErrorBoundary>
-              <Component {...pageProps} />
-            </ErrorBoundary>
-          </div>
+          <PreferencesProvider>
+            <div
+              className={`${inter.className} ${inter.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable}`}
+              style={{ minHeight: "100%" }}
+            >
+              <ErrorBoundary>
+                <Component {...pageProps} />
+              </ErrorBoundary>
+            </div>
+          </PreferencesProvider>
         </MonthProvider>
       </ThemeProvider>
     </UserProvider>

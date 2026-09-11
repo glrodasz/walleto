@@ -2,7 +2,7 @@ import type { Currency, Transaction } from "../../../types";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { TransactionRow } from "../../../components/molecules/TransactionRow";
-import { formatRelativeDay } from "../../../utils/formatRelativeDay";
+import { formatRelativeDay } from "../../../helpers/formatRelativeDay";
 
 interface Props {
   transactions: Transaction[];

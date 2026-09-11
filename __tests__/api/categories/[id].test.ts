@@ -35,7 +35,10 @@ jest.mock("../../../firebase/admin", () => ({
         }),
       })),
       {
-        FieldValue: { serverTimestamp: jest.fn(() => "SERVER_TIMESTAMP") },
+        FieldValue: {
+          serverTimestamp: jest.fn(() => "SERVER_TIMESTAMP"),
+          delete: jest.fn(() => "DELETE_FIELD"),
+        },
       }
     ),
   },
@@ -64,7 +67,11 @@ describe("PATCH /api/categories/[id]", () => {
     docGetMock.mockResolvedValue({ exists: true, data: () => ({ userId: "owner" }) });
     const res = mockRes();
     await handler(
-      { method: "PATCH", query: { id: "cat1" }, body: { name: "New" } } as unknown as NextApiRequest,
+      {
+        method: "PATCH",
+        query: { id: "cat1" },
+        body: { name: "New" },
+      } as unknown as NextApiRequest,
       res
     );
     expect(res.status).toHaveBeenCalledWith(403);
@@ -90,11 +97,46 @@ describe("PATCH /api/categories/[id]", () => {
     docGetMock.mockResolvedValue({ exists: true, data: () => ({ userId: "user1" }) });
     const res = mockRes();
     await handler(
-      { method: "PATCH", query: { id: "cat1" }, body: { name: "Renamed" } } as unknown as NextApiRequest,
+      {
+        method: "PATCH",
+        query: { id: "cat1" },
+        body: { name: "Renamed" },
+      } as unknown as NextApiRequest,
       res
     );
     expect(docUpdateMock).toHaveBeenCalledWith({ name: "Renamed", isDefault: false });
     expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it("stores a picked icon and removes the field when cleared", async () => {
+    getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
+    docGetMock.mockResolvedValue({ exists: true, data: () => ({ userId: "user1" }) });
+    await handler(
+      {
+        method: "PATCH",
+        query: { id: "cat1" },
+        body: { icon: "plane" },
+      } as unknown as NextApiRequest,
+      mockRes()
+    );
+    expect(docUpdateMock).toHaveBeenCalledWith({ icon: "plane" });
+
+    await handler(
+      { method: "PATCH", query: { id: "cat1" }, body: { icon: null } } as unknown as NextApiRequest,
+      mockRes()
+    );
+    expect(docUpdateMock).toHaveBeenLastCalledWith({ icon: "DELETE_FIELD" });
+
+    const res = mockRes();
+    await handler(
+      {
+        method: "PATCH",
+        query: { id: "cat1" },
+        body: { icon: "nope" },
+      } as unknown as NextApiRequest,
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
   });
 });
 

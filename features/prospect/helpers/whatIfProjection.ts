@@ -1,6 +1,5 @@
+import { formatDate } from "../../../helpers/dates";
 import type { FlowPoint } from "../../../helpers/chartData";
-
-const MONTH_LABEL = new Intl.DateTimeFormat("en", { month: "short" });
 
 /**
  * Cumulative cash position over the next `months`, with and without the
@@ -19,7 +18,7 @@ export function buildWhatIfProjection(
   for (let i = 1; i <= months; i++) {
     const date = new Date(now.getFullYear(), now.getMonth() + i, 1);
     points.push({
-      label: MONTH_LABEL.format(date),
+      label: formatDate(date, "month"),
       income: currentMonthlyNet * i,
       expense: (currentMonthlyNet + freedMonthly) * i,
     });

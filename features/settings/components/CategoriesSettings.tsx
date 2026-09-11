@@ -10,10 +10,14 @@ import { TabStrip } from "../../../components/atoms/TabStrip";
 import { Pager } from "../../../components/molecules/Pager";
 import { paginate } from "../../../utils/paginate";
 import { ErrorState } from "../../../components/atoms/ErrorState";
+import { CategoryIcon } from "../../../components/atoms/CategoryIcon";
+import { IconDisc } from "../../../components/molecules/IconDisc";
+import { IconPicker } from "../../../components/molecules/IconPicker";
+import { iconFor } from "../../../helpers/categoryIcons";
 import { useCategories } from "../../../hooks/useCategories";
 import suggestions from "../../onboarding/data/categorySuggestions.json";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
-import type { Domain } from "../../../types";
+import type { Domain, IconKey } from "../../../types";
 
 const DOMAINS: Domain[] = ["INCOME", "EXPENSE", "INVESTMENT", "SAVING"];
 const PAGE_SIZE = 25;
@@ -26,8 +30,9 @@ const SUGGESTIONS = suggestions as Record<Domain, string[]>;
  */
 export function CategoriesSettings() {
   const [domain, setDomain] = useState<Domain>("EXPENSE");
-  const { categories, loading, error, create, rename, remove } = useCategories(domain);
+  const { categories, loading, error, create, rename, remove, update } = useCategories(domain);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [iconEditingId, setIconEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [adding, setAdding] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -65,6 +70,10 @@ export function CategoriesSettings() {
     if (current && current.name === name) return;
     await run(id, () => rename(id, name), "Couldn't rename the category");
   };
+  const pickIcon = async (id: string, icon: IconKey) => {
+    setIconEditingId(null);
+    await run(id, () => update(id, { icon }), "Couldn't change the icon");
+  };
   const add = async (raw: string) => {
     const name = raw.trim();
     setAdding(false);
@@ -91,6 +100,7 @@ export function CategoriesSettings() {
           setDomain(d as Domain);
           setPage(1);
           setEditingId(null);
+          setIconEditingId(null);
           setAdding(false);
           setMessage(null);
         }}
@@ -125,14 +135,30 @@ export function CategoriesSettings() {
                     Cancel
                   </Button>
                 </form>
+              ) : iconEditingId === c.id ? (
+                <div className="icon-edit">
+                  <span className="icon-edit-label">Icon for {c.name}</span>
+                  <IconPicker
+                    label={`Icon for ${c.name}`}
+                    value={iconFor(c)}
+                    onChange={(icon) => c.id && pickIcon(c.id, icon)}
+                  />
+                  <Button variant="ghost" size="sm" onClick={() => setIconEditingId(null)}>
+                    Cancel
+                  </Button>
+                </div>
               ) : (
                 <>
+                  <IconDisc domain={domain} size={32}>
+                    <CategoryIcon category={c} size={15} />
+                  </IconDisc>
                   <span className="name">{c.name}</span>
                   {c.isDefault && <span className="default">default</span>}
                   <KebabMenu
                     aria-label={`Actions for ${c.name}`}
                     actions={[
                       { label: "Rename", onSelect: () => c.id && startRename(c.id, c.name) },
+                      { label: "Change icon", onSelect: () => c.id && setIconEditingId(c.id) },
                       {
                         label: busyId === c.id ? "Archiving…" : "Archive",
                         onSelect: () =>
@@ -187,9 +213,24 @@ export function CategoriesSettings() {
         .row {
           display: flex;
           align-items: center;
-          gap: 8px;
-          min-height: 44px;
+          gap: 10px;
+          min-height: 48px;
+          padding: 4px 0;
           border-bottom: 1px solid var(--line);
+        }
+
+        .icon-edit {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+          padding: 8px 0;
+        }
+
+        .icon-edit-label {
+          font-size: 0.8rem;
+          color: var(--fg-2);
         }
 
         .row:last-child {

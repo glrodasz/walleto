@@ -4,6 +4,9 @@ import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { TransactionRow } from "../../../components/molecules/TransactionRow";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
+import { formatDate } from "../../../helpers/dates";
+import type { DateFormat } from "../../../types";
+import { useDateFormat } from "../../../hooks/usePreferences";
 
 interface Props {
   items: RecurrentTransaction[];
@@ -14,13 +17,13 @@ interface Props {
   onHide?: (id: string) => Promise<void>;
 }
 
-function formatDate(ts: RecurrentTransaction["nextOccurrence"]): string {
+function nextDate(ts: RecurrentTransaction["nextOccurrence"], format: DateFormat): string {
   if (!ts) return "—";
   const date =
     typeof (ts as { toDate?: () => Date }).toDate === "function"
       ? (ts as { toDate: () => Date }).toDate()
       : new Date(ts as unknown as string);
-  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(date);
+  return formatDate(date, "day", format);
 }
 
 export function UpcomingExpirations({
@@ -30,6 +33,7 @@ export function UpcomingExpirations({
   onMarkPaid,
   onHide,
 }: Props) {
+  const { format } = useDateFormat();
   const [pendingId, setPendingId] = useState<string | null>(null);
 
   const markPaid = async (id: string) => {
@@ -61,7 +65,7 @@ export function UpcomingExpirations({
               amount={item.amount}
               currency={item.currency}
               displayCurrency={displayCurrency}
-              meta={formatDate(item.nextOccurrence)}
+              meta={nextDate(item.nextOccurrence, format)}
               trailing={
                 onMarkPaid &&
                 item.id && (

@@ -6,6 +6,7 @@ import { useAllInvestmentValuations } from "../../../hooks/useInvestmentValuatio
 import { ACCOUNT_NOUN, accountLabel } from "../../../helpers/accounts";
 import { valuationDomain } from "../helpers/valuation";
 import type { Account, Category, InvestmentValuation } from "../../../types";
+import { useDateFormat } from "../../../hooks/usePreferences";
 
 interface Props {
   categories: Category[];
@@ -14,8 +15,6 @@ interface Props {
   start: Date;
   end: Date;
 }
-
-const DATE = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
 
 export function valuationsInWindow(
   valuations: InvestmentValuation[],
@@ -34,6 +33,7 @@ export function valuationsInWindow(
  * the ledger tells the whole story of the month.
  */
 export function ValuationRows({ categories, accounts, start, end }: Props) {
+  const { formatDate } = useDateFormat();
   const { valuations } = useAllInvestmentValuations();
   const rows = useMemo(() => valuationsInWindow(valuations, start, end), [valuations, start, end]);
   if (rows.length === 0) return null;
@@ -55,7 +55,7 @@ export function ValuationRows({ categories, accounts, start, end }: Props) {
                 })()}
               </span>
               <span className="meta">
-                {DATE.format(v.asOf.toDate())} · value check
+                {formatDate(v.asOf.toDate(), "day")} · value check
                 {v.note ? ` · ${v.note}` : ""}
               </span>
             </span>

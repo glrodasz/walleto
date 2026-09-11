@@ -1,5 +1,6 @@
 import admin from "../firebase/admin";
 import defaults from "../data/defaultCategories.json";
+import { defaultIconFor } from "./categoryIcons";
 import type { Domain } from "../types";
 
 /**
@@ -39,6 +40,7 @@ export async function seedDefaultCategories(userId: string): Promise<number> {
         userId,
         domain: domain as Domain,
         name,
+        icon: defaultIconFor(name, domain as Domain),
         isDefault: true,
         archived: false,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),

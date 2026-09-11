@@ -2,7 +2,8 @@ import { convertedAmount } from "../../../helpers/aggregations";
 import type { MoneyContext, MoneyFields } from "../../../helpers/aggregations";
 import { bucketStart, toDate } from "../../../helpers/chartData";
 import { materializeOccurrences, occurrenceId } from "../../../helpers/materializeOccurrences";
-import { formatRelativeDay } from "../../../utils/formatRelativeDay";
+import { formatRelativeDay } from "../../../helpers/formatRelativeDay";
+import { formatDate } from "../../../helpers/dates";
 import type { Currency, RecurrentTransaction, Transaction } from "../../../types";
 
 /** One calendar month on the page: [start, end). */
@@ -17,9 +18,6 @@ export interface MonthWindow {
   longLabel: string;
   isCurrent: boolean;
 }
-
-const SHORT = new Intl.DateTimeFormat("en", { month: "short" });
-const LONG = new Intl.DateTimeFormat("en", { month: "long", year: "numeric" });
 
 export function monthKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
@@ -38,8 +36,8 @@ export function monthWindows(count = 7, now: Date = new Date()): MonthWindow[] {
       key: monthKey(start),
       start,
       end,
-      label: SHORT.format(start),
-      longLabel: LONG.format(start),
+      label: formatDate(start, "month"),
+      longLabel: formatDate(start, "monthLong"),
       isCurrent: n === 0,
     });
   }

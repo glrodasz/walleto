@@ -4,7 +4,7 @@ import { useUser } from "@auth0/nextjs-auth0/client";
 import { db } from "../firebase/client";
 import { useFirebaseAuth } from "./useFirebaseAuth";
 import { byCreatedAt } from "../utils/sortByCreatedAt";
-import type { Category, Domain } from "../types";
+import type { Category, Domain, IconKey } from "../types";
 import type { CategoryUpdate } from "../schemas";
 
 export function useCategories(domain?: Domain) {
@@ -49,6 +49,7 @@ export function useCategories(domain?: Domain) {
     domain: Domain;
     name: string;
     parentId?: string;
+    icon?: IconKey;
   }): Promise<string> => {
     const res = await fetch("/api/categories", {
       method: "POST",

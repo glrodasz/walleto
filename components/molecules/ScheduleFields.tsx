@@ -1,3 +1,4 @@
+import { formatDate } from "../../helpers/dates";
 import { Select } from "../atoms/Select";
 import { TextField } from "../atoms/TextField";
 import type { Frequency } from "../../types";
@@ -27,7 +28,7 @@ const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => ({
 
 const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
   value: String(i),
-  label: new Intl.DateTimeFormat("en", { month: "short" }).format(new Date(2026, i, 1)),
+  label: formatDate(new Date(2026, i, 1), "month"),
 }));
 
 /**

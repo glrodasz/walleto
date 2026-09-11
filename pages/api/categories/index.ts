@@ -34,7 +34,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
-    const { domain, name, parentId } = parsed.data;
+    const { domain, name, parentId, icon } = parsed.data;
 
     // Validate parentId: must exist, belong to this user, same domain, be a root category
     if (parentId) {
@@ -75,6 +75,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       domain,
       name,
       ...(parentId ? { parentId } : {}),
+      ...(icon ? { icon } : {}),
       isDefault: false,
       archived: false,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),

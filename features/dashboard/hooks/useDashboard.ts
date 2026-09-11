@@ -183,6 +183,7 @@ export function useDashboard() {
     investmentsByCategory,
     savingsByCategory,
     currencyMix,
+    categories,
     recentPayments,
     upcoming,
     markPaid,

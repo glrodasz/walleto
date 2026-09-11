@@ -1,3 +1,4 @@
+import { formatDate } from "../../../helpers/dates";
 import { convertedAmount } from "../../../helpers/aggregations";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { convert } from "../../../helpers/fx";
@@ -146,8 +147,6 @@ export function currentValue(
   );
 }
 
-const MONTH_LABEL = new Intl.DateTimeFormat("en", { month: "short" });
-
 /**
  * Invested vs value, one point per month for the last `months` months, for
  * FlowChart (`income` = invested, `expense` = value — the caller relabels).
@@ -172,7 +171,7 @@ export function valuationSeries(
     const monthEnd = i === 0 ? now : new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59);
     const invested = deposits.filter((d) => d.at <= monthEnd).reduce((s, d) => s + d.amount, 0);
     const value = valueAt(deposits, checks, rate, monthEnd);
-    points.push({ label: MONTH_LABEL.format(monthStart), income: invested, expense: value });
+    points.push({ label: formatDate(monthStart, "month"), income: invested, expense: value });
   }
   return points;
 }

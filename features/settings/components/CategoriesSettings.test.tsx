@@ -4,6 +4,7 @@ import { CategoriesSettings } from "./CategoriesSettings";
 const create = jest.fn().mockResolvedValue("new1");
 const rename = jest.fn().mockResolvedValue(undefined);
 const remove = jest.fn().mockResolvedValue(undefined);
+const update = jest.fn().mockResolvedValue(undefined);
 let lastDomain = "";
 jest.mock("../../../hooks/useCategories", () => ({
   useCategories: (domain: string) => {
@@ -22,6 +23,7 @@ jest.mock("../../../hooks/useCategories", () => ({
       create,
       rename,
       remove,
+      update,
     };
   },
 }));
@@ -30,6 +32,7 @@ beforeEach(() => {
   create.mockClear();
   rename.mockClear();
   remove.mockClear();
+  update.mockClear();
 });
 
 describe("CategoriesSettings", () => {
@@ -63,5 +66,13 @@ describe("CategoriesSettings", () => {
     fireEvent.change(box, { target: { value: "Travel" } });
     fireEvent.keyDown(box, { key: "Enter" });
     await waitFor(() => expect(create).toHaveBeenCalledWith({ domain: "EXPENSE", name: "Travel" }));
+  });
+
+  it("changes a category's icon from the kebab", async () => {
+    render(<CategoriesSettings />);
+    fireEvent.click(screen.getByRole("button", { name: "Actions for Rent" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Change icon" }));
+    fireEvent.click(screen.getByRole("radio", { name: "plane" }));
+    await waitFor(() => expect(update).toHaveBeenCalledWith("e2", { icon: "plane" }));
   });
 });

@@ -1,3 +1,4 @@
+import { categoryIdSet } from "../../../helpers/categoryTree";
 import { useMemo } from "react";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
@@ -37,13 +38,9 @@ export interface CategoryMonthRow {
   planned: number;
 }
 
-/** A root category owns its own id plus every child's. */
-export function categoryIdSet(root: Category, categories: Category[]): Set<string> {
-  const ids = new Set<string>();
-  if (root.id) ids.add(root.id);
-  for (const c of categories) if (c.id && c.parentId === root.id) ids.add(c.id);
-  return ids;
-}
+// Kept here for existing importers; the tree helpers now live with the other
+// shared helpers so charts and filters can fold children into roots too.
+export { categoryIdSet };
 
 export function categoryMonthRows(
   categories: Category[],

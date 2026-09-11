@@ -52,7 +52,19 @@ describe("CategoryField", () => {
     fireEvent.keyDown(input, { key: "Enter" });
 
     await waitFor(() => expect(onChange).toHaveBeenCalledWith("new1"));
-    expect(createCategory).toHaveBeenCalledWith("Travel");
+    expect(createCategory).toHaveBeenCalledWith("Travel", undefined);
+  });
+
+  it("sends a picked icon along with the new category", async () => {
+    const { onChange, createCategory } = setup();
+    fireEvent.click(screen.getByRole("button", { name: /New category/ }));
+    fireEvent.click(screen.getByRole("radio", { name: "plane" }));
+    const input = screen.getByRole("combobox");
+    fireEvent.change(input, { target: { value: "Trips" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith("new1"));
+    expect(createCategory).toHaveBeenCalledWith("Trips", "plane");
   });
 
   it("reports a failed creation without selecting anything", async () => {

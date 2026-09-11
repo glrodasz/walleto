@@ -18,6 +18,7 @@ import {
 import type { ValueSelector } from "../helpers/valuation";
 import { ValuationModal } from "./ValuationModal";
 import type { Currency, InterestRate, InvestmentValuation, Transaction } from "../../../types";
+import { useDateFormat } from "../../../hooks/usePreferences";
 
 interface Props {
   selector: ValueSelector;
@@ -36,7 +37,6 @@ interface Props {
 }
 
 const CHART_MONTHS = 12;
-const DATE = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" });
 
 /**
  * What one position is worth versus what went into it: the latest value
@@ -54,6 +54,7 @@ export function InvestmentValuePanel({
   currency,
   accent = "var(--domain-investment)",
 }: Props) {
+  const { formatDate } = useDateFormat();
   const valuations = useMemo(
     () =>
       allValuations
@@ -85,7 +86,7 @@ export function InvestmentValuePanel({
   );
 
   const valueMeta = latest
-    ? `checked ${DATE.format(latest.asOf.toDate())}${rate ? `, ${formatInterestRate(rate)} since` : ""}`
+    ? `checked ${formatDate(latest.asOf.toDate(), "dayYear")}${rate ? `, ${formatInterestRate(rate)} since` : ""}`
     : rate
       ? `estimated at ${formatInterestRate(rate)}`
       : "no value check yet";
@@ -152,7 +153,7 @@ export function InvestmentValuePanel({
         <ul className="history">
           {valuations.map((v) => (
             <li key={v.id} className="row">
-              <span className="row-date">{DATE.format(v.asOf.toDate())}</span>
+              <span className="row-date">{formatDate(v.asOf.toDate(), "dayYear")}</span>
               <span className="row-figures">
                 <span className="row-value">{formatAmount(v.value, v.currency)}</span>
                 <span className={`row-pct ${v.gainPct >= 0 ? "up" : "down"}`}>
@@ -162,7 +163,7 @@ export function InvestmentValuePanel({
                 {v.note && <span className="row-note">{v.note}</span>}
               </span>
               <KebabMenu
-                aria-label={`Actions for valuation ${DATE.format(v.asOf.toDate())}`}
+                aria-label={`Actions for valuation ${formatDate(v.asOf.toDate(), "dayYear")}`}
                 actions={[
                   { label: "Edit", onSelect: () => setModal({ open: true, editing: v }) },
                   {

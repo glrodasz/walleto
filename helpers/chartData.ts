@@ -1,6 +1,7 @@
 import { convertedAmount } from "./aggregations";
+import { formatDate } from "./dates";
 import type { MoneyContext, MoneyFields } from "./aggregations";
-import type { Domain } from "../types";
+import type { DateFormat, Domain, WeekStart } from "../types";
 
 export type ChartBucket = "day" | "week" | "month";
 
@@ -30,12 +31,12 @@ export function toDate(occurredAt: unknown): Date {
   return typeof ts?.toDate === "function" ? ts.toDate() : new Date(occurredAt as string);
 }
 
-export function bucketStart(date: Date, bucket: ChartBucket): Date {
+/** `weekStart` as in Date#getDay(): 1 = Monday (default), 0 = Sunday. */
+export function bucketStart(date: Date, bucket: ChartBucket, weekStart: WeekStart = 1): Date {
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   if (bucket === "day") return d;
   if (bucket === "week") {
-    // Monday-anchored weeks.
-    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    d.setDate(d.getDate() - ((d.getDay() - weekStart + 7) % 7));
     return d;
   }
   return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -49,11 +50,8 @@ export function nextBucketStart(date: Date, bucket: ChartBucket): Date {
   return d;
 }
 
-const DAY_LABEL = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
-const MONTH_LABEL = new Intl.DateTimeFormat("en", { month: "short" });
-
-export function bucketLabel(date: Date, bucket: ChartBucket): string {
-  return bucket === "month" ? MONTH_LABEL.format(date) : DAY_LABEL.format(date);
+export function bucketLabel(date: Date, bucket: ChartBucket, format?: DateFormat): string {
+  return formatDate(date, bucket === "month" ? "month" : "day", format);
 }
 
 /**
@@ -70,19 +68,26 @@ export function bucketLabel(date: Date, bucket: ChartBucket): string {
  */
 export function toFlowSeries(
   transactions: FlowInput[],
-  opts: MoneyContext & { from: Date; to?: Date; bucket: ChartBucket; cumulative?: boolean }
+  opts: MoneyContext & {
+    from: Date;
+    to?: Date;
+    bucket: ChartBucket;
+    cumulative?: boolean;
+    weekStart?: WeekStart;
+    dateFormat?: DateFormat;
+  }
 ): FlowPoint[] {
   const to = opts.to ?? new Date();
   if (to < opts.from) return [];
 
   const points = new Map<number, FlowPoint>();
   for (
-    let cursor = bucketStart(opts.from, opts.bucket);
+    let cursor = bucketStart(opts.from, opts.bucket, opts.weekStart);
     cursor <= to;
     cursor = nextBucketStart(cursor, opts.bucket)
   ) {
     points.set(cursor.getTime(), {
-      label: bucketLabel(cursor, opts.bucket),
+      label: bucketLabel(cursor, opts.bucket, opts.dateFormat),
       income: 0,
       expense: 0,
     });
@@ -90,7 +95,7 @@ export function toFlowSeries(
 
   for (const t of transactions) {
     if (t.domain !== "INCOME" && t.domain !== "EXPENSE") continue;
-    const key = bucketStart(toDate(t.occurredAt), opts.bucket).getTime();
+    const key = bucketStart(toDate(t.occurredAt), opts.bucket, opts.weekStart).getTime();
     const point = points.get(key);
     if (!point) continue;
 

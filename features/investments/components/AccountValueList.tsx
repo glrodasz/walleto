@@ -29,6 +29,7 @@ import type {
   InterestRate,
   InvestmentValuation,
 } from "../../../types";
+import { useDateFormat } from "../../../hooks/usePreferences";
 
 interface Props {
   domain: AccountDomain;
@@ -51,7 +52,6 @@ interface Row {
 
 /** Cost basis needs the domain's whole history, not the page's month. */
 const INCEPTION = new Date(2000, 0, 1);
-const DATE = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
 
 /**
  * Every account / pocket of the domain at a glance — what went in, what it
@@ -62,6 +62,7 @@ const DATE = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
  * runs nowhere else.
  */
 export function AccountValueList({ domain, categories, ctx, currency }: Props) {
+  const { formatDate } = useDateFormat();
   const { accounts, loading: accLoading, error: accError } = useAccounts(domain);
   const { transactions, loading: txLoading } = useDomainTransactions(domain, INCEPTION);
   const { valuations: rawValuations, loading, error } = useAllInvestmentValuations();
@@ -146,7 +147,7 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
                     {r.sub ? `${r.sub} · ` : ""}
                     In {formatAmount(r.invested, currency)}
                     {r.latest
-                      ? ` · checked ${DATE.format(r.latest.asOf.toDate())}`
+                      ? ` · checked ${formatDate(r.latest.asOf.toDate(), "day")}`
                       : r.rate
                         ? " · estimated"
                         : " · no value check yet"}

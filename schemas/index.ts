@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CURRENCIES } from "../constants";
+import { CURRENCIES, ICON_KEYS } from "../constants";
 
 export const CurrencySchema = z.enum(CURRENCIES);
 
@@ -67,14 +67,19 @@ function refineChargedPair(
   }
 }
 
+export const IconKeySchema = z.enum(ICON_KEYS);
+
 export const CategoryInputSchema = z.object({
   domain: DomainSchema,
   name: z.string().min(1).max(40).trim(),
   parentId: z.string().optional(),
+  icon: IconKeySchema.optional(),
 });
 
 export const CategoryUpdateSchema = z.object({
   name: z.string().min(1).max(40).trim().optional(),
+  /** null clears the pick and the name decides again. */
+  icon: IconKeySchema.nullable().optional(),
   hiddenFromChart: z.boolean().optional(),
   archived: z.boolean().optional(),
 });

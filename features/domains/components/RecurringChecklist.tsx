@@ -21,6 +21,7 @@ import type {
   Tag,
   Transaction,
 } from "../../../types";
+import { useDateFormat } from "../../../hooks/usePreferences";
 
 interface Props {
   domain: Domain;
@@ -60,7 +61,6 @@ const hiddenAction = (
 const hiddenTags = (item: RecurrentTransaction) =>
   item.hiddenFromDashboard ? ["Hidden on dashboard"] : undefined;
 
-const DATE = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
 const GROUPS: { status: OccurrenceStatus; title: string }[] = [
   { status: "overdue", title: "Overdue" },
   { status: "due", title: "Due" },
@@ -280,6 +280,7 @@ export function RecurringChecklist({
   onToggleHidden,
   busyId,
 }: Props) {
+  const { formatDate } = useDateFormat();
   const config = DOMAIN_CONFIG[domain];
   const { occurrences, notThisMonth } = useMemo(
     () => monthOccurrences(items, transactions, ctx, window, now),
@@ -325,7 +326,7 @@ export function RecurringChecklist({
                       <OccurrenceRow
                         key={`${id}_${o.occurredAt.toISOString()}`}
                         name={o.item.name}
-                        meta={`${DATE.format(o.occurredAt)} · ${FREQUENCY_LABELS[o.item.frequency]}${details(o.item)}`}
+                        meta={`${formatDate(o.occurredAt, "day")} · ${FREQUENCY_LABELS[o.item.frequency]}${details(o.item)}`}
                         tags={hiddenTags(o.item)}
                         labels={tagNames(o.item.tags, tags)}
                         note={o.item.note}
@@ -370,7 +371,7 @@ export function RecurringChecklist({
                     name={item.name}
                     meta={`${FREQUENCY_LABELS[item.frequency]}${
                       item.nextOccurrence
-                        ? ` · next ${DATE.format(item.nextOccurrence.toDate())}`
+                        ? ` · next ${formatDate(item.nextOccurrence.toDate(), "day")}`
                         : ""
                     }`}
                     amount={formatNative(item.amount, item.currency, currency)}

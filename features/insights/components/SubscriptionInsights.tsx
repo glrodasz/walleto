@@ -6,6 +6,7 @@ import { sumMonthly } from "../../../helpers/aggregations";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { subscriptionCosts } from "../helpers/subscriptionCosts";
 import type { Category, Currency, RecurrentTransaction } from "../../../types";
+import { useDateFormat } from "../../../hooks/usePreferences";
 
 interface Props {
   /** All of the domain's active recurrent items — the predicate does its own filtering. */
@@ -15,8 +16,6 @@ interface Props {
   currency: Currency;
 }
 
-const NEXT_CHARGE_FORMAT = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
-
 /**
  * The mockup calls out subscriptions as a primary surface: what they cost
  * monthly and per year, what share of income they eat, and — when a charged
@@ -24,6 +23,7 @@ const NEXT_CHARGE_FORMAT = new Intl.DateTimeFormat("en", { month: "short", day: 
  * abroad shows the rate actually paid rather than today's market rate.
  */
 export function SubscriptionInsights({ items, categories, ctx, currency }: Props) {
+  const { formatDate } = useDateFormat();
   // Only mounted on the Subscriptions tab, so this listener is scoped to when
   // it's actually needed rather than always running on every expenses visit.
   const { items: incomeItems } = useRecurrentTransactions("INCOME");
@@ -66,7 +66,7 @@ export function SubscriptionInsights({ items, categories, ctx, currency }: Props
                 {formatAmount(sub.annualizedAmount, currency)}/yr
               </span>
               <span className="meta">
-                {sub.nextOccurrence && `Next ${NEXT_CHARGE_FORMAT.format(sub.nextOccurrence)}`}
+                {sub.nextOccurrence && `Next ${formatDate(sub.nextOccurrence, "day")}`}
                 {sub.nextOccurrence && sub.impliedRate !== null && " · "}
                 {sub.impliedRate !== null && `≈${sub.impliedRate.toFixed(2)} implied rate`}
               </span>

@@ -113,6 +113,9 @@ describe("bucketStart / nextBucketStart", () => {
   it("anchors weeks on Monday and strips the time of day", () => {
     const thursday = new Date(2026, 7, 27, 15, 30); // Aug 27 2026 is a Thursday
     expect(bucketStart(thursday, "week")).toEqual(new Date(2026, 7, 24));
+    expect(bucketStart(thursday, "week", 0)).toEqual(new Date(2026, 7, 23));
+    expect(bucketStart(new Date(2026, 7, 23), "week", 0)).toEqual(new Date(2026, 7, 23));
+    expect(bucketStart(new Date(2026, 7, 23), "week", 1)).toEqual(new Date(2026, 7, 17));
     expect(bucketStart(thursday, "day")).toEqual(new Date(2026, 7, 27));
     expect(bucketStart(thursday, "month")).toEqual(new Date(2026, 7, 1));
   });

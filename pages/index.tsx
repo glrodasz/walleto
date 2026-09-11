@@ -2,7 +2,7 @@ import { useUser } from "@auth0/nextjs-auth0/client";
 import { withOnboardingGuard } from "../features/onboarding/helpers/onboardingGuard";
 import { PageLayout } from "../components/organisms/PageLayout";
 import { StatCard } from "../components/molecules/StatCard";
-import { ExpenseBreakdown } from "../features/dashboard/components/ExpenseBreakdown";
+import { CategoryBreakdown } from "../components/molecules/CategoryBreakdown";
 import { RecentPayments } from "../features/dashboard/components/RecentPayments";
 import { UpcomingExpirations } from "../features/dashboard/components/UpcomingExpirations";
 import Skeleton from "../components/Skeleton";
@@ -34,6 +34,7 @@ export default function Dashboard() {
     investmentsByCategory,
     savingsByCategory,
     currencyMix,
+    categories,
     recentPayments,
     upcoming,
     markPaid,
@@ -131,9 +132,13 @@ export default function Dashboard() {
       </section>
 
       <section className="row">
-        <ExpenseBreakdown
+        <CategoryBreakdown
+          title="Top expense categories"
           rows={topWithOther(expensesByCategory, 5)}
+          categories={categories}
+          domain="EXPENSE"
           currency={currency}
+          href="/expenses"
           loading={loading}
         />
         <RecentPayments

@@ -57,3 +57,37 @@ export const FREQUENCY_LABELS: Record<Frequency, string> = {
   QUARTERLY: "Quarterly",
   YEARLY: "Yearly",
 };
+
+/**
+ * Curated category icons, keyed by name. `IconKey` (types) and the Zod enum
+ * derive from this list; the drawings live in components/atoms/Icons.tsx and
+ * the key → component map in components/atoms/CategoryIcon.tsx.
+ */
+export const ICON_KEYS = [
+  "home",
+  "family",
+  "subscriptions",
+  "credit-card",
+  "shield",
+  "shuffle",
+  "briefcase",
+  "building",
+  "piggy",
+  "lifebuoy",
+  "coins",
+  "chart",
+  "bitcoin",
+  "landmark",
+  "car",
+  "cart",
+  "utensils",
+  "heart",
+  "gift",
+  "plane",
+  "book",
+  "zap",
+  "phone",
+  "tag",
+  "wallet",
+  "repeat",
+] as const;

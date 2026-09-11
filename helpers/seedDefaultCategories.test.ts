@@ -54,7 +54,7 @@ describe("seedDefaultCategories", () => {
     expect(created).toBe(1);
     expect(batchSetMock).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ domain: "INCOME", name: "Rent", userId: "user1" })
+      expect.objectContaining({ domain: "INCOME", name: "Rent", userId: "user1", icon: "home" })
     );
   });
 

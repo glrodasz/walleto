@@ -38,13 +38,12 @@ import type {
   RecurrentTransaction,
   Transaction,
 } from "../../../types";
+import { useDateFormat } from "../../../hooks/usePreferences";
 
 const FREQUENCY_OPTIONS = (Object.keys(FREQUENCY_LABELS) as Frequency[]).map((f) => ({
   value: f,
   label: FREQUENCY_LABELS[f],
 }));
-
-const NEXT_DATE = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
 
 const CURRENCY_OPTIONS = SELECTABLE_CURRENCIES.map((c) => ({
   value: c.value,
@@ -102,6 +101,7 @@ export function RecurrentTransactionModal({
   onOpenItem,
   onClose,
 }: Props) {
+  const { formatDate } = useDateFormat();
   const config = DOMAIN_CONFIG[domain];
   const noun = config.noun.replace(/s$/, "");
   const { userDoc } = useUserDoc();
@@ -444,7 +444,7 @@ export function RecurrentTransactionModal({
           categories={categories}
           value={form.categoryId}
           onChange={(categoryId) => patch({ categoryId })}
-          createCategory={(name) => createCategory({ domain, name })}
+          createCategory={(name, icon) => createCategory({ domain, name, icon })}
           newLabel={`New ${config.title.toLowerCase()} category`}
           onError={setFormError}
         />
@@ -467,7 +467,7 @@ export function RecurrentTransactionModal({
               Part of the recurring item <strong>{parent.name}</strong> ·{" "}
               {FREQUENCY_LABELS[parent.frequency]}
               {parent.nextOccurrence
-                ? ` · next ${NEXT_DATE.format(parent.nextOccurrence.toDate())}`
+                ? ` · next ${formatDate(parent.nextOccurrence.toDate(), "day")}`
                 : ""}
             </span>
             {onOpenItem && (
