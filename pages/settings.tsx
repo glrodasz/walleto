@@ -79,7 +79,11 @@ export default function SettingsPage() {
   };
 
   return (
-    <PageLayout title="Settings">
+    <PageLayout
+      title="Settings"
+      subtitle="Manage your preferences, categories, tags, and accounts."
+      hideMonth
+    >
       <div className="column">
         <TabStrip label="Section" tabs={SECTIONS} value={section} onChange={selectSection} />
 

@@ -51,7 +51,7 @@ export default function MethodsPage() {
   };
 
   return (
-    <PageLayout title="Payment methods" hideCurrency>
+    <PageLayout title="Payment methods" hideCurrency hideMonth>
       <Card>
         <SectionTitle title="Add a method" />
         <p className="hint">Cards, bank accounts and wallets you use for incomes and expenses.</p>

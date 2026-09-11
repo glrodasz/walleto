@@ -30,6 +30,13 @@ export type RecurrentTransactionType =
   | "UTILITY"
   | "OTHER";
 
+export type ThemePreference = "light" | "dark" | "system";
+/** MDY "Sep 6" · DMY "6 Sep" · YMD "2026-09-06". */
+export type DateFormat = "MDY" | "DMY" | "YMD";
+/** 0 = Sunday, 1 = Monday, as in Date#getDay(). */
+export type WeekStart = 0 | 1;
+export type Language = "en";
+
 export interface User {
   id: string;
   mainCurrency: Currency;
@@ -37,6 +44,10 @@ export interface User {
   displayCurrency?: Currency;
   onboardingCompleted: boolean;
   onboardingMode?: "MAGIC" | "ASSISTED";
+  theme?: ThemePreference;
+  dateFormat?: DateFormat;
+  weekStart?: WeekStart;
+  language?: Language;
   createdAt: Timestamp;
 }
 

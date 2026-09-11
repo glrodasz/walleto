@@ -55,7 +55,7 @@ export function Modal({ open, title, onClose, children }: Props) {
           position: fixed;
           inset: 0;
           z-index: var(--z-overlay, 200);
-          background: rgba(10, 10, 15, 0.7);
+          background: var(--scrim);
           backdrop-filter: blur(2px);
           display: flex;
           align-items: center;

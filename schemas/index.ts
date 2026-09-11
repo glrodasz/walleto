@@ -273,12 +273,23 @@ export const InvestmentValuationUpdateSchema = z
   })
   .refine((v) => Object.keys(v).length > 0, { message: "At least one field is required" });
 
+export const ThemePreferenceSchema = z.enum(["light", "dark", "system"]);
+/** MDY "Sep 6" · DMY "6 Sep" · YMD "2026-09-06". */
+export const DateFormatSchema = z.enum(["MDY", "DMY", "YMD"]);
+/** 0 = Sunday, 1 = Monday, as in Date#getDay(). */
+export const WeekStartSchema = z.union([z.literal(0), z.literal(1)]);
+export const LanguageSchema = z.enum(["en"]);
+
 export const UserUpdateSchema = z
   .object({
     mainCurrency: CurrencySchema.optional(),
     displayCurrency: CurrencySchema.optional(),
     onboardingCompleted: z.boolean().optional(),
     onboardingMode: z.enum(["MAGIC", "ASSISTED"]).optional(),
+    theme: ThemePreferenceSchema.optional(),
+    dateFormat: DateFormatSchema.optional(),
+    weekStart: WeekStartSchema.optional(),
+    language: LanguageSchema.optional(),
   })
   .refine((v) => Object.keys(v).length > 0, {
     message: "At least one field is required",

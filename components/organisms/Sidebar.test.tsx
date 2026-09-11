@@ -42,13 +42,26 @@ describe("Sidebar mobile navigation", () => {
     for (const [label, href] of [
       ["Savings", "/savings"],
       ["Prospect", "/prospect"],
-      ["Methods", "/methods"],
       ["Settings", "/settings"],
       ["Log out", "/api/auth/logout"],
     ]) {
       expect(within(sheet).getByRole("link", { name: label })).toHaveAttribute("href", href);
     }
     expect(within(sheet).getByText("ada@example.com")).toBeInTheDocument();
+    // Payment methods moved into Settings; the sheet no longer links to /methods.
+    expect(within(sheet).queryByRole("link", { name: "Methods" })).toBeNull();
+  });
+
+  it("lists Dashboard first and Settings as the only account destination on desktop", () => {
+    render(<Sidebar />);
+    const nav = screen.getByRole("navigation", { name: "Main navigation" });
+    const links = within(nav).getAllByRole("link");
+    expect(links[0]).toHaveAttribute("href", "/");
+    expect(within(nav).queryByRole("link", { name: "Methods" })).toBeNull();
+    expect(within(nav).getByRole("link", { name: "Settings" })).toHaveAttribute(
+      "href",
+      "/settings"
+    );
   });
 
   it("closes the sheet when a destination is chosen and marks More active on those pages", () => {

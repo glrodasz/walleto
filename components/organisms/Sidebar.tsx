@@ -2,134 +2,63 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useUser } from "@auth0/nextjs-auth0/client";
+import type { ComponentType } from "react";
 import { Modal } from "../molecules/Modal";
+import {
+  ArrowDown,
+  ArrowUp,
+  Circle,
+  Compass,
+  Home,
+  MoreHorizontal,
+  Settings,
+  TrendingUp,
+  Waves,
+} from "../atoms/Icons";
+import type { IconProps } from "../atoms/Icons";
 
 interface NavItem {
   label: string;
   href: string;
+  icon: ComponentType<IconProps>;
 }
 
-/** Grouped so eight destinations read as three ideas instead of one long list. */
+const DASHBOARD: NavItem = { label: "Dashboard", href: "/", icon: Home };
+
+/** Grouped so seven destinations read as three ideas instead of one long list. */
 const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
-  {
-    title: "Overview",
-    items: [{ label: "Dashboard", href: "/" }],
-  },
   {
     title: "Money",
     items: [
-      { label: "Incomes", href: "/incomes" },
-      { label: "Expenses", href: "/expenses" },
-      { label: "Investments", href: "/investments" },
-      { label: "Savings", href: "/savings" },
+      { label: "Incomes", href: "/incomes", icon: ArrowUp },
+      { label: "Expenses", href: "/expenses", icon: ArrowDown },
+      { label: "Investments", href: "/investments", icon: TrendingUp },
+      { label: "Savings", href: "/savings", icon: Circle },
     ],
   },
   {
     title: "Planning",
-    items: [{ label: "Prospect", href: "/prospect" }],
+    items: [{ label: "Prospect", href: "/prospect", icon: Compass }],
   },
   {
     title: "Account",
-    items: [
-      { label: "Methods", href: "/methods" },
-      { label: "Settings", href: "/settings" },
-    ],
+    items: [{ label: "Settings", href: "/settings", icon: Settings }],
   },
 ];
 
 /** Four direct tabs; everything else sits one tap away behind "More". */
 const BOTTOM_NAV: NavItem[] = [
-  { label: "Home", href: "/" },
-  { label: "Incomes", href: "/incomes" },
-  { label: "Expenses", href: "/expenses" },
-  { label: "Invest", href: "/investments" },
+  { label: "Home", href: "/", icon: Home },
+  { label: "Incomes", href: "/incomes", icon: ArrowUp },
+  { label: "Expenses", href: "/expenses", icon: ArrowDown },
+  { label: "Invest", href: "/investments", icon: TrendingUp },
 ];
 
 const MORE_NAV: NavItem[] = [
-  { label: "Savings", href: "/savings" },
-  { label: "Prospect", href: "/prospect" },
-  { label: "Methods", href: "/methods" },
-  { label: "Settings", href: "/settings" },
+  { label: "Savings", href: "/savings", icon: Circle },
+  { label: "Prospect", href: "/prospect", icon: Compass },
+  { label: "Settings", href: "/settings", icon: Settings },
 ];
-
-function NavIcon({ href, size = 20 }: { href: string; size?: number }) {
-  const p = {
-    width: size,
-    height: size,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.75,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    "aria-hidden": true,
-  };
-  if (href === "/")
-    return (
-      <svg {...p}>
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-        <polyline points="9 22 9 12 15 12 15 22" />
-      </svg>
-    );
-  if (href === "/incomes")
-    return (
-      <svg {...p}>
-        <line x1="12" y1="19" x2="12" y2="5" />
-        <polyline points="5 12 12 5 19 12" />
-      </svg>
-    );
-  if (href === "/expenses")
-    return (
-      <svg {...p}>
-        <line x1="12" y1="5" x2="12" y2="19" />
-        <polyline points="19 12 12 19 5 12" />
-      </svg>
-    );
-  if (href === "/investments")
-    return (
-      <svg {...p}>
-        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-        <polyline points="17 6 23 6 23 12" />
-      </svg>
-    );
-  if (href === "/savings")
-    return (
-      <svg {...p}>
-        <circle cx="12" cy="13" r="7" />
-        <path d="M12 6V4" />
-        <path d="M9 17v1a3 3 0 0 0 6 0v-1" />
-        <path d="M19 13c0-1.1-.4-2.1-1-3" />
-      </svg>
-    );
-  if (href === "/prospect")
-    return (
-      <svg {...p}>
-        <circle cx="12" cy="12" r="10" />
-        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
-      </svg>
-    );
-  if (href === "/methods")
-    return (
-      <svg {...p}>
-        <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-        <line x1="1" y1="10" x2="23" y2="10" />
-      </svg>
-    );
-  if (href === "#more")
-    return (
-      <svg {...p}>
-        <circle cx="5" cy="12" r="1.5" />
-        <circle cx="12" cy="12" r="1.5" />
-        <circle cx="19" cy="12" r="1.5" />
-      </svg>
-    );
-  return (
-    <svg {...p}>
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-    </svg>
-  );
-}
 
 export function Sidebar() {
   const { pathname } = useRouter();
@@ -140,27 +69,38 @@ export function Sidebar() {
   const initial = name.trim().charAt(0).toUpperCase() || "?";
   const moreActive = MORE_NAV.some((item) => item.href === pathname);
 
+  const navLink = (item: NavItem, size: number) => {
+    const Icon = item.icon;
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        aria-current={pathname === item.href ? "page" : undefined}
+        className={`nav-item${pathname === item.href ? " is-active" : ""}`}
+      >
+        <Icon size={size} />
+        <span>{item.label}</span>
+      </Link>
+    );
+  };
+
   return (
     <>
       {/* ── Desktop sidebar ──────────────────────────── */}
       <aside className="waletto-sidebar">
-        <div className="logo">Waletto</div>
+        <div className="logo">
+          <span className="logo-mark" aria-hidden="true">
+            <Waves size={22} />
+          </span>
+          Waletto
+        </div>
 
         <nav className="nav" aria-label="Main navigation">
+          <div className="section">{navLink(DASHBOARD, 18)}</div>
           {NAV_SECTIONS.map((section) => (
             <div className="section" key={section.title}>
               <span className="section-title">{section.title}</span>
-              {section.items.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  aria-current={pathname === item.href ? "page" : undefined}
-                  className={`nav-item${pathname === item.href ? " is-active" : ""}`}
-                >
-                  <NavIcon href={item.href} size={18} />
-                  <span>{item.label}</span>
-                </Link>
-              ))}
+              {section.items.map((item) => navLink(item, 18))}
             </div>
           ))}
         </nav>
@@ -184,17 +124,20 @@ export function Sidebar() {
 
       {/* ── Mobile bottom nav ────────────────────────── */}
       <nav className="waletto-bnav" aria-label="Mobile navigation">
-        {BOTTOM_NAV.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            aria-current={pathname === item.href ? "page" : undefined}
-            className={`bnav-item${pathname === item.href ? " is-active" : ""}`}
-          >
-            <NavIcon href={item.href} size={22} />
-            <span>{item.label}</span>
-          </Link>
-        ))}
+        {BOTTOM_NAV.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={pathname === item.href ? "page" : undefined}
+              className={`bnav-item${pathname === item.href ? " is-active" : ""}`}
+            >
+              <Icon size={22} />
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
         <button
           type="button"
           className={`bnav-item bnav-more${moreActive ? " is-active" : ""}`}
@@ -202,25 +145,28 @@ export function Sidebar() {
           aria-expanded={moreOpen}
           onClick={() => setMoreOpen(true)}
         >
-          <NavIcon href="#more" size={22} />
+          <MoreHorizontal size={22} />
           <span>More</span>
         </button>
       </nav>
 
       <Modal open={moreOpen} title="More" onClose={() => setMoreOpen(false)}>
         <div className="more">
-          {MORE_NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={pathname === item.href ? "page" : undefined}
-              className={`more-item${pathname === item.href ? " is-active" : ""}`}
-              onClick={() => setMoreOpen(false)}
-            >
-              <NavIcon href={item.href} size={20} />
-              <span>{item.label}</span>
-            </Link>
-          ))}
+          {MORE_NAV.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={pathname === item.href ? "page" : undefined}
+                className={`more-item${pathname === item.href ? " is-active" : ""}`}
+                onClick={() => setMoreOpen(false)}
+              >
+                <Icon size={20} />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
           <div className="more-account">
             <span className="avatar" aria-hidden="true">
               {initial}
@@ -245,14 +191,16 @@ export function Sidebar() {
        */}
       <style jsx>{`
         .waletto-sidebar {
-          width: 232px;
+          width: 236px;
           flex-shrink: 0;
-          background: var(--bg-1);
+          background: var(--glass-strong);
+          backdrop-filter: blur(var(--glass-blur));
+          -webkit-backdrop-filter: blur(var(--glass-blur));
           border-right: 1px solid var(--line);
           display: flex;
           flex-direction: column;
           gap: 28px;
-          padding: 24px 12px 16px;
+          padding: 24px 14px 16px;
           height: 100vh;
           position: sticky;
           top: 0;
@@ -260,12 +208,19 @@ export function Sidebar() {
         }
 
         .logo {
-          font-family: var(--font-display, "Space Grotesk", system-ui, sans-serif);
+          display: flex;
+          align-items: center;
+          gap: 8px;
           font-size: 1.25rem;
           font-weight: 700;
           color: var(--fg-0);
           padding: 0 10px;
           letter-spacing: -0.03em;
+        }
+
+        .logo-mark {
+          display: inline-flex;
+          color: var(--accent);
         }
 
         .nav {
@@ -283,25 +238,22 @@ export function Sidebar() {
 
         .section-title {
           padding: 0 10px 6px;
-          font-size: 0.66rem;
-          font-weight: 700;
-          letter-spacing: 0.09em;
-          text-transform: uppercase;
+          font-size: 0.7rem;
+          font-weight: 600;
+          letter-spacing: 0.02em;
           color: var(--fg-2);
-          opacity: 0.75;
         }
 
         .nav :global(.nav-item) {
           display: flex;
           align-items: center;
-          gap: 10px;
-          padding: 9px 10px;
-          border-radius: var(--r-sm);
-          border-left: 2px solid transparent;
-          font-size: 0.875rem;
+          gap: 12px;
+          padding: 10px 12px;
+          border-radius: var(--r-md);
+          font-size: 0.9rem;
           font-weight: 500;
           line-height: 1;
-          color: var(--fg-2);
+          color: var(--fg-1);
           text-decoration: none;
           transition:
             background 0.15s,
@@ -319,9 +271,8 @@ export function Sidebar() {
         }
 
         .nav :global(.nav-item.is-active) {
-          background: var(--bg-2);
+          background: var(--accent-soft);
           color: var(--accent);
-          border-left-color: var(--accent);
           font-weight: 600;
         }
 
@@ -342,11 +293,11 @@ export function Sidebar() {
 
         .avatar {
           flex-shrink: 0;
-          width: 30px;
-          height: 30px;
+          width: 32px;
+          height: 32px;
           border-radius: 50%;
-          background: var(--bg-3);
-          color: var(--fg-1);
+          background: var(--accent);
+          color: var(--on-accent);
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -378,9 +329,9 @@ export function Sidebar() {
         }
 
         .logout {
-          font-size: 0.78rem;
-          font-weight: 600;
-          color: var(--fg-2);
+          font-size: 0.8rem;
+          font-weight: 500;
+          color: var(--fg-1);
           text-decoration: none;
           padding: 2px 0;
         }
@@ -397,7 +348,9 @@ export function Sidebar() {
           height: 64px;
           display: none;
           align-items: stretch;
-          background: var(--bg-1);
+          background: var(--glass-strong);
+          backdrop-filter: blur(var(--glass-blur));
+          -webkit-backdrop-filter: blur(var(--glass-blur));
           border-top: 1px solid var(--line);
           z-index: var(--z-nav, 100);
           padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -444,7 +397,7 @@ export function Sidebar() {
           gap: 12px;
           min-height: 48px;
           padding: 0 10px;
-          border-radius: var(--r-sm);
+          border-radius: var(--r-md);
           font-size: 0.95rem;
           font-weight: 500;
           color: var(--fg-1);
@@ -453,7 +406,7 @@ export function Sidebar() {
 
         .more :global(.more-item.is-active) {
           color: var(--accent);
-          background: var(--bg-2);
+          background: var(--accent-soft);
         }
 
         .more-account {

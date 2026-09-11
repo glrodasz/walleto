@@ -2,16 +2,22 @@ import type { ReactNode } from "react";
 import Head from "next/head";
 import { Sidebar } from "./Sidebar";
 import { CurrencySelector } from "../molecules/CurrencySelector";
+import { MonthPicker } from "../molecules/MonthPicker";
 import { CreateLauncher } from "../../features/create/components/CreateLauncher";
 import { useMoneyContext } from "../../hooks/useMoneyContext";
+import { useSelectedMonth } from "../../hooks/useSelectedMonth";
 import type { Domain } from "../../types";
 
 interface Props {
   title: string;
+  /** One line under the title saying what the page is for. */
+  subtitle?: string;
   /** The page's domain, so the create button skips the domain question. */
   domain?: Domain;
-  /** Pages with no money on them (Methods) skip the display-currency switcher. */
+  /** Pages with no money on them skip the display-currency switcher. */
   hideCurrency?: boolean;
+  /** Pages that are not about one month (Settings) skip the month picker. */
+  hideMonth?: boolean;
   children: ReactNode;
 }
 
@@ -20,15 +26,15 @@ interface Props {
  * the mobile create launcher must exist on every page, and every page is
  * built on this layout.
  */
-export function PageLayout({ title, domain, hideCurrency, children }: Props) {
-  // The display currency is a property of the whole app, so its switcher
-  // lives in every page header, not only on the dashboard.
+export function PageLayout({ title, subtitle, domain, hideCurrency, hideMonth, children }: Props) {
+  // The display currency and the selected month are properties of the whole
+  // app, so their controls live in every page header, not only on the dashboard.
   const { target, setDisplayCurrency } = useMoneyContext();
+  const month = useSelectedMonth();
   return (
     <>
       <Head>
         <title>{title} — Waletto</title>
-        <meta name="theme-color" content="#0A0A0F" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
@@ -37,10 +43,23 @@ export function PageLayout({ title, domain, hideCurrency, children }: Props) {
 
         <div className="content">
           <header className="header">
-            <div className="header-left">
+            <div className="heading">
               <h1 className="page-title">{title}</h1>
-              {!hideCurrency && <CurrencySelector value={target} onChange={setDisplayCurrency} />}
+              {subtitle && <p className="subtitle">{subtitle}</p>}
             </div>
+            {(!hideCurrency || !hideMonth) && (
+              <div className="controls">
+                {!hideCurrency && <CurrencySelector value={target} onChange={setDisplayCurrency} />}
+                {!hideMonth && (
+                  <MonthPicker
+                    value={month.selectedKey}
+                    windows={month.pickerWindows}
+                    onChange={month.select}
+                    onStep={month.step}
+                  />
+                )}
+              </div>
+            )}
           </header>
 
           <main className="main">{children}</main>
@@ -53,7 +72,6 @@ export function PageLayout({ title, domain, hideCurrency, children }: Props) {
         .app {
           display: flex;
           min-height: 100vh;
-          background: var(--bg-0);
         }
 
         .content {
@@ -65,32 +83,44 @@ export function PageLayout({ title, domain, hideCurrency, children }: Props) {
 
         .header {
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           justify-content: space-between;
-          padding: 20px 28px;
-          border-bottom: 1px solid var(--line);
-          gap: 12px;
+          gap: 16px;
+          padding: 32px 32px 8px;
         }
 
-        .header-left {
+        .heading {
           display: flex;
-          align-items: center;
-          gap: 10px;
+          flex-direction: column;
+          gap: 4px;
           min-width: 0;
         }
 
         .page-title {
           margin: 0;
-          font-size: 1.1rem;
+          font-size: 1.9rem;
           font-weight: 700;
+          letter-spacing: -0.03em;
           color: var(--fg-0);
-          white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
 
+        .subtitle {
+          margin: 0;
+          font-size: 0.95rem;
+          color: var(--fg-1);
+        }
+
+        .controls {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-shrink: 0;
+        }
+
         .main {
-          padding: 24px 28px 96px;
+          padding: 16px 32px 96px;
           display: flex;
           flex-direction: column;
           gap: 20px;
@@ -98,15 +128,25 @@ export function PageLayout({ title, domain, hideCurrency, children }: Props) {
 
         @media (max-width: 767px) {
           .header {
-            padding: 14px 16px;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 20px 16px 4px;
           }
 
           .page-title {
-            font-size: 1rem;
+            font-size: 1.5rem;
+          }
+
+          .subtitle {
+            font-size: 0.85rem;
+          }
+
+          .controls {
+            flex-wrap: wrap;
           }
 
           .main {
-            padding: 16px;
+            padding: 12px 16px;
             /* Clear the fixed bottom nav (64px + safe area) and the floating
                create button above it, so the last row is never hidden. */
             padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));

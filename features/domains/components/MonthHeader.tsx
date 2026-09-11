@@ -165,7 +165,7 @@ export function MonthHeader({
         .month.is-selected {
           background: ${config.accent};
           border-color: ${config.accent};
-          color: #0a0a0f;
+          color: var(--on-accent);
         }
 
         .label {

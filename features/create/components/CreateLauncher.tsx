@@ -115,7 +115,7 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
           border: none;
           border-radius: 50%;
           background: var(--accent);
-          color: #0a0a0f;
+          color: var(--on-accent);
           align-items: center;
           justify-content: center;
           cursor: pointer;

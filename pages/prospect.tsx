@@ -63,7 +63,7 @@ export default function ProspectPage() {
   );
 
   return (
-    <PageLayout title="Prospect">
+    <PageLayout title="Prospect" hideMonth>
       {error && <ErrorState error={error} />}
 
       <section className="row">

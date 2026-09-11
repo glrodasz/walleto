@@ -46,7 +46,6 @@ export function OnboardingLayout({
     <>
       <Head>
         <title>Assisted setup — Waletto</title>
-        <meta name="theme-color" content="#0A0A0F" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 

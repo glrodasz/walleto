@@ -56,7 +56,7 @@ export function Button({
 
         .btn--primary {
           background: var(--accent);
-          color: #0a0a0f;
+          color: var(--on-accent);
         }
 
         .btn--secondary {

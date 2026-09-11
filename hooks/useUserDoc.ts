@@ -3,14 +3,18 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { db } from "../firebase/client";
 import { useFirebaseAuth } from "./useFirebaseAuth";
-import type { Currency } from "../types";
+import type { Currency, DateFormat, Language, ThemePreference, WeekStart } from "../types";
 import type { UserUpdate } from "../schemas";
 
-interface UserDoc {
+export interface UserDoc {
   mainCurrency: Currency;
   displayCurrency?: Currency;
   onboardingCompleted: boolean;
   onboardingMode?: "MAGIC" | "ASSISTED";
+  theme?: ThemePreference;
+  dateFormat?: DateFormat;
+  weekStart?: WeekStart;
+  language?: Language;
 }
 
 export function useUserDoc() {

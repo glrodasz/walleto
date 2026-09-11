@@ -10,7 +10,6 @@ export default function LoginError() {
     <>
       <Head>
         <title>Sign-in failed · Sublr</title>
-        <meta name="theme-color" content="#0A0A0F" />
       </Head>
       <main className="wrap">
         <section className="panel" role="alert">
@@ -107,7 +106,7 @@ export default function LoginError() {
 
         .primary {
           background: var(--accent, #7cffb2);
-          color: #0a0a0f;
+          color: var(--on-accent);
           border: 1px solid var(--accent, #7cffb2);
         }
 
