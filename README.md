@@ -39,12 +39,12 @@ rates into a per-user display currency.
 - **Prospect** (`/prospect`) — a what-if simulator: check any recurring
   expense, investment or saving to see the monthly/annual amount it would
   free and how your net would change, projected 6 or 12 months out.
-- **Methods** (`/methods`) — payment methods CRUD (cards, wallets, bank
-  transfers, cash, crypto), grouped by type and sorted by name.
-- **Settings** (`/settings`) — account info, main reporting currency,
-  root categories per domain (rename, add, archive), tags (rename, add,
-  archive), investment accounts and savings pockets (add, edit, archive),
-  redo onboarding.
+- **Settings** (`/settings`) — account info, main and display currency,
+  preferences (theme light / dark / system, date format, week start,
+  language), root categories per domain with icons (rename, add, archive),
+  tags (rename, add, archive), payment methods (cards, wallets, bank
+  transfers, cash, crypto), investment accounts and savings pockets (add,
+  edit, archive), redo onboarding. `/methods` redirects here.
 
 One-off transactions (a coffee, an invoice) are recorded through the create
 button — the header's New buttons on desktop, the floating "+" on phones —

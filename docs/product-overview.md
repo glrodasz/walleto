@@ -161,278 +161,124 @@ to prefill during onboarding), and a daily cache of exchange rates.
 
 Three screens are described here: the dashboard, the domain page (one page
 shared by all four domains) and settings. Every screen sits in the same shell —
-a left sidebar on desktop, a bottom tab bar on phones, a header carrying the
-page title and the display-currency switcher, and a floating "+" button.
+a left sidebar on desktop, a bottom tab bar on phones, and a header carrying
+the page title, a one-line subtitle, the display-currency switcher and the
+**month picker** ("September 2026", with previous/next arrows). The month is
+app-wide: the dashboard and the domain pages all speak about the same month,
+it survives navigation, and a link can carry it (`?month=2026-07`). A floating
+"+" button is the single entry point for creating anything.
 
-The sidebar groups navigation as **Overview** (Dashboard), **Domains**
-(Incomes, Expenses, Investments, Savings), **Plan** (Prospect) and **Manage**
-(Methods, Settings). The phone tab bar shows only Home, Incomes, Expenses and
-Invest, with everything else behind a "More" sheet.
+The sidebar lists **Dashboard**, then **Money** (Incomes, Expenses,
+Investments, Savings), **Planning** (Prospect) and **Account** (Settings). The
+phone tab bar shows Home, Incomes, Expenses and Invest, with the rest behind a
+"More" sheet.
+
+The interface is light by default — frosted "glass" cards over a soft mountain
+backdrop — with a dark variant and a "system" setting that follows the OS.
 
 ---
 
 ### 3.1 Dashboard
 
-**Purpose.** The monthly run-rate of the user's _plan_: what the recurring
-items add up to each month, and what is left over. It is not a report of what
-happened this month — that lives on the domain pages — and the interface says
-so on every card.
-
-Page title is personal: **"Welcome back, Guillermo"**.
+**Purpose.** The monthly run-rate of the user's _plan_ (what the recurring
+items add up to) next to what actually moved. Title: "Good morning, Guillermo"
+(afternoon/evening after noon/six), subtitle "Here's your financial overview
+for September 2026."
 
 Down the page:
 
-**1. Error banners (conditional).** A data error shows the underlying message
-verbatim, including any link it carries. A separate banner appears when
-exchange rates cannot be fetched: _"Exchange rates unavailable — Totals mix
-currencies without conversion right now. They'll correct themselves when rates
-load again."_
-
-**2. Net-flow hero (full width).**
-
-| Element                             | Example                                                                                  |
-| ----------------------------------- | ---------------------------------------------------------------------------------------- |
-| Title, with a pill to its right     | "Net this month" · pill "Recurring"                                                      |
-| The figure, large, coloured by sign | "≈ $2,480.00"                                                                            |
-| Equation line                       | "$6,800.00 in − $2,120.00 out"                                                           |
-| Allocation line                     | "→ savings $1,200.00 · investments $1,000.00"                                            |
-| Footnote                            | "Your recurring plan per month. One-off payments show in Cash flow and Recent payments." |
-
-**3. Four domain cards, in a row: Income, Expenses, Investments, Savings.**
-Each card carries a 3px top border in its domain colour, and:
-
-- The domain name with a **"Recurring"** pill at the top right.
-- The monthly figure, large: "$2,120.00".
-- Up to **two top categories** underneath: "Housing: $1,200.00 · Food: $420.00".
-- A **per-currency share** line, shown only when more than one currency is in
-  play: "USD 68% · SEK 32%".
-- The Expenses card alone carries a **month-over-month delta**, measured on
-  real transactions rather than the plan: "▲ 4.2% more than last month to
-  date". Its colour reads the domain's sentiment — spending less is good,
-  earning less is not.
-
-**4. Cash flow (full width).** Titled "Cash flow" with the note _"Monthly
-totals · this month is still in progress."_ Seven monthly bars, two series —
-income green and expenses red — with the month in progress drawn lighter so a
-half-finished month does not read as a collapse. **This block is built from
-real transactions, unlike the cards above it.**
-
-**5. Three cards in a row.**
-
-- **"Expenses"** with a "View all" link. The top five categories plus an
-  aggregated "Other" row. Each row: name, percentage, and a horizontal bar.
-  Empty: "No data yet".
-- **"Recent payments"**. Five transaction rows, each with the name, its amount
-  in its own currency, and a relative date as metadata: "Today", "3 days ago".
-  Empty: "No data yet".
-- **"Next to expire"**. Five upcoming recurring items, each with the name, the
-  amount and the next due date ("Oct 15"). A kebab menu offers "Mark as paid"
-  and "Hide from dashboard". Empty: "No upcoming items".
-
-**What a designer should know.** The dashboard's central tension is that the
-big numbers are a _forecast_ and the chart below them is _history_, and they
-will rarely agree. The "Recurring" pills are currently the only thing carrying
-that distinction. Loading shows grey skeleton blocks sized to the final cards.
+1. **Error banners** (conditional): data errors verbatim, and the
+   exchange-rates-unavailable notice.
+2. **Monthly plan hero**: the label "MONTHLY PLAN" with a "RECURRING" pill, the
+   net figure ("left to allocate this month"), four mini stats (Income,
+   Expenses, Investments, Savings) with an **allocation bar** splitting the
+   month's income into expenses / investments / savings / left, and the quote
+   _"A clear plan today, a more free tomorrow."_
+3. **Four domain cards**, tinted in their colour, each with an icon, the name
+   (linking to the domain page), the monthly figure, two top categories (amounts
+   for income, shares for the rest), the per-currency mix when currencies are
+   mixed, and "N categories" with a menu.
+4. **Monthly cash flow**: per month, four bars side by side (one per domain),
+   each stacked by its top five categories plus "Other" — or by currency, or
+   plain — over the last 3, 6 or 12 months. Built from real transactions. A
+   legend chip per domain opens the list of slices. Clicking a bar selects that
+   month everywhere.
+5. **Top expense categories** (icon, name, amount, bar, share; "View all") and
+   **Upcoming payments** (calendar-leaf date, name, category, amount; "View
+   all").
+6. A dismissable **tip** at the foot of the page.
 
 ---
 
 ### 3.2 Domain page (Incomes · Expenses · Investments · Savings)
 
-**Purpose.** One month of one domain, three ways: aggregated by category, as a
-raw ledger, and as the plan's checklist. Investments and savings add a fourth
-view for what the money is _worth_.
+| Domain      | Title       | Subtitle                                                      | Accent |
+| ----------- | ----------- | ------------------------------------------------------------- | ------ |
+| Income      | Incomes     | See what comes in, month by month, and where it comes from.   | Green  |
+| Expenses    | Expenses    | Track what you spend, see your patterns, and stay in control. | Red    |
+| Investments | Investments | Follow what you put aside to grow, and what it is worth.      | Cyan   |
+| Savings     | Savings     | Watch your pockets fill up, one deposit at a time.            | Amber  |
 
-All four pages are the same layout with different copy and accent:
+**Month summary** (two panels): **Total spent so far** — the figure, a delta
+pill against the previous month ("↑ 12%", coloured by whether a rise is good
+for the domain) and "Compared to SEK 16,402.18 in August 2026"; **Planned** —
+the expected total, a progress bar, the percentage reached and "SEK 5,361.45
+left" (or "Month total" for a finished month).
 
-| Domain      | Title       | Month verb              | Accent |
-| ----------- | ----------- | ----------------------- | ------ |
-| Income      | Incomes     | "Received in September" | Green  |
-| Expenses    | Expenses    | "Spent in September"    | Red    |
-| Investments | Investments | "Invested in September" | Cyan   |
-| Savings     | Savings     | "Saved in September"    | Amber  |
+**Chart card** ("Monthly expenses · Actual expenses, split by category"): one
+bar per month over the last 7 or 12 months, stacked by the **top five
+categories + Other** in shades of the domain colour, or by **currency** (a
+toggle). The dashed line is the six-month average; the current month carries a
+hatched "still planned" segment; the selected month is highlighted and clicking
+a bar selects it. A "Show hidden" checkbox appears when something is hidden.
+Next to it, **Top categories** for the selected month (icon, name, amount, bar,
+share; "View all" opens the Categories view).
 
-The page is a single column: the chart card on top, the tabbed section below it
-at every width.
+**Views** (a segmented strip, remembered in the URL hash):
 
-#### The chart card
-
-**Month strip.** Seven chips, oldest to newest, horizontally scrollable, the
-selected one highlighted and the current month marked. Selecting one changes
-everything below.
-
-**The month's verdict**, stacked:
-
-- Label: "Spent in September **so far**" (the "so far" appears only for the
-  month in progress).
-- The figure, large: "≈ $1,240.00".
-- A progress bar filling realised against expected.
-- A sentence combining two facts:
-  _"**$380.00** still planned · expected **$1,620.00** · 12% above your average
-  of $1,450.00"_. For a finished month it reads "Month total" instead, and when
-  the plan owes nothing: "Nothing more planned this month". The comparison
-  clause is coloured by whether being above average is good for that domain.
-
-**The bars.** Seven months. A dashed line marks the six-month average. The
-current month carries a lighter segment on top of its bar representing what the
-plan still owes. When more than one currency is in use the bars stack by
-currency with a colour per currency and a legend; otherwise a single bar in the
-domain accent.
-
-**"Show hidden" checkbox**, appearing only when something is hidden:
-_"Show hidden — items hidden from the dashboard and categories hidden from the
-chart"_. Off by default, remembered per domain. It affects the bars and the
-month figure only; the lists always show everything.
-
-#### The tab strip
-
-"Categories · Transactions · Recurring", plus "Value" for investments and
-savings.
-
-#### Categories view
-
-One row per root category, sorted by size, with children folded in:
-
-- Name, followed by an amber **"Hidden on chart"** pill when applicable.
-- Metadata: "12 transactions · 34% · $300.00 planned".
-- A thin progress bar of actual against expected.
-- The total on the right: "$420.00".
-- A chevron, and a kebab offering "Hide from chart" / "Show on chart".
-
-Empty: "Nothing in this month yet".
-
-**Drilldown.** Tapping a row replaces the list with: a "‹ All categories" back
-link, a row of subcategory chips ("All" plus each child) when the category has
-children, and the month's transactions for it under the heading "Household ·
-September". For investments and savings, the value panels for the accounts
-behind that category appear underneath. For the Expenses "Subscriptions"
-category, a subscription cost-insight panel appears.
-
-#### Transactions view
-
-The ledger, newest first, **grouped by day**. Each day has a header with a
-relative label and that day's subtotal: "Today — $47.50", "3 days ago —
-$120.00".
-
-Row anatomy, left to right:
-
-| Part                               | Example                                                                                         |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Name                               | "Netflix"                                                                                       |
-| Pills after the name               | amber "Hidden"; neutral "Trip2026", "Work"                                                      |
-| Note line, when present            | "Shared with Ana"                                                                               |
-| Amount (right, top)                | "COP 62,700"                                                                                    |
-| Charged amount, when different     | "charged $15.49"                                                                                |
-| Metadata (right, under the amount) | "recurring · Monthly" or "recurring · Monthly · Netflix" when the row was renamed, or "one-off" |
-| Kebab                              | "Edit", "Delete"                                                                                |
-
-The list caps at 60 rows and closes with "and 14 more in this period". Empty:
-"Nothing recorded in this period".
-
-Editing a row opens the entry form, which — for a row a recurring item wrote —
-shows a banner: _"Part of the recurring item **Netflix** · Monthly · next Oct
-15"_ with an "Edit the recurring item" action that jumps to the rule.
-
-#### Recurring view
-
-The month's plan as a checklist, in three groups — **Overdue**, **Due**,
-**Paid** — each with a group total on the right.
-
-Row anatomy:
-
-- Name, pills (amber "Hidden on dashboard", neutral tags), an optional note line.
-- Metadata: "Sep 25 · Monthly · Housing · Chase ••4242 (Credit card)" — the
-  date, the cadence, the category and the full payment method.
-- The amount in its own currency.
-- A status pill: "Overdue", "Due", "Paid".
-- A kebab: "Mark as paid", "Edit", "Hide from dashboard", "Stop".
-
-Below the groups, a collapsed fold: **"Not this month (3)"**, holding active
-items that do not fall in the selected month, each showing its cadence and next
-date ("Yearly · next Jan 15"). Empty: "No recurring expenses yet".
-
-#### Value view (investments and savings only)
-
-Titled "Value". One row per account or pocket, plus a single "No account" row
-holding everything unfiled:
-
-- Name, with an interest pill when the account quotes a rate: "SEB savings"
-  · "2.5% yearly".
-- Metadata: "SEB · In $1,000.00 · checked Sep 2", or "· estimated" when the
-  figure comes from compounding interest, or "· no value check yet".
-- The current value and the gain: "$1,024.00" and "+2.4%".
-- A "Record value" button.
-
-Selecting a row opens a panel beneath it: three figures (**Invested**, **Current
-value** with its provenance underneath, **Gain** with a percentage), a
-twelve-month two-line chart of invested against value, and the history of
-recorded checks — each with its date, value, "+100.0% on $130.00" and an
-optional note, with a kebab to edit or delete.
-
-Empty: "Nothing here yet — file a deposit under a pocket to track its value".
-
-**What a designer should know.** This is the densest screen in the app. A
-recurring row can carry a name, two kinds of pill, a note, a four-part metadata
-line, an amount, a status pill and a menu — and it must stay readable on a
-phone. The metadata line is where the pressure is worst.
+- **Transactions** — a table: DATE (sortable), DESCRIPTION (name, tag pills,
+  note, "recurring · Monthly · Netflix" or "one-off"), CATEGORY (icon + name),
+  METHOD (expenses only), AMOUNT (own currency, "charged …" when a pair was
+  recorded), and a menu (Edit, Delete). Above it: a search box, a category
+  filter and a method filter. On phones each row folds into a card. Capped at
+  60 rows with "and N more".
+- **Recurring** — the month's checklist in Overdue / Due / Paid groups, with
+  "Not this month" collapsed underneath (unchanged).
+- **Categories** — one row per root category (icon, name, count, share, planned,
+  mini bar, total) with a drilldown into subcategory chips and that category's
+  transactions table.
+- **Tags** — the month grouped by tag (a payment with two tags counts under
+  both); picking one narrows the Transactions view.
+- **Payment methods** (expenses) — the month grouped by method; picking one
+  narrows the Transactions view.
+- **Value** (investments, savings) — accounts and pockets with their current
+  value, gain and history (unchanged).
 
 ---
 
 ### 3.3 Settings
 
-**Purpose.** Everything the user maintains rather than records: identity,
-reporting currency, and the three lists that entries are filed against.
+Title "Settings", subtitle "Manage your preferences, categories, tags, and
+accounts." A section strip — **General · Categories · Tags · Payment methods ·
+Accounts & pockets** — remembered in the URL hash.
 
-A section tab strip sits at the top — **General · Categories · Tags · Accounts
-& pockets** — above a single column capped at a readable width. Only the
-selected section is shown, and it is remembered in the URL, so a link can point
-straight at one.
+**General** is six cards in two columns:
 
-#### General
+- **Account** — Name, Email, Password and Two-factor authentication rows (the
+  last two link to the sign-in provider's account page when one is
+  configured), "Edit profile", and Log out.
+- **Currency** — Main currency ("Default for new entries."), Display currency
+  ("Used for totals and conversions."), and the supported-currencies list.
+- **Preferences** — Start week on, Date format (with a live example), Language
+  (English), Theme (Light / Dark / System).
+- **Setup** — Redo onboarding.
+- **Data & privacy** — informational rows; export and deletion are not
+  self-service yet and say so.
+- **About** — Version, Built with, Help & support, Feedback.
 
-Three cards:
-
-- **Account** — two label/value rows, "Name" and "Email", and a red "Log out"
-  link.
-- **Currency** — the hint _"Your main currency for reporting. Amounts always
-  stay in the currency they were entered in — this only controls the default
-  target for totals."_ and a narrow currency select.
-- **Setup** — the hint _"Re-run the assisted setup to review your categories,
-  payment methods, and recurring incomes and expenses."_ and a "Redo
-  onboarding" button.
-
-#### Categories
-
-A four-tab strip in the domain accents — Incomes, Expenses, Investments,
-Savings — over the root categories of the selected domain. Each row is the
-name, a small "default" badge for seeded categories, and a kebab with "Rename"
-and "Archive". Renaming swaps the row for an inline field with Save and Cancel.
-Below the list, an "Add category" chip opens a combobox suggesting names not
-already used. Empty: "No categories yet".
-
-#### Tags
-
-The hint _"Labels for any payment or recurring item. Spaces are dropped."_,
-then one row per tag: the name and a kebab with "Rename" and "Archive". An
-"Add tag" chip at the bottom. Renaming to a name that collides with another tag
-is refused with the message _"You already have a tag called 'Trip2026'"_.
-Empty: "No tags yet".
-
-#### Accounts & pockets
-
-A two-tab strip, Investments and Savings. Rows show the account's label —
-"SEB - Savings", the bank or broker before the name — over metadata giving its
-currency and rate: "SEK · 2.5% yearly". The kebab offers "Edit" and "Archive".
-Editing expands the row into a form: Name, Bank or broker, Currency, Interest
-rate % and Period (Yearly or Monthly); emptying the rate clears it. An "Add
-pocket" / "Add account" chip opens the same creator used by the entry forms.
-Empty: "No pockets yet".
-
-**Long lists.** All three lists page at 25 rows, with "Previous · Page 2 of 5 ·
-Next" underneath. Switching domain tabs returns to page one.
-
-**What a designer should know.** These lists are the ones that grow without
-limit — a user may end up with sixty tags. The current answer is pagination;
-there is no search or filter, and no bulk action.
+**Categories** — per domain, each row with its icon; the menu offers Rename,
+Change icon (a grid of 26 icons) and Archive. **Tags**, **Payment methods**
+and **Accounts & pockets** keep their lists (25 per page).
 
 ---
 
@@ -440,56 +286,37 @@ there is no search or filter, and no bulk action.
 
 ### Money
 
-- Figures render in one locale for the whole interface, so grouping is
-  consistent: "$1,150.00", "COP 26,900", "kr 1,240.00". A row whose currency
-  differs from the display currency is written with its ISO code rather than
-  its symbol, because USD, MXN and COP all use "$".
+- Figures render in one locale for the whole interface: "$1,150.00",
+  "COP 26,900", "kr 1,240.00". A row whose currency differs from the display
+  currency is written with its ISO code.
 - Chart axis ticks compact: "$60K", "COP 4M".
 - "≈" prefixes a figure that was converted from at least one other currency.
-- Net figures are coloured by sign: green at or above zero, red below.
+- Net figures are coloured by sign; delta pills are coloured by whether the
+  move is good for the domain (spending less is good, earning less is not).
 
-### Pills and badges
+### Dates
 
-Two distinct vocabularies, and they must stay distinguishable:
+Every visible date follows the user's date-format preference (YYYY-MM-DD,
+DD/MM/YYYY or MM/DD/YYYY); month labels ("Sep", "September 2026") never change.
 
-- **Amber outline** — a state the app applied: "Hidden", "Hidden on chart".
-- **Neutral outline** — the user's own tags.
-- **Filled status pills** — "Overdue", "Due", "Paid" in the recurring
-  checklist.
+### Pills
 
-### Colour tokens
+- **Solid** pills are states the app applied: "RECURRING", "Paid", "Due".
+- **Outline** pills are the user's own tags, and the amber "Hidden".
 
-Dark interface throughout.
+### Colour
 
-| Role                      | Token     |
-| ------------------------- | --------- |
-| Page background           | `#0a0a0f` |
-| Card surface              | `#14141b` |
-| Input / raised surface    | `#1c1c26` |
-| Hairline border           | `#2a2a38` |
-| Primary text              | `#f5f5fa` |
-| Secondary text            | `#b8b8c8` |
-| Muted text, metadata      | `#6e6e85` |
-| Green (income, positive)  | `#7cffb2` |
-| Red (expense, negative)   | `#ff3d68` |
-| Amber (savings, warnings) | `#ffb84d` |
-| Cyan (investments)        | `#5ee8ff` |
-
-Cards carry a 3px top border in their domain accent. Corner radii are 6, 10 and
-16 pixels. An eight-colour categorical palette exists for per-currency stacked
-bars, in a fixed order so a currency keeps its colour across pages.
+Two palettes chosen by a `data-theme` attribute. Light: page `#e9eef5` under
+the backdrop, glass cards (white at 64%), text `#0f172a` / `#3b465a` /
+`#6b7688`, primary accent blue `#2563eb`, domains green `#16a34a`, red
+`#f43f5e`, cyan `#0ea5e9`, amber `#f59e0b`. Dark: the original noir values
+(`#0a0a0f` page, `#14141b` cards, `#7cffb2` green, `#ff3d68` red, `#5ee8ff`
+cyan, `#ffb84d` amber). Each domain also has a soft tint (card washes, icon
+discs) and a six-step ramp for category-stacked bars. Corner radii are 6, 10,
+16 and 20 pixels.
 
 ### States
 
-Every list has three: a **loading** line ("Loading…"), an **empty** line
-written for that specific list ("Nothing recorded in this period", "No tags
-yet"), and an **error** state that shows the underlying message verbatim rather
-than a friendly euphemism — a deliberate choice after a silent failure once
-made screens look empty instead of broken.
-
-### Layout
-
-A left sidebar on desktop, a fixed bottom nav on phones, and a floating "+"
-button on every screen at every width — the single entry point for creating
-anything. Inputs are 40px tall on desktop and 44px on phones, with 16px text to
-stop iOS zooming on focus.
+Every list has three: **loading** ("Loading…"), **empty** written for that
+list ("Nothing recorded in this period", "No tags yet", "Nothing matches these
+filters"), and **error** showing the underlying message verbatim.

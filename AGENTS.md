@@ -36,6 +36,12 @@ helpers/paymentMethodOptions.ts   tipos de método, sugerencias de red/proveedor
 helpers/accounts.ts               isAccountDomain (INVESTMENT | SAVING), ACCOUNT_NOUN (account / pocket), accountLabel, formatInterestRate
 helpers/tags.ts                   normaliseTagName / tagKey (sin espacios; key en minúsculas), tagNames (ids → nombres)
 helpers/hidden.ts                 qué filas del ledger están ocultas (por su item recurrente o su categoría)
+helpers/dates.ts                  formatDate(date, style, format) — toda fecha visible pasa por aquí (preferencia del usuario); monthKey
+helpers/stacks.ts                 monthTotalsBy / monthTotalsByCategory — totales mensuales apilados (top N + "Other"), tintes por dominio
+helpers/categoryTree.ts           categoryIdSet / rootIdMap — plegar hijos en su categoría raíz
+helpers/categoryIcons.ts          defaultIconFor(name, domain) / iconFor(category) — icono por defecto cuando no hay pick
+helpers/allocation.ts             allocationSegments(flow) — cómo se reparte el ingreso del mes (barra del hero)
+helpers/i18n.ts                   t(key, language) — catálogo (solo "en") para las cadenas de Settings
 helpers/recurrence.ts             próxima ocurrencia según Frequency
 helpers/seedDefaultCategories.ts  categorías por defecto
 ```
@@ -57,16 +63,22 @@ Todo lo que solo sirve a una feature vive junta:
 ```
 features/
   onboarding/   el wizard de configuración inicial + el guard de acceso
-  dashboard/    la home: net-flow, stat cards, barras mensuales income vs expense, próximos vencimientos
+  dashboard/    la home: hero del plan mensual (NetFlowCard + AllocationBar), stat cards por dominio,
+                cash flow de 4 dominios apilado por categoría / moneda (CashFlowCard + helpers/cashFlowSeries),
+                top categorías, próximos pagos, tip
   domains/      DomainPage — la pantalla month-first que comparten incomes/expenses/investments/savings:
-                selector de mes, gastado vs esperado, barras mensuales, y Categories / Transactions / Recurring
-  methods/      CRUD de métodos de pago (la lista de MethodsStep no alcanza para editar)
+                el mes viene del header (hooks/useSelectedMonth), MonthSummary (total vs mes anterior, planeado),
+                barras apiladas por categoría o moneda (ChartControls), Top categories, y las vistas
+                Transactions (TransactionsTable con búsqueda/filtros) / Recurring / Categories / Tags / Payment methods (/ Value)
+  methods/      MethodsList + EditMethodModal — los usa Settings › Payment methods (la página /methods redirige)
   insights/     SubscriptionInsights — costo mensual/anualizado de suscripciones
   investments/  valor por cuenta / pocket (y por categoría para lo que no tiene cuenta): invertido vs valor,
                 % de ganancia, historial; helpers/interest.ts estima con la tasa de la cuenta;
                 AccountValueList (vista Value), AccountValuePanels (drilldown), RecordValueModal ("+")
-  settings/     Settings en una columna con pestañas de sección (General / Categories / Tags / Accounts & pockets,
-                la activa va en el hash de la URL); CategoriesSettings, TagsSettings y AccountsSettings paginan de a 25 (`Pager`)
+  settings/     pestañas de sección (General / Categories / Tags / Payment methods / Accounts & pockets, la activa
+                va en el hash de la URL). General son seis tarjetas (Account, Currency, Preferences, Setup, Data &
+                privacy, About) sobre SettingsCard + SettingsRow; CategoriesSettings, TagsSettings y AccountsSettings
+                paginan de a 25 (`Pager`); MethodsSettings monta el MethodsStep del wizard más la lista
   prospect/     simulador what-if: qué pasa si cancelo X
   create/       CreateLauncher — el botón flotante "+" y su sheet (¿pago puntual, recurrente, o valor de una cuenta?)
 ```
@@ -78,7 +90,7 @@ Cada una con la misma forma interna: `components/`, `hooks/`, `helpers/`, `data/
 - **Un solo consumidor** → baja a la feature.
 - **Dos o más** → sube a la raíz, aunque hoy "parezca" de una feature.
 
-Ejemplos reales: `Combobox` nació en el wizard y vive en `components/atoms/` porque es genérico; `TabStrip` (pestañas outlined con acento) sirve a Settings y a sus tarjetas por dominio; `utils/paginate` + `components/molecules/Pager` son la paginación de cualquier lista; `helpers/aggregations` y `hooks/useMoneyContext` parecen de `domains` pero los usan también dashboard, insights y prospect, así que se quedan compartidos. `hooks/useDomainTransactions` nació en `expenses/` (dos consumidores después: dashboard y domains) y subió a `hooks/`.
+Ejemplos reales: `Combobox` nació en el wizard y vive en `components/atoms/` porque es genérico; `TabStrip` (pestañas segmentadas con acento) sirve a Settings, a sus tarjetas por dominio y a las vistas de DomainPage; `utils/paginate` + `components/molecules/Pager` son la paginación de cualquier lista; `helpers/aggregations` y `hooks/useMoneyContext` parecen de `domains` pero los usan también dashboard, insights y prospect, así que se quedan compartidos. `hooks/useDomainTransactions` nació en `expenses/` (dos consumidores después: dashboard y domains) y subió a `hooks/`.
 
 > Cuidado con los barrels: `helpers/index.ts` reexporta, así que un `grep` por el nombre del archivo **no** encuentra a quien lo importa como `from "../helpers"`. Cuenta consumidores mirando también los barrels, o te llevarás a una feature algo que usan tres.
 
@@ -102,7 +114,9 @@ constants.ts                            constantes y mapas de presentación
 
 - **styled-jsx** dentro del componente (`<style jsx>{\`…\`}</style>`). No usamos CSS Modules.
 - Siempre **design tokens**, nunca hex a mano: `var(--bg-1)`, `var(--accent)`, `var(--r-md)`. Los tokens están en `styles/globals.css`.
-- Tema oscuro ("Fintech-noir"). Los acentos por dominio ya existen: `--domain-income`, `--domain-expense`, `--domain-investment`, `--domain-saving`.
+- **Dos paletas**: clara por defecto ("glass" sobre un fondo de paisaje) y oscura (la "Fintech-noir" original), elegidas por `data-theme` en `<html>`. Un script inline en `_document` la fija antes del primer paint y `hooks/useTheme` la sigue (preferencia en el user doc, `"system"` se resuelve en JS con `matchMedia`; los tokens viven solo en esos dos bloques). Texto sobre el acento: `--on-accent`. Superficies: `--glass` / `--glass-strong` (Card, Sidebar, header), `--scrim` (overlays), `--shadow-sm/lg`.
+- Los acentos por dominio: `--domain-income`, `--domain-expense`, `--domain-investment`, `--domain-saving`, sus tintes suaves `--domain-*-soft` y las rampas `--tint-{domain}-1..6` para barras apiladas por categoría. **Nunca** metas `color-mix()` en un string de JS (recharts no lo entiende en atributos SVG): define el token en CSS y pasa `var(--x)`.
+- Iconos: `components/atoms/Icons.tsx` (trazo Feather). Los de categoría se eligen por key (`constants.ICON_KEYS`) en `CategoryIcon`; sin pick, `helpers/categoryIcons` decide por el nombre.
 
 ### Trampa de especificidad (importante)
 
@@ -169,6 +183,7 @@ useEffect(() => {
 
 Todo monto se **guarda en su moneda nativa** y se **convierte solo al leer**. El punto único de conversión es `helpers/aggregations.ts` (`convertedAmount`/`toMonthlyAmount`/`sumMonthly`/`groupByCategory`/`computeMoM`/`computeFlow`), todas reciben un `MoneyContext = { rates, target }`.
 
+- **`useSelectedMonth()`** (`hooks/useSelectedMonth.tsx`) es el mes que mira toda la app: estado en React, espejo en `?month=YYYY-MM` (replace shallow), nunca posterior al mes actual; el `MonthPicker` del header lo cambia y las páginas de dominio lo acotan a su ventana de barras. `usePreferences()` / `useDateFormat()` (`hooks/usePreferences.ts`) leen formato de fecha, inicio de semana e idioma desde un contexto que `PreferencesProvider` llena con el user doc — los componentes de presentación nunca tocan Firestore por esto.
 - **`useMoneyContext()`** (`hooks/useMoneyContext.ts`) es el único lugar que decide moneda objetivo y tasas: `target = displayCurrency ?? mainCurrency`, `rates = useExchangeRates() ?? IDENTITY_RATES`. Cualquier pantalla que muestre montos agregados lo usa — no leas `mainCurrency` directo de `useUserDoc`.
 - **Precedencia del par charged**: si un item tiene `chargedAmount`/`chargedCurrency` y `chargedCurrency === target`, se usa `chargedAmount` tal cual — lo que de verdad se cobró le gana a cualquier tasa de mercado.
 - **`IDENTITY_RATES`** (`helpers/fx.ts`) son tasas 1:1 — útiles en tests y como fallback cuando no hay tasas reales; con ellas la salida es la suma cruda (para verificar mecánicamente un refactor).

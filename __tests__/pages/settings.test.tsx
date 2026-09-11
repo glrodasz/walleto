@@ -38,6 +38,9 @@ jest.mock("../../features/settings/components/AccountsSettings", () => ({
 jest.mock("../../features/settings/components/TagsSettings", () => ({
   TagsSettings: () => <div data-testid="tags-settings" />,
 }));
+jest.mock("../../features/settings/components/MethodsSettings", () => ({
+  MethodsSettings: () => <div data-testid="methods-settings" />,
+}));
 
 jest.mock("../../features/create/components/CreateLauncher", () => ({
   CreateLauncher: () => null,
@@ -76,6 +79,17 @@ describe("SettingsPage", () => {
       "aria-selected",
       "true"
     );
+    window.history.replaceState(null, "", window.location.pathname);
+  });
+
+  it("hosts payment methods as a section", () => {
+    window.location.hash = "#methods";
+    render(<SettingsPage />);
+    expect(screen.getByRole("tab", { name: "Payment methods" })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+    expect(screen.getByTestId("methods-settings")).toBeInTheDocument();
     window.history.replaceState(null, "", window.location.pathname);
   });
 
