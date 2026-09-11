@@ -91,3 +91,6 @@ export const ICON_KEYS = [
   "wallet",
   "repeat",
 ] as const;
+
+/** Where the commit of a preview build links to. */
+export const GITHUB_REPO_URL = "https://github.com/glrodasz/walleto";
