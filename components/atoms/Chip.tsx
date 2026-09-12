@@ -32,22 +32,17 @@ export function Chip({
     .filter(Boolean)
     .join(" ");
 
-  const content = (
-    <>
-      {variant === "add" && <Plus size={14} />}
-      <span className="text">{children}</span>
-    </>
-  );
-
   return (
     <span className="wrap">
       {onClick ? (
         <button type="button" className={classes} onClick={onClick} aria-pressed={selected}>
-          {content}
+          {variant === "add" && <Plus size={14} />}
+          <span className="text">{children}</span>
         </button>
       ) : (
         <span className={classes}>
-          {content}
+          {variant === "add" && <Plus size={14} />}
+          <span className="text">{children}</span>
           {onRemove && (
             <button
               type="button"

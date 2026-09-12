@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { TransactionsTable } from "./TransactionsTable";
 import { IDENTITY_RATES } from "../../helpers/fx";
 import type { Category, Currency, PaymentMethod, Timestamp, Transaction } from "../../types";
@@ -60,7 +60,8 @@ const base = {
   items: [{ id: "r1", name: "Netflix", frequency: "MONTHLY" }] as never,
 };
 
-const bodyRows = () => within(screen.getAllByRole("rowgroup")[1]).getAllByRole("row");
+const bodyRows = () => screen.getAllByRole("listitem");
+const sortControl = () => screen.getByRole("combobox", { name: "Sort" });
 
 describe("TransactionsTable", () => {
   it("lists newest first with category, method, charged pair and origin", () => {
@@ -75,20 +76,18 @@ describe("TransactionsTable", () => {
     expect(list[1]).toHaveTextContent("Visa - 4242");
     expect(list[1]).toHaveTextContent("recurring · Monthly");
     expect(list[2]).toHaveTextContent("Old coffee");
-    expect(screen.getByRole("columnheader", { name: /Date/ })).toHaveAttribute(
-      "aria-sort",
-      "descending"
-    );
+    expect(sortControl()).toHaveValue("date-desc");
   });
 
-  it("flips the date sort", () => {
+  it("sorts by date and by amount", () => {
     render(<TransactionsTable {...base} rows={rows} onDelete={jest.fn()} />);
-    fireEvent.click(screen.getByRole("button", { name: /Date/ }));
+    fireEvent.change(sortControl(), { target: { value: "date-asc" } });
     expect(bodyRows()[0]).toHaveTextContent("Old coffee");
-    expect(screen.getByRole("columnheader", { name: /Date/ })).toHaveAttribute(
-      "aria-sort",
-      "ascending"
-    );
+
+    fireEvent.change(sortControl(), { target: { value: "amount-desc" } });
+    expect(bodyRows()[0]).toHaveTextContent("Old coffee");
+    fireEvent.change(sortControl(), { target: { value: "amount-asc" } });
+    expect(bodyRows()[0]).toHaveTextContent("Bread");
   });
 
   it("searches and filters, and clears", () => {
@@ -121,13 +120,13 @@ describe("TransactionsTable", () => {
     expect(screen.getByText("Nothing recorded in this period")).toBeInTheDocument();
   });
 
-  it("caps the rows and hides the method column when asked", () => {
+  it("caps the rows and leaves the method out when asked", () => {
     render(
       <TransactionsTable {...base} rows={rows} onDelete={jest.fn()} limit={2} showMethod={false} />
     );
     expect(bodyRows()).toHaveLength(2);
     expect(screen.getByText("and 1 more in this period")).toBeInTheDocument();
-    expect(screen.queryByRole("columnheader", { name: "Method" })).toBeNull();
+    expect(bodyRows()[1]).not.toHaveTextContent("Visa - 4242");
     expect(screen.queryByRole("combobox", { name: "Method filter" })).toBeNull();
   });
 });

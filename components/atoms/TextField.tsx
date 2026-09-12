@@ -1,8 +1,15 @@
 import { useId } from "react";
-import type { InputHTMLAttributes } from "react";
+import type { InputHTMLAttributes, ReactNode } from "react";
 
 interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, "onChange"> {
   label?: string;
+  /**
+   * A glyph pinned to the left edge — a magnifier on a search box. The room for
+   * it has to be made here: a caller's own `:global(input) { padding-left }` is
+   * (0,2,1) and loses to this file's `.control .input`, which is exactly how the
+   * search icon ended up sitting on top of its own placeholder.
+   */
+  icon?: ReactNode;
   /** Currency symbol or similar, pinned to the left edge. */
   prefix?: string;
   /** Right-align for money, so the value can never collide with the prefix. */
@@ -12,6 +19,7 @@ interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, "onChange"> 
 
 export function TextField({
   label,
+  icon,
   prefix,
   align = "left",
   onValueChange,
@@ -30,6 +38,11 @@ export function TextField({
         </label>
       )}
       <div className="control">
+        {icon && (
+          <span className="icon" aria-hidden="true">
+            {icon}
+          </span>
+        )}
         {prefix && (
           <span className="prefix" aria-hidden="true">
             {prefix}
@@ -37,7 +50,9 @@ export function TextField({
         )}
         <input
           id={inputId}
-          className={`input${prefix ? " prefixed" : ""}${align === "right" ? " right" : ""}`}
+          className={`input${icon ? " with-icon" : ""}${prefix ? " prefixed" : ""}${
+            align === "right" ? " right" : ""
+          }`}
           onChange={(e) => onValueChange?.(e.currentTarget.value)}
           {...rest}
         />
@@ -60,6 +75,14 @@ export function TextField({
           position: relative;
           display: flex;
           align-items: center;
+        }
+
+        .icon {
+          position: absolute;
+          left: 12px;
+          display: inline-flex;
+          color: var(--fg-2);
+          pointer-events: none;
         }
 
         .prefix {
@@ -95,6 +118,11 @@ export function TextField({
         .control .input.prefixed {
           /* Room for a 2-3 character symbol such as "kr" or "Fr". */
           padding-left: 38px;
+        }
+
+        .control .input.with-icon {
+          /* 12px gutter + a 16px glyph + 8px of air. */
+          padding-left: 36px;
         }
 
         .control .input.right {

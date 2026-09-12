@@ -118,7 +118,7 @@ describe("CategoryMonthList — hidden categories", () => {
         onToggleHidden={onToggleHidden}
       />
     );
-    expect(screen.getByText("Hidden on chart")).toBeInTheDocument();
+    expect(screen.getByText("Hidden")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Actions for Food" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Show on chart" }));
     expect(onToggleHidden).toHaveBeenCalledWith(expect.objectContaining({ id: "food" }));

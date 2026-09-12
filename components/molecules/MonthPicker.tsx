@@ -41,6 +41,7 @@ export function MonthPicker({ value, windows, onChange, onStep }: Props) {
       </span>
       <div className="select">
         <Select
+          flat
           aria-label="Month"
           options={[...windows].reverse().map((w) => ({ value: w.key, label: w.longLabel }))}
           value={value}
@@ -98,22 +99,10 @@ export function MonthPicker({ value, windows, onChange, onStep }: Props) {
           padding-left: 4px;
         }
 
-        /* The select atom draws its own border; inside the picker it is flat. */
+        /* The picker is the glass; the select inside it carries no chrome of its
+           own — that is Select's flat prop, since a rule from here cannot win. */
         .select {
           min-width: 150px;
-        }
-
-        /* Inside the picker the select is flat: the picker itself is the glass,
-           and a second pane inside it would read as a box in a box. */
-        .select :global(.select) {
-          height: 34px;
-          border-color: transparent;
-          background-color: transparent;
-          backdrop-filter: none;
-          -webkit-backdrop-filter: none;
-          box-shadow: none;
-          font-weight: 600;
-          font-size: 0.875rem;
         }
 
         @media (max-width: 767px) {
