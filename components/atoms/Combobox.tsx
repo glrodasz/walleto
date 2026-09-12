@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 interface Props {
   /** Names to suggest. Anything already used should be filtered out by the caller. */
@@ -50,6 +51,11 @@ export function Combobox({
   const [focused, setFocused] = useState(false);
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  // Null until measured; the list renders hidden for that one frame so it
+  // never flashes at the wrong place.
+  const [pos, setPos] = useState<React.CSSProperties | null>(null);
 
   const trimmed = draft.trim();
 
@@ -75,15 +81,47 @@ export function Combobox({
   }, [trimmed]);
 
   // Clicking outside is a cancel, not a create — the old inline input committed
-  // on blur, which made stray categories far too easy to produce.
+  // on blur, which made stray categories far too easy to produce. The list is
+  // portaled onto document.body (see below), so its own DOM sits outside
+  // rootRef and needs its own containment check.
   useEffect(() => {
     if (!onCancel) return;
     const onPointerDown = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) onCancel();
+      const target = e.target as Node;
+      if (rootRef.current?.contains(target)) return;
+      if (listRef.current?.contains(target)) return;
+      onCancel();
     };
     document.addEventListener("mousedown", onPointerDown);
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, [onCancel]);
+
+  // Every Card wears `.glass`, and `backdrop-filter` makes it both a stacking
+  // context and a containing block — so a list positioned inside one can
+  // never be ranked against a later card, the FAB or the mobile nav, whatever
+  // its z-index (see KebabMenu). The only way out is to render it somewhere
+  // else: the list lives on `document.body`, positioned against the input's
+  // viewport rect.
+  useEffect(() => {
+    if (!showList) {
+      setPos(null);
+      return;
+    }
+    const update = () => {
+      const rect = inputRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      // At least as wide as the input, but never narrower than the old fixed
+      // list width — a compact combobox shouldn't truncate its own suggestions.
+      setPos({ top: rect.bottom + 6, left: rect.left, width: Math.max(rect.width, 240) });
+    };
+    update();
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+    };
+  }, [showList]);
 
   const commit = (index: number) => {
     const picked = options[index];
@@ -103,6 +141,7 @@ export function Combobox({
       <input
         // eslint-disable-next-line jsx-a11y/no-autofocus
         autoFocus={autoFocus}
+        ref={inputRef}
         id={fieldLabel ? listId : undefined}
         className="input"
         type="text"
@@ -145,38 +184,43 @@ export function Combobox({
         }}
       />
 
-      {showList && (
-        <ul
-          className="glass glass--strong glass--raised list"
-          id={listId}
-          role="listbox"
-          aria-label={label}
-        >
-          {options.map((option, i) => (
-            <li
-              key={`${option}-${i}`}
-              id={`${listId}-${i}`}
-              role="option"
-              aria-selected={i === highlight}
-              className={`option${i === highlight ? " highlighted" : ""}`}
-              onMouseEnter={() => setHighlight(i)}
-              // mousedown fires before the input's blur, so the click isn't lost
-              onMouseDown={(e) => {
-                e.preventDefault();
-                commit(i);
-              }}
-            >
-              {i === createIndex ? (
-                <>
-                  Create <strong>&ldquo;{option}&rdquo;</strong>
-                </>
-              ) : (
-                option
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+      {showList &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <ul
+            ref={listRef}
+            className="glass glass--strong glass--raised list"
+            id={listId}
+            role="listbox"
+            aria-label={label}
+            style={pos ?? { top: 0, left: 0, visibility: "hidden" }}
+          >
+            {options.map((option, i) => (
+              <li
+                key={`${option}-${i}`}
+                id={`${listId}-${i}`}
+                role="option"
+                aria-selected={i === highlight}
+                className={`option${i === highlight ? " highlighted" : ""}`}
+                onMouseEnter={() => setHighlight(i)}
+                // mousedown fires before the input's blur, so the click isn't lost
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  commit(i);
+                }}
+              >
+                {i === createIndex ? (
+                  <>
+                    Create <strong>&ldquo;{option}&rdquo;</strong>
+                  </>
+                ) : (
+                  option
+                )}
+              </li>
+            ))}
+          </ul>,
+          document.body
+        )}
 
       <style jsx>{`
         .combobox {
@@ -236,15 +280,17 @@ export function Combobox({
           opacity: 0.5;
         }
 
+        /* Fixed, because it is mounted on the body: the position comes from
+           the input's rect (see the positioning effect above). Above the nav
+           and the FAB, below a modal — which it can finally honour, now that
+           no ancestor's backdrop-filter traps it. */
         .list {
-          position: absolute;
-          top: calc(100% + 6px);
-          left: 0;
+          position: fixed;
           z-index: var(--z-menu, 150);
           margin: 0;
           padding: 4px;
           list-style: none;
-          width: 240px;
+          min-width: 200px;
           max-height: 220px;
           overflow-y: auto;
           border-radius: var(--r-lg);
