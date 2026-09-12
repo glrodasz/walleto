@@ -103,82 +103,177 @@ export function InvestmentValuePanel({
   };
 
   return (
-    <Card accentColor={accent}>
-      <div className="head">
-        <SectionTitle title={`${title} — value`} />
-        <Button variant="primary" size="sm" onClick={() => setModal({ open: true })}>
-          Record value
-        </Button>
-      </div>
-
-      <div className="figures">
-        <div>
-          <span className="label">Invested</span>
-          <Amount value={invested} currency={currency} size="md" />
+    <>
+      <Card accentColor={accent}>
+        <div className="head">
+          <SectionTitle title={`${title} — value`} />
+          <Button variant="primary" size="sm" onClick={() => setModal({ open: true })}>
+            Record value
+          </Button>
         </div>
-        <div>
-          <span className="label">Current value</span>
-          <Amount
-            value={value}
-            currency={currency}
-            size="md"
-            approximate={Boolean(rate) || (!!latest && latest.currency !== currency)}
-          />
-          <span className="meta">{valueMeta}</span>
-        </div>
-        <div>
-          <span className="label">Gain</span>
-          <Amount value={gain} currency={currency} size="md" colorize />
-          {gainPct !== null && (
-            <span className={`meta ${gain >= 0 ? "up" : "down"}`}>
-              {gain >= 0 ? "+" : ""}
-              {gainPct.toFixed(1)}%
-            </span>
-          )}
-        </div>
-      </div>
 
-      <FlowChart
-        data={series}
-        currency={currency}
-        loading={Boolean(loading)}
-        labelA="Invested"
-        labelB="Value"
-        colorA="var(--fg-2)"
-        colorB={accent}
-        height={200}
-      />
-
-      {valuations.length > 0 && (
-        <ul className="history">
-          {valuations.map((v) => (
-            <li key={v.id} className="row">
-              <span className="row-date">{formatDate(v.asOf.toDate(), "dayYear")}</span>
-              <span className="row-figures">
-                <span className="row-value">{formatAmount(v.value, v.currency)}</span>
-                <span className={`row-pct ${v.gainPct >= 0 ? "up" : "down"}`}>
-                  {v.gainPct >= 0 ? "+" : ""}
-                  {v.gainPct.toFixed(1)}% on {formatAmount(v.costBasis, v.currency)}
-                </span>
-                {v.note && <span className="row-note">{v.note}</span>}
+        <div className="figures">
+          <div>
+            <span className="label">Invested</span>
+            <Amount value={invested} currency={currency} size="md" />
+          </div>
+          <div>
+            <span className="label">Current value</span>
+            <Amount
+              value={value}
+              currency={currency}
+              size="md"
+              approximate={Boolean(rate) || (!!latest && latest.currency !== currency)}
+            />
+            <span className="meta">{valueMeta}</span>
+          </div>
+          <div>
+            <span className="label">Gain</span>
+            <Amount value={gain} currency={currency} size="md" colorize />
+            {gainPct !== null && (
+              <span className={`meta ${gain >= 0 ? "up" : "down"}`}>
+                {gain >= 0 ? "+" : ""}
+                {gainPct.toFixed(1)}%
               </span>
-              <KebabMenu
-                aria-label={`Actions for valuation ${formatDate(v.asOf.toDate(), "dayYear")}`}
-                actions={[
-                  { label: "Edit", onSelect: () => setModal({ open: true, editing: v }) },
-                  {
-                    label: deletingId === v.id ? "Deleting…" : "Delete",
-                    onSelect: () => v.id && del(v.id),
-                    danger: true,
-                    disabled: deletingId === v.id,
-                  },
-                ]}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
+            )}
+          </div>
+        </div>
 
+        <FlowChart
+          data={series}
+          currency={currency}
+          loading={Boolean(loading)}
+          labelA="Invested"
+          labelB="Value"
+          colorA="var(--fg-2)"
+          colorB={accent}
+          height={200}
+        />
+
+        {valuations.length > 0 && (
+          <ul className="history">
+            {valuations.map((v) => (
+              <li key={v.id} className="row">
+                <span className="row-date">{formatDate(v.asOf.toDate(), "dayYear")}</span>
+                <span className="row-figures">
+                  <span className="row-value">{formatAmount(v.value, v.currency)}</span>
+                  <span className={`row-pct ${v.gainPct >= 0 ? "up" : "down"}`}>
+                    {v.gainPct >= 0 ? "+" : ""}
+                    {v.gainPct.toFixed(1)}% on {formatAmount(v.costBasis, v.currency)}
+                  </span>
+                  {v.note && <span className="row-note">{v.note}</span>}
+                </span>
+                <KebabMenu
+                  aria-label={`Actions for valuation ${formatDate(v.asOf.toDate(), "dayYear")}`}
+                  actions={[
+                    { label: "Edit", onSelect: () => setModal({ open: true, editing: v }) },
+                    {
+                      label: deletingId === v.id ? "Deleting…" : "Delete",
+                      onSelect: () => v.id && del(v.id),
+                      danger: true,
+                      disabled: deletingId === v.id,
+                    },
+                  ]}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <style jsx>{`
+          .head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+          }
+
+          .figures {
+            display: flex;
+            gap: 28px;
+            flex-wrap: wrap;
+            padding: 4px 0 12px;
+          }
+
+          .figures > div {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+          }
+
+          .label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--fg-2);
+          }
+
+          .meta {
+            font-size: 0.75rem;
+            color: var(--fg-2);
+          }
+
+          .up {
+            color: var(--accent);
+          }
+
+          .down {
+            color: var(--accent-hot);
+          }
+
+          .history {
+            list-style: none;
+            margin: 12px 0 0;
+            padding: 12px 0 0;
+            border-top: 1px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+          }
+
+          .row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+          }
+
+          .row-date {
+            flex: 0 0 120px;
+            font-size: 0.82rem;
+            color: var(--fg-1);
+          }
+
+          .row-figures {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+          }
+
+          .row-value {
+            font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
+            font-variant-numeric: tabular-nums;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--fg-0);
+          }
+
+          .row-pct {
+            font-size: 0.72rem;
+          }
+
+          .row-note {
+            font-size: 0.72rem;
+            color: var(--fg-2);
+          }
+        `}</style>
+      </Card>
+
+      {/* Outside the Card on purpose: the card is glass, and backdrop-filter
+          makes it the containing block for fixed children — a modal inside it
+          would size itself to the card instead of the viewport. */}
       <ValuationModal
         open={modal.open}
         selector={selector}
@@ -188,96 +283,6 @@ export function InvestmentValuePanel({
         valuation={modal.editing}
         onClose={() => setModal({ open: false })}
       />
-
-      <style jsx>{`
-        .head {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-        }
-
-        .figures {
-          display: flex;
-          gap: 28px;
-          flex-wrap: wrap;
-          padding: 4px 0 12px;
-        }
-
-        .figures > div {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-
-        .label {
-          font-size: 0.72rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-          color: var(--fg-2);
-        }
-
-        .meta {
-          font-size: 0.75rem;
-          color: var(--fg-2);
-        }
-
-        .up {
-          color: var(--accent);
-        }
-
-        .down {
-          color: var(--accent-hot);
-        }
-
-        .history {
-          list-style: none;
-          margin: 12px 0 0;
-          padding: 12px 0 0;
-          border-top: 1px solid var(--line);
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-
-        .row {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .row-date {
-          flex: 0 0 120px;
-          font-size: 0.82rem;
-          color: var(--fg-1);
-        }
-
-        .row-figures {
-          flex: 1;
-          min-width: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 1px;
-        }
-
-        .row-value {
-          font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
-          font-variant-numeric: tabular-nums;
-          font-size: 0.85rem;
-          font-weight: 600;
-          color: var(--fg-0);
-        }
-
-        .row-pct {
-          font-size: 0.72rem;
-        }
-
-        .row-note {
-          font-size: 0.72rem;
-          color: var(--fg-2);
-        }
-      `}</style>
-    </Card>
+    </>
   );
 }

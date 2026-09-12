@@ -233,7 +233,11 @@ export function ListItem({
           border-bottom: none;
         }
 
-        .is-muted {
+        /* Dim the content, never the <li>: opacity on the row makes it a
+           stacking context, which used to bury an open kebab menu under the
+           rows below it — and greyed out the very control you reach for to
+           un-hide the thing. */
+        .is-muted > :global(.hit) {
           opacity: 0.55;
         }
 

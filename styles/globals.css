@@ -119,6 +119,9 @@
      otherwise a modal's footer sits under the nav and taps navigate away. */
   --z-nav: 100;
   --z-fab: 110;
+  /* Dropdowns sit on the body (a glass card would trap them), above the chrome
+     and below a modal. */
+  --z-menu: 150;
   --z-overlay: 200;
 }
 
