@@ -154,6 +154,31 @@ describe("TransactionsTable", () => {
     expect(toggle).toHaveTextContent("2");
   });
 
+  it("says which rule hid a row — the chart or the dashboard", () => {
+    const { rerender } = render(
+      <TransactionsTable
+        {...base}
+        rows={rows}
+        onDelete={jest.fn()}
+        hiddenReason={(t) => (t.id === "b" ? "dashboard" : null)}
+      />
+    );
+    // The pill is a short word either way; the glyph is what distinguishes
+    // them, and it is aria-hidden — so assert the row that carries it.
+    expect(bodyRows()[1]).toHaveTextContent("Hidden");
+    expect(bodyRows()[0]).not.toHaveTextContent("Hidden");
+
+    rerender(
+      <TransactionsTable
+        {...base}
+        rows={rows}
+        onDelete={jest.fn()}
+        hiddenReason={(t) => (t.id === "c" ? "chart" : null)}
+      />
+    );
+    expect(bodyRows()[0]).toHaveTextContent("Hidden");
+  });
+
   it("caps the rows and leaves the method out when asked", () => {
     render(
       <TransactionsTable {...base} rows={rows} onDelete={jest.fn()} limit={2} showMethod={false} />

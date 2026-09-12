@@ -5,13 +5,14 @@ import { TextField } from "../atoms/TextField";
 import { Select } from "../atoms/Select";
 import { Badge } from "../atoms/Badge";
 import { CategoryIcon } from "../atoms/CategoryIcon";
-import { Search, Sliders } from "../atoms/Icons";
+import { Chart, Home, Search, Sliders } from "../atoms/Icons";
 import { formatNative } from "../atoms/Amount";
 import { KebabMenu } from "./KebabMenu";
 import { IconDisc } from "./IconDisc";
 import { ListItem, ListItems } from "./ListItem";
 import { useTransactionFilters } from "../../features/domains/hooks/useTransactionFilters";
 import { NO_METHOD } from "../../features/domains/helpers/transactionFilters";
+import type { HiddenReason } from "../../helpers/hidden";
 import type { TransactionFilters } from "../../features/domains/helpers/transactionFilters";
 import { useDateFormat } from "../../hooks/usePreferences";
 import { paymentMethodLabel, paymentMethodOptionLabel } from "../../helpers/paymentMethodLabel";
@@ -44,8 +45,12 @@ interface Props {
   ctx: MoneyContext;
   loading?: boolean;
   onEdit?: (transaction: Transaction) => void;
-  /** Rows written by a hidden recurring item (or a hidden category) get a pill and dim. */
-  isHidden?: (transaction: Transaction) => boolean;
+  /**
+   * Why a row is hidden — by its recurring item ("dashboard") or by its
+   * category ("chart"), or not at all. The row dims either way; the pill says
+   * which, since the two are undone in different places.
+   */
+  hiddenReason?: (transaction: Transaction) => HiddenReason | null;
   onDelete: (transactionId: string) => void;
   deletingId: string | null;
   /** Whether the payment method belongs in this domain's rows and filters. */
@@ -80,7 +85,7 @@ export function TransactionsTable({
   ctx,
   loading,
   onEdit,
-  isHidden,
+  hiddenReason,
   onDelete,
   deletingId,
   showMethod = true,
@@ -203,7 +208,7 @@ export function TransactionsTable({
               labels={tagNames(t.tags, tags)}
               displayCurrency={displayCurrency}
               showMethod={showMethod}
-              hidden={Boolean(isHidden?.(t))}
+              hidden={hiddenReason?.(t) ?? null}
               onEdit={onEdit}
               onDelete={onDelete}
               deleting={deletingId === t.id}
@@ -336,7 +341,7 @@ interface RowProps {
   labels: string[];
   displayCurrency: Currency;
   showMethod: boolean;
-  hidden: boolean;
+  hidden: HiddenReason | null;
   onEdit?: (transaction: Transaction) => void;
   onDelete: (transactionId: string) => void;
   deleting: boolean;
@@ -391,7 +396,12 @@ function TransactionListRow({
         hidden || labels.length > 0 ? (
           <>
             {hidden && (
-              <Badge variant="outline" tone="warning" caps>
+              <Badge
+                variant="outline"
+                tone="warning"
+                caps
+                icon={hidden === "chart" ? <Chart size={12} /> : <Home size={12} />}
+              >
                 Hidden
               </Badge>
             )}
@@ -405,7 +415,7 @@ function TransactionListRow({
       }
       meta={meta}
       note={t.note}
-      muted={hidden}
+      muted={Boolean(hidden)}
       amount={formatNative(t.amount, t.currency, displayCurrency)}
       amountMeta={
         t.chargedAmount !== undefined && t.chargedCurrency

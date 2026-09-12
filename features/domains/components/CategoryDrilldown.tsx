@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Chip } from "../../../components/atoms/Chip";
 import { TransactionsTable } from "../../../components/molecules/TransactionsTable";
 import { categoryIdSet } from "../../../helpers/categoryTree";
+import type { HiddenReason } from "../../../helpers/hidden";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import type {
@@ -28,7 +29,7 @@ interface Props {
   loading?: boolean;
   onBack: () => void;
   onEdit?: (transaction: Transaction) => void;
-  isHidden?: (transaction: Transaction) => boolean;
+  hiddenReason?: (transaction: Transaction) => HiddenReason | null;
   onDelete: (transactionId: string) => void;
   deletingId: string | null;
   /** Domain-specific panels for this category (subscription insights, valuations). */
@@ -52,7 +53,7 @@ export function CategoryDrilldown({
   loading,
   onBack,
   onEdit,
-  isHidden,
+  hiddenReason,
   onDelete,
   deletingId,
   extras,
@@ -99,7 +100,7 @@ export function CategoryDrilldown({
         ctx={ctx}
         loading={loading}
         onEdit={onEdit}
-        isHidden={isHidden}
+        hiddenReason={hiddenReason}
         onDelete={onDelete}
         deletingId={deletingId}
         showMethod={DOMAIN_CONFIG[category.domain].showPaymentMethod}

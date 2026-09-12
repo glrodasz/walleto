@@ -7,9 +7,9 @@ interface BodyProps {
   leading?: ReactNode;
   name: ReactNode;
   /**
-   * Flag pills, riding the right end of the name line. Always `Badge` — a
-   * hand-rolled span has no `white-space: nowrap`, which is how
-   * "HIDDEN ON CHART" ended up split across two lines.
+   * Flag pills and the row's own tags, on their own line at the bottom of the
+   * text block. Always `Badge` — a hand-rolled span has no
+   * `white-space: nowrap`, which is how "HIDDEN ON CHART" once split in two.
    */
   badges?: ReactNode;
   /**
@@ -57,10 +57,7 @@ function ListItemBody({
     <>
       {leading && <span className="leading">{leading}</span>}
       <span className="main">
-        <span className="name-line">
-          <span className="name">{name}</span>
-          {badges && <span className="badges">{badges}</span>}
-        </span>
+        <span className="name">{name}</span>
         {meta && <span className="meta">{meta}</span>}
         {note && <span className="note">{note}</span>}
         {progress && (
@@ -73,6 +70,7 @@ function ListItemBody({
             />
           </span>
         )}
+        {badges && <span className="badges">{badges}</span>}
       </span>
       {(amount || amountMeta) && (
         <span className="value">
@@ -95,17 +93,9 @@ function ListItemBody({
           gap: 4px;
         }
 
-        /* The badges ride the end of this line rather than taking one of their
-           own, so a flag never costs the row a second line. */
-        .name-line {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          flex-wrap: wrap;
-        }
-
+        /* No flex shorthand here: .main is a column, so a flex grow factor
+           would stretch the name vertically rather than fill the line. */
         .name {
-          flex: 1 1 auto;
           min-width: 0;
           font-size: 0.95rem;
           font-weight: 600;
@@ -115,16 +105,16 @@ function ListItemBody({
           white-space: nowrap;
         }
 
+        /* The last line of the text block. Off the name line, the pills no
+           longer compete with the name or the amount for width, so they can
+           simply wrap — and several tags read as a group instead of pushing
+           the name into an ellipsis. */
         .badges {
-          margin-left: auto;
-          display: inline-flex;
+          display: flex;
+          flex-wrap: wrap;
           align-items: center;
           gap: 4px;
-          flex-shrink: 0;
-          /* A Badge is nowrap, so without this a long flag overflows the text
-             column and paints over the amount on a narrow screen. */
-          max-width: 100%;
-          overflow: hidden;
+          margin-top: 2px;
         }
 
         .meta,

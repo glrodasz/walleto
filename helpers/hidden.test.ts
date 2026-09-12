@@ -1,4 +1,10 @@
-import { hiddenCategoryIds, hiddenItemIds, isHiddenRow, withoutHidden } from "./hidden";
+import {
+  hiddenCategoryIds,
+  hiddenItemIds,
+  hiddenRowReason,
+  isHiddenRow,
+  withoutHidden,
+} from "./hidden";
 
 describe("hiddenItemIds / hiddenCategoryIds", () => {
   it("collects hidden items and hidden roots with their children", () => {
@@ -31,6 +37,17 @@ describe("isHiddenRow / withoutHidden", () => {
     expect(isHiddenRow({ recurrentTransactionId: "rent", categoryId: "fun" }, items, cats)).toBe(
       false
     );
+  });
+
+  it("says which rule hid the row, the item winning when both do", () => {
+    expect(hiddenRowReason({ recurrentTransactionId: "netflix", categoryId: "fun" }, items)).toBe(
+      "dashboard"
+    );
+    expect(hiddenRowReason({ categoryId: "home" }, items, cats)).toBe("chart");
+    expect(
+      hiddenRowReason({ recurrentTransactionId: "netflix", categoryId: "home" }, items, cats)
+    ).toBe("dashboard");
+    expect(hiddenRowReason({ categoryId: "fun" }, items, cats)).toBeNull();
   });
 
   it("filters a list", () => {

@@ -6,7 +6,7 @@ import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { formatAmount } from "../../../components/atoms/Amount";
 import { Badge } from "../../../components/atoms/Badge";
-import { ArrowRight } from "../../../components/atoms/Icons";
+import { ArrowRight, Chart } from "../../../components/atoms/Icons";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
 import { ListItem, ListItems } from "../../../components/molecules/ListItem";
 import { convertedAmount } from "../../../helpers/aggregations";
@@ -126,11 +126,11 @@ export function CategoryMonthList({
                 }
                 name={r.category.name}
                 badges={
-                  /* Just "Hidden": the long label could not shrink and painted
-                     over the amount on a phone, and the kebab right next to it
-                     already says "Show on chart" / "Hide from chart". */
+                  /* The bars say which "Hidden" this is: from the chart, not
+                     from the dashboard. The label stays one short word — a pill
+                     cannot shrink, and the kebab beside it spells the rest out. */
                   r.category.hiddenFromChart ? (
-                    <Badge variant="outline" tone="warning" caps>
+                    <Badge variant="outline" tone="warning" caps icon={<Chart size={12} />}>
                       Hidden
                     </Badge>
                   ) : undefined

@@ -149,7 +149,8 @@ La escala vive ahí, una sola vez: nombre y monto a `0.95rem` (600 / 700 mono ta
 
 Los slots: `leading` (IconDisc, DateBadge), `name`, `badges`, `meta`, `note`, `progress`, `amount`, `amountMeta`, `trailing`, más `onClick` / `href` / `muted`.
 
-- **`badges` va siempre con `Badge`** (`components/atoms/Badge.tsx`), nunca un span propio: el átomo trae `white-space: nowrap`, y sin eso "HIDDEN ON CHART" se parte en dos líneas. Se pintan al final de la línea del nombre, así una marca nunca le cuesta un renglón a la fila.
+- **`badges` va siempre con `Badge`** (`components/atoms/Badge.tsx`), nunca un span propio: el átomo trae `white-space: nowrap`, y sin eso "HIDDEN ON CHART" se parte en dos líneas. Van en su **propia línea, abajo a la izquierda** del bloque de texto (después de meta / note / progress): ahí no le compiten el ancho ni al nombre ni al monto, y tres tags se leen como un grupo en vez de empujar el nombre a una elipsis.
+- **Las dos marcas "Hidden" se distinguen por icono**, porque la palabra sola ya no alcanza: `Chart` = oculto del gráfico (categorías), `Home` = oculto del dashboard (recurrentes) — el mismo icono que el sidebar usa para esa pantalla. En el ledger la razón la da `hiddenRowReason` (`helpers/hidden.ts`), que devuelve `"dashboard" | "chart" | null`; si una fila cumple las dos, gana el item. El icono va en el prop `icon` de `Badge` a `size={12}` (la pastilla `caps` es de 0.64rem) y es decorativo: `aria-hidden` viene de fábrica en `Icons.tsx`, así que el nombre accesible sigue siendo el texto.
 - **`meta` es un solo string ya unido** ("Sep 25 · Monthly · Housing · Visa - 4242"). Hay tests que lo buscan como un único nodo de texto, y así la elipsis cae al final y no dentro de una columna.
 - **`trailing` queda fuera del área clicable** (el kebab no puede vivir dentro del botón de la fila); `amount` queda dentro.
 

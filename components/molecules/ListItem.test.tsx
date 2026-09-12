@@ -52,6 +52,18 @@ describe("ListItem", () => {
     expect(screen.getByRole("link", { name: /Food/ })).toHaveAttribute("href", "/expenses");
   });
 
+  it("puts the badges on their own line under the facts, not beside the name", () => {
+    render(
+      <ListItems>
+        <ListItem name="iCloud" meta="Sep 12 · Monthly · Subscriptions" badges={<em>Family</em>} />
+      </ListItems>
+    );
+    const meta = screen.getByText("Sep 12 · Monthly · Subscriptions");
+    const badge = screen.getByText("Family");
+    // DOCUMENT_POSITION_FOLLOWING: the badge comes after the meta line.
+    expect(meta.compareDocumentPosition(badge) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("renders badges and a labelled progress bar when asked", () => {
     render(
       <ListItems>

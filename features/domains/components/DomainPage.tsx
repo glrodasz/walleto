@@ -51,7 +51,7 @@ import { toDate } from "../../../helpers/chartData";
 import {
   hiddenCategoryIds,
   hiddenItemIds,
-  isHiddenRow,
+  hiddenRowReason,
   withoutHidden,
 } from "../../../helpers/hidden";
 import { spreadItemIds, spreadTransactions } from "../helpers/spread";
@@ -137,7 +137,7 @@ export function DomainPage({ domain }: Props) {
   const hiddenItems = useMemo(() => hiddenItemIds(items), [items]);
   const hiddenCategories = useMemo(() => hiddenCategoryIds(categories), [categories]);
   const anythingHidden = hiddenItems.size > 0 || hiddenCategories.size > 0;
-  const isHidden = (t: Transaction) => isHiddenRow(t, hiddenItems, hiddenCategories);
+  const hiddenReason = (t: Transaction) => hiddenRowReason(t, hiddenItems, hiddenCategories);
   // Items asked to be "reflected monthly" chart as one slice per month in
   // place of their real payment (which the ledger and checklist keep).
   // Spread first, then hide: the slices carry the item id and category.
@@ -315,7 +315,7 @@ export function DomainPage({ domain }: Props) {
           loading={txLoading}
           onBack={() => setDrillCategoryId(null)}
           onEdit={setEditingTx}
-          isHidden={isHidden}
+          hiddenReason={hiddenReason}
           onDelete={deleteTx}
           deletingId={deletingTxId}
           extras={
@@ -371,7 +371,7 @@ export function DomainPage({ domain }: Props) {
           ctx={ctx}
           loading={txLoading}
           onEdit={setEditingTx}
-          isHidden={isHidden}
+          hiddenReason={hiddenReason}
           onDelete={deleteTx}
           deletingId={deletingTxId}
           showMethod={config.showPaymentMethod}

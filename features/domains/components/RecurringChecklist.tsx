@@ -3,6 +3,7 @@ import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { formatAmount, formatNative } from "../../../components/atoms/Amount";
 import { Badge } from "../../../components/atoms/Badge";
+import { Home } from "../../../components/atoms/Icons";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
 import { ListItem, ListItems } from "../../../components/molecules/ListItem";
 import type { KebabAction } from "../../../components/molecules/KebabMenu";
@@ -60,11 +61,6 @@ const hiddenAction = (
       ]
     : [];
 
-// Just "Hidden": a pill cannot shrink, so the long label used to paint over
-// the amount on a phone. The kebab beside it says "Show on dashboard".
-const hiddenTags = (item: RecurrentTransaction) =>
-  item.hiddenFromDashboard ? ["Hidden"] : undefined;
-
 const GROUPS: { status: OccurrenceStatus; title: string }[] = [
   { status: "overdue", title: "Overdue" },
   { status: "due", title: "Due" },
@@ -83,8 +79,10 @@ interface RowProps {
   status?: OccurrenceStatus;
   accent: string;
   actions: KebabAction[];
-  /** Flag pills at the end of the name line ("Hidden"). */
-  tags?: string[];
+  /** Hidden from the dashboard — flagged with the house, the sidebar's own
+   *  glyph for that screen, so it cannot be read as "hidden from the chart". */
+  hidden?: boolean;
+  /** The user's own tags. */
   labels?: string[];
   note?: string;
   muted?: boolean;
@@ -104,17 +102,19 @@ function OccurrenceRow({
   status,
   accent,
   actions,
-  tags,
+  hidden,
   labels,
   note,
   muted,
 }: RowProps) {
   const flags = [
-    ...(tags ?? []).map((t) => (
-      <Badge key={`flag-${t}`} variant="outline" tone="warning" caps>
-        {t}
-      </Badge>
-    )),
+    ...(hidden
+      ? [
+          <Badge key="hidden" variant="outline" tone="warning" caps icon={<Home size={12} />}>
+            Hidden
+          </Badge>,
+        ]
+      : []),
     ...(labels ?? []).map((t) => (
       <Badge key={`label-${t}`} variant="outline">
         {t}
@@ -212,7 +212,7 @@ export function RecurringChecklist({
                         key={`${id}_${o.occurredAt.toISOString()}`}
                         name={o.item.name}
                         meta={`${formatDate(o.occurredAt, "day")} · ${FREQUENCY_LABELS[o.item.frequency]}${details(o.item)}`}
-                        tags={hiddenTags(o.item)}
+                        hidden={Boolean(o.item.hiddenFromDashboard)}
                         labels={tagNames(o.item.tags, tags)}
                         note={o.item.note}
                         muted={Boolean(o.item.hiddenFromDashboard)}
@@ -261,7 +261,7 @@ export function RecurringChecklist({
                     }`}
                     amount={formatNative(item.amount, item.currency, currency)}
                     accent={config.accent}
-                    tags={hiddenTags(item)}
+                    hidden={Boolean(item.hiddenFromDashboard)}
                     labels={tagNames(item.tags, tags)}
                     note={item.note}
                     muted={Boolean(item.hiddenFromDashboard)}
