@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
 import { Close } from "../atoms/Icons";
 
@@ -30,9 +31,15 @@ export function Modal({ open, title, onClose, children }: Props) {
     };
   }, [open]);
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
-  return (
+  // A caller can sit inside a `.glass` card, and `backdrop-filter` makes that
+  // card the containing block for its `position: fixed` descendants — so an
+  // overlay nested inside one would size and center itself against the card,
+  // not the viewport, leaving the rest of the app (the sidebar included)
+  // outside the scrim. Portaling onto document.body is the only way out —
+  // the same fix already applied to KebabMenu and Combobox.
+  return createPortal(
     <div className="overlay" onClick={onClose}>
       <div
         className="glass glass--strong glass--raised panel"
@@ -132,6 +139,7 @@ export function Modal({ open, title, onClose, children }: Props) {
           padding: 18px 22px 22px;
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   );
 }
