@@ -1,16 +1,19 @@
+import { useId, useState } from "react";
 import { Card } from "../atoms/Card";
 import { SectionTitle } from "../atoms/SectionTitle";
 import { TextField } from "../atoms/TextField";
 import { Select } from "../atoms/Select";
 import { Badge } from "../atoms/Badge";
 import { CategoryIcon } from "../atoms/CategoryIcon";
-import { ArrowDown, ArrowUp, CreditCard, Search } from "../atoms/Icons";
+import { Chart, Home, Search, Sliders } from "../atoms/Icons";
 import { formatNative } from "../atoms/Amount";
 import { KebabMenu } from "./KebabMenu";
 import { IconDisc } from "./IconDisc";
+import { ListItem, ListItems } from "./ListItem";
 import { useTransactionFilters } from "../../features/domains/hooks/useTransactionFilters";
 import { NO_METHOD } from "../../features/domains/helpers/transactionFilters";
-import type { SortBy, TransactionFilters } from "../../features/domains/helpers/transactionFilters";
+import type { HiddenReason } from "../../helpers/hidden";
+import type { TransactionFilters } from "../../features/domains/helpers/transactionFilters";
 import { useDateFormat } from "../../hooks/usePreferences";
 import { paymentMethodLabel, paymentMethodOptionLabel } from "../../helpers/paymentMethodLabel";
 import { tagNames } from "../../helpers/tags";
@@ -42,11 +45,15 @@ interface Props {
   ctx: MoneyContext;
   loading?: boolean;
   onEdit?: (transaction: Transaction) => void;
-  /** Rows written by a hidden recurring item (or a hidden category) get a pill and dim. */
-  isHidden?: (transaction: Transaction) => boolean;
+  /**
+   * Why a row is hidden — by its recurring item ("dashboard") or by its
+   * category ("chart"), or not at all. The row dims either way; the pill says
+   * which, since the two are undone in different places.
+   */
+  hiddenReason?: (transaction: Transaction) => HiddenReason | null;
   onDelete: (transactionId: string) => void;
   deletingId: string | null;
-  /** Whether the METHOD column and filter make sense for this domain. */
+  /** Whether the payment method belongs in this domain's rows and filters. */
   showMethod?: boolean;
   /** Hide the category filter (a drilldown already fixed the category). */
   showCategoryFilter?: boolean;
@@ -59,9 +66,11 @@ interface Props {
 }
 
 /**
- * The ledger as a table: date, description, category, method, amount; with
- * search, filters and a sortable date. Under 768px each row folds into a
- * card, so nothing scrolls sideways on a phone.
+ * The ledger, one ListItem per payment: name and amount first, then the
+ * date · category · method · origin line. It was a table with a sortable
+ * header; at phone width three of its cells shared one grid area and painted
+ * on top of each other, and the columns never earned their width anyway.
+ * Sorting moved into a control that works the same at every size.
  */
 export function TransactionsTable({
   title,
@@ -76,7 +85,7 @@ export function TransactionsTable({
   ctx,
   loading,
   onEdit,
-  isHidden,
+  hiddenReason,
   onDelete,
   deletingId,
   showMethod = true,
@@ -96,25 +105,53 @@ export function TransactionsTable({
   const shown = filter.rows.slice(0, limit);
   const hidden = filter.rows.length - shown.length;
   const roots = categories.filter((c) => !c.parentId);
+  // Two or three controls depending on the domain; the row splits evenly
+  // either way, so the count is a custom property rather than a special case.
+  const filterCount = 1 + (showCategoryFilter ? 1 : 0) + (showMethod ? 1 : 0);
+  const panelId = useId();
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   return (
     <Card>
       <SectionTitle title={title} subtitle={subtitle} />
 
       <div className="toolbar" role="search">
-        <div className="search">
-          <span className="search-icon" aria-hidden="true">
-            <Search size={16} />
-          </span>
-          <TextField
-            aria-label="Search transactions"
-            placeholder="Search transactions…"
-            value={filter.filters.search}
-            onValueChange={(v) => filter.set("search", v)}
-          />
+        <div className="find">
+          <div className="search">
+            <TextField
+              icon={<Search size={16} />}
+              aria-label="Search transactions"
+              placeholder="Search transactions…"
+              value={filter.filters.search}
+              onValueChange={(v) => filter.set("search", v)}
+            />
+          </div>
+          {/* Phone only — hidden by CSS from 768px up, where the panel is
+              always open and this button has no job. */}
+          <button
+            type="button"
+            className="glass glass--tap toggle"
+            aria-expanded={filtersOpen}
+            aria-controls={panelId}
+            onClick={() => setFiltersOpen((open) => !open)}
+          >
+            <Sliders size={16} />
+            Filters
+            {filter.narrowCount > 0 && <span className="count">{filter.narrowCount}</span>}
+          </button>
         </div>
-        {showCategoryFilter && (
-          <div className="control">
+
+        {/*
+         * The panel is always rendered and the media query decides whether it
+         * shows: one DOM for both widths, so there is no matchMedia in render
+         * and nothing to mismatch on hydration.
+         */}
+        <div
+          id={panelId}
+          className={`filters${filtersOpen ? " is-open" : ""}`}
+          style={{ "--filters": filterCount } as React.CSSProperties}
+        >
+          {showCategoryFilter && (
             <Select
               aria-label="Category filter"
               options={[
@@ -124,10 +161,8 @@ export function TransactionsTable({
               value={filter.filters.categoryId}
               onValueChange={(v) => filter.set("categoryId", v)}
             />
-          </div>
-        )}
-        {showMethod && (
-          <div className="control">
+          )}
+          {showMethod && (
             <Select
               aria-label="Method filter"
               options={[
@@ -138,8 +173,15 @@ export function TransactionsTable({
               value={filter.filters.paymentMethodId}
               onValueChange={(v) => filter.set("paymentMethodId", v)}
             />
-          </div>
-        )}
+          )}
+          <Select
+            aria-label="Sort"
+            options={SORT_OPTIONS}
+            value={`${filter.filters.sort.by}-${filter.filters.sort.dir}`}
+            onValueChange={(v) => filter.set("sort", parseSort(v))}
+          />
+        </div>
+
         {filter.active && (
           <button type="button" className="clear" onClick={filter.reset}>
             Clear
@@ -154,88 +196,105 @@ export function TransactionsTable({
           {rows.length === 0 ? "Nothing recorded in this period" : "Nothing matches these filters"}
         </p>
       ) : (
-        <div className="scroll">
-          <table className="table">
-            <thead>
-              <tr>
-                <SortHeader
-                  label="Date"
-                  by="date"
-                  sort={filter.filters.sort}
-                  onSort={filter.toggleSort}
-                />
-                <th scope="col">Description</th>
-                <th scope="col">Category</th>
-                {showMethod && <th scope="col">Method</th>}
-                <SortHeader
-                  label="Amount"
-                  by="amount"
-                  sort={filter.filters.sort}
-                  onSort={filter.toggleSort}
-                  align="right"
-                />
-                <th scope="col">
-                  <span className="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {shown.map((t) => (
-                <TransactionTableRow
-                  key={t.id}
-                  transaction={t}
-                  domain={domain}
-                  category={categories.find((c) => c.id === t.categoryId)}
-                  method={methods.find((m) => m.id === t.paymentMethodId)}
-                  item={items.find((i) => i.id === t.recurrentTransactionId)}
-                  labels={tagNames(t.tags, tags)}
-                  displayCurrency={displayCurrency}
-                  showMethod={showMethod}
-                  hidden={Boolean(isHidden?.(t))}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                  deleting={deletingId === t.id}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ListItems>
+          {shown.map((t) => (
+            <TransactionListRow
+              key={t.id}
+              transaction={t}
+              domain={domain}
+              category={categories.find((c) => c.id === t.categoryId)}
+              method={methods.find((m) => m.id === t.paymentMethodId)}
+              item={items.find((i) => i.id === t.recurrentTransactionId)}
+              labels={tagNames(t.tags, tags)}
+              displayCurrency={displayCurrency}
+              showMethod={showMethod}
+              hidden={hiddenReason?.(t) ?? null}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              deleting={deletingId === t.id}
+            />
+          ))}
+        </ListItems>
       )}
 
       {hidden > 0 && <p className="more">and {hidden} more in this period</p>}
 
       <style jsx>{`
+        /* Two rows: the search owns the first, the filters share the second. */
         .toolbar {
           display: flex;
-          flex-wrap: wrap;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .find {
+          display: flex;
           align-items: center;
           gap: 10px;
         }
 
         .search {
-          position: relative;
-          flex: 1 1 220px;
-          min-width: 180px;
+          flex: 1;
+          min-width: 0;
         }
 
-        .search-icon {
-          position: absolute;
-          left: 12px;
-          top: 50%;
-          transform: translateY(-50%);
+        /* Whatever is rendered — two controls or three — splits the row evenly. */
+        .filters {
+          display: grid;
+          grid-template-columns: repeat(var(--filters, 2), minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .toggle {
+          display: none;
+          align-items: center;
+          gap: 6px;
+          flex-shrink: 0;
+          height: var(--input-height);
+          padding: 0 14px;
+          border-radius: var(--r-pill);
+          color: var(--fg-1);
+          font-family: inherit;
+          font-size: 0.85rem;
+          font-weight: 600;
+          cursor: pointer;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        .toggle[aria-expanded="true"] {
+          color: var(--accent);
+        }
+
+        .count {
           display: inline-flex;
-          color: var(--fg-2);
-          pointer-events: none;
-          z-index: 1;
+          align-items: center;
+          justify-content: center;
+          min-width: 18px;
+          height: 18px;
+          padding: 0 5px;
+          border-radius: var(--r-pill);
+          background: var(--accent);
+          color: var(--on-accent);
+          font-size: 0.68rem;
+          font-weight: 700;
         }
 
-        .search :global(input) {
-          padding-left: 36px;
-        }
+        @media (max-width: 767px) {
+          /* Four stacked boxes before the first transaction is most of the
+             screen. The filters fold behind the button beside the search and
+             open under it, one per row, when they are asked for. */
+          .toggle {
+            display: inline-flex;
+          }
 
-        .control {
-          flex: 0 1 190px;
-          min-width: 150px;
+          .filters {
+            display: none;
+            grid-template-columns: 1fr;
+          }
+
+          .filters.is-open {
+            display: grid;
+          }
         }
 
         .clear {
@@ -249,130 +308,28 @@ export function TransactionsTable({
           padding: 6px 8px;
         }
 
-        .scroll {
-          overflow-x: auto;
-        }
-
-        .table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-
-        .table thead th {
-          padding: 0 10px 10px;
-          text-align: left;
-          font-size: 0.68rem;
-          font-weight: 700;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: var(--fg-2);
-          border-bottom: 1px solid var(--line);
-          white-space: nowrap;
-        }
-
-        .table thead th:first-child {
-          padding-left: 0;
-        }
-
         .empty,
         .more {
           margin: 0;
           font-size: 0.8rem;
           color: var(--fg-2);
         }
-
-        .sr-only {
-          position: absolute;
-          width: 1px;
-          height: 1px;
-          overflow: hidden;
-          clip: rect(0, 0, 0, 0);
-          white-space: nowrap;
-        }
-
-        @media (max-width: 767px) {
-          .table thead {
-            display: none;
-          }
-
-          .table,
-          .table tbody {
-            display: block;
-          }
-        }
       `}</style>
     </Card>
   );
 }
 
-interface SortHeaderProps {
-  label: string;
-  by: SortBy;
-  sort: TransactionFilters["sort"];
-  onSort: (by: SortBy) => void;
-  align?: "left" | "right";
-}
+const SORT_OPTIONS = [
+  { value: "date-desc", label: "Newest first" },
+  { value: "date-asc", label: "Oldest first" },
+  { value: "amount-desc", label: "Largest amount" },
+  { value: "amount-asc", label: "Smallest amount" },
+];
 
-function SortHeader({ label, by, sort, onSort, align = "left" }: SortHeaderProps) {
-  const active = sort.by === by;
-  return (
-    <th
-      scope="col"
-      aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
-      className={align}
-    >
-      <button type="button" className="sort" onClick={() => onSort(by)}>
-        {label}
-        <span className="arrow" aria-hidden="true">
-          {active && sort.dir === "asc" ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
-        </span>
-      </button>
-      <style jsx>{`
-        th {
-          padding: 0 10px 10px;
-          text-align: left;
-          font-size: 0.68rem;
-          font-weight: 700;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: var(--fg-2);
-          border-bottom: 1px solid var(--line);
-          white-space: nowrap;
-        }
-
-        th:first-child {
-          padding-left: 0;
-        }
-
-        th.right {
-          text-align: right;
-        }
-
-        .sort {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          border: none;
-          background: transparent;
-          font: inherit;
-          letter-spacing: inherit;
-          text-transform: inherit;
-          color: inherit;
-          cursor: pointer;
-          padding: 0;
-        }
-
-        .sort:hover {
-          color: var(--fg-0);
-        }
-
-        .arrow {
-          display: inline-flex;
-          opacity: ${active ? 1 : 0.35};
-        }
-      `}</style>
-    </th>
-  );
+/** "amount-asc" back into the filter state's { by, dir }. */
+function parseSort(value: string): TransactionFilters["sort"] {
+  const [by, dir] = value.split("-");
+  return { by: by === "amount" ? "amount" : "date", dir: dir === "asc" ? "asc" : "desc" };
 }
 
 interface RowProps {
@@ -384,14 +341,14 @@ interface RowProps {
   labels: string[];
   displayCurrency: Currency;
   showMethod: boolean;
-  hidden: boolean;
+  hidden: HiddenReason | null;
   onEdit?: (transaction: Transaction) => void;
   onDelete: (transactionId: string) => void;
   deleting: boolean;
 }
 
-/** One ledger row. A component of its own so styled-jsx scopes its styles. */
-function TransactionTableRow({
+/** One ledger row: everything but the name and the amount folds into one line. */
+function TransactionListRow({
   transaction: t,
   domain,
   category,
@@ -414,15 +371,37 @@ function TransactionTableRow({
       ? "recurring"
       : `recurring · ${FREQUENCY_LABELS[item.frequency]}${item.name !== t.name ? ` · ${item.name}` : ""}`;
 
+  // One string, not one span per fact: the row reads as a sentence, and the
+  // ellipsis lands at the end instead of inside a column.
+  const meta = [
+    formatDate(toDate(t.occurredAt), "day"),
+    category?.name,
+    showMethod && method ? paymentMethodLabel(method) : null,
+    origin,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
-    <tr className={`row${hidden ? " muted" : ""}`}>
-      <td className="date">{formatDate(toDate(t.occurredAt), "day")}</td>
-      <td className="desc">
-        <span className="name">{t.name}</span>
-        {(hidden || labels.length > 0) && (
-          <span className="pills">
+    <ListItem
+      leading={
+        category ? (
+          <IconDisc domain={domain} size={36}>
+            <CategoryIcon category={category} size={16} />
+          </IconDisc>
+        ) : undefined
+      }
+      name={t.name}
+      badges={
+        hidden || labels.length > 0 ? (
+          <>
             {hidden && (
-              <Badge variant="outline" tone="warning" caps>
+              <Badge
+                variant="outline"
+                tone="warning"
+                caps
+                icon={hidden === "chart" ? <Chart size={12} /> : <Home size={12} />}
+              >
                 Hidden
               </Badge>
             )}
@@ -431,46 +410,19 @@ function TransactionTableRow({
                 {l}
               </Badge>
             ))}
-          </span>
-        )}
-        {t.note && <span className="note">{t.note}</span>}
-        <span className="origin">{origin}</span>
-      </td>
-      <td className="category">
-        {category ? (
-          <span className="cell">
-            <IconDisc domain={domain} size={28}>
-              <CategoryIcon category={category} size={14} />
-            </IconDisc>
-            <span>{category.name}</span>
-          </span>
-        ) : (
-          <span className="dim">—</span>
-        )}
-      </td>
-      {showMethod && (
-        <td className="method">
-          {method ? (
-            <span className="cell">
-              <span className="method-icon" aria-hidden="true">
-                <CreditCard size={16} />
-              </span>
-              <span>{paymentMethodLabel(method)}</span>
-            </span>
-          ) : (
-            <span className="dim">—</span>
-          )}
-        </td>
-      )}
-      <td className="amount">
-        <span className="value">{formatNative(t.amount, t.currency, displayCurrency)}</span>
-        {t.chargedAmount !== undefined && t.chargedCurrency && (
-          <span className="charged">
-            charged {formatNative(t.chargedAmount, t.chargedCurrency, displayCurrency)}
-          </span>
-        )}
-      </td>
-      <td className="actions">
+          </>
+        ) : undefined
+      }
+      meta={meta}
+      note={t.note}
+      muted={Boolean(hidden)}
+      amount={formatNative(t.amount, t.currency, displayCurrency)}
+      amountMeta={
+        t.chargedAmount !== undefined && t.chargedCurrency
+          ? `charged ${formatNative(t.chargedAmount, t.chargedCurrency, displayCurrency)}`
+          : undefined
+      }
+      trailing={
         <KebabMenu
           aria-label={`Actions for ${t.name}`}
           actions={[
@@ -483,151 +435,7 @@ function TransactionTableRow({
             },
           ]}
         />
-      </td>
-      <style jsx>{`
-        .row td {
-          padding: 12px 10px;
-          border-bottom: 1px solid var(--line);
-          vertical-align: middle;
-          font-size: 0.85rem;
-          color: var(--fg-0);
-        }
-
-        .row td:first-child {
-          padding-left: 0;
-        }
-
-        .row td:last-child {
-          padding-right: 0;
-        }
-
-        .row.muted td {
-          opacity: 0.55;
-        }
-
-        .date {
-          white-space: nowrap;
-          color: var(--fg-1);
-        }
-
-        .desc {
-          min-width: 160px;
-        }
-
-        .name {
-          display: block;
-          font-weight: 500;
-        }
-
-        .pills {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 4px;
-          margin-top: 4px;
-        }
-
-        .note,
-        .origin {
-          display: block;
-          font-size: 0.72rem;
-          color: var(--fg-2);
-          margin-top: 2px;
-        }
-
-        .cell {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          white-space: nowrap;
-        }
-
-        .method-icon {
-          display: inline-flex;
-          color: var(--fg-2);
-        }
-
-        .dim {
-          color: var(--fg-2);
-        }
-
-        .amount {
-          text-align: right;
-          white-space: nowrap;
-        }
-
-        .value {
-          display: block;
-          font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
-          font-variant-numeric: tabular-nums;
-        }
-
-        .charged {
-          display: block;
-          font-size: 0.72rem;
-          color: var(--fg-2);
-        }
-
-        .actions {
-          width: 40px;
-          text-align: right;
-        }
-
-        @media (max-width: 767px) {
-          .row {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) auto auto;
-            grid-template-areas:
-              "desc amount actions"
-              "meta meta meta";
-            gap: 2px 10px;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--line);
-          }
-
-          .row td {
-            display: block;
-            padding: 0;
-            border-bottom: none;
-          }
-
-          .desc {
-            grid-area: desc;
-            min-width: 0;
-          }
-
-          .amount {
-            grid-area: amount;
-          }
-
-          .actions {
-            grid-area: actions;
-            width: auto;
-          }
-
-          .date,
-          .category,
-          .method {
-            grid-area: meta;
-            display: inline;
-            font-size: 0.72rem;
-            color: var(--fg-2);
-          }
-
-          .category::before,
-          .method::before {
-            content: " · ";
-          }
-
-          .cell {
-            display: inline;
-          }
-
-          .cell :global(.disc),
-          .method-icon {
-            display: none;
-          }
-        }
-      `}</style>
-    </tr>
+      }
+    />
   );
 }

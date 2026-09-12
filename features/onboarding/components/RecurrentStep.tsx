@@ -182,9 +182,9 @@ export function RecurrentStep({ state, showPaymentMethod = false }: Props) {
           align-items: flex-start;
           gap: 10px;
           padding: 12px 14px;
-          border: 1px solid var(--line);
+          border: 1px solid var(--glass-rim);
           border-radius: var(--r-md);
-          background: var(--bg-1);
+          background: var(--glass-inset);
           font-size: 0.875rem;
           color: var(--fg-0);
           cursor: pointer;
@@ -233,9 +233,9 @@ export function RecurrentStep({ state, showPaymentMethod = false }: Props) {
           align-items: flex-end;
           gap: 12px;
           padding: 14px;
-          border: 1px solid var(--line);
+          border: 1px solid var(--glass-rim);
           border-radius: var(--r-md);
-          background: var(--bg-1);
+          background: var(--glass-inset);
         }
 
         .fields {
@@ -284,7 +284,7 @@ export function RecurrentStep({ state, showPaymentMethod = false }: Props) {
 
         .remove:hover {
           color: var(--accent-hot);
-          background: var(--bg-2);
+          background: var(--glass-hover);
         }
 
         @media (max-width: 767px) {

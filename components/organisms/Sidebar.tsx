@@ -88,7 +88,7 @@ export function Sidebar() {
   return (
     <>
       {/* ── Desktop sidebar ──────────────────────────── */}
-      <aside className="waletto-sidebar">
+      <aside className="glass glass--strong waletto-sidebar">
         <div className="logo">
           <span className="logo-mark" aria-hidden="true">
             <Waves size={22} />
@@ -125,7 +125,10 @@ export function Sidebar() {
       </aside>
 
       {/* ── Mobile bottom nav ────────────────────────── */}
-      <nav className="waletto-bnav" aria-label="Mobile navigation">
+      <nav
+        className="glass glass--strong glass--raised waletto-bnav"
+        aria-label="Mobile navigation"
+      >
         {BOTTOM_NAV.map((item) => {
           const Icon = item.icon;
           return (
@@ -195,13 +198,16 @@ export function Sidebar() {
        * exactly what silently unstyled this whole sidebar before.
        */}
       <style jsx>{`
+        /* A single tall pane of glass. Only the inner edge is drawn: the other
+           three sit against the viewport, where a rim would read as a seam. */
         .waletto-sidebar {
           width: 236px;
           flex-shrink: 0;
-          background: var(--glass-strong);
-          backdrop-filter: blur(var(--glass-blur));
-          -webkit-backdrop-filter: blur(var(--glass-blur));
-          border-right: 1px solid var(--line);
+          border-width: 0 1px 0 0;
+          border-radius: 0;
+          box-shadow:
+            inset -1px 0 0 var(--glass-edge-low),
+            var(--glass-shadow);
           display: flex;
           flex-direction: column;
           gap: 28px;
@@ -266,7 +272,7 @@ export function Sidebar() {
         }
 
         .nav :global(.nav-item:hover) {
-          background: var(--bg-2);
+          background: var(--glass-hover);
           color: var(--fg-0);
         }
 
@@ -276,9 +282,13 @@ export function Sidebar() {
         }
 
         .nav :global(.nav-item.is-active) {
-          background: var(--accent-soft);
+          background-color: var(--accent-soft);
+          background-image: var(--glass-sheen);
           color: var(--accent);
           font-weight: 600;
+          box-shadow:
+            inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent),
+            inset 0 1px 0 var(--glass-edge);
         }
 
         .account {
@@ -345,23 +355,25 @@ export function Sidebar() {
           color: var(--accent-hot);
         }
 
+        /* A floating capsule rather than a bar welded to the screen edge:
+           content slides under it and is visibly refracted through it, which
+           is the whole point of the material. PageLayout already reserves the
+           room for it at the bottom of every page. */
         .waletto-bnav {
           position: fixed;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          height: 64px;
+          bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+          left: 12px;
+          right: 12px;
+          height: 62px;
           display: none;
           align-items: stretch;
-          background: var(--glass-strong);
-          backdrop-filter: blur(var(--glass-blur));
-          -webkit-backdrop-filter: blur(var(--glass-blur));
-          border-top: 1px solid var(--line);
+          border-radius: var(--r-2xl);
           z-index: var(--z-nav, 100);
-          padding-bottom: env(safe-area-inset-bottom, 0px);
+          overflow: hidden;
         }
 
         .waletto-bnav :global(.bnav-item) {
+          position: relative;
           flex: 1;
           display: flex;
           flex-direction: column;
@@ -381,6 +393,21 @@ export function Sidebar() {
 
         .waletto-bnav :global(.bnav-item.is-active) {
           color: var(--accent);
+        }
+
+        /* The lit lozenge behind the current tab. */
+        .waletto-bnav :global(.bnav-item.is-active)::before {
+          content: "";
+          position: absolute;
+          inset: 6px 6px;
+          border-radius: var(--r-lg);
+          background-color: var(--accent-soft);
+          background-image: var(--glass-sheen);
+          box-shadow: inset 0 1px 0 var(--glass-edge);
+        }
+
+        .waletto-bnav :global(.bnav-item) > :global(*) {
+          position: relative;
         }
 
         .bnav-more {
@@ -411,7 +438,9 @@ export function Sidebar() {
 
         .more :global(.more-item.is-active) {
           color: var(--accent);
-          background: var(--accent-soft);
+          background-color: var(--accent-soft);
+          background-image: var(--glass-sheen);
+          box-shadow: inset 0 1px 0 var(--glass-edge);
         }
 
         .more-build {

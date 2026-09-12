@@ -22,6 +22,8 @@ export function Chip({
   removeLabel,
 }: Props) {
   const classes = [
+    "glass",
+    onClick ? "glass--tap" : "",
     "chip",
     `chip--${variant}`,
     selected ? "chip--selected" : "",
@@ -30,22 +32,17 @@ export function Chip({
     .filter(Boolean)
     .join(" ");
 
-  const content = (
-    <>
-      {variant === "add" && <Plus size={14} />}
-      <span className="text">{children}</span>
-    </>
-  );
-
   return (
     <span className="wrap">
       {onClick ? (
         <button type="button" className={classes} onClick={onClick} aria-pressed={selected}>
-          {content}
+          {variant === "add" && <Plus size={14} />}
+          <span className="text">{children}</span>
         </button>
       ) : (
         <span className={classes}>
-          {content}
+          {variant === "add" && <Plus size={14} />}
+          <span className="text">{children}</span>
           {onRemove && (
             <button
               type="button"
@@ -70,9 +67,7 @@ export function Chip({
           gap: 6px;
           /* Right padding shrinks when a × button supplies its own. */
           padding: 7px 14px;
-          border-radius: 999px;
-          border: 1px solid var(--line);
-          background: var(--bg-2);
+          border-radius: var(--r-pill);
           color: var(--fg-0);
           font-family: inherit;
           font-size: 0.8125rem;
@@ -86,8 +81,11 @@ export function Chip({
         }
 
         .chip--add {
-          background: transparent;
+          background-color: transparent;
+          background-image: none;
           border-style: dashed;
+          border-color: var(--line-strong);
+          box-shadow: none;
           color: var(--fg-1);
         }
 
@@ -100,14 +98,16 @@ export function Chip({
         }
 
         .chip--clickable:hover {
-          border-color: var(--line-strong);
           color: var(--fg-0);
         }
 
         .chip--selected {
-          border-color: var(--accent);
+          border-color: color-mix(in srgb, var(--accent) 45%, transparent);
           color: var(--accent);
-          background: var(--glow);
+          background-color: var(--accent-soft);
+          box-shadow:
+            inset 0 1px 0 var(--glass-edge),
+            0 4px 12px -8px var(--accent);
         }
 
         .chip--clickable:focus-visible {

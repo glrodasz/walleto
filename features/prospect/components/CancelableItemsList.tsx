@@ -127,7 +127,7 @@ export function CancelableItemsList({
           text-transform: uppercase;
           letter-spacing: 0.03em;
           color: var(--fg-2);
-          background: var(--bg-2);
+          background: var(--glass-inset);
           border-radius: 999px;
           padding: 2px 8px;
         }

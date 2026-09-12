@@ -92,6 +92,15 @@ function setup(overrides: Partial<React.ComponentProps<typeof RecurringChecklist
 }
 
 describe("RecurringChecklist", () => {
+  it("flags an item hidden from the dashboard", () => {
+    const hiddenGym = item("Gym", 400, new Date(2026, 2, 2, 12), { hiddenFromDashboard: true });
+    setup({ items: [rent, netflix, hiddenGym, insurance] });
+    const row = screen.getByText("Gym").closest("li")!;
+    expect(within(row).getByText("Hidden")).toBeInTheDocument();
+    // No other row claims it.
+    expect(screen.getAllByText("Hidden")).toHaveLength(1);
+  });
+
   it("groups the month into overdue, due and paid, and folds the rest away", () => {
     setup();
     const groups = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);

@@ -16,11 +16,18 @@ interface Props {
   danger?: boolean;
 }
 
-/** One "label · value" line of a Settings card; a chevron when it leads somewhere. */
-export function SettingsRow({ label, value, control, hint, href, onClick, danger }: Props) {
-  const external = href?.startsWith("http") || href?.startsWith("mailto:");
-  const interactive = Boolean(href || onClick);
-  const body = (
+interface BodyProps extends Pick<Props, "label" | "value" | "control" | "hint"> {
+  external: boolean;
+  interactive: boolean;
+}
+
+/**
+ * The row's contents, as a component rather than a `const`: styled-jsx only
+ * scopes the JSX a component returns itself, so markup parked in a variable
+ * compiles with bare class names and its CSS silently does nothing.
+ */
+function SettingsRowBody({ label, value, control, hint, external, interactive }: BodyProps) {
+  return (
     <>
       <span className="label">{label}</span>
       <span className="right">
@@ -33,57 +40,8 @@ export function SettingsRow({ label, value, control, hint, href, onClick, danger
           </span>
         )}
       </span>
-    </>
-  );
 
-  return (
-    <div className={`row${danger ? " danger" : ""}`}>
-      {href ? (
-        <a
-          className="hit"
-          href={href}
-          target={external ? "_blank" : undefined}
-          rel={external ? "noreferrer" : undefined}
-        >
-          {body}
-        </a>
-      ) : onClick ? (
-        <button type="button" className="hit" onClick={onClick}>
-          {body}
-        </button>
-      ) : (
-        <div className="hit">{body}</div>
-      )}
       <style jsx>{`
-        .row {
-          border-bottom: 1px solid var(--line);
-        }
-
-        .row:last-child {
-          border-bottom: none;
-        }
-
-        .hit {
-          width: 100%;
-          display: grid;
-          grid-template-columns: minmax(120px, 180px) minmax(0, 1fr);
-          align-items: center;
-          gap: 12px;
-          min-height: 48px;
-          padding: 6px 0;
-          border: none;
-          background: transparent;
-          font-family: inherit;
-          text-align: left;
-          color: inherit;
-          text-decoration: none;
-        }
-
-        button.hit,
-        a.hit {
-          cursor: pointer;
-        }
-
         .label {
           font-size: 0.88rem;
           color: var(--fg-1);
@@ -124,6 +82,72 @@ export function SettingsRow({ label, value, control, hint, href, onClick, danger
           color: var(--fg-2);
         }
 
+        @media (max-width: 480px) {
+          .right {
+            flex-wrap: wrap;
+          }
+        }
+      `}</style>
+    </>
+  );
+}
+
+/** One "label · value" line of a Settings card; a chevron when it leads somewhere. */
+export function SettingsRow({ label, value, control, hint, href, onClick, danger }: Props) {
+  const external = Boolean(href?.startsWith("http") || href?.startsWith("mailto:"));
+  const interactive = Boolean(href || onClick);
+  const body = { label, value, control, hint, external, interactive };
+
+  return (
+    <div className={`row${danger ? " danger" : ""}`}>
+      {href ? (
+        <a
+          className="hit"
+          href={href}
+          target={external ? "_blank" : undefined}
+          rel={external ? "noreferrer" : undefined}
+        >
+          <SettingsRowBody {...body} />
+        </a>
+      ) : onClick ? (
+        <button type="button" className="hit" onClick={onClick}>
+          <SettingsRowBody {...body} />
+        </button>
+      ) : (
+        <div className="hit">
+          <SettingsRowBody {...body} />
+        </div>
+      )}
+      <style jsx>{`
+        .row {
+          border-bottom: 1px solid var(--line);
+        }
+
+        .row:last-child {
+          border-bottom: none;
+        }
+
+        .hit {
+          width: 100%;
+          display: grid;
+          grid-template-columns: minmax(120px, 180px) minmax(0, 1fr);
+          align-items: center;
+          gap: 12px;
+          min-height: 48px;
+          padding: 6px 0;
+          border: none;
+          background: transparent;
+          font-family: inherit;
+          text-align: left;
+          color: inherit;
+          text-decoration: none;
+        }
+
+        button.hit,
+        a.hit {
+          cursor: pointer;
+        }
+
         .danger {
           margin-top: 8px;
           border-radius: var(--r-md);
@@ -135,7 +159,8 @@ export function SettingsRow({ label, value, control, hint, href, onClick, danger
           padding: 6px 12px;
         }
 
-        .danger .label {
+        /* The label belongs to the body component's scope, hence :global(). */
+        .danger :global(.label) {
           color: var(--accent-hot);
           font-weight: 600;
         }
@@ -145,10 +170,6 @@ export function SettingsRow({ label, value, control, hint, href, onClick, danger
             grid-template-columns: 1fr;
             gap: 4px;
             padding: 10px 0;
-          }
-
-          .right {
-            flex-wrap: wrap;
           }
         }
       `}</style>

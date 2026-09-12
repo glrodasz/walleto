@@ -24,20 +24,34 @@ interface HideableRow {
   categoryId: string;
 }
 
+/** Which rule hid a row — the two are flagged differently in the UI. */
+export type HiddenReason = "dashboard" | "chart";
+
 /**
  * A ledger row is hidden through what it belongs to: the recurring item that
- * wrote it, or (on the domain graph) the category it is filed under. One-off
- * rows never hide on their own.
+ * wrote it (hidden from the dashboard), or the category it is filed under
+ * (hidden from the domain graph). One-off rows never hide on their own.
+ *
+ * A row can match both; the item wins, as it always has — this used to be an
+ * `||` that short-circuited on the same term.
  */
+export function hiddenRowReason(
+  row: HideableRow,
+  hiddenItems: ReadonlySet<string>,
+  hiddenCategories: ReadonlySet<string> = NONE
+): HiddenReason | null {
+  if (row.recurrentTransactionId !== undefined && hiddenItems.has(row.recurrentTransactionId)) {
+    return "dashboard";
+  }
+  return hiddenCategories.has(row.categoryId) ? "chart" : null;
+}
+
 export function isHiddenRow(
   row: HideableRow,
   hiddenItems: ReadonlySet<string>,
   hiddenCategories: ReadonlySet<string> = NONE
 ): boolean {
-  return (
-    (row.recurrentTransactionId !== undefined && hiddenItems.has(row.recurrentTransactionId)) ||
-    hiddenCategories.has(row.categoryId)
-  );
+  return hiddenRowReason(row, hiddenItems, hiddenCategories) !== null;
 }
 
 export function withoutHidden<T extends HideableRow>(

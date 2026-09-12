@@ -62,9 +62,9 @@ export function SetupCard() {
           gap: 12px;
           width: 100%;
           padding: 12px;
-          border: 1px solid var(--line);
+          border: 1px solid var(--glass-rim);
           border-radius: var(--r-lg);
-          background: var(--bg-1);
+          background: var(--glass-inset);
           font-family: inherit;
           text-align: left;
           color: inherit;

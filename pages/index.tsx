@@ -119,6 +119,9 @@ export default function Dashboard() {
     <PageLayout
       title={`${greeting()}, ${firstName}`}
       subtitle={`Here's your financial overview for ${window.longLabel}.`}
+      /* The dashboard is the whole picture, not one month's ledger: the month
+         is picked on a domain page, or by clicking a bar in the cash flow. */
+      hideMonth
     >
       {error && <ErrorState error={error} />}
       {fxUnavailable && (

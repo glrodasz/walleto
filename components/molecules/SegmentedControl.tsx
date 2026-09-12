@@ -28,7 +28,7 @@ export function SegmentedControl<K extends string>({
   size = "md",
 }: Props<K>) {
   return (
-    <div className={`segments segments--${size}`} role="radiogroup" aria-label={label}>
+    <div className={`glass segments segments--${size}`} role="radiogroup" aria-label={label}>
       {options.map((o) => {
         const Icon = o.icon;
         const active = o.key === value;
@@ -51,9 +51,7 @@ export function SegmentedControl<K extends string>({
           display: inline-flex;
           gap: 2px;
           padding: 3px;
-          border-radius: var(--r-md);
-          border: 1px solid var(--line);
-          background: var(--bg-2);
+          border-radius: var(--r-pill);
         }
 
         .segment {
@@ -63,7 +61,8 @@ export function SegmentedControl<K extends string>({
           gap: 6px;
           flex: 1;
           border: none;
-          border-radius: var(--r-sm);
+          border-radius: var(--r-pill);
+          -webkit-tap-highlight-color: transparent;
           background: transparent;
           color: var(--fg-1);
           font-family: inherit;
@@ -91,10 +90,15 @@ export function SegmentedControl<K extends string>({
           color: var(--fg-0);
         }
 
+        /* The thumb: a lit pill sliding over the track, same material a
+           shade brighter. */
         .segment.is-active {
-          background: var(--bg-1);
+          background-color: var(--glass-raised);
+          background-image: var(--glass-sheen);
           color: var(--accent);
-          box-shadow: var(--shadow-sm);
+          box-shadow:
+            inset 0 1px 0 var(--glass-edge),
+            var(--glass-shadow);
         }
       `}</style>
     </div>

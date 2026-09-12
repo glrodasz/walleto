@@ -114,7 +114,46 @@ constants.ts                            constantes y mapas de presentación
 
 - **styled-jsx** dentro del componente (`<style jsx>{\`…\`}</style>`). No usamos CSS Modules.
 - Siempre **design tokens**, nunca hex a mano: `var(--bg-1)`, `var(--accent)`, `var(--r-md)`. Los tokens están en `styles/globals.css`.
-- **Dos paletas**: clara por defecto ("glass" sobre un fondo de paisaje) y oscura (la "Fintech-noir" original), elegidas por `data-theme` en `<html>`. Un script inline en `_document` la fija antes del primer paint y `hooks/useTheme` la sigue (preferencia en el user doc, `"system"` se resuelve en JS con `matchMedia`; los tokens viven solo en esos dos bloques). Texto sobre el acento: `--on-accent`. Superficies: `--glass` / `--glass-strong` (Card, Sidebar, header), `--scrim` (overlays), `--shadow-sm/lg`.
+- **Dos paletas**: clara por defecto ("glass" sobre un fondo de paisaje) y oscura (la "Fintech-noir" original), elegidas por `data-theme` en `<html>`. Un script inline en `_document` la fija antes del primer paint y `hooks/useTheme` la sigue (preferencia en el user doc, `"system"` se resuelve en JS con `matchMedia`; los tokens viven solo en esos dos bloques). Texto sobre el acento: `--on-accent`.
+
+### Liquid glass: el material (importante)
+
+Toda superficie que flota —Card, Sidebar, la barra inferior, menús, sheets, pills, chips, campos— es **la misma pieza de vidrio**, y esa pieza se implementa **una sola vez**: la clase global `.glass` en `styles/globals.css`.
+
+```jsx
+<div className="glass card">           {/* vidrio + lo propio del componente */}
+<nav className="glass glass--strong glass--raised waletto-bnav">
+<button className="glass glass--tap btn btn--secondary">
+```
+
+- `.glass` — relleno translúcido (`--glass`), `backdrop-filter: blur() saturate()`, borde `--glass-rim`, brillo especular en el canto superior (`--glass-edge`, `--glass-edge-low`) y el barrido de luz `--glass-sheen`, más `--glass-shadow`.
+- `.glass--strong` — cromo que tiene que seguir legible con contenido pasando por debajo (sidebar, barra inferior, sheets, la fila sticky de acciones de un formulario).
+- `.glass--raised` — sombra grande, para lo que flota sobre la página (menús, el sheet del modal, el FAB).
+- `.glass--tap` — reacciona al puntero: aclara al hover, se hunde al `:active`. Va en todo lo que se pueda tocar.
+
+**Es una clase global a propósito.** La alternativa era copiar seis declaraciones en veinte componentes y verlas divergir. styled-jsx sigue siendo el sitio de la geometría (radio, padding, grid) y de cualquier cosa específica del componente.
+
+El resto del vocabulario, por si algo no puede llevar la clase (un `<dialog>` nativo, un `::before`): `--glass-field` (campos: un pozo excavado en el vidrio, no una baldosa), `--glass-inset` (un panel dentro de otro panel: el bloque de stats de una card, la pista de una barra de progreso — sin blur propio, lo que tiene detrás ya está borroso), `--glass-raised` (la pastilla levantada de un TabStrip / SegmentedControl), `--glass-hover`, `--scrim` + `--scrim-blur` (overlays), `--shadow-sm/lg`.
+
+**Nunca pongas `background: var(--bg-1|2|3)` en una superficie visible.** Ese es el modo en que el material se rompe: una baldosa opaca sobre el vidrio. Los `--bg-*` quedan para el fondo de la página y para lo que el navegador dibuja por su cuenta (`select option`).
+
+El fondo importa tanto como el vidrio: el paisaje de `--bg-image` nunca llega a taparse del todo y `body::before` deja una luz ambiental fija al viewport (`--ambient-1..3`), para que una card por debajo del fold también tenga color que refractar. Sin eso el material se lee como un panel gris.
+
+Dos degradaciones, ambas en `globals.css` y ambas solo quitan translucidez (la geometría no cambia): `@supports not (backdrop-filter)` y `prefers-reduced-transparency: reduce` vuelven `--glass*` opacos, y la segunda además apaga `sheen`, cantos, blur y `--scrim-blur`.
+
+### Filas de lista: `ListItem` (importante)
+
+Cualquier fila de "nombre · datos · monto" es `components/molecules/ListItem.tsx`, con su `ListItems` alrededor. No escribas otra: llegaron a existir trece implementaciones distintas de la misma fila, con el nombre a 0.85/0.88/0.9rem, el monto a cuatro tamaños y la mitad de las veces sin `font-weight` — o sea, el número principal de la fila pesaba menos que su etiqueta.
+
+La escala vive ahí, una sola vez: nombre y monto a `0.95rem` (600 / 700 mono tabular, `--fg-0`), meta y note a `0.75rem` (`--fg-2`), el pie del monto a `0.72rem`. Dos saltos de tamaño y uno de peso, nada más.
+
+Los slots: `leading` (IconDisc, DateBadge), `name`, `badges`, `meta`, `note`, `progress`, `amount`, `amountMeta`, `trailing`, más `onClick` / `href` / `muted`.
+
+- **`badges` va siempre con `Badge`** (`components/atoms/Badge.tsx`), nunca un span propio: el átomo trae `white-space: nowrap`, y sin eso "HIDDEN ON CHART" se parte en dos líneas. Van en su **propia línea, abajo a la izquierda** del bloque de texto (después de meta / note / progress): ahí no le compiten el ancho ni al nombre ni al monto, y tres tags se leen como un grupo en vez de empujar el nombre a una elipsis.
+- **Las dos marcas "Hidden" se distinguen por icono**, porque la palabra sola ya no alcanza: `Chart` = oculto del gráfico (categorías), `Home` = oculto del dashboard (recurrentes) — el mismo icono que el sidebar usa para esa pantalla. En el ledger la razón la da `hiddenRowReason` (`helpers/hidden.ts`), que devuelve `"dashboard" | "chart" | null`; si una fila cumple las dos, gana el item. El icono va en el prop `icon` de `Badge` a `size={12}` (la pastilla `caps` es de 0.64rem) y es decorativo: `aria-hidden` viene de fábrica en `Icons.tsx`, así que el nombre accesible sigue siendo el texto.
+- **`meta` es un solo string ya unido** ("Sep 25 · Monthly · Housing · Visa - 4242"). Hay tests que lo buscan como un único nodo de texto, y así la elipsis cae al final y no dentro de una columna.
+- **`trailing` queda fuera del área clicable** (el kebab no puede vivir dentro del botón de la fila); `amount` queda dentro.
+
 - Los acentos por dominio: `--domain-income`, `--domain-expense`, `--domain-investment`, `--domain-saving`, sus tintes suaves `--domain-*-soft` y las rampas `--tint-{domain}-1..6` para barras apiladas por categoría. **Nunca** metas `color-mix()` en un string de JS (recharts no lo entiende en atributos SVG): define el token en CSS y pasa `var(--x)`.
 - Iconos: `components/atoms/Icons.tsx` (trazo Feather). Los de categoría se eligen por key (`constants.ICON_KEYS`) en `CategoryIcon`; sin pick, `helpers/categoryIcons` decide por el nombre.
 
@@ -147,7 +186,17 @@ Mismo patrón en `pages/index.tsx` (`.row > :global(*)`). Si estilas algo que no
 
 ### Trampa de los render helpers (importante)
 
-El hash de scope solo se estampa en el JSX que devuelve **el propio componente**. Una función auxiliar dentro del componente (`const renderRow = (o) => <li className="row">…`) devuelve elementos **sin** el hash, y sus reglas quedan muertas igual de silenciosamente — así salió el checklist de Recurring con todo el texto pegado. La salida es un componente hijo con su propio `<style jsx>` (`OccurrenceRow` en `RecurringChecklist.tsx`), nunca un helper que devuelve JSX.
+El hash de scope solo se estampa en el JSX que devuelve **el propio componente**. Una función auxiliar dentro del componente (`const renderRow = (o) => <li className="row">…`) devuelve elementos **sin** el hash, y sus reglas quedan muertas igual de silenciosamente — así salió el checklist de Recurring con todo el texto pegado. La salida es un componente hijo con su propio `<style jsx>` (`ListItemBody` en `components/molecules/ListItem.tsx`, `SettingsRowBody` en Settings), nunca un helper que devuelve JSX.
+
+**Y cuidado: una `const` con JSX cae en la misma trampa**, aunque no sea una función:
+
+```jsx
+const body = // ✗ sale sin hash
+  <span className="main">…</span>;
+return <li className="row">{onClick ? <button>{body}</button> : <div>{body}</div>}</li>;
+```
+
+Es el patrón tentador cuando el wrapper cambia (button / link / div) y el contenido no. La lista de Tags estuvo así: el `<li>` compilaba con hash y todo lo de dentro sin él, con lo cual nombre, monto, barra y meta quedaban uno pegado al otro sin ninguna jerarquía, y ningún error en ninguna parte. Se comprueba en el bundle: si en `.next/static/chunks/*.js` ves `className:"main"` sin un `jsx-…` delante, ese CSS está muerto. La salida es la misma: el contenido es un componente hijo con su propio `<style jsx>`, y las reglas del padre que lo toquen van por `:global()`.
 
 ---
 

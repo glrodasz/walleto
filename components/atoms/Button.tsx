@@ -16,10 +16,14 @@ export function Button({
   className,
   ...rest
 }: Props) {
+  // Solid and ghost buttons are glass; the primary one is accent-coloured, so
+  // it takes the sheen and the press response without the translucent fill.
+  const material = variant === "secondary" ? "glass glass--tap " : "";
+
   return (
     <button
       type={type}
-      className={`btn btn--${variant} btn--${size}${className ? ` ${className}` : ""}`}
+      className={`${material}btn btn--${variant} btn--${size}${className ? ` ${className}` : ""}`}
       {...rest}
     >
       {children}
@@ -30,16 +34,21 @@ export function Button({
           align-items: center;
           justify-content: center;
           gap: 8px;
-          border-radius: var(--r-md);
+          border-radius: var(--r-pill);
           border: 1px solid transparent;
           font-family: inherit;
           font-weight: 600;
           cursor: pointer;
           white-space: nowrap;
           transition:
-            opacity 120ms ease,
-            background 120ms ease,
-            border-color 120ms ease;
+            background-color 180ms ease,
+            border-color 180ms ease,
+            box-shadow 180ms ease,
+            transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .btn:active:not(:disabled) {
+          transform: scale(0.97);
         }
 
         .btn--md {
@@ -54,20 +63,30 @@ export function Button({
           min-height: 32px;
         }
 
+        /* Accent glass: the same top-lit sheen and rim, over a solid accent,
+           plus a coloured pool of light under it so it sits above the page. */
         .btn--primary {
-          background: var(--accent);
+          background-color: var(--accent);
+          background-image: var(--glass-sheen);
           color: var(--on-accent);
+          border-color: color-mix(in srgb, var(--on-accent) 28%, transparent);
+          box-shadow:
+            inset 0 1px 0 color-mix(in srgb, var(--on-accent) 45%, transparent),
+            0 8px 20px -10px var(--accent);
         }
 
+        .btn--primary:hover:not(:disabled) {
+          background-color: color-mix(in srgb, var(--accent) 88%, var(--on-accent));
+          box-shadow:
+            inset 0 1px 0 color-mix(in srgb, var(--on-accent) 45%, transparent),
+            0 10px 26px -10px var(--accent);
+        }
+
+        /* .btn sets a transparent border at a higher specificity than
+           .glass, so the rim is re-declared here. */
         .btn--secondary {
-          background: var(--bg-2);
           color: var(--fg-0);
-          border-color: var(--line);
-        }
-
-        .btn--secondary:hover:not(:disabled) {
-          background: var(--bg-3);
-          border-color: var(--line-strong);
+          border-color: var(--glass-rim);
         }
 
         .btn--ghost {
@@ -77,10 +96,7 @@ export function Button({
 
         .btn--ghost:hover:not(:disabled) {
           color: var(--fg-0);
-        }
-
-        .btn:hover:not(:disabled) {
-          opacity: 0.92;
+          background: var(--accent-soft);
         }
 
         .btn:focus-visible {

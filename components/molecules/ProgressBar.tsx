@@ -25,7 +25,7 @@ export function ProgressBar({ ratio, color = "var(--accent)", height = 8, label 
           width: 100%;
           height: var(--bar-height);
           border-radius: 999px;
-          background: color-mix(in srgb, var(--bar-color) 16%, var(--bg-2));
+          background: color-mix(in srgb, var(--bar-color) 16%, var(--glass-inset));
           overflow: hidden;
         }
 

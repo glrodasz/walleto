@@ -4,6 +4,13 @@ export type BadgeTone = "neutral" | "success" | "warning" | "danger" | "info";
 
 interface Props {
   children: ReactNode;
+  /**
+   * A glyph before the label, for flags that need to say *which* flag —
+   * bars for the chart, a house for the dashboard. Icons carry `aria-hidden`
+   * and `stroke: currentColor`, so it tints with the pill and the label stays
+   * the accessible name. Size it against `caps` (0.64rem): 12px.
+   */
+  icon?: ReactNode;
   /** Solid: tinted pill ("RECURRING", "Paid"). Outline: hairline pill (user tags, "Hidden"). */
   variant?: "solid" | "outline";
   tone?: BadgeTone;
@@ -26,12 +33,17 @@ const TONE: Record<BadgeTone, string> = {
  * the app applied (status, kind of number); outline pills are the user's own
  * labels.
  */
-export function Badge({ children, variant = "solid", tone = "neutral", caps, color }: Props) {
+export function Badge({ children, icon, variant = "solid", tone = "neutral", caps, color }: Props) {
   return (
     <span
       className={`badge badge--${variant}${caps ? " badge--caps" : ""}`}
       style={{ "--badge-color": color ?? TONE[tone] } as React.CSSProperties}
     >
+      {icon && (
+        <span className="icon" aria-hidden="true">
+          {icon}
+        </span>
+      )}
       {children}
       <style jsx>{`
         .badge {
@@ -46,6 +58,11 @@ export function Badge({ children, variant = "solid", tone = "neutral", caps, col
           white-space: nowrap;
           flex-shrink: 0;
           color: var(--badge-color);
+        }
+
+        .icon {
+          display: inline-flex;
+          flex-shrink: 0;
         }
 
         .badge--solid {

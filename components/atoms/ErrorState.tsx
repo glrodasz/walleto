@@ -81,9 +81,10 @@ export function ErrorState({
           max-height: 88px;
           overflow: auto;
           padding: 8px 12px;
-          border-radius: var(--r-sm);
-          background: var(--bg-0);
-          border: 1px solid var(--line);
+          border-radius: var(--r-md);
+          background: var(--glass-field);
+          border: 1px solid var(--glass-rim);
+          box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
           font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
           font-size: 0.72rem;
           line-height: 1.5;

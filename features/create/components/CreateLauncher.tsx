@@ -45,7 +45,7 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
 
   return (
     <>
-      <button type="button" className="fab" aria-label="Add" onClick={openSheet}>
+      <button type="button" className="glass--tap fab" aria-label="Add" onClick={openSheet}>
         <Plus size={26} />
       </button>
 
@@ -57,7 +57,7 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
                 <button
                   key={d}
                   type="button"
-                  className={`domain${d === domain ? " is-active" : ""}`}
+                  className={`glass glass--tap domain${d === domain ? " is-active" : ""}`}
                   aria-pressed={d === domain}
                   style={{ "--tab-accent": DOMAIN_CONFIG[d].accent } as React.CSSProperties}
                   onClick={() => setDomain(d)}
@@ -68,16 +68,24 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
             </div>
           )}
 
-          <button type="button" className="option" onClick={() => choose("quick")}>
+          <button type="button" className="glass glass--tap option" onClick={() => choose("quick")}>
             <strong>{DOMAIN_CONFIG[domain].oneOff.title}</strong>
             <span>A single amount on a date, already paid</span>
           </button>
-          <button type="button" className="option" onClick={() => choose("recurring")}>
+          <button
+            type="button"
+            className="glass glass--tap option"
+            onClick={() => choose("recurring")}
+          >
             <strong>Add a recurring {singular}</strong>
             <span>Something that repeats: a subscription, a salary, rent</span>
           </button>
           {isAccountDomain(domain) && (
-            <button type="button" className="option" onClick={() => choose("value")}>
+            <button
+              type="button"
+              className="glass glass--tap option"
+              onClick={() => choose("value")}
+            >
               <strong>Record current value</strong>
               <span>
                 What {domain === "SAVING" ? "a pocket" : "an account"} is worth today, as a gain %
@@ -104,22 +112,28 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
       )}
 
       <style jsx>{`
+        /* A bead of accent-coloured glass: lit along the top, pooling its own
+           colour onto whatever is behind it. It clears the floating tab bar. */
         .fab {
           display: inline-flex;
           position: fixed;
           right: 16px;
-          bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+          bottom: calc(86px + env(safe-area-inset-bottom, 0px));
           z-index: var(--z-fab, 110);
           width: 56px;
           height: 56px;
-          border: none;
+          border: 1px solid color-mix(in srgb, var(--on-accent) 30%, transparent);
           border-radius: 50%;
-          background: var(--accent);
+          background-color: var(--accent);
+          background-image: var(--glass-sheen);
           color: var(--on-accent);
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+          box-shadow:
+            inset 0 1px 0 color-mix(in srgb, var(--on-accent) 50%, transparent),
+            0 10px 30px -8px var(--accent),
+            var(--glass-shadow-lg);
           -webkit-tap-highlight-color: transparent;
         }
 
@@ -139,9 +153,7 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
         .domain {
           min-height: 40px;
           padding: 8px 4px;
-          border: 1px solid var(--line);
-          border-radius: var(--r-sm);
-          background: var(--bg-2);
+          border-radius: var(--r-md);
           color: var(--fg-1);
           font-family: inherit;
           font-size: 0.8rem;
@@ -150,9 +162,9 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
         }
 
         .domain.is-active {
-          border-color: var(--tab-accent);
+          border-color: color-mix(in srgb, var(--tab-accent) 50%, transparent);
           color: var(--tab-accent);
-          background: color-mix(in srgb, var(--tab-accent) 12%, transparent);
+          background-color: color-mix(in srgb, var(--tab-accent) 16%, transparent);
         }
 
         .option {
@@ -161,9 +173,7 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
           align-items: flex-start;
           gap: 4px;
           padding: 14px 16px;
-          border: 1px solid var(--line);
-          border-radius: var(--r-md);
-          background: var(--bg-2);
+          border-radius: var(--r-lg);
           color: var(--fg-0);
           font-family: inherit;
           text-align: left;
@@ -182,7 +192,6 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
 
         .option:hover {
           border-color: var(--line-strong);
-          background: var(--bg-3);
         }
 
         /* Desktop: same button, clear of the page corner; no bottom nav to dodge. */

@@ -2,7 +2,10 @@ import { useMemo } from "react";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { formatAmount, formatNative } from "../../../components/atoms/Amount";
+import { Badge } from "../../../components/atoms/Badge";
+import { Home } from "../../../components/atoms/Icons";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
+import { ListItem, ListItems } from "../../../components/molecules/ListItem";
 import type { KebabAction } from "../../../components/molecules/KebabMenu";
 import { sumMonthly } from "../../../helpers/aggregations";
 import type { MoneyContext } from "../../../helpers/aggregations";
@@ -58,9 +61,6 @@ const hiddenAction = (
       ]
     : [];
 
-const hiddenTags = (item: RecurrentTransaction) =>
-  item.hiddenFromDashboard ? ["Hidden on dashboard"] : undefined;
-
 const GROUPS: { status: OccurrenceStatus; title: string }[] = [
   { status: "overdue", title: "Overdue" },
   { status: "due", title: "Due" },
@@ -79,17 +79,21 @@ interface RowProps {
   status?: OccurrenceStatus;
   accent: string;
   actions: KebabAction[];
-  /** Small pills after the name ("Hidden on dashboard"). */
-  tags?: string[];
+  /** Hidden from the dashboard — flagged with the house, the sidebar's own
+   *  glyph for that screen, so it cannot be read as "hidden from the chart". */
+  hidden?: boolean;
+  /** The user's own tags. */
   labels?: string[];
   note?: string;
   muted?: boolean;
 }
 
+const STATUS_COLOR = (status: OccurrenceStatus, accent: string) =>
+  status === "overdue" ? "var(--accent-hot)" : status === "paid" ? "var(--accent)" : accent;
+
 /**
- * One checklist row. A component of its own rather than a render helper:
- * styled-jsx only stamps its scope class on the JSX a component returns
- * itself, so rows built by a helper function came out unstyled.
+ * One checklist row: the shared ListItem, plus the two things only this list
+ * has — the paid/due/overdue pill under the amount, and the kebab.
  */
 function OccurrenceRow({
   name,
@@ -98,162 +102,43 @@ function OccurrenceRow({
   status,
   accent,
   actions,
-  tags,
+  hidden,
   labels,
   note,
   muted,
 }: RowProps) {
+  const flags = [
+    ...(hidden
+      ? [
+          <Badge key="hidden" variant="outline" tone="warning" caps icon={<Home size={12} />}>
+            Hidden
+          </Badge>,
+        ]
+      : []),
+    ...(labels ?? []).map((t) => (
+      <Badge key={`label-${t}`} variant="outline">
+        {t}
+      </Badge>
+    )),
+  ];
+
   return (
-    <li className={`row${status ? ` ${status}` : ""}${muted ? " muted" : ""}`}>
-      <span className="main">
-        <span className="name">{name}</span>
-        {((tags && tags.length > 0) || (labels && labels.length > 0)) && (
-          <span className="tags">
-            {tags?.map((t) => (
-              <span key={`flag-${t}`} className="tag">
-                {t}
-              </span>
-            ))}
-            {labels?.map((t) => (
-              <span key={`label-${t}`} className="label">
-                {t}
-              </span>
-            ))}
-          </span>
-        )}
-        {note && <span className="note">{note}</span>}
-        <span className="meta">{meta}</span>
-      </span>
-      <span className="right">
-        <span className="amount">{amount}</span>
-        {status && <span className={`pill ${status}`}>{STATUS_LABEL[status]}</span>}
-      </span>
-      <KebabMenu aria-label={`Actions for ${name}`} actions={actions} />
-
-      <style jsx>{`
-        .row {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 10px 0;
-          border-bottom: 1px solid var(--line);
-        }
-
-        .row:last-child {
-          border-bottom: none;
-        }
-
-        .row.paid .name {
-          color: var(--fg-1);
-        }
-
-        .row.muted {
-          opacity: 0.55;
-        }
-
-        .tags {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 4px;
-        }
-
-        .tag {
-          font-size: 0.62rem;
-          font-weight: 700;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
-          padding: 1px 6px;
-          border-radius: 999px;
-          border: 1px solid var(--accent-amber);
-          color: var(--accent-amber);
-        }
-
-        .label {
-          font-size: 0.68rem;
-          font-weight: 600;
-          padding: 1px 7px;
-          border-radius: 999px;
-          border: 1px solid var(--line-strong);
-          color: var(--fg-1);
-        }
-
-        .note {
-          font-size: 0.72rem;
-          color: var(--fg-2);
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .main {
-          flex: 1;
-          min-width: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-
-        .name {
-          font-size: 0.9rem;
-          font-weight: 600;
-          color: var(--fg-0);
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .meta {
-          font-size: 0.72rem;
-          color: var(--fg-2);
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .right {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-end;
-          gap: 3px;
-          flex-shrink: 0;
-        }
-
-        .amount {
-          font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
-          font-variant-numeric: tabular-nums;
-          font-size: 0.88rem;
-          font-weight: 600;
-          color: var(--fg-0);
-          white-space: nowrap;
-        }
-
-        .pill {
-          font-size: 0.66rem;
-          font-weight: 700;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
-          padding: 2px 7px;
-          border-radius: 999px;
-          background: var(--bg-3);
-          color: var(--fg-2);
-        }
-
-        .pill.due {
-          color: ${accent};
-          background: color-mix(in srgb, ${accent} 14%, transparent);
-        }
-
-        .pill.overdue {
-          color: var(--accent-hot);
-          background: color-mix(in srgb, var(--accent-hot) 14%, transparent);
-        }
-
-        .pill.paid {
-          color: var(--accent);
-          background: color-mix(in srgb, var(--accent) 12%, transparent);
-        }
-      `}</style>
-    </li>
+    <ListItem
+      name={name}
+      badges={flags.length > 0 ? flags : undefined}
+      note={note}
+      meta={meta}
+      muted={muted}
+      amount={amount}
+      amountMeta={
+        status ? (
+          <Badge color={STATUS_COLOR(status, accent)} caps>
+            {STATUS_LABEL[status]}
+          </Badge>
+        ) : undefined
+      }
+      trailing={<KebabMenu aria-label={`Actions for ${name}`} actions={actions} />}
+    />
   );
 }
 
@@ -318,7 +203,7 @@ export function RecurringChecklist({
                   <span>{g.title}</span>
                   <span className="group-total">{formatAmount(total, currency)}</span>
                 </h3>
-                <ul className="list">
+                <ListItems>
                   {rows.map((o) => {
                     const id = o.item.id!;
                     const busy = busyId === id;
@@ -327,7 +212,7 @@ export function RecurringChecklist({
                         key={`${id}_${o.occurredAt.toISOString()}`}
                         name={o.item.name}
                         meta={`${formatDate(o.occurredAt, "day")} · ${FREQUENCY_LABELS[o.item.frequency]}${details(o.item)}`}
-                        tags={hiddenTags(o.item)}
+                        hidden={Boolean(o.item.hiddenFromDashboard)}
                         labels={tagNames(o.item.tags, tags)}
                         note={o.item.note}
                         muted={Boolean(o.item.hiddenFromDashboard)}
@@ -356,7 +241,7 @@ export function RecurringChecklist({
                       />
                     );
                   })}
-                </ul>
+                </ListItems>
               </section>
             );
           })}
@@ -364,7 +249,7 @@ export function RecurringChecklist({
           {notThisMonth.length > 0 && (
             <details className="later">
               <summary>Not this month ({notThisMonth.length})</summary>
-              <ul className="list">
+              <ListItems>
                 {notThisMonth.map((item) => (
                   <OccurrenceRow
                     key={item.id}
@@ -376,7 +261,7 @@ export function RecurringChecklist({
                     }`}
                     amount={formatNative(item.amount, item.currency, currency)}
                     accent={config.accent}
-                    tags={hiddenTags(item)}
+                    hidden={Boolean(item.hiddenFromDashboard)}
                     labels={tagNames(item.tags, tags)}
                     note={item.note}
                     muted={Boolean(item.hiddenFromDashboard)}
@@ -391,7 +276,7 @@ export function RecurringChecklist({
                     ]}
                   />
                 ))}
-              </ul>
+              </ListItems>
             </details>
           )}
 
@@ -428,14 +313,6 @@ export function RecurringChecklist({
           font-variant-numeric: tabular-nums;
           letter-spacing: 0;
           text-transform: none;
-        }
-
-        .list {
-          list-style: none;
-          margin: 0;
-          padding: 0;
-          display: flex;
-          flex-direction: column;
         }
 
         .later {

@@ -20,8 +20,9 @@ export function DateBadge({ date }: Props) {
           width: 44px;
           height: 44px;
           border-radius: var(--r-md);
-          background: var(--bg-2);
-          border: 1px solid var(--line);
+          background: var(--glass-inset);
+          border: 1px solid var(--glass-rim);
+          box-shadow: inset 0 1px 0 var(--glass-edge);
           line-height: 1;
         }
 

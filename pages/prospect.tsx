@@ -137,14 +137,15 @@ export default function ProspectPage() {
         .horizon-tabs {
           display: flex;
           gap: 2px;
-          background: var(--bg-2);
-          border-radius: var(--r-sm);
+          background: var(--glass-inset);
+          border: 1px solid var(--glass-rim);
+          border-radius: var(--r-pill);
           padding: 3px;
         }
 
         .horizon-btn {
           padding: 5px 12px;
-          border-radius: calc(var(--r-sm) - 2px);
+          border-radius: var(--r-pill);
           border: none;
           background: transparent;
           color: var(--fg-2);
@@ -155,8 +156,12 @@ export default function ProspectPage() {
         }
 
         .horizon-btn.active {
-          background: var(--bg-3);
+          background-color: var(--glass-raised);
+          background-image: var(--glass-sheen);
           color: var(--fg-0);
+          box-shadow:
+            inset 0 1px 0 var(--glass-edge),
+            var(--glass-shadow);
         }
 
         @media (max-width: 900px) {

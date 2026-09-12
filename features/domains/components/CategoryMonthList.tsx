@@ -5,8 +5,10 @@ import { useMemo } from "react";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { formatAmount } from "../../../components/atoms/Amount";
-import { ArrowRight } from "../../../components/atoms/Icons";
+import { Badge } from "../../../components/atoms/Badge";
+import { ArrowRight, Chart } from "../../../components/atoms/Icons";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
+import { ListItem, ListItems } from "../../../components/molecules/ListItem";
 import { convertedAmount } from "../../../helpers/aggregations";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { plannedOccurrences } from "../helpers/months";
@@ -110,59 +112,65 @@ export function CategoryMonthList({
       ) : rows.length === 0 ? (
         <p className="empty">Nothing in this month yet</p>
       ) : (
-        <ul className="list">
+        <ListItems>
           {rows.map((r) => {
             const expected = r.total + r.planned;
-            const pct = expected > 0 ? Math.min(100, (r.total / expected) * 100) : 0;
             return (
-              <li
+              <ListItem
                 key={r.category.id}
-                className={`row${r.category.hiddenFromChart ? " muted" : ""}`}
-              >
-                <button
-                  type="button"
-                  className="open"
-                  onClick={() => r.category.id && onSelect(r.category.id)}
-                >
+                muted={r.category.hiddenFromChart}
+                leading={
                   <IconDisc domain={domain} size={36}>
                     <CategoryIcon category={r.category} size={16} />
                   </IconDisc>
-                  <span className="main">
-                    <span className="name">
-                      {r.category.name}
-                      {r.category.hiddenFromChart && <span className="tag">Hidden on chart</span>}
+                }
+                name={r.category.name}
+                badges={
+                  /* The bars say which "Hidden" this is: from the chart, not
+                     from the dashboard. The label stays one short word — a pill
+                     cannot shrink, and the kebab beside it spells the rest out. */
+                  r.category.hiddenFromChart ? (
+                    <Badge variant="outline" tone="warning" caps icon={<Chart size={12} />}>
+                      Hidden
+                    </Badge>
+                  ) : undefined
+                }
+                meta={`${r.count} ${r.count === 1 ? "transaction" : "transactions"}${
+                  r.share > 0 ? ` · ${r.share.toFixed(0)}%` : ""
+                }${r.planned > 0 ? ` · ${formatAmount(r.planned, currency)} planned` : ""}`}
+                progress={
+                  expected > 0
+                    ? {
+                        ratio: r.total / expected,
+                        color: config.accent,
+                        label: `${r.category.name} landed`,
+                      }
+                    : undefined
+                }
+                amount={formatAmount(r.total, currency)}
+                onClick={() => r.category.id && onSelect(r.category.id)}
+                trailing={
+                  <span className="actions">
+                    <span className="chevron" aria-hidden="true">
+                      <ArrowRight size={16} />
                     </span>
-                    <span className="meta">
-                      {r.count} {r.count === 1 ? "transaction" : "transactions"}
-                      {r.share > 0 ? ` · ${r.share.toFixed(0)}%` : ""}
-                      {r.planned > 0 ? ` · ${formatAmount(r.planned, currency)} planned` : ""}
-                    </span>
-                    {expected > 0 && (
-                      <span className="mini">
-                        <span className="mini-fill" style={{ width: `${pct}%` }} />
-                      </span>
+                    {onToggleHidden && (
+                      <KebabMenu
+                        aria-label={`Actions for ${r.category.name}`}
+                        actions={[
+                          {
+                            label: r.category.hiddenFromChart ? "Show on chart" : "Hide from chart",
+                            onSelect: () => onToggleHidden(r.category),
+                          },
+                        ]}
+                      />
                     )}
                   </span>
-                  <span className="amount">{formatAmount(r.total, currency)}</span>
-                  <span className="chevron" aria-hidden="true">
-                    <ArrowRight size={16} />
-                  </span>
-                </button>
-                {onToggleHidden && (
-                  <KebabMenu
-                    aria-label={`Actions for ${r.category.name}`}
-                    actions={[
-                      {
-                        label: r.category.hiddenFromChart ? "Show on chart" : "Hide from chart",
-                        onSelect: () => onToggleHidden(r.category),
-                      },
-                    ]}
-                  />
-                )}
-              </li>
+                }
+              />
             );
           })}
-        </ul>
+        </ListItems>
       )}
 
       <style jsx>{`
@@ -172,98 +180,10 @@ export function CategoryMonthList({
           color: var(--fg-2);
         }
 
-        .list {
-          list-style: none;
-          margin: 0;
-          padding: 0;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .row {
-          display: flex;
+        .actions {
+          display: inline-flex;
           align-items: center;
-          gap: 8px;
-          border-bottom: 1px solid var(--line);
-        }
-
-        .row:last-child {
-          border-bottom: none;
-        }
-
-        .row.muted .open {
-          opacity: 0.55;
-        }
-
-        .open {
-          flex: 1;
-          min-width: 0;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 12px 0;
-          border: none;
-          background: transparent;
-          color: inherit;
-          font-family: inherit;
-          text-align: left;
-          cursor: pointer;
-        }
-
-        .tag {
-          margin-left: 8px;
-          font-size: 0.62rem;
-          font-weight: 700;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
-          padding: 1px 6px;
-          border-radius: 999px;
-          border: 1px solid var(--accent-amber);
-          color: var(--accent-amber);
-          vertical-align: middle;
-        }
-
-        .main {
-          flex: 1;
-          min-width: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-
-        .name {
-          font-size: 0.9rem;
-          font-weight: 600;
-          color: var(--fg-0);
-        }
-
-        .meta {
-          font-size: 0.72rem;
-          color: var(--fg-2);
-        }
-
-        .mini {
-          display: block;
-          height: 4px;
-          max-width: 180px;
-          border-radius: 999px;
-          background: var(--bg-3);
-          overflow: hidden;
-        }
-
-        .mini-fill {
-          display: block;
-          height: 100%;
-          background: ${config.accent};
-        }
-
-        .amount {
-          font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
-          font-variant-numeric: tabular-nums;
-          font-size: 0.9rem;
-          font-weight: 600;
-          color: var(--fg-0);
-          white-space: nowrap;
+          gap: 2px;
         }
 
         .chevron {

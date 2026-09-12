@@ -26,7 +26,7 @@ export function MonthPicker({ value, windows, onChange, onStep }: Props) {
   };
 
   return (
-    <div className="picker">
+    <div className="glass picker">
       <button
         type="button"
         className="arrow"
@@ -41,6 +41,7 @@ export function MonthPicker({ value, windows, onChange, onStep }: Props) {
       </span>
       <div className="select">
         <Select
+          flat
           aria-label="Month"
           options={[...windows].reverse().map((w) => ({ value: w.key, label: w.longLabel }))}
           value={value}
@@ -63,10 +64,7 @@ export function MonthPicker({ value, windows, onChange, onStep }: Props) {
           align-items: center;
           gap: 2px;
           padding: 2px;
-          border-radius: var(--r-md);
-          border: 1px solid var(--line);
-          background: var(--glass-strong);
-          box-shadow: var(--shadow-sm);
+          border-radius: var(--r-pill);
         }
 
         .arrow {
@@ -76,14 +74,17 @@ export function MonthPicker({ value, windows, onChange, onStep }: Props) {
           width: 30px;
           height: 34px;
           border: none;
-          border-radius: var(--r-sm);
+          border-radius: var(--r-pill);
           background: transparent;
           color: var(--fg-2);
           cursor: pointer;
+          transition:
+            background 150ms ease,
+            color 150ms ease;
         }
 
         .arrow:hover:not(:disabled) {
-          background: var(--bg-2);
+          background: var(--glass-hover);
           color: var(--fg-0);
         }
 
@@ -98,17 +99,10 @@ export function MonthPicker({ value, windows, onChange, onStep }: Props) {
           padding-left: 4px;
         }
 
-        /* The select atom draws its own border; inside the picker it is flat. */
+        /* The picker is the glass; the select inside it carries no chrome of its
+           own — that is Select's flat prop, since a rule from here cannot win. */
         .select {
           min-width: 150px;
-        }
-
-        .select :global(.select) {
-          height: 34px;
-          border-color: transparent;
-          background: transparent;
-          font-weight: 600;
-          font-size: 0.875rem;
         }
 
         @media (max-width: 767px) {

@@ -217,7 +217,12 @@ export function ValuationModal({
           gap: 10px;
           margin: 4px -22px -22px;
           padding: 12px 22px 22px;
-          background: var(--bg-1);
+          /* The form scrolls under this row, so it is glass rather than a
+             plate: what passes behind it stays visible, just out of focus. */
+          background-color: var(--glass-strong);
+          backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
+          -webkit-backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
+          box-shadow: inset 0 1px 0 var(--glass-edge);
         }
 
         @media (max-width: 480px) {

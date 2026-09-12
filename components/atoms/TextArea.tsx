@@ -50,8 +50,13 @@ export function TextArea({ label, onValueChange, id, className, rows = 3, ...res
           min-width: 0;
           padding: 10px 12px;
           border-radius: var(--r-md);
-          border: 1px solid var(--line);
-          background: var(--bg-2);
+          border: 1px solid var(--glass-rim);
+          background-color: var(--glass-field);
+          backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+          -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+          box-shadow:
+            inset 0 1px 2px rgba(15, 23, 42, 0.06),
+            0 1px 0 var(--glass-edge);
           color: var(--fg-0);
           font-family: inherit;
           font-size: 16px;
@@ -66,7 +71,7 @@ export function TextArea({ label, onValueChange, id, className, rows = 3, ...res
         .control .input:focus {
           outline: none;
           border-color: var(--accent);
-          box-shadow: none;
+          box-shadow: 0 0 0 3px var(--accent-soft);
         }
 
         .control .input:disabled {
