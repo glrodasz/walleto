@@ -240,7 +240,7 @@ export function Combobox({
           position: absolute;
           top: calc(100% + 6px);
           left: 0;
-          z-index: 20;
+          z-index: var(--z-menu, 150);
           margin: 0;
           padding: 4px;
           list-style: none;
