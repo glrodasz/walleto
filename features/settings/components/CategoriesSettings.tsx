@@ -6,6 +6,7 @@ import { Button } from "../../../components/atoms/Button";
 import { Chip } from "../../../components/atoms/Chip";
 import { Combobox } from "../../../components/atoms/Combobox";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
+import { Modal } from "../../../components/molecules/Modal";
 import { TabStrip } from "../../../components/atoms/TabStrip";
 import { Pager } from "../../../components/molecules/Pager";
 import { paginate } from "../../../utils/paginate";
@@ -19,6 +20,12 @@ import suggestions from "../../onboarding/data/categorySuggestions.json";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import type { Domain, IconKey } from "../../../types";
 
+interface EditDraft {
+  id: string;
+  name: string;
+  icon: IconKey;
+}
+
 const DOMAINS: Domain[] = ["INCOME", "EXPENSE", "INVESTMENT", "SAVING"];
 const PAGE_SIZE = 25;
 const SUGGESTIONS = suggestions as Record<Domain, string[]>;
@@ -31,9 +38,8 @@ const SUGGESTIONS = suggestions as Record<Domain, string[]>;
 export function CategoriesSettings() {
   const [domain, setDomain] = useState<Domain>("EXPENSE");
   const { categories, loading, error, create, rename, remove, update } = useCategories(domain);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [iconEditingId, setIconEditingId] = useState<string | null>(null);
-  const [draft, setDraft] = useState("");
+  const [editing, setEditing] = useState<EditDraft | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
   const [adding, setAdding] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -57,22 +63,26 @@ export function CategoriesSettings() {
     }
   };
 
-  const startRename = (id: string, name: string) => {
-    setEditingId(id);
-    setDraft(name);
-  };
-  const saveRename = async () => {
-    const id = editingId;
-    const name = draft.trim();
-    if (!id || !name) return;
-    const current = roots.find((c) => c.id === id);
-    setEditingId(null);
-    if (current && current.name === name) return;
-    await run(id, () => rename(id, name), "Couldn't rename the category");
-  };
-  const pickIcon = async (id: string, icon: IconKey) => {
-    setIconEditingId(null);
-    await run(id, () => update(id, { icon }), "Couldn't change the icon");
+  const startEdit = (id: string, name: string, icon: IconKey) => setEditing({ id, name, icon });
+
+  const saveEdit = async () => {
+    if (!editing) return;
+    const name = editing.name.trim();
+    if (!name) return setMessage("Give it a name");
+    const current = roots.find((c) => c.id === editing.id);
+    setSavingEdit(true);
+    setMessage(null);
+    try {
+      if (current && current.name !== name) await rename(editing.id, name);
+      if (current && iconFor(current) !== editing.icon)
+        await update(editing.id, { icon: editing.icon });
+      setEditing(null);
+    } catch (err) {
+      console.error("Couldn't save the category", err);
+      setMessage("Couldn't save the category");
+    } finally {
+      setSavingEdit(false);
+    }
   };
   const add = async (raw: string) => {
     const name = raw.trim();
@@ -99,8 +109,7 @@ export function CategoriesSettings() {
         onChange={(d) => {
           setDomain(d as Domain);
           setPage(1);
-          setEditingId(null);
-          setIconEditingId(null);
+          setEditing(null);
           setAdding(false);
           setMessage(null);
         }}
@@ -114,62 +123,27 @@ export function CategoriesSettings() {
         <ul className="list">
           {paged.rows.map((c) => (
             <li key={c.id} className="row">
-              {editingId === c.id ? (
-                <form
-                  className="rename"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    saveRename();
-                  }}
-                >
-                  <TextField
-                    aria-label="Category name"
-                    value={draft}
-                    autoFocus
-                    onValueChange={setDraft}
-                  />
-                  <Button type="submit" variant="primary" size="sm">
-                    Save
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setEditingId(null)}>
-                    Cancel
-                  </Button>
-                </form>
-              ) : iconEditingId === c.id ? (
-                <div className="icon-edit">
-                  <span className="icon-edit-label">Icon for {c.name}</span>
-                  <IconPicker
-                    label={`Icon for ${c.name}`}
-                    value={iconFor(c)}
-                    onChange={(icon) => c.id && pickIcon(c.id, icon)}
-                  />
-                  <Button variant="ghost" size="sm" onClick={() => setIconEditingId(null)}>
-                    Cancel
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <IconDisc domain={domain} size={32}>
-                    <CategoryIcon category={c} size={15} />
-                  </IconDisc>
-                  <span className="name">{c.name}</span>
-                  {c.isDefault && <span className="default">default</span>}
-                  <KebabMenu
-                    aria-label={`Actions for ${c.name}`}
-                    actions={[
-                      { label: "Rename", onSelect: () => c.id && startRename(c.id, c.name) },
-                      { label: "Change icon", onSelect: () => c.id && setIconEditingId(c.id) },
-                      {
-                        label: busyId === c.id ? "Archiving…" : "Archive",
-                        onSelect: () =>
-                          c.id && run(c.id, () => remove(c.id!), "Couldn't archive the category"),
-                        danger: true,
-                        disabled: busyId === c.id,
-                      },
-                    ]}
-                  />
-                </>
-              )}
+              <IconDisc domain={domain} size={32}>
+                <CategoryIcon category={c} size={15} />
+              </IconDisc>
+              <span className="name">{c.name}</span>
+              {c.isDefault && <span className="default">default</span>}
+              <KebabMenu
+                aria-label={`Actions for ${c.name}`}
+                actions={[
+                  {
+                    label: "Edit",
+                    onSelect: () => c.id && startEdit(c.id, c.name, iconFor(c)),
+                  },
+                  {
+                    label: busyId === c.id ? "Archiving…" : "Archive",
+                    onSelect: () =>
+                      c.id && run(c.id, () => remove(c.id!), "Couldn't archive the category"),
+                    danger: true,
+                    disabled: busyId === c.id,
+                  },
+                ]}
+              />
             </li>
           ))}
           {roots.length === 0 && <li className="hint">No categories yet</li>}
@@ -195,11 +169,45 @@ export function CategoriesSettings() {
         )}
       </div>
 
-      {message && (
+      {message && !editing && (
         <p className="message" role="alert">
           {message}
         </p>
       )}
+
+      <Modal open={editing !== null} title="Edit category" onClose={() => setEditing(null)}>
+        {editing && (
+          <div className="edit">
+            <TextField
+              label="Name"
+              value={editing.name}
+              autoFocus
+              onValueChange={(name) => setEditing((d) => d && { ...d, name })}
+            />
+            <div className="edit-icons">
+              <span className="edit-icons-label">Icon</span>
+              <IconPicker
+                label="Icon"
+                value={editing.icon}
+                onChange={(icon) => setEditing((d) => d && { ...d, icon })}
+              />
+            </div>
+            {message && (
+              <p className="message" role="alert">
+                {message}
+              </p>
+            )}
+            <div className="edit-actions">
+              <Button variant="ghost" onClick={() => setEditing(null)} disabled={savingEdit}>
+                Cancel
+              </Button>
+              <Button variant="primary" onClick={saveEdit} disabled={savingEdit}>
+                {savingEdit ? "Saving…" : "Save"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <style jsx>{`
         .list {
@@ -217,20 +225,6 @@ export function CategoriesSettings() {
           min-height: 48px;
           padding: 4px 0;
           border-bottom: 1px solid var(--line);
-        }
-
-        .icon-edit {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 8px;
-          padding: 8px 0;
-        }
-
-        .icon-edit-label {
-          font-size: 0.8rem;
-          color: var(--fg-2);
         }
 
         .row:last-child {
@@ -255,16 +249,27 @@ export function CategoriesSettings() {
           color: var(--fg-2);
         }
 
-        .rename {
-          flex: 1;
+        .edit {
           display: flex;
-          align-items: flex-end;
-          gap: 8px;
-          padding: 6px 0;
+          flex-direction: column;
+          gap: 16px;
         }
 
-        .rename > :global(.field) {
-          flex: 1;
+        .edit-icons {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .edit-icons-label {
+          font-size: 0.8125rem;
+          color: var(--fg-1);
+        }
+
+        .edit-actions {
+          display: flex;
+          justify-content: flex-end;
+          gap: 10px;
         }
 
         .add {

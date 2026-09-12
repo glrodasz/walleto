@@ -47,12 +47,12 @@ describe("CategoriesSettings", () => {
     expect(screen.getByText("Salary")).toBeInTheDocument();
   });
 
-  it("renames inline, archives through the kebab, and adds through the combobox", async () => {
+  it("renames through the edit modal, archives through the kebab, and adds through the combobox", async () => {
     render(<CategoriesSettings />);
 
     fireEvent.click(screen.getByRole("button", { name: "Actions for Rent" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "Rename" }));
-    const input = screen.getByLabelText("Category name");
+    fireEvent.click(screen.getByRole("menuitem", { name: "Edit" }));
+    const input = screen.getByLabelText("Name");
     fireEvent.change(input, { target: { value: "Housing" } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(rename).toHaveBeenCalledWith("e2", "Housing"));
@@ -68,11 +68,12 @@ describe("CategoriesSettings", () => {
     await waitFor(() => expect(create).toHaveBeenCalledWith({ domain: "EXPENSE", name: "Travel" }));
   });
 
-  it("changes a category's icon from the kebab", async () => {
+  it("changes a category's icon from the edit modal", async () => {
     render(<CategoriesSettings />);
     fireEvent.click(screen.getByRole("button", { name: "Actions for Rent" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "Change icon" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Edit" }));
     fireEvent.click(screen.getByRole("radio", { name: "plane" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(update).toHaveBeenCalledWith("e2", { icon: "plane" }));
   });
 });
