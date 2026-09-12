@@ -100,6 +100,34 @@ export function SectionTitle({
           color: var(--fg-0);
           border-color: var(--line-strong);
         }
+
+        /*
+         * On a phone the controls win the row and the title loses it: .right
+         * holds its max-content width (two selects ask for ~310px), so the
+         * heading is squeezed to one word per line and the controls overflow
+         * on top of it. Stack instead, controls first — they are what the
+         * reader is reaching for — with the title and subtitle under them.
+         * The DOM order stays title → controls, so reading and focus order do
+         * not change.
+         */
+        @media (max-width: 767px) {
+          .header {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .right {
+            order: -1;
+            flex-shrink: 1;
+            flex-wrap: wrap;
+          }
+
+          /* The children are components, so their classes carry no scope hash. */
+          .right > :global(*) {
+            flex: 1 1 140px;
+            min-width: 0;
+          }
+        }
       `}</style>
     </div>
   );

@@ -1,10 +1,11 @@
+import { useId, useState } from "react";
 import { Card } from "../atoms/Card";
 import { SectionTitle } from "../atoms/SectionTitle";
 import { TextField } from "../atoms/TextField";
 import { Select } from "../atoms/Select";
 import { Badge } from "../atoms/Badge";
 import { CategoryIcon } from "../atoms/CategoryIcon";
-import { Search } from "../atoms/Icons";
+import { Search, Sliders } from "../atoms/Icons";
 import { formatNative } from "../atoms/Amount";
 import { KebabMenu } from "./KebabMenu";
 import { IconDisc } from "./IconDisc";
@@ -99,23 +100,53 @@ export function TransactionsTable({
   const shown = filter.rows.slice(0, limit);
   const hidden = filter.rows.length - shown.length;
   const roots = categories.filter((c) => !c.parentId);
+  // Two or three controls depending on the domain; the row splits evenly
+  // either way, so the count is a custom property rather than a special case.
+  const filterCount = 1 + (showCategoryFilter ? 1 : 0) + (showMethod ? 1 : 0);
+  const panelId = useId();
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   return (
     <Card>
       <SectionTitle title={title} subtitle={subtitle} />
 
       <div className="toolbar" role="search">
-        <div className="search">
-          <TextField
-            icon={<Search size={16} />}
-            aria-label="Search transactions"
-            placeholder="Search transactions…"
-            value={filter.filters.search}
-            onValueChange={(v) => filter.set("search", v)}
-          />
+        <div className="find">
+          <div className="search">
+            <TextField
+              icon={<Search size={16} />}
+              aria-label="Search transactions"
+              placeholder="Search transactions…"
+              value={filter.filters.search}
+              onValueChange={(v) => filter.set("search", v)}
+            />
+          </div>
+          {/* Phone only — hidden by CSS from 768px up, where the panel is
+              always open and this button has no job. */}
+          <button
+            type="button"
+            className="glass glass--tap toggle"
+            aria-expanded={filtersOpen}
+            aria-controls={panelId}
+            onClick={() => setFiltersOpen((open) => !open)}
+          >
+            <Sliders size={16} />
+            Filters
+            {filter.narrowCount > 0 && <span className="count">{filter.narrowCount}</span>}
+          </button>
         </div>
-        {showCategoryFilter && (
-          <div className="control">
+
+        {/*
+         * The panel is always rendered and the media query decides whether it
+         * shows: one DOM for both widths, so there is no matchMedia in render
+         * and nothing to mismatch on hydration.
+         */}
+        <div
+          id={panelId}
+          className={`filters${filtersOpen ? " is-open" : ""}`}
+          style={{ "--filters": filterCount } as React.CSSProperties}
+        >
+          {showCategoryFilter && (
             <Select
               aria-label="Category filter"
               options={[
@@ -125,10 +156,8 @@ export function TransactionsTable({
               value={filter.filters.categoryId}
               onValueChange={(v) => filter.set("categoryId", v)}
             />
-          </div>
-        )}
-        {showMethod && (
-          <div className="control">
+          )}
+          {showMethod && (
             <Select
               aria-label="Method filter"
               options={[
@@ -139,9 +168,7 @@ export function TransactionsTable({
               value={filter.filters.paymentMethodId}
               onValueChange={(v) => filter.set("paymentMethodId", v)}
             />
-          </div>
-        )}
-        <div className="control">
+          )}
           <Select
             aria-label="Sort"
             options={SORT_OPTIONS}
@@ -149,6 +176,7 @@ export function TransactionsTable({
             onValueChange={(v) => filter.set("sort", parseSort(v))}
           />
         </div>
+
         {filter.active && (
           <button type="button" className="clear" onClick={filter.reset}>
             Clear
@@ -187,22 +215,81 @@ export function TransactionsTable({
       {hidden > 0 && <p className="more">and {hidden} more in this period</p>}
 
       <style jsx>{`
+        /* Two rows: the search owns the first, the filters share the second. */
         .toolbar {
           display: flex;
-          flex-wrap: wrap;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .find {
+          display: flex;
           align-items: center;
           gap: 10px;
         }
 
         .search {
-          position: relative;
-          flex: 1 1 220px;
-          min-width: 180px;
+          flex: 1;
+          min-width: 0;
         }
 
-        .control {
-          flex: 0 1 190px;
-          min-width: 150px;
+        /* Whatever is rendered — two controls or three — splits the row evenly. */
+        .filters {
+          display: grid;
+          grid-template-columns: repeat(var(--filters, 2), minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .toggle {
+          display: none;
+          align-items: center;
+          gap: 6px;
+          flex-shrink: 0;
+          height: var(--input-height);
+          padding: 0 14px;
+          border-radius: var(--r-pill);
+          color: var(--fg-1);
+          font-family: inherit;
+          font-size: 0.85rem;
+          font-weight: 600;
+          cursor: pointer;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        .toggle[aria-expanded="true"] {
+          color: var(--accent);
+        }
+
+        .count {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 18px;
+          height: 18px;
+          padding: 0 5px;
+          border-radius: var(--r-pill);
+          background: var(--accent);
+          color: var(--on-accent);
+          font-size: 0.68rem;
+          font-weight: 700;
+        }
+
+        @media (max-width: 767px) {
+          /* Four stacked boxes before the first transaction is most of the
+             screen. The filters fold behind the button beside the search and
+             open under it, one per row, when they are asked for. */
+          .toggle {
+            display: inline-flex;
+          }
+
+          .filters {
+            display: none;
+            grid-template-columns: 1fr;
+          }
+
+          .filters.is-open {
+            display: grid;
+          }
         }
 
         .clear {

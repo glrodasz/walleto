@@ -42,5 +42,18 @@ export function useTransactionFilters({ rows, categories, tags, ctx, initial, re
   const active =
     filters.search.trim() !== "" || filters.categoryId !== "" || filters.paymentMethodId !== "";
 
-  return { filters, set, toggleSort, reset: () => setFilters(EMPTY_FILTERS), rows: filtered, active };
+  // How many of the *narrowing* controls are set — not the search, which is on
+  // screen anyway, and not the sort, which narrows nothing. It is what the
+  // Filters button counts when the panel is collapsed on a phone.
+  const narrowCount = (filters.categoryId ? 1 : 0) + (filters.paymentMethodId ? 1 : 0);
+
+  return {
+    filters,
+    set,
+    toggleSort,
+    reset: () => setFilters(EMPTY_FILTERS),
+    rows: filtered,
+    active,
+    narrowCount,
+  };
 }
