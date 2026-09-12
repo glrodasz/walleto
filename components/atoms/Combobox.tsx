@@ -1,5 +1,50 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { computeListPosition } from "../../utils/computeListPosition";
+import type { ViewportBox } from "../../utils/computeListPosition";
+
+/**
+ * Fixed chrome pinned to the bottom of the screen — the onboarding footer,
+ * the mobile nav — carries this attribute so any floating overlay can stay
+ * clear of it without being told about the page it lives on.
+ */
+const BOTTOM_BAR_SELECTOR = "[data-overlay-bottom-bar]";
+
+/** Enough room that a nudge would gain nothing: about four options. */
+const COMFORTABLE_ROOM = 176;
+
+function readViewport(): ViewportBox {
+  const vv = window.visualViewport;
+  return {
+    width: vv?.width ?? window.innerWidth,
+    height: vv?.height ?? window.innerHeight,
+    offsetTop: vv?.offsetTop ?? 0,
+    offsetLeft: vv?.offsetLeft ?? 0,
+    layoutHeight: document.documentElement.clientHeight || window.innerHeight,
+  };
+}
+
+/**
+ * How much of the visible viewport the bottom chrome eats, measured rather
+ * than declared. That is what makes it right on both platforms: Android
+ * Chrome resizes the layout viewport so the bar rides up above the keyboard
+ * and keeps its full height here, while iOS Safari leaves it pinned beneath
+ * the keyboard, outside the visible slice, where this returns 0 — correctly,
+ * because there is nothing left to avoid.
+ */
+function bottomInsetFrom(visibleBottom: number): number {
+  let inset = 0;
+  document.querySelectorAll<HTMLElement>(BOTTOM_BAR_SELECTOR).forEach((bar) => {
+    const rect = bar.getBoundingClientRect();
+    if (rect.height === 0) return; // display: none at this breakpoint
+    // Only bars actually pinned to the screen are in the way. The onboarding
+    // footer wears the attribute at every width but goes back into the flow
+    // above 768px, where it is just more page content to scroll past.
+    if (getComputedStyle(bar).position !== "fixed") return;
+    inset = Math.max(inset, visibleBottom - rect.top);
+  });
+  return Math.max(0, inset);
+}
 
 interface Props {
   /** Names to suggest. Anything already used should be filtered out by the caller. */
@@ -56,6 +101,8 @@ export function Combobox({
   // Null until measured; the list renders hidden for that one frame so it
   // never flashes at the wrong place.
   const [pos, setPos] = useState<React.CSSProperties | null>(null);
+  // One scroll-into-view per opening, no matter how the viewport churns.
+  const nudged = useRef(false);
 
   const trimmed = draft.trim();
 
@@ -107,20 +154,68 @@ export function Combobox({
       setPos(null);
       return;
     }
-    const update = () => {
+    let frame = 0;
+    const measure = () => {
       const rect = inputRef.current?.getBoundingClientRect();
       if (!rect) return;
-      // At least as wide as the input, but never narrower than the old fixed
-      // list width — a compact combobox shouldn't truncate its own suggestions.
-      setPos({ top: rect.bottom + 6, left: rect.left, width: Math.max(rect.width, 240) });
+      const viewport = readViewport();
+      const bottomInset = bottomInsetFrom(viewport.offsetTop + viewport.height);
+      const { placement, ...style } = computeListPosition(rect, viewport, { bottomInset });
+      // Replaced wholesale, never merged: the flipped result carries `bottom`
+      // and the normal one `top`, and a merge would leave the stale key behind.
+      setPos(style);
     };
-    update();
+    // The keyboard animates, and iOS fires visualViewport scroll continuously
+    // while it does; coalesce so we lay out once per frame.
+    const update = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        measure();
+      });
+    };
+    measure();
     window.addEventListener("scroll", update, true);
     window.addEventListener("resize", update);
+    // iOS Safari fires neither of those for the software keyboard: the layout
+    // viewport is untouched, only the visual one shrinks — and when Safari
+    // scrolls the focused field into view it scrolls the *visual* viewport, so
+    // the window scroll listener stays quiet too. Without these the fixed
+    // coordinates go stale exactly when the keyboard is up.
+    const vv = window.visualViewport;
+    vv?.addEventListener("resize", update);
+    vv?.addEventListener("scroll", update);
     return () => {
+      if (frame) cancelAnimationFrame(frame);
       window.removeEventListener("scroll", update, true);
       window.removeEventListener("resize", update);
+      vv?.removeEventListener("resize", update);
+      vv?.removeEventListener("scroll", update);
     };
+  }, [showList]);
+
+  // With the keyboard up, even a well-placed list can be left with a couple of
+  // rows. If the field opened into the cramped bottom of the screen, lift it
+  // toward the middle — once, so a later keyboard event can't fight the user.
+  useEffect(() => {
+    if (!showList || nudged.current) return;
+    const el = inputRef.current;
+    if (!el) return;
+    // Deferred a frame: the chip tap that mounts this field is also what opens
+    // the keyboard, and a scroll in that same tick is swallowed by Safari's
+    // own scroll-the-field-into-view.
+    const frame = requestAnimationFrame(() => {
+      const rect = el.getBoundingClientRect();
+      const viewport = readViewport();
+      const visibleBottom = viewport.offsetTop + viewport.height;
+      const room = visibleBottom - bottomInsetFrom(visibleBottom) - rect.bottom;
+      if (room >= COMFORTABLE_ROOM) return; // already comfortable — leave the page alone
+      nudged.current = true;
+      // `center` so the list has somewhere to go in both directions. The
+      // optional call is load-bearing: jsdom has no scrollIntoView.
+      el.scrollIntoView?.({ block: "center", behavior: "smooth" });
+    });
+    return () => cancelAnimationFrame(frame);
   }, [showList]);
 
   const commit = (index: number) => {
@@ -153,6 +248,12 @@ export function Combobox({
         aria-activedescendant={showList ? `${listId}-${highlight}` : undefined}
         aria-label={label}
         placeholder={placeholder}
+        // iOS autocorrect silently rewriting a typed name before it commits is
+        // a real way to end up with a category you never asked for.
+        autoCorrect="off"
+        autoCapitalize="sentences"
+        spellCheck={false}
+        enterKeyHint="done"
         value={draft}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
@@ -201,7 +302,9 @@ export function Combobox({
                 id={`${listId}-${i}`}
                 role="option"
                 aria-selected={i === highlight}
-                className={`option${i === highlight ? " highlighted" : ""}`}
+                className={`option${i === createIndex ? " create" : ""}${
+                  i === highlight ? " highlighted" : ""
+                }`}
                 onMouseEnter={() => setHighlight(i)}
                 // mousedown fires before the input's blur, so the click isn't lost
                 onMouseDown={(e) => {
@@ -290,9 +393,16 @@ export function Combobox({
           margin: 0;
           padding: 4px;
           list-style: none;
-          min-width: 200px;
-          max-height: 220px;
+          /* No min-width: it fought the viewport clamp on a 320px screen. The
+             floor lives in computeListPosition, which knows the viewport. */
+          min-width: 0;
+          /* Safety net for the one frame before measurement; the real value
+             arrives inline, from the room actually available. */
+          max-height: 320px;
           overflow-y: auto;
+          /* Scrolling the suggestions must not start scrolling the page. */
+          overscroll-behavior: contain;
+          -webkit-overflow-scrolling: touch;
           border-radius: var(--r-lg);
         }
 
@@ -305,11 +415,48 @@ export function Combobox({
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          touch-action: manipulation;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Fingers, not cursors: 44px is the smallest target that is reliably
+           hit first try. Desktop keeps its denser rows. */
+        @media (pointer: coarse) {
+          .option {
+            display: flex;
+            align-items: center;
+            min-height: 44px;
+            font-size: 0.9375rem;
+          }
+        }
+
+        /* "Create ..." is the way out of the preset list, so it must never be
+           the row that scrolled out of sight. */
+        .option.create {
+          position: sticky;
+          bottom: -4px;
+          /* The same glass fill, stacked: one layer at 0.85 lets the options
+             scrolling underneath read straight through the row. Two are opaque
+             enough to hide them without hardcoding a colour, and both collapse
+             to the flat --bg-1 fallback together. */
+          background-color: var(--glass-raised);
+          background-image: linear-gradient(var(--glass-raised), var(--glass-raised));
+          border-top: 1px solid var(--glass-rim);
+          border-radius: 0 0 var(--r-sm) var(--r-sm);
+          color: var(--fg-0);
         }
 
         .option.highlighted {
           background: var(--glass-hover);
           color: var(--fg-0);
+        }
+
+        /* The shorthand above resets background-image, which would drop the
+           create row back to a single translucent layer just as it is
+           highlighted. Stack the hover tint over the fill instead. */
+        .option.create.highlighted {
+          background-color: var(--glass-raised);
+          background-image: linear-gradient(var(--glass-hover), var(--glass-hover));
         }
       `}</style>
     </div>

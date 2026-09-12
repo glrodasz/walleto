@@ -128,6 +128,7 @@ export function Sidebar() {
       <nav
         className="glass glass--strong glass--raised waletto-bnav"
         aria-label="Mobile navigation"
+        data-overlay-bottom-bar
       >
         {BOTTOM_NAV.map((item) => {
           const Icon = item.icon;
