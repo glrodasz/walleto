@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { Combobox } from "./Combobox";
+import { OverlayLayerProvider } from "../../hooks/useOverlayLayer";
 
 const SUGGESTIONS = ["Salary", "Rent", "Pension", "Side projects"];
 
@@ -252,5 +253,27 @@ describe("Combobox", () => {
 
     fireEvent.change(input, { target: { value: "Salary" } });
     expect(screen.getByRole("option")).not.toHaveClass("create");
+  });
+  it("leaves the list on the page menu layer by default", () => {
+    mockAnchor({ top: 100, bottom: 134 });
+    setup();
+    // No inline override: the stylesheet's var(--z-menu) owns it, which keeps
+    // a page-level list below any modal, as globals.css intends.
+    expect(screen.getByRole("listbox").style.zIndex).toBe("");
+  });
+
+  it("lifts the list above the scrim when it belongs to a modal", () => {
+    mockAnchor({ top: 100, bottom: 134 });
+    // Deliberately the provider rather than a Modal: an atom's test must not
+    // reach up to a molecule.
+    render(
+      <OverlayLayerProvider>
+        <Combobox label="Network" suggestions={SUGGESTIONS} onSelect={jest.fn()} />
+      </OverlayLayerProvider>
+    );
+    const list = screen.getByRole("listbox");
+    expect(list.style.zIndex).toBe("250");
+    // The portal target must not regress: a glass ancestor would trap it.
+    expect(list.parentElement).toBe(document.body);
   });
 });

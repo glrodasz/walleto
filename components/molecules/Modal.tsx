@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
 import { Close } from "../atoms/Icons";
+import { OverlayLayerProvider, useOverlayLayer } from "../../hooks/useOverlayLayer";
 
 interface Props {
   open: boolean;
@@ -11,6 +12,14 @@ interface Props {
 }
 
 export function Modal({ open, title, onClose, children }: Props) {
+  // The layer this modal was opened *from*, so a nested one can outrank the
+  // dropdowns the outer modal owns.
+  const layer = useOverlayLayer();
+  // True until a press says otherwise, so a click that arrives without one —
+  // a synthetic dismissal, assistive tech — still closes the dialog. Only an
+  // observed press landing inside can veto.
+  const pressStartedOnScrim = useRef(true);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -40,7 +49,29 @@ export function Modal({ open, title, onClose, children }: Props) {
   // outside the scrim. Portaling onto document.body is the only way out —
   // the same fix already applied to KebabMenu and Combobox.
   return createPortal(
-    <div className="overlay" onClick={onClose}>
+    <div
+      className="overlay"
+      // Only bumped when nested; on the page the CSS var stays authoritative.
+      style={layer.depth > 0 ? { zIndex: layer.overlayZIndex } : undefined}
+      // A press that began inside the dialog — or inside a menu the dialog
+      // owns, which portals onto the body but still reaches here through the
+      // React tree — must not dismiss it. A combobox option commits on
+      // mousedown and is gone by mouseup, so the browser has no common
+      // ancestor to fire the click at and retargets it to whatever is now
+      // under the pointer: very often this scrim. Only the press origin can
+      // tell that apart from a real click-outside.
+      onMouseDown={(e) => {
+        pressStartedOnScrim.current = e.target === e.currentTarget;
+      }}
+      onClick={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (!pressStartedOnScrim.current) {
+          pressStartedOnScrim.current = true;
+          return;
+        }
+        onClose();
+      }}
+    >
       <div
         className="glass glass--strong glass--raised panel"
         role="dialog"
@@ -59,7 +90,9 @@ export function Modal({ open, title, onClose, children }: Props) {
             <Close size={20} />
           </button>
         </header>
-        <div className="body">{children}</div>
+        <div className="body">
+          <OverlayLayerProvider>{children}</OverlayLayerProvider>
+        </div>
       </div>
 
       <style jsx>{`

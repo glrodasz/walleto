@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useOverlayLayer } from "../../hooks/useOverlayLayer";
 import { computeListPosition } from "../../utils/computeListPosition";
 import type { ViewportBox } from "../../utils/computeListPosition";
 
@@ -103,6 +104,9 @@ export function Combobox({
   const [pos, setPos] = useState<React.CSSProperties | null>(null);
   // One scroll-into-view per opening, no matter how the viewport churns.
   const nudged = useRef(false);
+  // The list portals onto the body, so nothing but z-index ranks it against
+  // a modal's scrim — and a modal's own list has to clear it.
+  const { depth, menuZIndex } = useOverlayLayer();
 
   const trimmed = draft.trim();
 
@@ -294,7 +298,13 @@ export function Combobox({
             id={listId}
             role="listbox"
             aria-label={label}
-            style={pos ?? { top: 0, left: 0, visibility: "hidden" }}
+            style={{
+              ...(pos ?? { top: 0, left: 0, visibility: "hidden" }),
+              // Composed at render, never folded into `pos`, so the wholesale
+              // replacement the measure effect relies on stays true. On the
+              // page the stylesheet's var(--z-menu) is already right.
+              ...(depth > 0 ? { zIndex: menuZIndex } : null),
+            }}
           >
             {options.map((option, i) => (
               <li
@@ -386,7 +396,9 @@ export function Combobox({
         /* Fixed, because it is mounted on the body: the position comes from
            the input's rect (see the positioning effect above). Above the nav
            and the FAB, below a modal — which it can finally honour, now that
-           no ancestor's backdrop-filter traps it. */
+           no ancestor's backdrop-filter traps it. That ranking is right only
+           for a list opened from the page; one owned by a modal is lifted
+           above that modal's scrim inline (see useOverlayLayer). */
         .list {
           position: fixed;
           z-index: var(--z-menu, 150);
