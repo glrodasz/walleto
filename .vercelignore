@@ -1,2 +1,8 @@
 firebase/serviceAccountKey.*.json
 .env*.local
+
+# Storybook is a dev tool; nothing here ships.
+.storybook
+storybook-static
+**/*.stories.tsx
+stories
