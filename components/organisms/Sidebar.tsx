@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import type { ComponentType } from "react";
 import { Modal } from "../molecules/Modal";
+import { Avatar } from "../atoms/Avatar";
 import { BuildBadge } from "../atoms/BuildBadge";
 import {
   ArrowDown,
@@ -67,7 +68,6 @@ export function Sidebar() {
   const [moreOpen, setMoreOpen] = useState(false);
 
   const name = user?.name ?? user?.nickname ?? "Account";
-  const initial = name.trim().charAt(0).toUpperCase() || "?";
   const moreActive = MORE_NAV.some((item) => item.href === pathname);
 
   const navLink = (item: NavItem, size: number) => {
@@ -109,9 +109,7 @@ export function Sidebar() {
 
         <div className="account">
           <div className="who">
-            <span className="avatar" aria-hidden="true">
-              {initial}
-            </span>
+            <Avatar name={name} email={user?.email} />
             <span className="who-text">
               <span className="who-name">{name}</span>
               {user?.email && <span className="who-mail">{user.email}</span>}
@@ -176,9 +174,7 @@ export function Sidebar() {
             <BuildBadge />
           </div>
           <div className="more-account">
-            <span className="avatar" aria-hidden="true">
-              {initial}
-            </span>
+            <Avatar name={name} email={user?.email} />
             <span className="who-text">
               <span className="who-name">{name}</span>
               {user?.email && <span className="who-mail">{user.email}</span>}
@@ -304,20 +300,6 @@ export function Sidebar() {
           align-items: center;
           gap: 10px;
           min-width: 0;
-        }
-
-        .avatar {
-          flex-shrink: 0;
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          background: var(--accent);
-          color: var(--on-accent);
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 0.8rem;
-          font-weight: 700;
         }
 
         .who-text {
