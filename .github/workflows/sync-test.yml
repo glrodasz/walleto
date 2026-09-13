@@ -1,0 +1,22 @@
+name: Sync main to test
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      # Full history: GitHub rejects pushes from a shallow clone.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Fast-forward only: fails loudly if test has diverged from main.
+      - name: Fast-forward test to main
+        run: git push origin HEAD:test
