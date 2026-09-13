@@ -8,3 +8,5 @@ export * from "./accounts";
 export * from "./recurrent";
 export * from "./transactions";
 export * from "./valuations";
+export * from "./charts";
+export * from "./flow";

@@ -108,6 +108,17 @@ constants.ts                            constantes y mapas de presentación
 
 **La única excepción a "los organisms no importan features"** es `PageLayout`, que monta `features/create/CreateLauncher` (el "+" flotante de mobile): tiene que existir en todas las páginas y todas las páginas se construyen sobre ese layout. Los dos formularios que abre se montan solo mientras están abiertos, así ninguna página paga sus listeners.
 
+### Storybook
+
+`pnpm storybook` monta cada pieza sola y en contexto, ordenada por Atomic Design: **Atoms** y **Molecules** (`components/`), **Organisms** (`components/organisms/` y `features/*/components/`) y **Templates** (las pantallas enteras: `DashboardPage`, `DomainPage`, `ProspectPage`, `SettingsPage`, el wizard y `login-error`). Reglas:
+
+- La story va **colocada** junto al componente, como el test: `Button.stories.tsx`. El `title` decide el nivel (`Atoms/Button`, `Organisms/Dashboard/NetFlowCard`, `Templates/Settings`). **Nunca** una story dentro de `pages/` (Next la compila como ruta; `__tests__/pagesDirectory.test.ts` lo vigila).
+- Storybook no toca Firestore ni Auth0. `.storybook/preview.tsx` envuelve todo en `UserProvider` (usuario fijo) y `PreferencesProvider`, y sustituye cada hook de datos de `hooks/` (y `firebase/client`) por su hermano en `__mocks__/` vía `sb.mock()`. Los mocks devuelven un solo perfil demo desde `stories/fixtures/` (categorías, tags, métodos, cuentas, un plan multi-moneda y el ledger derivado con `helpers/materializeOccurrences`).
+- Otro estado = otro hook: `mocked(useCategories).mockImplementation(...)` en el `beforeEach` de la story; `resetStoryMocks()` restaura los defaults antes de cada una. Los componentes por props reciben los fixtures directamente (`STORY_CATEGORIES`, `STORY_CTX`…).
+- Un hook nuevo que lea Firestore necesita tres cosas: su default en `stories/fixtures/hookDefaults.ts`, `hooks/__mocks__/<hook>.ts` con **todos** los nombres que exporta el módulo real envueltos en `fn()`, y su alta en `.storybook/preview.tsx` y en `stories/fixtures/mocks.ts`.
+- Los cuerpos de página viven en `features/*/components/*Page.tsx`; `pages/*.tsx` solo exporta `getServerSideProps` y monta ese componente. Así una pantalla se puede montar fuera de `pages/`.
+- CI corre `pnpm build-storybook`: una story rota rompe el pipeline.
+
 ---
 
 ## 2. Estilos
@@ -287,6 +298,7 @@ pnpm tsc --noEmit
 pnpm lint
 pnpm test
 pnpm build
+pnpm build-storybook
 ```
 
 Es exactamente lo que corre CI (`.github/workflows/ci.yml`). **`pnpm build` no es opcional**: es el único que detecta rutas rotas, y `tsc` + `jest` en verde no lo garantizan.
