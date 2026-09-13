@@ -19,7 +19,8 @@
     "test:watch": "jest --watch",
     "prepare": "husky",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "vercel-build": "storybook build && rm -rf public/storybook && mv storybook-static public/storybook && next build"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [

@@ -19,7 +19,23 @@ const nextConfig = {
     NEXT_PUBLIC_COMMIT_SHA: process.env.VERCEL_GIT_COMMIT_SHA ?? "",
   },
   async headers() {
-    return [{ source: "/(.*)", headers: securityHeaders }];
+    return [
+      { source: "/(.*)", headers: securityHeaders },
+      // The component workbench isn't app content; keep it out of search results.
+      {
+        source: "/storybook/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+    ];
+  },
+  async rewrites() {
+    // vercel-build outputs Storybook's static build to public/storybook, which
+    // Next serves at exact file paths only — a bare /storybook (no filename)
+    // 404s without this.
+    return [
+      { source: "/storybook", destination: "/storybook/index.html" },
+      { source: "/storybook/", destination: "/storybook/index.html" },
+    ];
   },
 };
 
