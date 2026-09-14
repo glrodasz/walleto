@@ -88,7 +88,11 @@ export function OnboardingLayout({
 
           <div className="body">{children}</div>
 
-          {footer && <div className="footer">{footer}</div>}
+          {footer && (
+            <div className="footer" data-overlay-bottom-bar>
+              {footer}
+            </div>
+          )}
         </div>
       </div>
 

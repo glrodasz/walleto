@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { KebabMenu } from "./KebabMenu";
+import { OverlayLayerProvider } from "../../hooks/useOverlayLayer";
 
 const actions = [
   { label: "Edit", onSelect: jest.fn() },
@@ -66,5 +67,16 @@ describe("KebabMenu", () => {
     const menu = screen.getByRole("menu");
     expect(menu.parentElement).toBe(document.body);
     expect(screen.getByTestId("row")).not.toContainElement(menu);
+  });
+  it("lifts the menu above the scrim when it belongs to a modal", () => {
+    render(
+      <OverlayLayerProvider>
+        <KebabMenu aria-label="Actions for Bread" actions={actions} />
+      </OverlayLayerProvider>
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Actions for Bread" }));
+    const menu = screen.getByRole("menu");
+    expect(menu.style.zIndex).toBe("250");
+    expect(menu.parentElement).toBe(document.body);
   });
 });
