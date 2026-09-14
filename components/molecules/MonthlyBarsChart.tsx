@@ -1,5 +1,5 @@
 import dynamic from "next/dynamic";
-import { formatAmount, formatCompact } from "../atoms/Amount";
+import { useMoneyFormat } from "../../hooks/useMoneyFormat";
 import type { Currency } from "../../types";
 
 // recharts is client-only and heavy, so every piece is loaded on demand.
@@ -69,6 +69,7 @@ export function MonthlyBarsChart({
   height = 220,
   stacked = false,
 }: Props) {
+  const { formatAmount, formatCompact, formatTick } = useMoneyFormat();
   const hasMoney = data.some(
     (d) => series.some((s) => Number(d[s.key]) !== 0) || (d.planned ?? 0) !== 0
   );
@@ -146,7 +147,7 @@ export function MonthlyBarsChart({
                 tick={{ fill: "var(--fg-2)", fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(v: number) => formatCompact(v, currency)}
+                tickFormatter={(v: number) => formatTick(v, currency)}
                 width={64}
               />
               <Tooltip

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
-import { formatAmount, formatNative } from "../../../components/atoms/Amount";
+import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { Badge } from "../../../components/atoms/Badge";
 import { Home } from "../../../components/atoms/Icons";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
@@ -166,6 +166,7 @@ export function RecurringChecklist({
   busyId,
 }: Props) {
   const { formatDate } = useDateFormat();
+  const { formatAmount, formatNative } = useMoneyFormat();
   const config = DOMAIN_CONFIG[domain];
   const { occurrences, notThisMonth } = useMemo(
     () => monthOccurrences(items, transactions, ctx, window, now),

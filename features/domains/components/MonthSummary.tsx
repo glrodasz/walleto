@@ -1,7 +1,8 @@
 import { Card } from "../../../components/atoms/Card";
-import { Amount, formatAmount } from "../../../components/atoms/Amount";
+import { Amount } from "../../../components/atoms/Amount";
 import { DeltaPill } from "../../../components/molecules/DeltaPill";
 import { ProgressBar } from "../../../components/molecules/ProgressBar";
+import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import type { MonthDelta, MonthWindow } from "../helpers/months";
 import type { Currency, Domain } from "../../../types";
@@ -35,6 +36,7 @@ export function MonthSummary({
   currency,
   approximate,
 }: Props) {
+  const { formatAmount } = useMoneyFormat();
   const config = DOMAIN_CONFIG[domain];
   const ratio = expected > 0 ? realized / expected : 0;
   const left = Math.max(0, expected - realized);

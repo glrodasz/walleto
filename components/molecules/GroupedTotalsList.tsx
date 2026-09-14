@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { formatAmount } from "../atoms/Amount";
+import { useMoneyFormat } from "../../hooks/useMoneyFormat";
 import { IconDisc } from "./IconDisc";
 import { ListItem, ListItems } from "./ListItem";
 import type { Currency } from "../../types";
@@ -36,6 +36,8 @@ export function GroupedTotalsList({
   icon,
   onSelect,
 }: Props) {
+  const { formatAmount } = useMoneyFormat();
+
   if (loading || groups.length === 0) {
     return (
       <p className="empty">

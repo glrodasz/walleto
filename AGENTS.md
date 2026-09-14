@@ -41,6 +41,7 @@ helpers/stacks.ts                 monthTotalsBy / monthTotalsByCategory — tota
 helpers/categoryTree.ts           categoryIdSet / rootIdMap — plegar hijos en su categoría raíz
 helpers/categoryIcons.ts          defaultIconFor(name, domain) / iconFor(category) — icono por defecto cuando no hay pick
 helpers/allocation.ts             allocationSegments(flow) — cómo se reparte el ingreso del mes (barra del hero)
+helpers/money.ts                  formatAmount / formatCompact / formatNative — cómo se escribe un monto (y cómo se enmascara)
 helpers/i18n.ts                   t(key, language) — catálogo (solo "en") para las cadenas de Settings
 helpers/recurrence.ts             próxima ocurrencia según Frequency
 helpers/seedDefaultCategories.ts  categorías por defecto
@@ -238,6 +239,7 @@ Todo monto se **guarda en su moneda nativa** y se **convierte solo al leer**. El
 - **`IDENTITY_RATES`** (`helpers/fx.ts`) son tasas 1:1 — útiles en tests y como fallback cuando no hay tasas reales; con ellas la salida es la suma cruda (para verificar mecánicamente un refactor).
 - **Honestidad ante la falta de datos**: `fxMissing` (nunca hubo cache) y `fxStale` (sirviendo cache vencido o el fallback del servidor) se propagan hasta la UI. Nunca se inventa un número — cuando `fxMissing` y hay monedas mezcladas, se muestra un aviso en vez de una suma falsa (ver `pages/index.tsx`).
 - **`Amount`** (`components/atoms/Amount.tsx`): `colorize` para netos (verde ≥0, rojo <0), `showCode` cuando la moneda difiere del target, `approximate` antepone "≈" en agregados convertidos. Decimales por moneda vía `ZERO_DECIMAL_CURRENCIES` en `constants.ts` (JPY, COP sin centavos), no un `maximumFractionDigits` fijo.
+- **Todo monto se escribe con `useMoneyFormat()`** (`hooks/useMoneyFormat.ts`), no con las funciones de `helpers/money` directamente: el hook las ata al modo privacidad (§3.5). Las puras quedan para tests y para lo que no es React; si una función auxiliar fuera del componente necesita formatear (`cardRows` en `pages/index.tsx`), recibe el formateador por parámetro.
 - **`/api/currencies`**: cache in-memory de 12h + mirror diario a Firestore (`rates/{YYYY-MM-DD}`) como fallback; el cliente cachea 24h en `localStorage` (`hooks/useExchangeRates.ts`). Nunca lo llames sin pasar por ese hook.
 
 ---
@@ -309,6 +311,12 @@ Un item no mensual (anual, trimestral, semanal…) con `spreadMonthly` se pinta 
 ### 3.4 Puntual vs recurrente
 
 Hay **un solo formulario** para todo lo que entra: `RecurrentTransactionModal`. "Record a payment" del "+" lo abre con `initialFrequency="ONE_TIME"`; editar una fila del ledger lo abre con `transaction` (frecuencia fija en One time, PATCH con solo lo que cambió). Un `frequency: "ONE_TIME"` elegido ahí o en la sección One-time del wizard **no crea un item recurrente**: escribe una transacción PAID directa (`POST /api/transactions`). El plan (recurrentTransactions) es solo lo que se repite; el ledger (transactions) es lo que pasó. Los items ONE_TIME antiguos siguen funcionando, pero no se crean más.
+
+### 3.5 Modo privacidad
+
+El ojo del header (`components/molecules/PrivacyToggle`) enmascara **el texto** de todos los montos: `$****`, `COP ****` — se queda el símbolo o el código, se va el número entero (nunca `$*,***.**`: la forma ya delata la magnitud, y el sufijo compacto "K"/"M" también, así que se cae). La bandera vive en `hooks/usePrivacy` (contexto + `localStorage`, `waletto:privacy`): es "alguien me está viendo la pantalla", una propiedad del dispositivo y no de la cuenta, así que **no** va al user doc.
+
+Nada más cambia. Alturas de barras, shares, progreso, orden y totales se siguen calculando con los números reales, así que la pantalla conserva su forma y sus proporciones — el gráfico sigue contando el mes, solo que sin cifras. Dos detalles: los ticks del eje quedan **en blanco** en vez de repetir cuatro `$****` iguales (`formatTick`), y los `input` de los formularios muestran el valor de verdad — no se puede editar lo que no se ve. Los porcentajes tampoco se ocultan: son proporción, no dinero.
 
 ## 7. Deferido a propósito
 

@@ -1,6 +1,7 @@
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
-import { Amount, formatAmount } from "../../../components/atoms/Amount";
+import { Amount } from "../../../components/atoms/Amount";
+import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { useRecurrentTransactions } from "../../../hooks/useRecurrentTransactions";
 import { sumMonthly } from "../../../helpers/aggregations";
 import type { MoneyContext } from "../../../helpers/aggregations";
@@ -24,6 +25,7 @@ interface Props {
  */
 export function SubscriptionInsights({ items, categories, ctx, currency }: Props) {
   const { formatDate } = useDateFormat();
+  const { formatAmount } = useMoneyFormat();
   // Only mounted on the Subscriptions tab, so this listener is scoped to when
   // it's actually needed rather than always running on every expenses visit.
   const { items: incomeItems } = useRecurrentTransactions("INCOME");

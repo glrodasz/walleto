@@ -1,6 +1,6 @@
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
-import { formatAmount } from "../../../components/atoms/Amount";
+import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { toMonthlyAmount } from "../../../helpers/aggregations";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import type { Currency, Domain, RecurrentTransaction } from "../../../types";
@@ -30,6 +30,8 @@ export function CancelableItemsList({
   currency,
   loading,
 }: Props) {
+  const { formatAmount } = useMoneyFormat();
+
   return (
     <Card>
       <SectionTitle title="What could you cancel?" />

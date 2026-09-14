@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Head from "next/head";
 import { Sidebar } from "./Sidebar";
 import { CurrencySelector } from "../molecules/CurrencySelector";
+import { PrivacyToggle } from "../molecules/PrivacyToggle";
 import { MonthPicker } from "../molecules/MonthPicker";
 import { CreateLauncher } from "../../features/create/components/CreateLauncher";
 import { useMoneyContext } from "../../hooks/useMoneyContext";
@@ -27,8 +28,9 @@ interface Props {
  * built on this layout.
  */
 export function PageLayout({ title, subtitle, domain, hideCurrency, hideMonth, children }: Props) {
-  // The display currency and the selected month are properties of the whole
-  // app, so their controls live in every page header, not only on the dashboard.
+  // Privacy mode, the display currency and the selected month are properties
+  // of the whole app, so their controls live in every page header, not only on
+  // the dashboard.
   const { target, setDisplayCurrency } = useMoneyContext();
   const month = useSelectedMonth();
   return (
@@ -47,19 +49,18 @@ export function PageLayout({ title, subtitle, domain, hideCurrency, hideMonth, c
               <h1 className="page-title">{title}</h1>
               {subtitle && <p className="subtitle">{subtitle}</p>}
             </div>
-            {(!hideCurrency || !hideMonth) && (
-              <div className="controls">
-                {!hideCurrency && <CurrencySelector value={target} onChange={setDisplayCurrency} />}
-                {!hideMonth && (
-                  <MonthPicker
-                    value={month.selectedKey}
-                    windows={month.pickerWindows}
-                    onChange={month.select}
-                    onStep={month.step}
-                  />
-                )}
-              </div>
-            )}
+            <div className="controls">
+              <PrivacyToggle />
+              {!hideCurrency && <CurrencySelector value={target} onChange={setDisplayCurrency} />}
+              {!hideMonth && (
+                <MonthPicker
+                  value={month.selectedKey}
+                  windows={month.pickerWindows}
+                  onChange={month.select}
+                  onStep={month.step}
+                />
+              )}
+            </div>
           </header>
 
           <main className="main">{children}</main>

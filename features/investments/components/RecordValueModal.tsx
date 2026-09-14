@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Modal } from "../../../components/molecules/Modal";
 import { Select } from "../../../components/atoms/Select";
 import { Button } from "../../../components/atoms/Button";
-import { formatAmount } from "../../../components/atoms/Amount";
+import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { useAccounts } from "../../../hooks/useAccounts";
 import { useCategories } from "../../../hooks/useCategories";
 import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
@@ -31,6 +31,7 @@ const INCEPTION = new Date(2000, 0, 1);
  */
 export function RecordValueModal({ open, onClose, domain }: Props) {
   const { ctx, target } = useMoneyContext();
+  const { formatAmount } = useMoneyFormat();
   const { accounts } = useAccounts(domain);
   const { categories } = useCategories(domain);
   const { transactions } = useDomainTransactions(domain, INCEPTION);
