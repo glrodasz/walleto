@@ -9,6 +9,8 @@ interface Props {
   control?: ReactNode;
   /** Grey text after the control, explaining it. */
   hint?: string;
+  /** The control takes the whole right column, for one that wraps (chips). */
+  fill?: boolean;
   /** Makes the row a link (external ones get the arrow icon)… */
   href?: string;
   /** …or a button. */
@@ -16,7 +18,7 @@ interface Props {
   danger?: boolean;
 }
 
-interface BodyProps extends Pick<Props, "label" | "value" | "control" | "hint"> {
+interface BodyProps extends Pick<Props, "label" | "value" | "control" | "hint" | "fill"> {
   external: boolean;
   interactive: boolean;
 }
@@ -26,12 +28,12 @@ interface BodyProps extends Pick<Props, "label" | "value" | "control" | "hint"> 
  * scopes the JSX a component returns itself, so markup parked in a variable
  * compiles with bare class names and its CSS silently does nothing.
  */
-function SettingsRowBody({ label, value, control, hint, external, interactive }: BodyProps) {
+function SettingsRowBody({ label, value, control, hint, fill, external, interactive }: BodyProps) {
   return (
     <>
       <span className="label">{label}</span>
       <span className="right">
-        {control && <span className="control">{control}</span>}
+        {control && <span className={`control${fill ? " is-fill" : ""}`}>{control}</span>}
         {value !== undefined && <span className="value">{value}</span>}
         {hint && <span className="hint">{hint}</span>}
         {interactive && (
@@ -57,6 +59,14 @@ function SettingsRowBody({ label, value, control, hint, external, interactive }:
         .control {
           flex-shrink: 0;
           min-width: 150px;
+        }
+
+        /* A wrapping control (the currency chips) needs the column's width,
+           and needs to be allowed to shrink into it. */
+        .control.is-fill {
+          flex: 1;
+          flex-shrink: 1;
+          min-width: 0;
         }
 
         .value {
@@ -93,10 +103,10 @@ function SettingsRowBody({ label, value, control, hint, external, interactive }:
 }
 
 /** One "label · value" line of a Settings card; a chevron when it leads somewhere. */
-export function SettingsRow({ label, value, control, hint, href, onClick, danger }: Props) {
+export function SettingsRow({ label, value, control, hint, fill, href, onClick, danger }: Props) {
   const external = Boolean(href?.startsWith("http") || href?.startsWith("mailto:"));
   const interactive = Boolean(href || onClick);
-  const body = { label, value, control, hint, external, interactive };
+  const body = { label, value, control, hint, fill, external, interactive };
 
   return (
     <div className={`row${danger ? " danger" : ""}`}>

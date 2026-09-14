@@ -30,7 +30,8 @@ import {
   toDateInputValue,
 } from "../../../helpers/scheduleAnchor";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
-import { SELECTABLE_CURRENCIES, CURRENCY_SYMBOL, FREQUENCY_LABELS } from "../../../constants";
+import { CURRENCY_SYMBOL, FREQUENCY_LABELS } from "../../../constants";
+import { useEnabledCurrencies } from "../../../hooks/useEnabledCurrencies";
 import type {
   Currency,
   Domain,
@@ -43,11 +44,6 @@ import { useDateFormat } from "../../../hooks/usePreferences";
 const FREQUENCY_OPTIONS = (Object.keys(FREQUENCY_LABELS) as Frequency[]).map((f) => ({
   value: f,
   label: FREQUENCY_LABELS[f],
-}));
-
-const CURRENCY_OPTIONS = SELECTABLE_CURRENCIES.map((c) => ({
-  value: c.value,
-  label: `${CURRENCY_SYMBOL[c.value]} ${c.label}`,
 }));
 
 interface Props {
@@ -105,6 +101,7 @@ export function RecurrentTransactionModal({
   const config = DOMAIN_CONFIG[domain];
   const noun = config.noun.replace(/s$/, "");
   const { userDoc } = useUserDoc();
+  const { optionsFor } = useEnabledCurrencies();
   const { categories, create: createCategory } = useCategories(domain);
   const { methods, create: createMethod } = usePaymentMethods();
   const hasAccounts = isAccountDomain(domain);
@@ -497,7 +494,7 @@ export function RecurrentTransactionModal({
           />
           <Select
             label="Currency"
-            options={CURRENCY_OPTIONS}
+            options={optionsFor(effectiveCurrency)}
             value={effectiveCurrency}
             onValueChange={(v) => patch({ currency: v as Currency })}
           />
@@ -654,7 +651,9 @@ export function RecurrentTransactionModal({
                 <Select
                   label="Charged currency"
                   placeholder="Currency"
-                  options={CURRENCY_OPTIONS.filter((c) => c.value !== effectiveCurrency)}
+                  options={optionsFor(form.chargedCurrency).filter(
+                    (c) => c.value !== effectiveCurrency
+                  )}
                   value={form.chargedCurrency}
                   onValueChange={(v) => patch({ chargedCurrency: v as Currency })}
                 />

@@ -1,5 +1,5 @@
 import { Select } from "../atoms/Select";
-import { SELECTABLE_CURRENCIES, CURRENCY_SYMBOL } from "../../constants";
+import { useEnabledCurrencies } from "../../hooks/useEnabledCurrencies";
 import type { Currency } from "../../types";
 
 interface Props {
@@ -10,17 +10,16 @@ interface Props {
 /**
  * The mockup's "$ DOLAR" display-currency switcher. It changes the reporting
  * currency everywhere (persisted as users.displayCurrency), not the currency
- * of any stored record.
+ * of any stored record. It offers the currencies enabled in Settings.
  */
 export function CurrencySelector({ value, onChange }: Props) {
+  const { optionsFor } = useEnabledCurrencies();
+
   return (
     <div className="selector">
       <Select
         aria-label="Display currency"
-        options={SELECTABLE_CURRENCIES.map((c) => ({
-          value: c.value,
-          label: `${CURRENCY_SYMBOL[c.value]} ${c.label}`,
-        }))}
+        options={optionsFor(value)}
         value={value}
         onValueChange={(v) => onChange(v as Currency)}
       />

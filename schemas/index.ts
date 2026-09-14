@@ -289,6 +289,8 @@ export const UserUpdateSchema = z
   .object({
     mainCurrency: CurrencySchema.optional(),
     displayCurrency: CurrencySchema.optional(),
+    // Curated in Settings. At least one, or every picker would be empty.
+    enabledCurrencies: z.array(CurrencySchema).min(1).optional(),
     onboardingCompleted: z.boolean().optional(),
     onboardingMode: z.enum(["MAGIC", "ASSISTED"]).optional(),
     theme: ThemePreferenceSchema.optional(),

@@ -10,13 +10,8 @@ import {
   NETWORK_SUGGESTIONS,
   networkFieldLabel,
 } from "../../../helpers/paymentMethodOptions";
-import { SELECTABLE_CURRENCIES, CURRENCY_SYMBOL } from "../../../constants";
+import { useEnabledCurrencies } from "../../../hooks/useEnabledCurrencies";
 import type { Currency, PaymentMethod } from "../../../types";
-
-const CURRENCY_OPTIONS = SELECTABLE_CURRENCIES.map((c) => ({
-  value: c.value,
-  label: `${CURRENCY_SYMBOL[c.value]} ${c.label}`,
-}));
 
 interface Props {
   method: PaymentMethod | null;
@@ -33,6 +28,7 @@ interface Props {
  */
 export function EditMethodModal({ method, onClose }: Props) {
   const { update } = usePaymentMethods();
+  const { optionsFor } = useEnabledCurrencies();
   const [name, setName] = useState("");
   const [network, setNetwork] = useState("");
   const [last4, setLast4] = useState("");
@@ -110,7 +106,7 @@ export function EditMethodModal({ method, onClose }: Props) {
         <Select
           label="Default currency"
           placeholder="None"
-          options={CURRENCY_OPTIONS}
+          options={optionsFor(defaultCurrency)}
           value={defaultCurrency}
           onValueChange={(v) => setDefaultCurrency(v as Currency)}
         />

@@ -15,16 +15,11 @@ import { useAccounts } from "../../../hooks/useAccounts";
 import { useUserDoc } from "../../../hooks/useUserDoc";
 import { ACCOUNT_NOUN, accountLabel, formatInterestRate } from "../../../helpers/accounts";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
-import { SELECTABLE_CURRENCIES, CURRENCY_SYMBOL } from "../../../constants";
+import { useEnabledCurrencies } from "../../../hooks/useEnabledCurrencies";
 import type { Account, AccountDomain, Currency, InterestPeriod } from "../../../types";
 
 const DOMAINS: AccountDomain[] = ["INVESTMENT", "SAVING"];
 const PAGE_SIZE = 25;
-
-const CURRENCY_OPTIONS = SELECTABLE_CURRENCIES.map((c) => ({
-  value: c.value,
-  label: `${CURRENCY_SYMBOL[c.value]} ${c.label}`,
-}));
 
 const PERIOD_OPTIONS: { value: InterestPeriod; label: string }[] = [
   { value: "YEARLY", label: "Yearly" },
@@ -56,6 +51,7 @@ export function AccountsSettings() {
   const [domain, setDomain] = useState<AccountDomain>("INVESTMENT");
   const { accounts, loading, error, create, update, remove } = useAccounts(domain);
   const { userDoc } = useUserDoc();
+  const { optionsFor } = useEnabledCurrencies();
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -161,7 +157,7 @@ export function AccountsSettings() {
                   <div className="pair">
                     <Select
                       label="Currency"
-                      options={CURRENCY_OPTIONS}
+                      options={optionsFor(draft.currency)}
                       value={draft.currency}
                       onValueChange={(v) => setDraft({ ...draft, currency: v as Currency })}
                     />
