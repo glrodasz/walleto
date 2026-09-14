@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useOverlayLayer } from "../../hooks/useOverlayLayer";
 import { computeListPosition } from "../../utils/computeListPosition";
+import { computeScrollIntoBand } from "../../utils/computeScrollIntoBand";
 import type { ViewportBox } from "../../utils/computeListPosition";
 
 /**
@@ -11,8 +12,20 @@ import type { ViewportBox } from "../../utils/computeListPosition";
  */
 const BOTTOM_BAR_SELECTOR = "[data-overlay-bottom-bar]";
 
-/** Enough room that a nudge would gain nothing: about four options. */
-const COMFORTABLE_ROOM = 176;
+/**
+ * What actually scrolls above `el`. Usually the page, but a Modal's panel is a
+ * real scroller (overflow-y: auto, max-height) and hosts the long transaction
+ * form — there, scrolling the window would be a silent no-op.
+ */
+function scrollerFor(el: HTMLElement): HTMLElement | Window {
+  for (let node = el.parentElement; node; node = node.parentElement) {
+    const { overflowY } = getComputedStyle(node);
+    if ((overflowY === "auto" || overflowY === "scroll") && node.scrollHeight > node.clientHeight) {
+      return node;
+    }
+  }
+  return window;
+}
 
 function readViewport(): ViewportBox {
   const vv = window.visualViewport;
@@ -102,7 +115,7 @@ export function Combobox({
   // Null until measured; the list renders hidden for that one frame so it
   // never flashes at the wrong place.
   const [pos, setPos] = useState<React.CSSProperties | null>(null);
-  // One scroll-into-view per opening, no matter how the viewport churns.
+  // One scroll per opening, no matter how much the viewport churns.
   const nudged = useRef(false);
   // The list portals onto the body, so nothing but z-index ranks it against
   // a modal's scrim — and a modal's own list has to clear it.
@@ -160,14 +173,32 @@ export function Combobox({
     }
     let frame = 0;
     const measure = () => {
-      const rect = inputRef.current?.getBoundingClientRect();
-      if (!rect) return;
+      const input = inputRef.current;
+      if (!input) return;
+      const rect = input.getBoundingClientRect();
       const viewport = readViewport();
       const bottomInset = bottomInsetFrom(viewport.offsetTop + viewport.height);
       const { placement, ...style } = computeListPosition(rect, viewport, { bottomInset });
       // Replaced wholesale, never merged: the flipped result carries `bottom`
       // and the normal one `top`, and a merge would leave the stale key behind.
       setPos(style);
+
+      // The field itself has to be readable, not just the list. This lives
+      // here, inside the cycle that already tracks the visual viewport,
+      // because the keyboard is the thing that pushes the field out of sight
+      // and its arrival is the only moment we can know that. Deciding once a
+      // frame after mount — as this used to — asks the question before the
+      // keyboard has answered it.
+      if (nudged.current) return;
+      const delta = computeScrollIntoBand(rect, viewport, { bottomInset });
+      if (delta === 0) return;
+      // Armed only when it actually moves the page, so an evaluation that ran
+      // too early cannot disarm it.
+      nudged.current = true;
+      // Instant, not smooth: a smooth scroll leaves the rect stale for frames
+      // while the capture-phase listener below re-fires, and it fights the
+      // browser's own focus scroll. Element.scrollBy is absent in jsdom.
+      scrollerFor(input).scrollBy?.({ top: delta });
     };
     // The keyboard animates, and iOS fires visualViewport scroll continuously
     // while it does; coalesce so we lay out once per frame.
@@ -195,31 +226,12 @@ export function Combobox({
       window.removeEventListener("resize", update);
       vv?.removeEventListener("resize", update);
       vv?.removeEventListener("scroll", update);
+      // Re-arm for the next opening. An uncontrolled combobox unmounts and
+      // takes the ref with it, but a controlled one stays mounted and only
+      // flips `showList` on blur — without this it would scroll into view the
+      // first time it was focused and never again.
+      nudged.current = false;
     };
-  }, [showList]);
-
-  // With the keyboard up, even a well-placed list can be left with a couple of
-  // rows. If the field opened into the cramped bottom of the screen, lift it
-  // toward the middle — once, so a later keyboard event can't fight the user.
-  useEffect(() => {
-    if (!showList || nudged.current) return;
-    const el = inputRef.current;
-    if (!el) return;
-    // Deferred a frame: the chip tap that mounts this field is also what opens
-    // the keyboard, and a scroll in that same tick is swallowed by Safari's
-    // own scroll-the-field-into-view.
-    const frame = requestAnimationFrame(() => {
-      const rect = el.getBoundingClientRect();
-      const viewport = readViewport();
-      const visibleBottom = viewport.offsetTop + viewport.height;
-      const room = visibleBottom - bottomInsetFrom(visibleBottom) - rect.bottom;
-      if (room >= COMFORTABLE_ROOM) return; // already comfortable — leave the page alone
-      nudged.current = true;
-      // `center` so the list has somewhere to go in both directions. The
-      // optional call is load-bearing: jsdom has no scrollIntoView.
-      el.scrollIntoView?.({ block: "center", behavior: "smooth" });
-    });
-    return () => cancelAnimationFrame(frame);
   }, [showList]);
 
   const commit = (index: number) => {

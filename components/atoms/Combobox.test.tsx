@@ -71,6 +71,11 @@ function listStyle() {
   return screen.getByRole("listbox").style;
 }
 
+/** jsdom defines window.scrollBy (unlike Element.scrollBy), so it is spy-able. */
+function spyOnScroll() {
+  return jest.spyOn(window, "scrollBy").mockImplementation(() => {});
+}
+
 describe("Combobox", () => {
   const originalRaf = window.requestAnimationFrame;
 
@@ -275,5 +280,78 @@ describe("Combobox", () => {
     expect(list.style.zIndex).toBe("250");
     // The portal target must not regress: a glass ancestor would trap it.
     expect(list.parentElement).toBe(document.body);
+  });
+  describe("scrolling the field into view", () => {
+    it("waits for the keyboard rather than deciding a frame after mount", () => {
+      // The reported bug: the chip is tapped, the field mounts where the chip
+      // was — comfortably visible — and only *then* does the keyboard slide up
+      // and push it out of the visible slice.
+      const scrollBy = spyOnScroll();
+      const vv = fakeVisualViewport({ width: 390, height: 800 });
+      mockAnchor({ top: 700, bottom: 734 });
+      setup();
+
+      // Nothing to do yet: at mount the field is well inside the viewport.
+      expect(scrollBy).not.toHaveBeenCalled();
+
+      // Keyboard up. The layout viewport is untouched; only this shrinks.
+      vv.height = 400;
+      act(() => vv.emit("resize"));
+
+      // 734 must come back to 400 - 8 margin = 392, so 342px down.
+      expect(scrollBy).toHaveBeenCalledTimes(1);
+      expect(scrollBy).toHaveBeenCalledWith({ top: 342 });
+    });
+
+    it("leaves the page alone when the field is already in view", () => {
+      const scrollBy = spyOnScroll();
+      const vv = fakeVisualViewport({ width: 390, height: 800 });
+      mockAnchor({ top: 100, bottom: 134 });
+      setup();
+      vv.height = 400;
+      act(() => vv.emit("resize"));
+      expect(scrollBy).not.toHaveBeenCalled();
+    });
+
+    it("scrolls at most once, however much the viewport churns", () => {
+      const scrollBy = spyOnScroll();
+      const vv = fakeVisualViewport({ width: 390, height: 800 });
+      mockAnchor({ top: 700, bottom: 734 });
+      setup();
+
+      vv.height = 400;
+      act(() => vv.emit("resize"));
+      act(() => vv.emit("scroll"));
+      act(() => vv.emit("resize"));
+      expect(scrollBy).toHaveBeenCalledTimes(1);
+    });
+
+    it("lifts a field that sits above the visible slice", () => {
+      const scrollBy = spyOnScroll();
+      const vv = fakeVisualViewport({ width: 390, height: 800, offsetTop: 200 });
+      // Above the shifted band, which starts at 200 + 8.
+      mockAnchor({ top: 120, bottom: 154 });
+      setup();
+      act(() => vv.emit("resize"));
+      // 120 must come down to 208, so scroll up by 88.
+      expect(scrollBy).toHaveBeenCalledWith({ top: -88 });
+    });
+
+    it("re-arms for a controlled field, which stays mounted between openings", () => {
+      const scrollBy = spyOnScroll();
+      const vv = fakeVisualViewport({ width: 390, height: 400 });
+      mockAnchor({ top: 700, bottom: 734 });
+      const { input } = setup({ value: "" });
+
+      fireEvent.focus(input);
+      expect(scrollBy).toHaveBeenCalledTimes(1);
+
+      fireEvent.blur(input);
+      fireEvent.focus(input);
+      act(() => vv.emit("resize"));
+      // Focusing again is a new opening; a flag that never re-arms is the very
+      // bug this block exists to pin.
+      expect(scrollBy).toHaveBeenCalledTimes(2);
+    });
   });
 });
