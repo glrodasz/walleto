@@ -9,6 +9,7 @@ import type { UserUpdate } from "../schemas";
 export interface UserDoc {
   mainCurrency: Currency;
   displayCurrency?: Currency;
+  enabledCurrencies?: Currency[];
   onboardingCompleted: boolean;
   onboardingMode?: "MAGIC" | "ASSISTED";
   theme?: ThemePreference;

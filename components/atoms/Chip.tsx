@@ -8,9 +8,13 @@ interface Props {
   /** Turns the whole chip into a toggle button. */
   onClick?: () => void;
   selected?: boolean;
+  /** A toggle whose state is fixed (a currency that can't be turned off). */
+  disabled?: boolean;
   /** Dashed outline + leading plus, for "Add category". */
   variant?: "solid" | "add";
   removeLabel?: string;
+  /** Native tooltip — say why a disabled toggle is stuck. */
+  title?: string;
 }
 
 export function Chip({
@@ -18,16 +22,18 @@ export function Chip({
   onRemove,
   onClick,
   selected = false,
+  disabled = false,
   variant = "solid",
   removeLabel,
+  title,
 }: Props) {
   const classes = [
     "glass",
-    onClick ? "glass--tap" : "",
+    onClick && !disabled ? "glass--tap" : "",
     "chip",
     `chip--${variant}`,
     selected ? "chip--selected" : "",
-    onClick ? "chip--clickable" : "",
+    onClick && !disabled ? "chip--clickable" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -35,12 +41,19 @@ export function Chip({
   return (
     <span className="wrap">
       {onClick ? (
-        <button type="button" className={classes} onClick={onClick} aria-pressed={selected}>
+        <button
+          type="button"
+          className={classes}
+          onClick={onClick}
+          disabled={disabled}
+          title={title}
+          aria-pressed={selected}
+        >
           {variant === "add" && <Plus size={14} />}
           <span className="text">{children}</span>
         </button>
       ) : (
-        <span className={classes}>
+        <span className={classes} title={title}>
           {variant === "add" && <Plus size={14} />}
           <span className="text">{children}</span>
           {onRemove && (
@@ -108,6 +121,12 @@ export function Chip({
           box-shadow:
             inset 0 1px 0 var(--glass-edge),
             0 4px 12px -8px var(--accent);
+        }
+
+        /* A toggle that can't move still reads as on — just not as tappable. */
+        .chip:disabled {
+          cursor: default;
+          opacity: 0.75;
         }
 
         .chip--clickable:focus-visible {

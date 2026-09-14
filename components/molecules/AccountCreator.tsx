@@ -3,7 +3,7 @@ import { Select } from "../atoms/Select";
 import { TextField } from "../atoms/TextField";
 import { Button } from "../atoms/Button";
 import { ACCOUNT_NOUN } from "../../helpers/accounts";
-import { SELECTABLE_CURRENCIES, CURRENCY_SYMBOL } from "../../constants";
+import { useEnabledCurrencies } from "../../hooks/useEnabledCurrencies";
 import type { Account, AccountDomain, Currency, InterestPeriod } from "../../types";
 import type { AccountInput } from "../../schemas";
 
@@ -18,11 +18,6 @@ interface Props {
   onCancel: () => void;
   onError?: (message: string) => void;
 }
-
-const CURRENCY_OPTIONS = SELECTABLE_CURRENCIES.map((c) => ({
-  value: c.value,
-  label: `${CURRENCY_SYMBOL[c.value]} ${c.label}`,
-}));
 
 const PERIOD_OPTIONS: { value: InterestPeriod; label: string }[] = [
   { value: "YEARLY", label: "Yearly" },
@@ -45,6 +40,7 @@ export function AccountCreator({
   onError,
 }: Props) {
   const noun = ACCOUNT_NOUN[domain].singular;
+  const { optionsFor } = useEnabledCurrencies();
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState("");
   const [provider, setProvider] = useState("");
@@ -101,7 +97,7 @@ export function AccountCreator({
         />
         <Select
           label="Currency"
-          options={CURRENCY_OPTIONS}
+          options={optionsFor(currency)}
           value={currency}
           onValueChange={(v) => setCurrency(v as Currency)}
         />

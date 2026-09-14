@@ -2,6 +2,24 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AccountField } from "./AccountField";
 import type { Account } from "../../types";
 
+import { CURRENCIES } from "../../constants";
+import { currencyOptions } from "../../helpers/currencies";
+
+// The creator's currency select reads the user's enabled currencies, and that
+// hook reaches firebase/client, which wants real credentials at import time.
+// This account is entered in SEK, so the mock offers the whole catalog.
+const mockCurrencies = [...CURRENCIES];
+const mockOptions = currencyOptions(mockCurrencies);
+
+jest.mock("../../hooks/useEnabledCurrencies", () => ({
+  useEnabledCurrencies: () => ({
+    currencies: mockCurrencies,
+    options: mockOptions,
+    optionsFor: () => mockOptions,
+    setEnabledCurrencies: jest.fn(),
+  }),
+}));
+
 const accounts = [
   { id: "a1", userId: "u", domain: "SAVING", name: "Emergency fund", currency: "USD" },
   { id: "a2", userId: "u", domain: "SAVING", name: "Trip", provider: "Revolut", currency: "EUR" },

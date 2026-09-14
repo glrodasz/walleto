@@ -10,13 +10,9 @@ import { paymentMethodOptionLabel } from "../../../helpers/paymentMethodLabel";
 import { sortByName } from "../../../helpers/paymentMethodOptions";
 import { BACKFILL_MONTHS } from "../../../helpers/scheduleAnchor";
 import { ScheduleFields } from "../../../components/molecules/ScheduleFields";
-import { CURRENCY_SYMBOL, FREQUENCY_LABELS, SELECTABLE_CURRENCIES } from "../../../constants";
+import { CURRENCY_SYMBOL, FREQUENCY_LABELS } from "../../../constants";
+import { useEnabledCurrencies } from "../../../hooks/useEnabledCurrencies";
 import type { Currency, Frequency } from "../../../types";
-
-const CURRENCY_OPTIONS = SELECTABLE_CURRENCIES.map((c) => ({
-  value: c.value,
-  label: `${CURRENCY_SYMBOL[c.value]} ${c.label}`,
-}));
 
 interface Props {
   state: ReturnType<typeof useRecurrentStep>;
@@ -25,6 +21,7 @@ interface Props {
 
 export function RecurrentStep({ state, showPaymentMethod = false }: Props) {
   const { rows, addTo, update, removeAt, categories, methods, backfill, setBackfill } = state;
+  const { optionsFor } = useEnabledCurrencies();
 
   const categoryOptions = categories
     .filter((c) => !c.parentId)
@@ -128,7 +125,7 @@ export function RecurrentStep({ state, showPaymentMethod = false }: Props) {
                     <div className="field field--currency">
                       <Select
                         label="Currency"
-                        options={CURRENCY_OPTIONS}
+                        options={optionsFor(row.currency)}
                         value={row.currency}
                         disabled={disabled}
                         onValueChange={(value) => update(row.key, { currency: value as Currency })}
