@@ -6,7 +6,7 @@ import { Select } from "../atoms/Select";
 import { Badge } from "../atoms/Badge";
 import { CategoryIcon } from "../atoms/CategoryIcon";
 import { Chart, Home, Search, Sliders } from "../atoms/Icons";
-import { formatNative } from "../atoms/Amount";
+import { useMoneyFormat } from "../../hooks/useMoneyFormat";
 import { KebabMenu } from "./KebabMenu";
 import { IconDisc } from "./IconDisc";
 import { ListItem, ListItems } from "./ListItem";
@@ -363,6 +363,7 @@ function TransactionListRow({
   deleting,
 }: RowProps) {
   const { formatDate } = useDateFormat();
+  const { formatNative } = useMoneyFormat();
   // "recurring · Monthly", plus the item's name when the row was renamed;
   // a stopped item no longer resolves, so the row just says "recurring".
   const origin = !t.recurrentTransactionId

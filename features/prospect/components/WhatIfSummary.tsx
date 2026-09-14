@@ -1,5 +1,6 @@
 import { Card } from "../../../components/atoms/Card";
-import { Amount, formatAmount } from "../../../components/atoms/Amount";
+import { Amount } from "../../../components/atoms/Amount";
+import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { formatList } from "../../../utils/formatList";
 import type { Currency } from "../../../types";
 import type { WhatIfImpact } from "../helpers/whatIfImpact";
@@ -12,6 +13,7 @@ interface Props {
 
 /** "Cancelling Netflix, iCloud frees ≈ $36/mo · $432/yr; your net becomes $X" — the mockup's payoff line. */
 export function WhatIfSummary({ impact, currentNet, currency }: Props) {
+  const { formatAmount } = useMoneyFormat();
   const adjustedNet = currentNet + impact.freedMonthly;
   const hasSelection = impact.excludedNames.length > 0;
 

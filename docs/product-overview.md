@@ -162,7 +162,8 @@ to prefill during onboarding), and a daily cache of exchange rates.
 Three screens are described here: the dashboard, the domain page (one page
 shared by all four domains) and settings. Every screen sits in the same shell —
 a left sidebar on desktop, a bottom tab bar on phones, and a header carrying
-the page title, a one-line subtitle, the display-currency switcher and the
+the page title, a one-line subtitle, the **privacy toggle** (the eye, which
+masks every amount), the display-currency switcher and the
 **month picker** ("September 2026", with previous/next arrows). The month is
 app-wide: the dashboard and the domain pages all speak about the same month,
 it survives navigation, and a link can carry it (`?month=2026-07`). A floating
@@ -291,6 +292,12 @@ and **Accounts & pockets** keep their lists (25 per page).
   currency is written with its ISO code.
 - Chart axis ticks compact: "$60K", "COP 4M".
 - "≈" prefixes a figure that was converted from at least one other currency.
+- **Privacy mode** (the eye in the header) writes every figure as `****`,
+  keeping its currency symbol or ISO code. Nothing else changes: bars, shares,
+  progress and orderings are still computed from the real numbers, so the
+  screen keeps its shape while the amounts are unreadable over a shoulder. It
+  is remembered per browser, not per account, and axis ticks go blank rather
+  than repeating the mask.
 - Net figures are coloured by sign; delta pills are coloured by whether the
   move is good for the domain (spending less is good, earning less is not).
 

@@ -1,9 +1,10 @@
 import { Card } from "../../../components/atoms/Card";
 import { Badge } from "../../../components/atoms/Badge";
-import { Amount, formatAmount } from "../../../components/atoms/Amount";
+import { Amount } from "../../../components/atoms/Amount";
 import { ArrowDown, ArrowUpRight, Circle, TrendingUp } from "../../../components/atoms/Icons";
 import { IconDisc } from "../../../components/molecules/IconDisc";
 import { AllocationBar } from "./AllocationBar";
+import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import type { Currency, Domain } from "../../../types";
 import type { MoneyFlow } from "../../../helpers";
 
@@ -32,6 +33,8 @@ const STATS: { key: keyof MoneyFlow; label: string; domain: Domain; Icon: typeof
  * recurring run-rate — what the plan does each month — and the card says so.
  */
 export function NetFlowCard({ flow, currency, approximate = false }: Props) {
+  const { formatAmount } = useMoneyFormat();
+
   return (
     <Card>
       <div className="hero">

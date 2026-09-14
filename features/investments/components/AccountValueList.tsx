@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { Button } from "../../../components/atoms/Button";
-import { formatAmount } from "../../../components/atoms/Amount";
+import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { ErrorState } from "../../../components/atoms/ErrorState";
 import { useAccounts } from "../../../hooks/useAccounts";
 import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
@@ -63,6 +63,7 @@ const INCEPTION = new Date(2000, 0, 1);
  */
 export function AccountValueList({ domain, categories, ctx, currency }: Props) {
   const { formatDate } = useDateFormat();
+  const { formatAmount } = useMoneyFormat();
   const { accounts, loading: accLoading, error: accError } = useAccounts(domain);
   const { transactions, loading: txLoading } = useDomainTransactions(domain, INCEPTION);
   const { valuations: rawValuations, loading, error } = useAllInvestmentValuations();

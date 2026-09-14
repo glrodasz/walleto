@@ -6,6 +6,7 @@ import type { AppProps } from "next/app";
 import { ThemeProvider } from "../hooks/useTheme";
 import { MonthProvider } from "../hooks/useSelectedMonth";
 import { PreferencesProvider } from "../hooks/PreferencesProvider";
+import { PrivacyProvider } from "../hooks/usePrivacy";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -34,14 +35,16 @@ function MyApp({ Component, pageProps }: AppProps) {
       <ThemeProvider>
         <MonthProvider>
           <PreferencesProvider>
-            <div
-              className={`${inter.className} ${inter.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable}`}
-              style={{ minHeight: "100%" }}
-            >
-              <ErrorBoundary>
-                <Component {...pageProps} />
-              </ErrorBoundary>
-            </div>
+            <PrivacyProvider>
+              <div
+                className={`${inter.className} ${inter.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable}`}
+                style={{ minHeight: "100%" }}
+              >
+                <ErrorBoundary>
+                  <Component {...pageProps} />
+                </ErrorBoundary>
+              </div>
+            </PrivacyProvider>
           </PreferencesProvider>
         </MonthProvider>
       </ThemeProvider>

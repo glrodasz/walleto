@@ -1,5 +1,5 @@
 import dynamic from "next/dynamic";
-import { formatAmount, formatCompact } from "../atoms/Amount";
+import { useMoneyFormat } from "../../hooks/useMoneyFormat";
 import type { FlowPoint } from "../../helpers/chartData";
 import type { Currency } from "../../types";
 
@@ -48,6 +48,7 @@ export function FlowChart({
   colorB = "var(--domain-expense)",
   curve = "monotone",
 }: Props) {
+  const { formatAmount, formatTick } = useMoneyFormat();
   const hasMoney = data.some((p) => p.income !== 0 || p.expense !== 0);
 
   return (
@@ -90,7 +91,7 @@ export function FlowChart({
                 tick={{ fill: "var(--fg-2)", fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(v: number) => formatCompact(v, currency)}
+                tickFormatter={(v: number) => formatTick(v, currency)}
                 width={68}
               />
               <Tooltip

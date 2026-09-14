@@ -21,7 +21,7 @@ import { createTransaction, updateTransaction } from "../../../hooks/useTransact
 import { createInvestmentValuation } from "../../../hooks/useInvestmentValuations";
 import { valueFromGain } from "../../investments/helpers/valuation";
 import { FREQ_TO_MONTHS } from "../../../helpers/aggregations";
-import { formatAmount } from "../../../components/atoms/Amount";
+import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { isAccountDomain } from "../../../helpers/accounts";
 import {
   BACKFILL_MONTHS,
@@ -102,6 +102,7 @@ export function RecurrentTransactionModal({
   onClose,
 }: Props) {
   const { formatDate } = useDateFormat();
+  const { formatAmount } = useMoneyFormat();
   const config = DOMAIN_CONFIG[domain];
   const noun = config.noun.replace(/s$/, "");
   const { userDoc } = useUserDoc();
