@@ -1,0 +1,66 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Introduction" />
+
+# Waletto UI
+
+Every piece of the interface, alone and in context, organised by
+[Atomic Design](https://atomicdesign.bradfrost.com/chapter-2/). Use the
+**Theme** toolbar to flip between the light glass palette and the dark one,
+and the viewport toolbar for the phone layout.
+
+| Tier | Folder | What lives there |
+| --- | --- | --- |
+| **Atoms** | `components/atoms/` | Buttons, fields, badges, icons, the glass `Card`, `Amount`. |
+| **Molecules** | `components/molecules/` | Rows, pickers, charts, `Modal`, `KebabMenu`, `TransactionsTable`. |
+| **Organisms** | `components/organisms/` and `features/*/components/` | The shell (`Sidebar`, `PageLayout`) and the feature panels: dashboard cards, the domain views, the wizard steps, settings sections. |
+| **Templates** | `features/*/components/*Page.tsx` | Whole screens rendered with mock data: Dashboard, the domain page, Prospect, Settings, Onboarding, the login error. |
+
+## Where a story lives
+
+Next to its component, as `Name.stories.tsx` — the same rule as the
+colocated tests. The story `title` decides the sidebar tier
+(`Atoms/Button`, `Organisms/Dashboard/NetFlowCard`, `Templates/Settings`).
+Never put a story under `pages/`: Next compiles every file there as a route.
+
+## Mock data
+
+Storybook never reaches Firestore or Auth0. `.storybook/preview.tsx`:
+
+- wraps every story in Auth0's `UserProvider` with a fixed user and in the
+  app's `PreferencesProvider`;
+- replaces every data hook in `hooks/` (and `firebase/client`) with its
+  `__mocks__/` sibling through `sb.mock()`. The mocks return one demo
+  profile from `stories/fixtures/` — categories, tags, methods, accounts, a
+  multi-currency plan and a ledger derived from it with the app's own
+  materializer.
+
+A story shows another state by overriding one hook in `beforeEach`; the
+defaults come back before the next story:
+
+```tsx
+import { mocked } from "storybook/test";
+import { useCategories } from "../../hooks/useCategories";
+import { hookDefaults, loadingState } from "../../stories/fixtures/hookDefaults";
+
+export const Loading: Story = {
+  beforeEach: () => {
+    mocked(useCategories).mockImplementation((domain) => ({
+      ...hookDefaults.useCategories(domain),
+      categories: [],
+      ...loadingState,
+    }));
+  },
+};
+```
+
+Prop-driven components take fixtures directly:
+`import { STORY_CATEGORIES, STORY_CTX } from "../../stories/fixtures"`.
+
+## Adding a hook that reads Firestore
+
+1. Put the default implementation in `stories/fixtures/hookDefaults.ts`.
+2. Add `hooks/__mocks__/<hook>.ts` exporting every name the real module
+   exports, wrapped in `fn()`.
+3. Register it in `.storybook/preview.tsx` (`sb.mock`) and in
+   `stories/fixtures/mocks.ts` (`resetStoryMocks`).

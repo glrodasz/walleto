@@ -39,3 +39,9 @@ yarn-error.log*
 
 # firebase
 firebase/serviceAccountKey.*.json
+# storybook
+/storybook-static
+*storybook.log
+# Vercel builds Storybook straight into public/storybook (see the
+# vercel-build script); it's generated output, never committed.
+/public/storybook

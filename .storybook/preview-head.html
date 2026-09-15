@@ -1,0 +1,19 @@
+<!-- The app loads these through next/font in _app.tsx; Storybook takes the
+     same families from Google Fonts and exposes the same CSS variables. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap"
+/>
+<style>
+  :root {
+    --font-sans: "Inter", system-ui, sans-serif;
+    --font-serif: "Instrument Serif", Georgia, serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  }
+  /* The theme boot script in _document.tsx does this in the app. */
+  html:not([data-theme]) {
+    color-scheme: light;
+  }
+</style>

@@ -47,6 +47,8 @@ pnpm test:watch
 pnpm lint
 pnpm tsc --noEmit # type check
 pnpm build        # production build
+pnpm storybook    # component workbench at http://localhost:6006
+pnpm build-storybook  # also hosted at /storybook on every Vercel deployment
 ```
 
 ### Seed data
