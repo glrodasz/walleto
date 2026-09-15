@@ -1,5 +1,5 @@
 import dynamic from "next/dynamic";
-import { formatAmount, formatCompact } from "../atoms/Amount";
+import { useMoneyFormat } from "../../hooks/useMoneyFormat";
 import { flatKey } from "../../features/dashboard/helpers/cashFlowSeries";
 import type { CashFlowGroup, GroupedBar } from "../../features/dashboard/helpers/cashFlowSeries";
 import type { Currency } from "../../types";
@@ -42,6 +42,7 @@ export function GroupedStackedBarsChart({
   onSelect,
   height = 260,
 }: Props) {
+  const { formatAmount, formatTick } = useMoneyFormat();
   const keys = groups.flatMap((g) => g.series.map((s) => flatKey(g.key, s.key)));
   const hasMoney = data.some((d) => keys.some((k) => Number(d[k]) !== 0));
   const labelOf = (key: string) => {
@@ -96,7 +97,7 @@ export function GroupedStackedBarsChart({
                 tick={{ fill: "var(--fg-2)", fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(v: number) => formatCompact(v, currency)}
+                tickFormatter={(v: number) => formatTick(v, currency)}
                 width={64}
               />
               <Tooltip

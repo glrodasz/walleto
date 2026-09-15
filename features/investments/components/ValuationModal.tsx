@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Modal } from "../../../components/molecules/Modal";
 import { TextField } from "../../../components/atoms/TextField";
 import { Button } from "../../../components/atoms/Button";
-import { formatAmount } from "../../../components/atoms/Amount";
+import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import {
   createInvestmentValuation,
   updateInvestmentValuation,
@@ -42,6 +42,7 @@ export function ValuationModal({
   valuation,
   onClose,
 }: Props) {
+  const { formatAmount } = useMoneyFormat();
   const [date, setDate] = useState(toDateInputValue(new Date()));
   const [gain, setGain] = useState("0");
   const [value, setValue] = useState("");

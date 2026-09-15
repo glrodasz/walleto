@@ -1,8 +1,8 @@
 import type { Category, Currency, RecurrentTransaction } from "../../../types";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
-import { formatNative } from "../../../components/atoms/Amount";
 import { DateBadge } from "../../../components/molecules/DateBadge";
+import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 
 interface Props {
   items: RecurrentTransaction[];
@@ -67,6 +67,8 @@ interface RowProps {
 }
 
 function UpcomingRow({ item, date, category, displayCurrency }: RowProps) {
+  const { formatNative } = useMoneyFormat();
+
   return (
     <li className="row">
       {date ? <DateBadge date={date} /> : <span className="no-date">—</span>}

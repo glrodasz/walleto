@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
-import { formatAmount } from "../../../components/atoms/Amount";
+import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { useAllInvestmentValuations } from "../../../hooks/useInvestmentValuations";
 import { ACCOUNT_NOUN, accountLabel } from "../../../helpers/accounts";
 import { valuationDomain } from "../helpers/valuation";
@@ -34,6 +34,7 @@ export function valuationsInWindow(
  */
 export function ValuationRows({ categories, accounts, start, end }: Props) {
   const { formatDate } = useDateFormat();
+  const { formatAmount } = useMoneyFormat();
   const { valuations } = useAllInvestmentValuations();
   const rows = useMemo(() => valuationsInWindow(valuations, start, end), [valuations, start, end]);
   if (rows.length === 0) return null;

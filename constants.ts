@@ -7,6 +7,14 @@ import type { Currency, Frequency, PaymentMethodType } from "./types";
  */
 export const CURRENCIES = ["USD", "EUR", "MXN", "GBP", "SEK", "CHF", "JPY", "COP"] as const;
 
+/**
+ * What the currency pickers offer until the user curates the list in Settings
+ * (`users.enabledCurrencies`). The catalog above stays the set of currencies
+ * the app *supports* — this is the handful shown by default, so a picker isn't
+ * eight options long for someone who only ever uses one or two.
+ */
+export const DEFAULT_ENABLED_CURRENCIES: Currency[] = ["USD", "EUR", "GBP"];
+
 /** Currencies conventionally written without decimal places. */
 export const ZERO_DECIMAL_CURRENCIES: Set<Currency> = new Set(["JPY", "COP"]);
 
@@ -21,7 +29,6 @@ export const CURRENCY_SYMBOL: Record<Currency, string> = {
   COP: "$",
 };
 
-/** Currencies offered during onboarding, in display order. */
 /** One colour per currency for stacked "by currency" charts — stable across pages. */
 export const CURRENCY_COLORS: Record<Currency, string> = {
   USD: "var(--palette-1)",
@@ -34,6 +41,12 @@ export const CURRENCY_COLORS: Record<Currency, string> = {
   JPY: "var(--palette-8)",
 };
 
+/**
+ * The whole catalog as select options. Only the onboarding main-currency
+ * picker uses it: the enabled list doesn't exist yet there, and a new user
+ * must be able to pick the currency they actually earn in. Everywhere else
+ * goes through `useEnabledCurrencies()`.
+ */
 export const SELECTABLE_CURRENCIES: { value: Currency; label: string }[] = CURRENCIES.map((c) => ({
   value: c,
   label: c,

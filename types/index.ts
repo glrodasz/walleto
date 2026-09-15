@@ -43,6 +43,8 @@ export interface User {
   mainCurrency: Currency;
   /** Reporting currency override for dashboards; falls back to mainCurrency. */
   displayCurrency?: Currency;
+  /** Which currencies the pickers offer; unset = DEFAULT_ENABLED_CURRENCIES. */
+  enabledCurrencies?: Currency[];
   onboardingCompleted: boolean;
   onboardingMode?: "MAGIC" | "ASSISTED";
   theme?: ThemePreference;

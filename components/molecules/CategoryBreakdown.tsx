@@ -1,6 +1,6 @@
 import { Card } from "../atoms/Card";
 import { SectionTitle } from "../atoms/SectionTitle";
-import { formatAmount } from "../atoms/Amount";
+import { useMoneyFormat } from "../../hooks/useMoneyFormat";
 import { CategoryIcon } from "../atoms/CategoryIcon";
 import { MoreHorizontal } from "../atoms/Icons";
 import { IconDisc } from "./IconDisc";
@@ -98,6 +98,8 @@ interface RowProps {
 }
 
 function CategoryBreakdownRow({ row, category, domain, currency, color }: RowProps) {
+  const { formatAmount } = useMoneyFormat();
+
   return (
     <li className="row">
       <IconDisc color={color} size={36}>

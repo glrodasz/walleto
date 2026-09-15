@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useOverlayLayer } from "../../hooks/useOverlayLayer";
 
 export interface KebabAction {
   label: string;
@@ -34,6 +35,9 @@ export function KebabMenu({ actions, "aria-label": ariaLabel = "More options" }:
   // Null until measured; the menu renders hidden for that one frame so it never
   // flashes at the wrong place.
   const [pos, setPos] = useState<React.CSSProperties | null>(null);
+  // Portaled onto the body like the Combobox list, and ranked the same way:
+  // a menu owned by a modal has to clear that modal's scrim.
+  const { depth, menuZIndex } = useOverlayLayer();
 
   useEffect(() => {
     if (!open) {
@@ -100,7 +104,10 @@ export function KebabMenu({ actions, "aria-label": ariaLabel = "More options" }:
             ref={menuRef}
             className="glass glass--strong glass--raised menu"
             role="menu"
-            style={pos ?? { top: 0, right: 0, visibility: "hidden" }}
+            style={{
+              ...(pos ?? { top: 0, right: 0, visibility: "hidden" }),
+              ...(depth > 0 ? { zIndex: menuZIndex } : null),
+            }}
           >
             {actions.map((action) => (
               <button
@@ -151,7 +158,9 @@ export function KebabMenu({ actions, "aria-label": ariaLabel = "More options" }:
 
         /* Fixed, because it is mounted on the body: the position comes from the
            trigger's rect. Above the nav and the FAB, below a modal — which it
-           can finally honour, now that nothing traps it. */
+           can finally honour, now that nothing traps it. A menu opened from
+           inside a modal is lifted above that modal's scrim inline instead
+           (see useOverlayLayer). */
         .menu {
           position: fixed;
           z-index: var(--z-menu, 150);

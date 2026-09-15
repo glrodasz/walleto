@@ -120,7 +120,11 @@
   --z-nav: 100;
   --z-fab: 110;
   /* Dropdowns sit on the body (a glass card would trap them), above the chrome
-     and below a modal. */
+     and below a modal. These two are the *page* layer: a dropdown owned by a
+     modal has to clear that modal's own scrim, so the pair steps once per
+     overlay layer (150/200, then 250/300, ...) and the menu takes its z-index
+     inline. hooks/useOverlayLayer.tsx duplicates these numbers; keep them in
+     step. */
   --z-menu: 150;
   --z-overlay: 200;
 }

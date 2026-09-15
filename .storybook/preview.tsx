@@ -3,6 +3,7 @@ import type { Preview } from "@storybook/nextjs";
 import { UserProvider } from "@auth0/nextjs-auth0/client";
 import { sb } from "storybook/test";
 import { PreferencesProvider } from "../hooks/PreferencesProvider";
+import { PrivacyProvider } from "../hooks/usePrivacy";
 import { STORY_USER } from "../stories/fixtures/user";
 import { resetStoryMocks } from "../stories/fixtures/mocks";
 import "../styles/globals.css";
@@ -83,10 +84,12 @@ const preview: Preview = {
       // the current month on its own and the theme comes from the toolbar.
       <UserProvider user={STORY_USER}>
         <PreferencesProvider>
-          <ThemeSync theme={(globals.theme as Theme) ?? "light"} />
-          <div style={{ minHeight: "100%", fontFamily: "var(--font-sans)" }}>
-            <Story />
-          </div>
+          <PrivacyProvider>
+            <ThemeSync theme={(globals.theme as Theme) ?? "light"} />
+            <div style={{ minHeight: "100%", fontFamily: "var(--font-sans)" }}>
+              <Story />
+            </div>
+          </PrivacyProvider>
         </PreferencesProvider>
       </UserProvider>
     ),

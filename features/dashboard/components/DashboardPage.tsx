@@ -4,7 +4,6 @@ import { PageLayout } from "../../../components/organisms/PageLayout";
 import { StatCard } from "../../../components/molecules/StatCard";
 import type { StatRow } from "../../../components/molecules/StatCard";
 import { CategoryBreakdown } from "../../../components/molecules/CategoryBreakdown";
-import { formatAmount } from "../../../components/atoms/Amount";
 import Skeleton from "../../../components/Skeleton";
 import { ErrorState } from "../../../components/atoms/ErrorState";
 import { NetFlowCard } from "./NetFlowCard";
@@ -19,6 +18,7 @@ import { useUserDoc } from "../../../hooks/useUserDoc";
 import { useMaterialize } from "../../../hooks/useMaterialize";
 import { useSelectedMonth } from "../../../hooks/useSelectedMonth";
 import { useLocalPreference } from "../../../hooks/useLocalPreference";
+import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { greeting } from "../../../helpers/greeting";
 import type { Currency, Domain } from "../../../types";
 
@@ -29,8 +29,16 @@ interface CategoryAmount {
   percent: number;
 }
 
-/** Income shows amounts; the other cards show each category's share. */
-function cardRows(list: CategoryAmount[], domain: Domain, currency: Currency): StatRow[] {
+/**
+ * Income shows amounts; the other cards show each category's share. The
+ * formatter comes from the caller because it is bound to privacy mode.
+ */
+function cardRows(
+  list: CategoryAmount[],
+  domain: Domain,
+  currency: Currency,
+  formatAmount: (value: number, currency: Currency) => string
+): StatRow[] {
   return list.slice(0, 2).map((c) => ({
     name: c.name,
     value: domain === "INCOME" ? formatAmount(c.amount, currency) : `${c.percent.toFixed(0)}%`,
@@ -42,6 +50,7 @@ export function DashboardPage() {
   const router = useRouter();
   const { userDoc } = useUserDoc();
   const { select } = useSelectedMonth();
+  const { formatAmount } = useMoneyFormat();
   useMaterialize();
   const [period, setPeriod] = useLocalPreference<CashFlowPeriod>("waletto:dashboard:period", 6);
   const [groupBy, setGroupBy] = useLocalPreference<CashFlowGroupBy>(
@@ -146,7 +155,7 @@ export function DashboardPage() {
                 amount={c.amount}
                 currency={currency}
                 domain={c.domain}
-                rows={cardRows(c.list, c.domain, currency)}
+                rows={cardRows(c.list, c.domain, currency, formatAmount)}
                 categoryCount={c.list.length}
                 byCurrency={c.mix}
                 actions={[{ label: `Open ${c.title}`, onSelect: () => router.push(c.href) }]}

@@ -4,7 +4,7 @@ import { IconDisc } from "../../../components/molecules/IconDisc";
 import { useMemo } from "react";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
-import { formatAmount } from "../../../components/atoms/Amount";
+import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { Badge } from "../../../components/atoms/Badge";
 import { ArrowRight, Chart } from "../../../components/atoms/Icons";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
@@ -97,6 +97,7 @@ export function CategoryMonthList({
   onSelect,
   onToggleHidden,
 }: Props) {
+  const { formatAmount } = useMoneyFormat();
   const config = DOMAIN_CONFIG[domain];
   const rows = useMemo(
     () => categoryMonthRows(categories, transactions, items, ctx, window, now),

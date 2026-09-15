@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
-import { Amount, formatAmount } from "../../../components/atoms/Amount";
+import { Amount } from "../../../components/atoms/Amount";
+import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { Button } from "../../../components/atoms/Button";
 import { FlowChart } from "../../../components/molecules/FlowChart";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
@@ -55,6 +56,7 @@ export function InvestmentValuePanel({
   accent = "var(--domain-investment)",
 }: Props) {
   const { formatDate } = useDateFormat();
+  const { formatAmount } = useMoneyFormat();
   const valuations = useMemo(
     () =>
       allValuations
