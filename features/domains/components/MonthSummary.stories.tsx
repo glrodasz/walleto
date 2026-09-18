@@ -41,3 +41,26 @@ export const NoPreviousMonth: Story = {
   args: { delta: { ...expenses.delta, deltaPct: null, previousKey: null }, previousLabel: null },
 };
 export const PlanMet: Story = { args: { expected: expenses.delta.current } };
+
+/** Investments fold the month's reported gain into the figure, and say so. */
+export const Investments: Story = {
+  args: {
+    domain: "INVESTMENT",
+    realized: 8_100,
+    expected: 8_100,
+    delta: { current: 8_100, previous: 5_200, deltaPct: 55.8, previousKey: previous.key },
+    contributed: 5_000,
+    gain: 3_100,
+  },
+};
+
+/** A month the market took back: the figure falls below what was paid in. */
+export const InvestmentsLoss: Story = {
+  args: {
+    ...Investments.args,
+    realized: 3_800,
+    expected: 3_800,
+    delta: { current: 3_800, previous: 5_200, deltaPct: -26.9, previousKey: previous.key },
+    gain: -1_200,
+  },
+};

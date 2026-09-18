@@ -68,4 +68,18 @@ describe("MonthlyBarsChart", () => {
     );
     expect(screen.queryByText("Still planned")).toBeNull();
   });
+
+  it("treats a negative segment as money: it is listed, and not an empty month", () => {
+    render(
+      <MonthlyBarsChart
+        data={[{ key: "2026-09", label: "Sep", spent: 0, gain: -120 }]}
+        series={[...series, { key: "gain", label: "Gain", color: "violet" }]}
+        currency="USD"
+        loading={false}
+        stacked
+      />
+    );
+    expect(screen.queryByText("No transactions in this period")).toBeNull();
+    expect(screen.getByRole("listitem")).toHaveTextContent("Sep: Spent $0.00, Gain -$120.00");
+  });
 });

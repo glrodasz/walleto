@@ -36,6 +36,10 @@
   --accent-cyan: #0891b2;
   --glow: rgba(37, 99, 235, 0.1);
 
+  /* The market-gain segment on the monthly bars. Deliberately clear of the
+     four domain ramps: a gain belongs to no domain colour. */
+  --bar-gain: #7c3aed;
+
   /*
    * Liquid glass. A glass surface is five things at once: a translucent
    * fill, a blurred and saturated view of what is behind it, a bright
@@ -150,6 +154,8 @@
   --accent-amber: #ffb84d;
   --accent-cyan: #5ee8ff;
   --glow: rgba(124, 255, 178, 0.12);
+
+  --bar-gain: #c58cff;
 
   /* Dark glass is smoked, not frosted: a darker fill, a rim that reads as a
      thin catch of light rather than a white line. */

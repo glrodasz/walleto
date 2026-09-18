@@ -43,11 +43,14 @@ export async function removeInvestmentValuation(id: string): Promise<void> {
 /**
  * Every valuation of the user, all accounts and both buckets — a handful a
  * year, so one listener serves the Value view, its panels, the record modal
- * and the month ledger, and selectors match in memory (which is also the
- * only way to catch pre-account valuations, which carry no `domain`).
+ * and the domain pages' gains, and selectors match in memory (which is also
+ * the only way to catch pre-account valuations, which carry no `domain`).
  * Equality filter only, newest first.
+ *
+ * `enabled` is how the two domains without accounts opt out: /incomes and
+ * /expenses render the same page and must open no listener here.
  */
-export function useAllInvestmentValuations() {
+export function useAllInvestmentValuations(enabled = true) {
   const { user } = useUser();
   const { ready } = useFirebaseAuth();
   const [valuations, setValuations] = useState<InvestmentValuation[]>([]);
@@ -55,6 +58,10 @@ export function useAllInvestmentValuations() {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
     if (!ready || !user?.sub) return;
     const q = query(collection(db, "investmentValuations"), where("userId", "==", user.sub));
     return onSnapshot(
@@ -72,7 +79,7 @@ export function useAllInvestmentValuations() {
         setLoading(false);
       }
     );
-  }, [ready, user?.sub]);
+  }, [enabled, ready, user?.sub]);
 
   return { valuations, loading, error };
 }

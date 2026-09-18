@@ -23,7 +23,8 @@ import { RecurrentTransactionModal } from "./RecurrentTransactionModal";
 import { SubscriptionInsights } from "../../insights/components/SubscriptionInsights";
 import { AccountValuePanels } from "../../investments/components/AccountValuePanels";
 import { AccountValueList } from "../../investments/components/AccountValueList";
-import { ValuationRows } from "../../investments/components/ValuationRows";
+import { useDomainGains } from "../../investments/hooks/useDomainGains";
+import { withGains } from "../helpers/gainStack";
 import { isAccountDomain } from "../../../helpers/accounts";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import {
@@ -32,6 +33,7 @@ import {
   groupByTag,
   monthDelta,
   monthTotals,
+  monthKey,
   monthTotalsByCurrency,
   monthWindows,
   trailingAverage,
@@ -41,7 +43,6 @@ import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
 import { useCategories } from "../../../hooks/useCategories";
 import { useRecurrentTransactions, markItemPaid } from "../../../hooks/useRecurrentTransactions";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
-import { useAccounts } from "../../../hooks/useAccounts";
 import { useTags } from "../../../hooks/useTags";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
 import { useSelectedMonth } from "../../../hooks/useSelectedMonth";
@@ -73,7 +74,6 @@ export function DomainPage({ domain }: Props) {
   const currency: Currency = target;
   // Investments and savings sit in accounts / pockets, which carry value.
   const accountDomain = isAccountDomain(domain) ? domain : null;
-  const { accounts } = useAccounts(accountDomain);
 
   // One clock for the whole app: the windows, "still planned" and the
   // checklist all agree on what "now" is.
@@ -164,9 +164,21 @@ export function DomainPage({ domain }: Props) {
     [showHidden, planItems, hiddenCategories]
   );
 
-  const totals = useMemo(
+  // A value check is not money moving, but the gain it reports is money the
+  // account really holds — so it counts toward the month, on top of what was
+  // paid in. Contributions and gain are kept apart so the summary can say
+  // which is which.
+  const { gains, rows: gainRows } = useDomainGains(accountDomain, categories, ctx, windows);
+  const txTotals = useMemo(
     () => monthTotals(chartTransactions, ctx, windows),
     [chartTransactions, ctx, windows]
+  );
+  const totals = useMemo(
+    () =>
+      Object.fromEntries(
+        windows.map((w) => [w.key, (txTotals[w.key] ?? 0) + (gains[w.key] ?? 0)])
+      ) as Record<string, number>,
+    [windows, txTotals, gains]
   );
   const inWindow = (t: Transaction) => {
     const d = toDate(t.occurredAt);
@@ -183,6 +195,8 @@ export function DomainPage({ domain }: Props) {
     [planRows, window]
   );
   const realized = totals[window.key] ?? 0;
+  const contributed = txTotals[window.key] ?? 0;
+  const monthGain = gains[window.key] ?? 0;
   const expected = useMemo(
     () => expectedForMonth(window, realized, chartItems, ctx, now),
     [window, realized, chartItems, ctx, now]
@@ -192,40 +206,57 @@ export function DomainPage({ domain }: Props) {
     () => monthDelta(totals, windows, window.key),
     [totals, windows, window.key]
   );
+  // "≈" has to cover the value checks too: one recorded in another currency
+  // was converted into the figure just like a transaction.
   const hasForeign = useMemo(
-    () => monthTransactions.some((t) => t.currency !== currency),
-    [monthTransactions, currency]
+    () =>
+      monthTransactions.some((t) => t.currency !== currency) ||
+      gainRows.some((r) => monthKey(r.at) === window.key && r.currency !== currency),
+    [monthTransactions, currency, gainRows, window.key]
   );
 
-  // One bar per month, stacked by the top categories or by currency.
+  // One bar per month, stacked by the top categories or by currency, capped
+  // with the month's gain — which belongs to neither split, so it rides on top
+  // of both.
   const stacks = useMemo(() => {
-    if (mode === "currency") {
-      const byCurrency = monthTotalsByCurrency(chartTransactions, ctx, windows);
-      return {
-        totals: byCurrency.totals as Record<string, Record<string, number>>,
-        series: byCurrency.currencies.map((c) => ({ key: c, label: c, color: CURRENCY_COLORS[c] })),
-      };
-    }
-    return monthTotalsByCategory(chartTransactions, categories, ctx, windows, { domain, top: 5 });
-  }, [mode, chartTransactions, categories, ctx, windows, domain]);
-  const series: BarSeries[] =
-    stacks.series.length > 0
-      ? stacks.series
-      : [{ key: "amount", label: config.spentLabel, color: config.accent }];
+    const base =
+      mode === "currency"
+        ? (() => {
+            const byCurrency = monthTotalsByCurrency(chartTransactions, ctx, windows);
+            return {
+              totals: byCurrency.totals as Record<string, Record<string, number>>,
+              series: byCurrency.currencies.map((c) => ({
+                key: c,
+                label: c,
+                color: CURRENCY_COLORS[c],
+              })),
+            };
+          })()
+        : monthTotalsByCategory(chartTransactions, categories, ctx, windows, { domain, top: 5 });
+    // Nothing to split by (no transactions at all) still needs one series, so
+    // a month that is pure gain has something to stack on.
+    const withFallback =
+      base.series.length > 0
+        ? base
+        : {
+            series: [{ key: "amount", label: config.spentLabel, color: config.accent }],
+            totals: Object.fromEntries(
+              windows.map((w) => [w.key, { amount: txTotals[w.key] ?? 0 }])
+            ),
+          };
+    return withGains(withFallback, gains);
+  }, [mode, chartTransactions, categories, ctx, windows, domain, config, txTotals, gains]);
+  const series: BarSeries[] = stacks.series;
   const bars: MonthBar[] = useMemo(
     () =>
       windows.map((w) => ({
         key: w.key,
         label: w.label,
         isCurrent: w.isCurrent,
-        ...(stacks.series.length > 0
-          ? Object.fromEntries(
-              stacks.series.map((s) => [s.key, stacks.totals[w.key]?.[s.key] ?? 0])
-            )
-          : { amount: totals[w.key] ?? 0 }),
+        ...Object.fromEntries(series.map((s) => [s.key, stacks.totals[w.key]?.[s.key] ?? 0])),
         ...(w.isCurrent && expected > realized ? { planned: expected - realized } : {}),
       })),
-    [windows, stacks, totals, expected, realized]
+    [windows, series, stacks, expected, realized]
   );
 
   // The selected month by category, for the side card and the Categories view.
@@ -357,36 +388,26 @@ export function DomainPage({ domain }: Props) {
         />
       )
     ) : view === "transactions" ? (
-      <>
-        <TransactionsTable
-          title="Transactions"
-          subtitle={`All ${config.noun.replace(/s$/, "")} transactions in ${window.longLabel}.`}
-          rows={monthTransactions}
-          domain={domain}
-          categories={categories}
-          methods={methods}
-          tags={tags}
-          items={items}
-          displayCurrency={currency}
-          ctx={ctx}
-          loading={txLoading}
-          onEdit={setEditingTx}
-          hiddenReason={hiddenReason}
-          onDelete={deleteTx}
-          deletingId={deletingTxId}
-          showMethod={config.showPaymentMethod}
-          initialFilters={preset}
-          resetKey={window.key}
-        />
-        {accountDomain && (
-          <ValuationRows
-            categories={categories}
-            accounts={accounts}
-            start={window.start}
-            end={window.end}
-          />
-        )}
-      </>
+      <TransactionsTable
+        title="Transactions"
+        subtitle={`All ${config.noun.replace(/s$/, "")} transactions in ${window.longLabel}.`}
+        rows={monthTransactions}
+        domain={domain}
+        categories={categories}
+        methods={methods}
+        tags={tags}
+        items={items}
+        displayCurrency={currency}
+        ctx={ctx}
+        loading={txLoading}
+        onEdit={setEditingTx}
+        hiddenReason={hiddenReason}
+        onDelete={deleteTx}
+        deletingId={deletingTxId}
+        showMethod={config.showPaymentMethod}
+        initialFilters={preset}
+        resetKey={window.key}
+      />
     ) : view === "tags" ? (
       <Card>
         <SectionTitle
@@ -463,13 +484,15 @@ export function DomainPage({ domain }: Props) {
         previousLabel={previousWindow?.longLabel ?? null}
         currency={currency}
         approximate={hasForeign}
+        contributed={accountDomain ? contributed : undefined}
+        gain={accountDomain ? monthGain : undefined}
       />
 
       <div className="charts">
         <Card>
           <SectionTitle
             title={`Monthly ${config.noun}`}
-            subtitle={`Actual ${config.noun}, split by ${mode === "category" ? "category" : "currency"}.`}
+            subtitle={`${accountDomain ? `Actual ${config.noun} and reported gain` : `Actual ${config.noun}`}, split by ${mode === "category" ? "category" : "currency"}.`}
           >
             <ChartControls period={period} onPeriod={setPeriod} mode={mode} onMode={setMode} />
           </SectionTitle>

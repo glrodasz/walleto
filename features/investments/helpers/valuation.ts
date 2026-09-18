@@ -48,6 +48,18 @@ export function valuationDomain(
   return viaCategory === "SAVING" ? "SAVING" : "INVESTMENT";
 }
 
+/**
+ * The selector a valuation hangs from: its account, or its domain's "No
+ * account" bucket. Resolves the domain through `categories` for the rows
+ * written before accounts existed.
+ */
+export function valuationSelector(
+  v: Pick<InvestmentValuation, "accountId" | "domain" | "categoryId">,
+  categories: Pick<Category, "id" | "domain">[] = []
+): ValueSelector {
+  return v.accountId ? { accountId: v.accountId } : { domain: valuationDomain(v, categories) };
+}
+
 /** Every valuation with its domain filled in, so selectors can match it. */
 export function withDomain(
   valuations: InvestmentValuation[],
