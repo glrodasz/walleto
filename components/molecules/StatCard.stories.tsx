@@ -74,6 +74,24 @@ export const Minimal: Story = {
   },
 };
 
+/**
+ * Investments and savings carry a second figure: the run-rate above is a plan,
+ * the caption below is what the accounts actually hold.
+ */
+export const WithSecondary: Story = {
+  args: {
+    title: "Investments",
+    domain: "INVESTMENT",
+    href: "/investments",
+    amount: 621.7,
+    secondary: (
+      <span style={{ fontSize: "0.72rem", color: "var(--fg-2)" }}>
+        Worth $312,400.00 · checked Sep 12
+      </span>
+    ),
+  },
+};
+
 /** The dashboard's four-up row. */
 export const Row: Story = {
   decorators: [boxed(1200)],

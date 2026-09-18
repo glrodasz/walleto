@@ -140,6 +140,16 @@ checks, an account with a quoted interest rate is _estimated_ by compounding
 each deposit monthly; a recorded check overrides the estimate from its date
 forward.
 
+A check also **counts**. The gain it reports since the previous check of the
+same account is booked as that month's market gain on the Investments and
+Savings pages, so "total invested" there means contributions **plus** gain.
+Because each check snapshots the cost basis, the chain reconciles exactly:
+what went in, plus every gain since, is what the last check said the position
+was worth. Two consequences are deliberate: the first check on a position
+whose contributions were never logged books its whole value as one month's
+gain, and a page's bars only ever move on a _stated_ value — an interest
+estimate is not something that happened, so it never becomes a bar.
+
 ### Service catalogue and exchange rates
 
 A shared catalogue of known subscription services with per-country prices (used
@@ -198,7 +208,9 @@ Down the page:
 3. **Four domain cards**, tinted in their colour, each with an icon, the name
    (linking to the domain page), the monthly figure, two top categories (amounts
    for income, shares for the rest), the per-currency mix when currencies are
-   mixed, and "N categories" with a menu.
+   mixed, and "N categories" with a menu. Investments and savings add a quiet
+   second line — "Worth SEK 312,400.00 · checked Sep 12" — what those accounts
+   hold today; the headline figure above it is still the recurring run-rate.
 4. **Monthly cash flow**: per month, four bars side by side (one per domain),
    each stacked by its top five categories plus "Other" — or by currency, or
    plain — over the last 3, 6 or 12 months. Built from real transactions. A
@@ -224,14 +236,19 @@ Down the page:
 pill against the previous month ("↑ 12%", coloured by whether a rise is good
 for the domain) and "Compared to SEK 16,402.18 in August 2026"; **Planned** —
 the expected total, a progress bar, the percentage reached and "SEK 5,361.45
-left" (or "Month total" for a finished month).
+left" (or "Month total" for a finished month). On investments and savings, a
+month that carries a value check says what its figure is made of underneath:
+"SEK 5,000.00 contributed · SEK 3,100.00 gain" (or "loss").
 
 **Chart card** ("Monthly expenses · Actual expenses, split by category"): one
 bar per month over the last 7 or 12 months, stacked by the **top five
 categories + Other** in shades of the domain colour, or by **currency** (a
 toggle). The dashed line is the six-month average; the current month carries a
 hatched "still planned" segment; the selected month is highlighted and clicking
-a bar selects it. A "Show hidden" checkbox appears when something is hidden.
+a bar selects it. A "Show hidden" checkbox appears when something is hidden. On
+investments and savings a **Gain** segment caps the stack in both splits — a
+market gain belongs to no category and no currency — and a month that lost
+ground is drawn below the axis rather than clamped.
 Next to it, **Top categories** for the selected month (icon, name, amount, bar,
 share; "View all" opens the Categories view).
 

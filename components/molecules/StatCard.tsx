@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 import type { Currency, Domain } from "../../types";
 import { Card } from "../atoms/Card";
 import { Amount } from "../atoms/Amount";
@@ -22,6 +22,8 @@ interface Props {
   domain: Domain;
   /** The domain page; the whole header links there. */
   href: string;
+  /** A second, quieter figure under the headline one (what accounts are worth). */
+  secondary?: ReactNode;
   /** Up to two lines under the figure ("Salary · $57,000"). */
   rows?: StatRow[];
   categoryCount?: number;
@@ -44,6 +46,7 @@ export function StatCard({
   currency,
   domain,
   href,
+  secondary,
   rows = [],
   categoryCount,
   byCurrency,
@@ -65,6 +68,8 @@ export function StatCard({
       </div>
 
       <Amount value={amount} currency={currency} size="lg" />
+
+      {secondary}
 
       {rows.length > 0 && (
         <ul className="rows">

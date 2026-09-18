@@ -1,34 +1,17 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { Button } from "../../../components/atoms/Button";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { ErrorState } from "../../../components/atoms/ErrorState";
-import { useAccounts } from "../../../hooks/useAccounts";
-import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
-import { useAllInvestmentValuations } from "../../../hooks/useInvestmentValuations";
 import { ACCOUNT_NOUN, formatInterestRate } from "../../../helpers/accounts";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
-import {
-  costBasisAt,
-  currentValue,
-  gainFromValue,
-  latestValuationAt,
-  matchesSelector,
-  selectorKey,
-  withDomain,
-} from "../helpers/valuation";
-import type { ValueSelector } from "../helpers/valuation";
+import { useDomainValue } from "../hooks/useDomainValue";
+import type { AccountValueRow } from "../helpers/domainValue";
 import { InvestmentValuePanel } from "./InvestmentValuePanel";
 import { ValuationModal } from "./ValuationModal";
-import type {
-  AccountDomain,
-  Category,
-  Currency,
-  InterestRate,
-  InvestmentValuation,
-} from "../../../types";
+import type { AccountDomain, Category, Currency } from "../../../types";
 import { useDateFormat } from "../../../hooks/usePreferences";
 
 interface Props {
@@ -38,90 +21,36 @@ interface Props {
   currency: Currency;
 }
 
-interface Row {
-  key: string;
-  selector: ValueSelector;
-  name: string;
-  sub?: string;
-  rate?: InterestRate;
-  invested: number;
-  value: number;
-  latest: InvestmentValuation | null;
-  gainPct: number | null;
-}
-
-/** Cost basis needs the domain's whole history, not the page's month. */
-const INCEPTION = new Date(2000, 0, 1);
-
 /**
  * Every account / pocket of the domain at a glance — what went in, what it
  * is worth, the gain — plus one "No account" row for whatever is filed under
  * none (including valuations from before accounts existed). Tapping a row
  * opens its full panel underneath; "Record value" goes straight to the value
  * form. Mounted only on the Value view, so its inception-to-date listener
- * runs nowhere else.
+ * runs nowhere else on this page.
  */
 export function AccountValueList({ domain, categories, ctx, currency }: Props) {
   const { formatDate } = useDateFormat();
   const { formatAmount } = useMoneyFormat();
-  const { accounts, loading: accLoading, error: accError } = useAccounts(domain);
-  const { transactions, loading: txLoading } = useDomainTransactions(domain, INCEPTION);
-  const { valuations: rawValuations, loading, error } = useAllInvestmentValuations();
-  const valuations = useMemo(
-    () => withDomain(rawValuations, categories),
-    [rawValuations, categories]
-  );
+  const {
+    rows,
+    transactions,
+    valuations,
+    loading: busy,
+    error,
+  } = useDomainValue(domain, categories, ctx);
   const [selected, setSelected] = useState<string | null>(null);
-  const [recording, setRecording] = useState<Row | null>(null);
-  const now = useMemo(() => new Date(), []);
+  const [recording, setRecording] = useState<AccountValueRow | null>(null);
   const noun = ACCOUNT_NOUN[domain].singular;
   const accent = DOMAIN_CONFIG[domain].accent;
 
-  const rows = useMemo<Row[]>(() => {
-    const build = (
-      selector: ValueSelector,
-      name: string,
-      sub: string | undefined,
-      rate: InterestRate | undefined
-    ): Row => {
-      const invested = costBasisAt(transactions, selector, now, ctx);
-      const value = currentValue(transactions, valuations, selector, rate, now, ctx);
-      const latest = latestValuationAt(
-        valuations.filter((v) => matchesSelector(v, selector)),
-        now
-      );
-      return {
-        key: selectorKey(selector),
-        selector,
-        name,
-        sub,
-        rate,
-        invested,
-        value,
-        latest,
-        gainPct: gainFromValue(invested, value),
-      };
-    };
-
-    const byAccount = accounts
-      .filter((a) => a.id)
-      .map((a) => build({ accountId: a.id! }, a.name, a.provider, a.interestRate));
-
-    // Whatever was filed under no account — one bucket, only when it holds something.
-    const bucket = build({ domain }, `No ${noun}`, undefined, undefined);
-    const unassigned = bucket.invested > 0 || bucket.latest ? [bucket] : [];
-
-    return [...byAccount, ...unassigned].sort((a, b) => b.value - a.value);
-  }, [accounts, domain, transactions, valuations, now, ctx, noun]);
-
   const open = rows.find((r) => r.key === selected) ?? null;
-  const busy = accLoading || txLoading || loading;
 
   return (
     <>
       <Card accentColor={accent}>
         <SectionTitle title="Value" />
-        {(error || accError) && <ErrorState error={(error ?? accError)!} />}
+        {error && <ErrorState error={error} />}
 
         {busy ? (
           <p className="empty">Loading…</p>
@@ -180,7 +109,7 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
           rate={open.rate}
           transactions={transactions}
           valuations={valuations}
-          loading={txLoading || loading}
+          loading={busy}
           ctx={ctx}
           currency={currency}
           accent={accent}
