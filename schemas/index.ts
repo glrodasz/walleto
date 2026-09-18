@@ -256,6 +256,8 @@ export const InvestmentValuationInputSchema = z
     accountId: z.string().min(1).optional(),
     /** Required without an account: which bucket. Ignored with one (the account's domain wins). */
     domain: AccountDomainSchema.optional(),
+    /** Which category the gain this check reports belongs to. */
+    categoryId: z.string().min(1).optional(),
     asOf: z.iso.datetime(),
     gainPct: z.number().finite(),
     value: z.number().min(0),
@@ -270,6 +272,8 @@ export const InvestmentValuationInputSchema = z
 
 export const InvestmentValuationUpdateSchema = z
   .object({
+    /** null clears it, leaving the gain unfiled. */
+    categoryId: z.string().min(1).nullable().optional(),
     asOf: z.iso.datetime().optional(),
     gainPct: z.number().finite().optional(),
     value: z.number().min(0).optional(),

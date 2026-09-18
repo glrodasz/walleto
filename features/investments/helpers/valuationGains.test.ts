@@ -1,4 +1,11 @@
-import { monthGains, valuationGainRows } from "./valuationGains";
+import {
+  gainRowsAsTransactions,
+  gainsByCategory,
+  monthGains,
+  unfiledGain,
+  valuationGainRows,
+} from "./valuationGains";
+import { isSyntheticRow } from "../../domains/helpers/spread";
 import { costBasisAt, currentValue } from "./valuation";
 import { IDENTITY_RATES } from "../../../helpers/fx";
 import type { ExchangeRates } from "../../../helpers/fx";
@@ -46,6 +53,15 @@ const tx = (amount: number, date: Date, overrides: Partial<Transaction> = {}): T
   occurredAt: ts(date),
   status: "PAID",
   ...overrides,
+});
+
+const category = (id: string, domain: Category["domain"], parentId?: string): Category => ({
+  id,
+  userId: "u1",
+  domain,
+  name: id,
+  ...(parentId ? { parentId } : {}),
+  createdAt: ts(new Date(2025, 0, 1)),
 });
 
 const JAN = new Date(2026, 0, 15);
@@ -141,10 +157,7 @@ describe("valuationGainRows", () => {
   });
 
   it("files a pre-accounts check under the domain its category names", () => {
-    const categories = [
-      { id: "pocket", domain: "SAVING" },
-      { id: "funds", domain: "INVESTMENT" },
-    ] as Pick<Category, "id" | "domain">[];
+    const categories = [category("pocket", "SAVING"), category("funds", "INVESTMENT")];
     const legacy = [
       check(1100, 1000, JAN, { domain: undefined, accountId: undefined, categoryId: "pocket" }),
       check(2200, 2000, JAN, { domain: undefined, accountId: undefined, categoryId: "funds" }),
@@ -192,5 +205,88 @@ describe("monthGains", () => {
       WINDOWS
     );
     expect(gains["2026-02"]).toBe(150);
+  });
+});
+
+describe("filing a gain under a category", () => {
+  const funds = category("funds", "INVESTMENT");
+  const bonds = category("bonds", "INVESTMENT");
+  const etfs = category("etfs", "INVESTMENT", "funds");
+  const cats = [funds, bonds, etfs];
+
+  it("carries the category the owner picked, folded to its root", () => {
+    const rows = valuationGainRows(
+      [
+        check(1100, 1000, FEB, { categoryId: "etfs" }),
+        check(600, 500, FEB, { accountId: "acc-2", categoryId: "bonds" }),
+        check(900, 800, FEB, { accountId: "acc-3" }),
+      ],
+      "INVESTMENT",
+      cats,
+      ctx
+    );
+    expect(rows.map((r) => r.categoryId)).toEqual(["funds", "bonds", null]);
+  });
+
+  it("sums the month's gains per category and leaves the unfiled ones out", () => {
+    const rows = valuationGainRows(
+      [
+        check(1100, 1000, FEB, { categoryId: "funds" }),
+        check(650, 500, FEB, { accountId: "acc-2", categoryId: "funds" }),
+        check(600, 500, FEB, { accountId: "acc-3", categoryId: "bonds" }),
+        check(900, 800, FEB, { accountId: "acc-4" }),
+        check(1300, 1000, MAR, { accountId: "acc-5", categoryId: "funds" }),
+      ],
+      "INVESTMENT",
+      cats,
+      ctx
+    );
+    expect(gainsByCategory(rows, "2026-02")).toEqual({ funds: 250, bonds: 100 });
+    expect(unfiledGain(rows, "2026-02")).toBe(100);
+    expect(gainsByCategory(rows, "2026-03")).toEqual({ funds: 300 });
+    expect(unfiledGain(rows, "2026-03")).toBe(0);
+  });
+
+  it("adds up to the month's whole gain, filed and unfiled together", () => {
+    const rows = valuationGainRows(
+      [
+        check(1100, 1000, FEB, { categoryId: "funds" }),
+        check(900, 800, FEB, { accountId: "acc-4" }),
+      ],
+      "INVESTMENT",
+      cats,
+      ctx
+    );
+    const filed = Object.values(gainsByCategory(rows, "2026-02")).reduce((s, g) => s + g, 0);
+    expect(filed + unfiledGain(rows, "2026-02")).toBe(
+      monthGains(
+        [
+          check(1100, 1000, FEB, { categoryId: "funds" }),
+          check(900, 800, FEB, { accountId: "acc-4" }),
+        ],
+        "INVESTMENT",
+        cats,
+        ctx,
+        WINDOWS
+      )["2026-02"]
+    );
+  });
+
+  it("dresses filed gains as ledger rows, and never the unfiled ones", () => {
+    const rows = valuationGainRows(
+      [
+        check(1100, 1000, FEB, { id: "v1", categoryId: "etfs" }),
+        check(900, 800, FEB, { id: "v2", accountId: "acc-4" }),
+      ],
+      "INVESTMENT",
+      cats,
+      ctx
+    );
+    const ledger = gainRowsAsTransactions(rows, ctx);
+    expect(ledger).toHaveLength(1);
+    expect(ledger[0]).toMatchObject({ categoryId: "funds", amount: 100, currency: "USD" });
+    // Marked synthetic so it never counts as a transaction of the month.
+    expect(isSyntheticRow(ledger[0])).toBe(true);
+    expect(ledger[0].occurredAt.toDate()).toEqual(FEB);
   });
 });

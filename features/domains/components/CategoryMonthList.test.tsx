@@ -134,3 +134,82 @@ describe("categoryMonthRows — synthetic slices", () => {
     expect(food.count).toBe(1);
   });
 });
+
+describe("CategoryMonthList — gains from value checks", () => {
+  it("folds a category's gain into its total and reshares the month", () => {
+    const rows = categoryMonthRows(categories, transactions, [], ctx, sep, now, { food: 2_000 });
+    expect(rows.map((r) => [r.category.name, r.total, r.gain, Math.round(r.share)])).toEqual([
+      // Food's 1,200 in plus 2,000 gained now outweighs Household's 2,800.
+      ["Food", 3_200, 2_000, 53],
+      ["Household", 2_800, 0, 47],
+    ]);
+  });
+
+  it("keeps a category whose whole month is a gain, with no transactions", () => {
+    const rows = categoryMonthRows(categories, [], [], ctx, sep, now, { empty: 900 });
+    expect(rows.map((r) => [r.category.name, r.total, r.count])).toEqual([["Travel", 900, 0]]);
+  });
+
+  it("keeps a category the market took more from than went in", () => {
+    const rows = categoryMonthRows(categories, [tx("a", "food", 100)], [], ctx, sep, now, {
+      food: -400,
+    });
+    expect(rows[0].total).toBe(-300);
+  });
+
+  it("names the gain in the row's meta, and the loss as a loss", () => {
+    const { rerender } = render(
+      <CategoryMonthList
+        domain="INVESTMENT"
+        categories={categories}
+        transactions={[tx("a", "food", 1_200)]}
+        items={[]}
+        gains={{ food: 2_000 }}
+        ctx={ctx}
+        currency="USD"
+        window={sep}
+        now={now}
+        onSelect={jest.fn()}
+      />
+    );
+    expect(screen.getByRole("button", { name: /Food/ })).toHaveTextContent(
+      "1 transaction · 100% · $2,000.00 gain"
+    );
+
+    rerender(
+      <CategoryMonthList
+        domain="INVESTMENT"
+        categories={categories}
+        transactions={[tx("a", "food", 1_200)]}
+        items={[]}
+        gains={{ food: -300 }}
+        ctx={ctx}
+        currency="USD"
+        window={sep}
+        now={now}
+        onSelect={jest.fn()}
+      />
+    );
+    expect(screen.getByRole("button", { name: /Food/ })).toHaveTextContent("$300.00 loss");
+  });
+
+  it("gives gains that name no category a row of their own", () => {
+    render(
+      <CategoryMonthList
+        domain="INVESTMENT"
+        categories={categories}
+        transactions={[]}
+        items={[]}
+        unfiledGain={640}
+        ctx={ctx}
+        currency="USD"
+        window={sep}
+        now={now}
+        onSelect={jest.fn()}
+      />
+    );
+    expect(screen.queryByText("Nothing in this month yet")).toBeNull();
+    expect(screen.getByText("From value checks that name no category")).toBeInTheDocument();
+    expect(screen.getByText("$640.00")).toBeInTheDocument();
+  });
+});

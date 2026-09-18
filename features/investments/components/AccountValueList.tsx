@@ -8,6 +8,7 @@ import { ACCOUNT_NOUN, formatInterestRate } from "../../../helpers/accounts";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import { useDomainValue } from "../hooks/useDomainValue";
+import { dominantCategoryId } from "../helpers/valuation";
 import type { AccountValueRow } from "../helpers/domainValue";
 import { InvestmentValuePanel } from "./InvestmentValuePanel";
 import { ValuationModal } from "./ValuationModal";
@@ -45,6 +46,10 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
   const accent = DOMAIN_CONFIG[domain].accent;
 
   const open = rows.find((r) => r.key === selected) ?? null;
+  // Prefills the value form: most accounts hold one category, so the common
+  // case costs no thought.
+  const suggestFor = (row: AccountValueRow) =>
+    dominantCategoryId(transactions, row.selector, categories, ctx);
 
   return (
     <>
@@ -109,6 +114,8 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
           rate={open.rate}
           transactions={transactions}
           valuations={valuations}
+          categories={categories}
+          suggestedCategoryId={suggestFor(open)}
           loading={busy}
           ctx={ctx}
           currency={currency}
@@ -123,6 +130,8 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
           name={recording.name}
           costBasis={recording.invested}
           currency={currency}
+          categories={categories}
+          suggestedCategoryId={suggestFor(recording)}
           onClose={() => setRecording(null)}
         />
       )}

@@ -188,17 +188,23 @@ export interface Transaction {
 /**
  * A point-in-time statement of what an account / pocket — or the domain's
  * "No account" bucket — is worth. `domain` is always written; `accountId`
- * names the account, absent for the bucket. `categoryId` only survives on
- * valuations written before accounts existed (no `domain` on those). Cost
- * basis and value are snapshots in `currency` at recording time, so history
- * stays truthful when rates or items change later.
+ * names the account, absent for the bucket. Cost basis and value are
+ * snapshots in `currency` at recording time, so history stays truthful when
+ * rates or items change later.
  */
 export interface InvestmentValuation {
   id?: string;
   userId: string;
   domain?: AccountDomain;
   accountId?: string;
-  /** Legacy: the category a pre-account valuation was recorded on. */
+  /**
+   * Which category the gain this check reports is filed under, so it lands in
+   * the right row of the month's breakdown. An account can hold several
+   * categories and only its owner knows which one moved, so this is picked,
+   * never derived. Absent on checks recorded before it was asked for — and on
+   * pre-account valuations, where it is the category being valued and
+   * `valuationDomain` resolves the domain through it.
+   */
   categoryId?: string;
   asOf: Timestamp;
   /** 0 = break-even, 100 = doubled, -20 = lost a fifth. */

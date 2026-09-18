@@ -9,7 +9,13 @@ import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
 import { ACCOUNT_NOUN, accountLabel } from "../../../helpers/accounts";
 import { useAllInvestmentValuations } from "../../../hooks/useInvestmentValuations";
-import { costBasisAt, matchesSelector, selectorKey, withDomain } from "../helpers/valuation";
+import {
+  costBasisAt,
+  dominantCategoryId,
+  matchesSelector,
+  selectorKey,
+  withDomain,
+} from "../helpers/valuation";
 import type { ValueSelector } from "../helpers/valuation";
 import { ValuationModal } from "./ValuationModal";
 import type { AccountDomain } from "../../../types";
@@ -68,6 +74,8 @@ export function RecordValueModal({ open, onClose, domain }: Props) {
         name={choice.label}
         costBasis={invested}
         currency={target}
+        categories={categories}
+        suggestedCategoryId={dominantCategoryId(transactions, choice.selector, categories, ctx)}
         onClose={onClose}
       />
     );

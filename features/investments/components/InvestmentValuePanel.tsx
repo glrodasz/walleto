@@ -18,7 +18,13 @@ import {
 } from "../helpers/valuation";
 import type { ValueSelector } from "../helpers/valuation";
 import { ValuationModal } from "./ValuationModal";
-import type { Currency, InterestRate, InvestmentValuation, Transaction } from "../../../types";
+import type {
+  Category,
+  Currency,
+  InterestRate,
+  InvestmentValuation,
+  Transaction,
+} from "../../../types";
 import { useDateFormat } from "../../../hooks/usePreferences";
 
 interface Props {
@@ -32,6 +38,10 @@ interface Props {
   /** Every valuation, domains filled in (`withDomain`); the panel picks its own. */
   valuations: InvestmentValuation[];
   loading?: boolean;
+  /** The domain's categories, so a recorded gain can name one. */
+  categories?: Category[];
+  /** Where most of this position's money came in; prefills a new check. */
+  suggestedCategoryId?: string | null;
   ctx: MoneyContext;
   currency: Currency;
   accent?: string;
@@ -51,6 +61,8 @@ export function InvestmentValuePanel({
   transactions,
   valuations: allValuations,
   loading,
+  categories,
+  suggestedCategoryId,
   ctx,
   currency,
   accent = "var(--domain-investment)",
@@ -282,6 +294,8 @@ export function InvestmentValuePanel({
         name={title}
         costBasis={invested}
         currency={currency}
+        categories={categories}
+        suggestedCategoryId={suggestedCategoryId}
         valuation={modal.editing}
         onClose={() => setModal({ open: false })}
       />
