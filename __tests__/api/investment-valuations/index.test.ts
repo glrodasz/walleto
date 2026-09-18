@@ -73,6 +73,53 @@ beforeEach(() => {
   getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
 });
 
+describe("POST /api/investment-valuations — the gain's category", () => {
+  it("stores the category the gain was filed under", async () => {
+    const add = wire({ exists: true, data: { userId: "user1", domain: "INVESTMENT" } });
+    const res = mockRes();
+    await handler(
+      { method: "POST", body: { ...body, categoryId: "funds" } } as NextApiRequest,
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(add).toHaveBeenCalledWith(expect.objectContaining({ categoryId: "funds" }));
+  });
+
+  it("writes nothing when no category was picked", async () => {
+    const add = wire({ exists: true });
+    const res = mockRes();
+    await handler({ method: "POST", body } as NextApiRequest, res);
+    expect(add.mock.calls[0][0]).not.toHaveProperty("categoryId");
+  });
+
+  it("rejects someone else's category", async () => {
+    wire({ exists: true, data: { userId: "intruder", domain: "INVESTMENT" } });
+    const res = mockRes();
+    await handler(
+      { method: "POST", body: { ...body, categoryId: "funds" } } as NextApiRequest,
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+
+  it("rejects a category from another domain", async () => {
+    wire({ exists: true, data: { userId: "user1", domain: "EXPENSE" } });
+    const res = mockRes();
+    await handler({ method: "POST", body: { ...body, categoryId: "rent" } } as NextApiRequest, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it("rejects a category that does not exist", async () => {
+    wire({ exists: false });
+    const res = mockRes();
+    await handler(
+      { method: "POST", body: { ...body, categoryId: "ghost" } } as NextApiRequest,
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+});
+
 describe("POST /api/investment-valuations", () => {
   it("returns 401 without a session", async () => {
     getSessionMock.mockResolvedValue(null);

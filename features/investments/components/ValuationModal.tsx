@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Modal } from "../../../components/molecules/Modal";
 import { TextField } from "../../../components/atoms/TextField";
+import { Select } from "../../../components/atoms/Select";
 import { Button } from "../../../components/atoms/Button";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import {
@@ -11,7 +12,7 @@ import { toDateInputValue } from "../../../helpers/scheduleAnchor";
 import { gainFromValue, valueFromGain } from "../helpers/valuation";
 import type { ValueSelector } from "../helpers/valuation";
 import { CURRENCY_SYMBOL } from "../../../constants";
-import type { Currency, InvestmentValuation } from "../../../types";
+import type { Category, Currency, InvestmentValuation } from "../../../types";
 
 interface Props {
   open: boolean;
@@ -23,6 +24,10 @@ interface Props {
   currency: Currency;
   /** Present = edit. */
   valuation?: InvestmentValuation;
+  /** The domain's categories; only roots are offered. Omit to hide the field. */
+  categories?: Category[];
+  /** Prefilled when the check is new: where most of this position's money came in. */
+  suggestedCategoryId?: string | null;
   onClose: () => void;
 }
 
@@ -40,6 +45,8 @@ export function ValuationModal({
   costBasis,
   currency,
   valuation,
+  categories,
+  suggestedCategoryId,
   onClose,
 }: Props) {
   const { formatAmount } = useMoneyFormat();
@@ -47,6 +54,7 @@ export function ValuationModal({
   const [gain, setGain] = useState("0");
   const [value, setValue] = useState("");
   const [note, setNote] = useState("");
+  const [categoryId, setCategoryId] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,13 +66,15 @@ export function ValuationModal({
       setGain(String(round2(valuation.gainPct)));
       setValue(String(round2(valuation.value)));
       setNote(valuation.note ?? "");
+      setCategoryId(valuation.categoryId ?? "");
     } else {
       setDate(toDateInputValue(new Date()));
       setGain("0");
       setValue(String(round2(costBasis)));
       setNote("");
+      setCategoryId(suggestedCategoryId ?? "");
     }
-  }, [open, valuation, costBasis]);
+  }, [open, valuation, costBasis, suggestedCategoryId]);
 
   const basis = valuation ? valuation.costBasis : costBasis;
 
@@ -99,6 +109,7 @@ export function ValuationModal({
           gainPct: pct,
           value: v,
           note: note.trim() || null,
+          ...(categories ? { categoryId: categoryId || null } : {}),
         });
       } else {
         await createInvestmentValuation({
@@ -108,6 +119,7 @@ export function ValuationModal({
           value: v,
           costBasis: basis,
           currency,
+          ...(categoryId ? { categoryId } : {}),
           ...(note.trim() ? { note: note.trim() } : {}),
         });
       }
@@ -153,6 +165,28 @@ export function ValuationModal({
         <p className="hint">
           Type either one — the other follows. Override the value if your broker says otherwise.
         </p>
+
+        {categories && (
+          <>
+            <Select
+              label="Category"
+              /* An explicit empty option rather than the placeholder, which is
+                 disabled: a gain filed by mistake has to be unfilable. */
+              options={[
+                { value: "", label: "No category" },
+                ...categories
+                  .filter((c) => !c.parentId && c.id)
+                  .map((c) => ({ value: c.id!, label: c.name })),
+              ]}
+              value={categoryId}
+              onValueChange={setCategoryId}
+            />
+            <p className="hint">
+              Where this gain belongs in the month&apos;s breakdown. An account can hold several
+              holdings and only you know which one moved.
+            </p>
+          </>
+        )}
 
         <TextField
           label="Note (optional)"

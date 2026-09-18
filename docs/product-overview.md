@@ -140,9 +140,14 @@ checks, an account with a quoted interest rate is _estimated_ by compounding
 each deposit monthly; a recorded check overrides the estimate from its date
 forward.
 
-A check also **counts**. The gain it reports since the previous check of the
-same account is booked as that month's market gain on the Investments and
-Savings pages, so "total invested" there means contributions **plus** gain.
+A check also **counts**, and it names **which category** the gain belongs to —
+an account can hold several holdings and only its owner knows which one moved,
+so this is picked, never derived. The field is prefilled with whichever
+category most of that account's money came in through, and can be left empty.
+The gain it reports since the previous check of the same account is booked as
+that month's market gain on the Investments and Savings pages, so "total
+invested" there means contributions **plus** gain, and the category it names
+carries its share of it.
 Because each check snapshots the cost basis, the chain reconciles exactly:
 what went in, plus every gain since, is what the last check said the position
 was worth. Two consequences are deliberate: the first check on a position
@@ -246,11 +251,15 @@ categories + Other** in shades of the domain colour, or by **currency** (a
 toggle). The dashed line is the six-month average; the current month carries a
 hatched "still planned" segment; the selected month is highlighted and clicking
 a bar selects it. A "Show hidden" checkbox appears when something is hidden. On
-investments and savings a **Gain** segment caps the stack in both splits — a
-market gain belongs to no category and no currency — and a month that lost
-ground is drawn below the axis rather than clamped.
+investments and savings a filed gain joins its own category's segment, so the
+bars and Top categories read the same; what nobody filed, and everything in
+the currency split (a gain is denominated in nothing), rides in a separate
+**Gain** segment. A month that lost ground is drawn below the axis rather than
+clamped.
 Next to it, **Top categories** for the selected month (icon, name, amount, bar,
-share; "View all" opens the Categories view).
+share; "View all" opens the Categories view) — on investments and savings the
+amounts include each category's reported gain, plus a **Gain** row for what was
+never filed under one.
 
 **Views** (a segmented strip, remembered in the URL hash):
 
@@ -264,7 +273,9 @@ share; "View all" opens the Categories view).
   "Not this month" collapsed underneath (unchanged).
 - **Categories** — one row per root category (icon, name, count, share, planned,
   mini bar, total) with a drilldown into subcategory chips and that category's
-  transactions table.
+  transactions table. On investments and savings a category's total is money in
+  plus the gain its value checks reported ("1 transaction · 42% · SEK 2,040
+  gain"); gains nobody filed get one **Gain** row of their own at the end.
 - **Tags** — the month grouped by tag (a payment with two tags counts under
   both); picking one narrows the Transactions view.
 - **Payment methods** (expenses) — the month grouped by method; picking one

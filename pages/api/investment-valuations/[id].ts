@@ -31,9 +31,28 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
-    const { asOf, gainPct, value, costBasis, note } = parsed.data;
+    const { categoryId, asOf, gainPct, value, costBasis, note } = parsed.data;
+
+    // Same check as on create: the category must be the caller's and share
+    // the valuation's domain.
+    if (categoryId) {
+      const catSnap = await db.collection("categories").doc(categoryId).get();
+      if (!catSnap.exists) {
+        return res.status(400).json({ error: "Category not found" });
+      }
+      const cat = catSnap.data()!;
+      if (cat.userId !== userId) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      if (cat.domain !== snap.data()?.domain) {
+        return res.status(400).json({ error: "Category belongs to another domain" });
+      }
+    }
 
     await ref.update({
+      ...(categoryId !== undefined
+        ? { categoryId: categoryId ?? admin.firestore.FieldValue.delete() }
+        : {}),
       ...(asOf ? { asOf: admin.firestore.Timestamp.fromDate(new Date(asOf)) } : {}),
       ...(gainPct !== undefined ? { gainPct } : {}),
       ...(value !== undefined ? { value } : {}),

@@ -86,6 +86,70 @@ describe("PATCH /api/investment-valuations/[id]", () => {
   });
 });
 
+describe("PATCH /api/investment-valuations/[id] — the gain's category", () => {
+  /** The valuation and the category live in different collections here. */
+  const wirePair = (
+    valuation: Record<string, unknown>,
+    category: Record<string, unknown> | undefined,
+    categoryExists = true
+  ) => {
+    const update = jest.fn().mockResolvedValue(undefined);
+    collectionMock.mockImplementation((name: string) => ({
+      doc: jest.fn(() =>
+        name === "categories"
+          ? { get: jest.fn().mockResolvedValue({ exists: categoryExists, data: () => category }) }
+          : {
+              get: jest.fn().mockResolvedValue({ exists: true, data: () => valuation }),
+              update,
+              delete: jest.fn(),
+            }
+      ),
+    }));
+    return update;
+  };
+
+  it("files the gain under a category of the same domain", async () => {
+    const update = wirePair(
+      { userId: "user1", domain: "INVESTMENT" },
+      {
+        userId: "user1",
+        domain: "INVESTMENT",
+      }
+    );
+    const res = mockRes();
+    await handler(req("PATCH", { categoryId: "funds" }), res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(update).toHaveBeenCalledWith({ categoryId: "funds" });
+  });
+
+  it("unfiles it with null, without touching anything else", async () => {
+    const update = wirePair({ userId: "user1", domain: "INVESTMENT" }, undefined);
+    const res = mockRes();
+    await handler(req("PATCH", { categoryId: null }), res);
+    expect(update).toHaveBeenCalledWith({ categoryId: "DELETE_FIELD" });
+  });
+
+  it("rejects someone else's category", async () => {
+    wirePair(
+      { userId: "user1", domain: "INVESTMENT" },
+      {
+        userId: "intruder",
+        domain: "INVESTMENT",
+      }
+    );
+    const res = mockRes();
+    await handler(req("PATCH", { categoryId: "funds" }), res);
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+
+  it("rejects a category from another domain", async () => {
+    wirePair({ userId: "user1", domain: "INVESTMENT" }, { userId: "user1", domain: "EXPENSE" });
+    const res = mockRes();
+    await handler(req("PATCH", { categoryId: "rent" }), res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+});
+
 describe("DELETE /api/investment-valuations/[id]", () => {
   it("really deletes — nothing references a valuation", async () => {
     const { del } = wireDoc({ userId: "user1" });

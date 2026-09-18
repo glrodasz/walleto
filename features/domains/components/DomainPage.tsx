@@ -24,7 +24,12 @@ import { SubscriptionInsights } from "../../insights/components/SubscriptionInsi
 import { AccountValuePanels } from "../../investments/components/AccountValuePanels";
 import { AccountValueList } from "../../investments/components/AccountValueList";
 import { useDomainGains } from "../../investments/hooks/useDomainGains";
-import { withGains } from "../helpers/gainStack";
+import {
+  gainRowsAsTransactions,
+  gainsByCategory,
+  unfiledGain,
+} from "../../investments/helpers/valuationGains";
+import { GAIN_KEY, GAIN_LABEL, withGains } from "../helpers/gainStack";
 import { isAccountDomain } from "../../../helpers/accounts";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import {
@@ -169,6 +174,19 @@ export function DomainPage({ domain }: Props) {
   // paid in. Contributions and gain are kept apart so the summary can say
   // which is which.
   const { gains, rows: gainRows } = useDomainGains(accountDomain, categories, ctx, windows);
+  // A gain names the category the owner filed it under, so it can travel the
+  // same paths a contribution does — one ranking, one "Other" cap, one set of
+  // shares. What nobody filed stays a segment of its own.
+  const gainLedger = useMemo(() => gainRowsAsTransactions(gainRows, ctx), [gainRows, ctx]);
+  const unfiledByMonth = useMemo(() => {
+    const out: Record<string, number> = {};
+    for (const w of windows) out[w.key] = 0;
+    for (const r of gainRows) {
+      const key = monthKey(r.at);
+      if (!r.categoryId && key in out) out[key] += r.gain;
+    }
+    return out;
+  }, [gainRows, windows]);
   const txTotals = useMemo(
     () => monthTotals(chartTransactions, ctx, windows),
     [chartTransactions, ctx, windows]
@@ -219,6 +237,9 @@ export function DomainPage({ domain }: Props) {
   // with the month's gain — which belongs to neither split, so it rides on top
   // of both.
   const stacks = useMemo(() => {
+    // By category a filed gain joins its own category's segment, so the bar
+    // and Top categories read the same. By currency it cannot: a gain is not
+    // denominated in anything, so every gain stays its own segment there.
     const base =
       mode === "currency"
         ? (() => {
@@ -232,7 +253,10 @@ export function DomainPage({ domain }: Props) {
               })),
             };
           })()
-        : monthTotalsByCategory(chartTransactions, categories, ctx, windows, { domain, top: 5 });
+        : monthTotalsByCategory([...chartTransactions, ...gainLedger], categories, ctx, windows, {
+            domain,
+            top: 5,
+          });
     // Nothing to split by (no transactions at all) still needs one series, so
     // a month that is pure gain has something to stack on.
     const withFallback =
@@ -244,8 +268,20 @@ export function DomainPage({ domain }: Props) {
               windows.map((w) => [w.key, { amount: txTotals[w.key] ?? 0 }])
             ),
           };
-    return withGains(withFallback, gains);
-  }, [mode, chartTransactions, categories, ctx, windows, domain, config, txTotals, gains]);
+    return withGains(withFallback, mode === "currency" ? gains : unfiledByMonth);
+  }, [
+    mode,
+    chartTransactions,
+    gainLedger,
+    categories,
+    ctx,
+    windows,
+    domain,
+    config,
+    txTotals,
+    gains,
+    unfiledByMonth,
+  ]);
   const series: BarSeries[] = stacks.series;
   const bars: MonthBar[] = useMemo(
     () =>
@@ -259,21 +295,47 @@ export function DomainPage({ domain }: Props) {
     [windows, series, stacks, expected, realized]
   );
 
-  // The selected month by category, for the side card and the Categories view.
+  // The selected month by category, for the side card and the Categories
+  // view. The month's filed gains ride along as rows, so a category's total
+  // is what it is really worth having held this month.
+  const monthGainsByCategory = useMemo(
+    () => gainsByCategory(gainRows, window.key),
+    [gainRows, window.key]
+  );
+  const monthUnfiledGain = useMemo(() => unfiledGain(gainRows, window.key), [gainRows, window.key]);
   const categoryRows = useMemo(
-    () => categoryMonthRows(categories, monthPlanRows, planItems, ctx, window, now),
-    [categories, monthPlanRows, planItems, ctx, window, now]
-  );
-  const topCategories = useMemo(
     () =>
-      categoryRows.slice(0, 6).map((r) => ({
-        categoryId: r.category.id ?? r.category.name,
-        name: r.category.name,
-        amount: r.total,
-        percent: r.share,
-      })),
-    [categoryRows]
+      categoryMonthRows(
+        categories,
+        monthPlanRows,
+        planItems,
+        ctx,
+        window,
+        now,
+        monthGainsByCategory
+      ),
+    [categories, monthPlanRows, planItems, ctx, window, now, monthGainsByCategory]
   );
+  const topCategories = useMemo(() => {
+    const rows = categoryRows.slice(0, 6).map((r) => ({
+      categoryId: r.category.id ?? r.category.name,
+      name: r.category.name,
+      amount: r.total,
+      percent: r.share,
+    }));
+    // Gains from checks recorded before the form asked for a category have no
+    // row to join, so they get their own rather than quietly going missing.
+    if (monthUnfiledGain === 0) return rows;
+    return [
+      ...rows,
+      {
+        categoryId: GAIN_KEY,
+        name: GAIN_LABEL,
+        amount: monthUnfiledGain,
+        percent: realized > 0 ? (monthUnfiledGain / realized) * 100 : 0,
+      },
+    ];
+  }, [categoryRows, monthUnfiledGain, realized]);
   const byTag = useMemo(
     () => groupByTag(monthTransactions, tags, ctx),
     [monthTransactions, tags, ctx]
@@ -377,6 +439,8 @@ export function DomainPage({ domain }: Props) {
           domain={domain}
           categories={categories}
           transactions={monthPlanRows}
+          gains={monthGainsByCategory}
+          unfiledGain={monthUnfiledGain}
           items={planItems}
           ctx={ctx}
           currency={currency}

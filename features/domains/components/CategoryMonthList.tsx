@@ -6,7 +6,7 @@ import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { Badge } from "../../../components/atoms/Badge";
-import { ArrowRight, Chart } from "../../../components/atoms/Icons";
+import { ArrowRight, Chart, MoreHorizontal } from "../../../components/atoms/Icons";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
 import { ListItem, ListItems } from "../../../components/molecules/ListItem";
 import { convertedAmount } from "../../../helpers/aggregations";
@@ -29,6 +29,14 @@ interface Props {
   window: MonthWindow;
   now?: Date;
   loading?: boolean;
+  /** What the month's value checks reported, per root category. */
+  gains?: Record<string, number>;
+  /**
+   * Gain from value checks that name no category — the ones recorded before
+   * the form asked. It counts toward the month, so it gets a row of its own
+   * rather than quietly going missing from the list.
+   */
+  unfiledGain?: number;
   onSelect: (categoryId: string) => void;
   /** Flip the category's hiddenFromChart flag. */
   onToggleHidden?: (category: Category) => void;
@@ -36,35 +44,47 @@ interface Props {
 
 export interface CategoryMonthRow {
   category: Category;
+  /** Money in plus the gain filed under the category — what it is worth having held. */
   total: number;
   count: number;
   share: number;
   planned: number;
+  /** The part of `total` that came from value checks, not from transactions. */
+  gain: number;
 }
 
 // Kept here for existing importers; the tree helpers now live with the other
 // shared helpers so charts and filters can fold children into roots too.
 export { categoryIdSet };
 
+/**
+ * `gains` is what the month's value checks reported, per root category — it
+ * joins the category's total, because what a holding was worth having is the
+ * money put in plus what the market did to it.
+ */
 export function categoryMonthRows(
   categories: Category[],
   transactions: Transaction[],
   items: RecurrentTransaction[],
   ctx: MoneyContext,
   window: MonthWindow,
-  now: Date = new Date()
+  now: Date = new Date(),
+  gains: Record<string, number> = {}
 ): CategoryMonthRow[] {
   const planned = window.isCurrent
     ? plannedOccurrences(items, ctx, now, new Date(window.end.getTime() - 1))
     : [];
-  const monthTotal = transactions.reduce((sum, t) => sum + convertedAmount(t, ctx), 0);
+  const monthTotal =
+    transactions.reduce((sum, t) => sum + convertedAmount(t, ctx), 0) +
+    Object.values(gains).reduce((sum, g) => sum + g, 0);
 
   return categories
     .filter((c) => !c.parentId)
     .map((category) => {
       const ids = categoryIdSet(category, categories);
       const mine = transactions.filter((t) => ids.has(t.categoryId));
-      const total = mine.reduce((sum, t) => sum + convertedAmount(t, ctx), 0);
+      const gain = category.id ? (gains[category.id] ?? 0) : 0;
+      const total = mine.reduce((sum, t) => sum + convertedAmount(t, ctx), 0) + gain;
       const plannedHere = planned
         .filter((p) => ids.has(p.item.categoryId))
         .reduce((sum, p) => sum + p.amount, 0);
@@ -74,9 +94,10 @@ export function categoryMonthRows(
         count: mine.filter((t) => !isSyntheticRow(t)).length,
         share: monthTotal > 0 ? (total / monthTotal) * 100 : 0,
         planned: plannedHere,
+        gain,
       };
     })
-    .filter((r) => r.total > 0 || r.planned > 0)
+    .filter((r) => r.total !== 0 || r.planned > 0)
     .sort((a, b) => b.total + b.planned - (a.total + a.planned));
 }
 
@@ -94,14 +115,16 @@ export function CategoryMonthList({
   window,
   now,
   loading,
+  gains,
+  unfiledGain = 0,
   onSelect,
   onToggleHidden,
 }: Props) {
   const { formatAmount } = useMoneyFormat();
   const config = DOMAIN_CONFIG[domain];
   const rows = useMemo(
-    () => categoryMonthRows(categories, transactions, items, ctx, window, now),
-    [categories, transactions, items, ctx, window, now]
+    () => categoryMonthRows(categories, transactions, items, ctx, window, now, gains),
+    [categories, transactions, items, ctx, window, now, gains]
   );
 
   return (
@@ -110,7 +133,7 @@ export function CategoryMonthList({
 
       {loading ? (
         <p className="empty">Loading…</p>
-      ) : rows.length === 0 ? (
+      ) : rows.length === 0 && unfiledGain === 0 ? (
         <p className="empty">Nothing in this month yet</p>
       ) : (
         <ListItems>
@@ -138,6 +161,10 @@ export function CategoryMonthList({
                 }
                 meta={`${r.count} ${r.count === 1 ? "transaction" : "transactions"}${
                   r.share > 0 ? ` · ${r.share.toFixed(0)}%` : ""
+                }${
+                  r.gain !== 0
+                    ? ` · ${formatAmount(Math.abs(r.gain), currency)} ${r.gain > 0 ? "gain" : "loss"}`
+                    : ""
                 }${r.planned > 0 ? ` · ${formatAmount(r.planned, currency)} planned` : ""}`}
                 progress={
                   expected > 0
@@ -171,6 +198,18 @@ export function CategoryMonthList({
               />
             );
           })}
+          {unfiledGain !== 0 && (
+            <ListItem
+              leading={
+                <IconDisc domain={domain} size={36}>
+                  <MoreHorizontal size={16} />
+                </IconDisc>
+              }
+              name="Gain"
+              meta="From value checks that name no category"
+              amount={formatAmount(unfiledGain, currency)}
+            />
+          )}
         </ListItems>
       )}
 

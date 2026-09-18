@@ -16,7 +16,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
-    const { accountId, asOf, gainPct, value, costBasis, currency, note } = parsed.data;
+    const { accountId, categoryId, asOf, gainPct, value, costBasis, currency, note } = parsed.data;
 
     // An account must exist and be the caller's; its domain is the record's.
     // Without one the valuation is the domain's "No account" bucket.
@@ -33,10 +33,28 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       domain = acc.domain;
     }
 
+    // The category the gain is filed under must be the caller's, and must
+    // belong to the same domain — a contribution's category and a gain's are
+    // the same list.
+    if (categoryId) {
+      const catSnap = await db.collection("categories").doc(categoryId).get();
+      if (!catSnap.exists) {
+        return res.status(400).json({ error: "Category not found" });
+      }
+      const cat = catSnap.data()!;
+      if (cat.userId !== userId) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      if (cat.domain !== domain) {
+        return res.status(400).json({ error: "Category belongs to another domain" });
+      }
+    }
+
     const ref = await db.collection("investmentValuations").add({
       userId,
       domain,
       ...(accountId ? { accountId } : {}),
+      ...(categoryId ? { categoryId } : {}),
       asOf: admin.firestore.Timestamp.fromDate(new Date(asOf)),
       gainPct,
       value,

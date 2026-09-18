@@ -50,6 +50,10 @@ export function AccountValuePanels({ domain, category, categories, ctx, currency
     transactions,
     valuations,
     loading: loading || valLoading,
+    categories,
+    // The drilldown is already inside one category, so a gain recorded from
+    // here belongs to it — no guessing needed.
+    suggestedCategoryId: category.id,
     ctx,
     currency,
     accent,

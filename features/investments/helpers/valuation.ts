@@ -3,6 +3,7 @@ import { convertedAmount } from "../../../helpers/aggregations";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { convert } from "../../../helpers/fx";
 import { isAccountDomain } from "../../../helpers/accounts";
+import { rootIdMap, rootIdOf } from "../../../helpers/categoryTree";
 import type { FlowPoint } from "../../../helpers/chartData";
 import type {
   AccountDomain,
@@ -123,6 +124,33 @@ export function valueChecks(
       value: convert(v.value, v.currency, ctx.target, ctx.rates),
       asOf: v.asOf.toDate(),
     }));
+}
+
+/**
+ * The root category most of this position's money came in through, or null
+ * when nothing has. Only a suggestion: it prefills the value form's category
+ * so the common case — one category per account — costs no thought, and the
+ * owner overrides it when a different holding is what moved.
+ */
+export function dominantCategoryId(
+  transactions: Transaction[],
+  selector: ValueSelector,
+  categories: Category[],
+  ctx: MoneyContext
+): string | null {
+  const roots = rootIdMap(categories);
+  const byCategory = new Map<string, number>();
+  for (const t of transactions) {
+    if (!isAccountDomain(t.domain) || t.status !== "PAID" || !matchesSelector(t, selector))
+      continue;
+    const key = rootIdOf(t.categoryId, roots);
+    byCategory.set(key, (byCategory.get(key) ?? 0) + convertedAmount(t, ctx));
+  }
+  let best: string | null = null;
+  for (const [key, total] of byCategory) {
+    if (best === null || total > byCategory.get(best)!) best = key;
+  }
+  return best;
 }
 
 /** The most recent valuation at or before `asOf`, or null. */

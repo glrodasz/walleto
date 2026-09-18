@@ -12,7 +12,7 @@ import type { AccountDomain, Category } from "../../../types";
  */
 export function useDomainGains(
   domain: AccountDomain | null,
-  categories: Pick<Category, "id" | "domain">[],
+  categories: Category[],
   ctx: MoneyContext,
   windows: { key: string }[]
 ): { gains: Record<string, number>; rows: GainRow[]; loading: boolean; error: Error | null } {
