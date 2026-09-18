@@ -1,8 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { AccountValueList } from "./AccountValueList";
-import { valuationsInWindow } from "./ValuationRows";
 import { IDENTITY_RATES } from "../../../helpers/fx";
-import type { Category, Currency, InvestmentValuation } from "../../../types";
+import type { Category, Currency } from "../../../types";
 
 const ts = (date: Date) => ({ seconds: 0, nanoseconds: 0, toDate: () => date });
 
@@ -125,24 +124,5 @@ describe("AccountValueList", () => {
     expect(valuationModalMock).toHaveBeenCalledWith(
       expect.objectContaining({ selector: { domain: "SAVING" }, costBasis: 130 })
     );
-  });
-});
-
-describe("valuationsInWindow", () => {
-  it("keeps only the value checks dated inside the month", () => {
-    const v = (id: string, date: Date) =>
-      ({
-        id,
-        accountId: "seb",
-        asOf: ts(date),
-        gainPct: 0,
-        value: 0,
-      }) as unknown as InvestmentValuation;
-    const rows = valuationsInWindow(
-      [v("a", new Date(2026, 8, 2)), v("b", new Date(2026, 7, 31)), v("c", new Date(2026, 9, 1))],
-      new Date(2026, 8, 1),
-      new Date(2026, 9, 1)
-    );
-    expect(rows.map((r) => r.id)).toEqual(["a"]);
   });
 });

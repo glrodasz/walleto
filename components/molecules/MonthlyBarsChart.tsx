@@ -123,6 +123,11 @@ export function MonthlyBarsChart({
               margin={{ top: 12, right: 8, bottom: 0, left: 0 }}
               barCategoryGap="28%"
               barGap={3}
+              /* A series can be negative (a month whose investments lost
+                 ground). The default offset accumulates blindly and would draw
+                 it over the positive segments; "sign" splits the stack at zero
+                 instead. A no-op while every series is positive. */
+              stackOffset="sign"
             >
               <defs>
                 <pattern

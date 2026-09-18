@@ -20,6 +20,10 @@ interface Props {
   previousLabel: string | null;
   currency: Currency;
   approximate?: boolean;
+  /** Investments / savings: the part of the figure that is money in. */
+  contributed?: number;
+  /** Investments / savings: what the month's value checks reported; negative is a loss. */
+  gain?: number;
 }
 
 /**
@@ -35,11 +39,17 @@ export function MonthSummary({
   previousLabel,
   currency,
   approximate,
+  contributed,
+  gain,
 }: Props) {
   const { formatAmount } = useMoneyFormat();
   const config = DOMAIN_CONFIG[domain];
   const ratio = expected > 0 ? realized / expected : 0;
   const left = Math.max(0, expected - realized);
+  // Investments and savings fold a market gain into the figure, so it says
+  // what it is made of. Silent when no value check landed: the month then
+  // reads exactly like one on the other two domains.
+  const showBreakdown = contributed !== undefined && gain !== undefined && gain !== 0;
 
   return (
     <Card>
@@ -55,6 +65,14 @@ export function MonthSummary({
               <DeltaPill pct={delta.deltaPct} upIsGood={config.upIsGood} />
             )}
           </span>
+          {showBreakdown && (
+            <span className="line breakdown">
+              {`${formatAmount(contributed!, currency)} contributed · ${formatAmount(
+                Math.abs(gain!),
+                currency
+              )} ${gain! >= 0 ? "gain" : "loss"}`}
+            </span>
+          )}
           <span className="line">
             {delta.previousKey && previousLabel
               ? `Compared to ${formatAmount(delta.previous, currency)} in ${previousLabel}`
@@ -124,6 +142,11 @@ export function MonthSummary({
         .line {
           font-size: 0.82rem;
           color: var(--fg-1);
+        }
+
+        .breakdown {
+          font-size: 0.78rem;
+          color: var(--fg-2);
         }
 
         .bar {
