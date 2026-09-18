@@ -11,6 +11,8 @@ import { CashFlowCard } from "./CashFlowCard";
 import type { CashFlowPeriod } from "./CashFlowCard";
 import { UpcomingPayments } from "./UpcomingPayments";
 import { TipBanner } from "./TipBanner";
+import { DomainValueLine } from "../../investments/components/DomainValueLine";
+import { isAccountDomain } from "../../../helpers/accounts";
 import { topWithOther } from "../helpers/topWithOther";
 import type { CashFlowGroupBy } from "../helpers/cashFlowSeries";
 import { useDashboard } from "../hooks/useDashboard";
@@ -158,6 +160,15 @@ export function DashboardPage() {
                 rows={cardRows(c.list, c.domain, currency, formatAmount)}
                 categoryCount={c.list.length}
                 byCurrency={c.mix}
+                secondary={
+                  isAccountDomain(c.domain) ? (
+                    <DomainValueLine
+                      domain={c.domain}
+                      categories={categories}
+                      currency={currency}
+                    />
+                  ) : undefined
+                }
                 actions={[{ label: `Open ${c.title}`, onSelect: () => router.push(c.href) }]}
               />
             ))
