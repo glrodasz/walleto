@@ -5,7 +5,7 @@ import { useAllInvestmentValuations } from "../../../hooks/useInvestmentValuatio
 import { ACCOUNT_NOUN, accountLabel } from "../../../helpers/accounts";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
-import { withDomain } from "../helpers/valuation";
+import { INCEPTION, withDomain } from "../helpers/valuation";
 import { InvestmentValuePanel } from "./InvestmentValuePanel";
 import type { AccountDomain, Category, Currency } from "../../../types";
 
@@ -16,8 +16,6 @@ interface Props {
   ctx: MoneyContext;
   currency: Currency;
 }
-
-const INCEPTION = new Date(2000, 0, 1);
 
 /**
  * The value panels behind one category's drilldown: one per account that

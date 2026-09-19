@@ -23,6 +23,27 @@ import type { Deposit, ValuePoint } from "./interest";
  */
 export type ValueSelector = { accountId: string } | { domain: AccountDomain };
 
+/**
+ * Where "the whole history" starts. A cost basis, a value and the gain chain
+ * all need every contribution ever made, not a page's window — and every
+ * query that reaches back must use this same instant, so the Firestore SDK
+ * folds them onto one listen target.
+ */
+export const INCEPTION = new Date(2000, 0, 1);
+
+/**
+ * Oldest first; two checks on the same day settle by creation, then id, so
+ * "the latest check" means one thing everywhere — the gain chain and the
+ * Value view must end on the same one.
+ */
+export function byAsOfAsc(a: InvestmentValuation, b: InvestmentValuation): number {
+  const at = a.asOf.toDate().getTime() - b.asOf.toDate().getTime();
+  if (at !== 0) return at;
+  const created = (a.createdAt?.toDate().getTime() ?? 0) - (b.createdAt?.toDate().getTime() ?? 0);
+  if (created !== 0) return created;
+  return (a.id ?? "").localeCompare(b.id ?? "");
+}
+
 export function selectorKey(s: ValueSelector): string {
   return "accountId" in s ? `acc:${s.accountId}` : `dom:${s.domain}`;
 }
@@ -120,6 +141,7 @@ export function valueChecks(
 ): ValuePoint[] {
   return valuations
     .filter((v) => matchesSelector(v, selector))
+    .sort(byAsOfAsc)
     .map((v) => ({
       value: convert(v.value, v.currency, ctx.target, ctx.rates),
       asOf: v.asOf.toDate(),
@@ -159,9 +181,8 @@ export function latestValuationAt(
   asOf: Date
 ): InvestmentValuation | null {
   let best: InvestmentValuation | null = null;
-  for (const v of valuations) {
-    const at = v.asOf.toDate();
-    if (at <= asOf && (!best || at > best.asOf.toDate())) best = v;
+  for (const v of [...valuations].sort(byAsOfAsc)) {
+    if (v.asOf.toDate() <= asOf) best = v;
   }
   return best;
 }

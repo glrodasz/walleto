@@ -4,13 +4,10 @@ import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
 import { useAllInvestmentValuations } from "../../../hooks/useInvestmentValuations";
 import { ACCOUNT_NOUN } from "../../../helpers/accounts";
 import type { MoneyContext } from "../../../helpers/aggregations";
-import { withDomain } from "../helpers/valuation";
+import { INCEPTION, withDomain } from "../helpers/valuation";
 import { domainValueRows, domainValueTotals } from "../helpers/domainValue";
 import type { AccountValueRow } from "../helpers/domainValue";
 import type { AccountDomain, Category, InvestmentValuation, Transaction } from "../../../types";
-
-/** A cost basis needs the position's whole history, not a page's month. */
-const INCEPTION = new Date(2000, 0, 1);
 
 /**
  * What a domain's accounts and pockets are worth right now, per account and in

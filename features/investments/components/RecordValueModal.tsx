@@ -10,6 +10,7 @@ import { useMoneyContext } from "../../../hooks/useMoneyContext";
 import { ACCOUNT_NOUN, accountLabel } from "../../../helpers/accounts";
 import { useAllInvestmentValuations } from "../../../hooks/useInvestmentValuations";
 import {
+  INCEPTION,
   costBasisAt,
   dominantCategoryId,
   matchesSelector,
@@ -25,9 +26,6 @@ interface Props {
   onClose: () => void;
   domain: AccountDomain;
 }
-
-/** Cost basis needs the whole history, not a page's window. */
-const INCEPTION = new Date(2000, 0, 1);
 
 /**
  * "Record current value" from anywhere: pick the account / pocket — or the

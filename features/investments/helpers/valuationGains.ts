@@ -2,7 +2,8 @@ import { convert } from "../../../helpers/fx";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { monthKey } from "../../../helpers/dates";
 import { rootIdMap, rootIdOf } from "../../../helpers/categoryTree";
-import { selectorKey, valuationSelector, withDomain } from "./valuation";
+import { byAsOfAsc, depositsFor, selectorKey, valuationSelector, withDomain } from "./valuation";
+import type { ValueSelector } from "./valuation";
 import type {
   AccountDomain,
   Category,
@@ -10,6 +11,7 @@ import type {
   InvestmentValuation,
   Transaction,
 } from "../../../types";
+import type { Deposit } from "./interest";
 
 /**
  * What one value check added in the month it lands in: the gain it reports
@@ -32,40 +34,34 @@ export interface GainRow {
   categoryId: string | null;
 }
 
-/** The net gain a check states, converted: what it is worth minus what went in. */
-function netGain(v: InvestmentValuation, ctx: MoneyContext): number {
-  return (
-    convert(v.value, v.currency, ctx.target, ctx.rates) -
-    convert(v.costBasis, v.currency, ctx.target, ctx.rates)
-  );
-}
-
-/** Oldest first; two checks on the same day settle deterministically. */
-function byAsOfAsc(a: InvestmentValuation, b: InvestmentValuation): number {
-  const at = a.asOf.toDate().getTime() - b.asOf.toDate().getTime();
-  if (at !== 0) return at;
-  const created = (a.createdAt?.toDate().getTime() ?? 0) - (b.createdAt?.toDate().getTime() ?? 0);
-  if (created !== 0) return created;
-  return (a.id ?? "").localeCompare(b.id ?? "");
-}
-
 /**
  * Every value check of `domain`, oldest first, each carrying the gain it
  * reported since the previous check of the same account / bucket.
  *
- * Because every check snapshots its own `costBasis`, this needs no transaction
- * history at all: the chain telescopes, so the gains of one selector add up to
- * `value − costBasis` of its last check. And since the modal writes that basis
- * as the contributions to date, `contributions + Σ gains` is what the position
- * is worth — the identity the page's totals rest on.
+ * A check is measured against what the position should have been worth had
+ * nothing moved: the previous check's value plus every deposit since it — or,
+ * for the first check, everything paid in up to that day. Every term is
+ * converted into the reporting currency at today's rate, the same way the
+ * Value view converts, so the chain telescopes into an identity that holds on
+ * any day and in any display currency:
  *
- * Value and basis are converted separately before subtracting, so a chain whose
- * checks were recorded in different currencies still telescopes. Rows written
- * before accounts existed carry no `domain`; `withDomain` resolves theirs
- * through their category first, so they chain in the right place.
+ *     contributions + Σ gains = last check's value + deposits since it
+ *
+ * — which is exactly what the Value view shows for an account without an
+ * interest rate. The `costBasis` the check snapshotted is deliberately not
+ * used here: it froze one day's exchange rate, and the day the rate moved
+ * the category read 98 SEK short of the account it summed. That snapshot
+ * still serves the history list and the check's own gain %.
+ *
+ * A deposit dated at a check's `asOf` belongs to that check, as in
+ * `interest.valueAt`. Two checks on one day see no deposits between them, so
+ * the later one reports the value difference alone. Rows written before
+ * accounts existed carry no `domain`; `withDomain` resolves theirs through
+ * their category first, so they chain in the right place.
  */
 export function valuationGainRows(
   valuations: InvestmentValuation[],
+  transactions: Transaction[],
   domain: AccountDomain,
   categories: Category[],
   ctx: MoneyContext
@@ -75,17 +71,34 @@ export function valuationGainRows(
     .sort(byAsOfAsc);
   const roots = rootIdMap(categories);
 
-  // The net gain the previous check of each chain reported; 0 before the first.
-  const previous = new Map<string, number>();
+  // Deposits per chain, built once each; the previous check's value and date
+  // so the next one knows what "since" means.
+  const deposits = new Map<string, Deposit[]>();
+  const previous = new Map<string, { value: number; asOf: Date }>();
+  const depositsOf = (key: string, selector: ValueSelector): Deposit[] => {
+    let list = deposits.get(key);
+    if (!list) {
+      list = depositsFor(transactions, selector, ctx);
+      deposits.set(key, list);
+    }
+    return list;
+  };
+
   return mine.map((v) => {
-    const selector = selectorKey(valuationSelector(v, categories));
-    const net = netGain(v, ctx);
-    const gain = net - (previous.get(selector) ?? 0);
-    previous.set(selector, net);
+    const selector = valuationSelector(v, categories);
+    const key = selectorKey(selector);
+    const at = v.asOf.toDate();
+    const prev = previous.get(key) ?? null;
+    const since = depositsOf(key, selector)
+      .filter((d) => (prev ? d.at > prev.asOf : true) && d.at <= at)
+      .reduce((sum, d) => sum + d.amount, 0);
+    const value = convert(v.value, v.currency, ctx.target, ctx.rates);
+    const gain = value - ((prev?.value ?? 0) + since);
+    previous.set(key, { value, asOf: at });
     return {
       id: v.id,
-      selector,
-      at: v.asOf.toDate(),
+      selector: key,
+      at,
       gain,
       currency: v.currency,
       categoryId: v.categoryId ? rootIdOf(v.categoryId, roots) : null,
@@ -151,6 +164,7 @@ export function unfiledGain(rows: GainRow[], windowKey: string): number {
  */
 export function monthGains(
   valuations: InvestmentValuation[],
+  transactions: Transaction[],
   domain: AccountDomain,
   categories: Category[],
   ctx: MoneyContext,
@@ -158,7 +172,7 @@ export function monthGains(
 ): Record<string, number> {
   const gains: Record<string, number> = {};
   for (const w of windows) gains[w.key] = 0;
-  for (const row of valuationGainRows(valuations, domain, categories, ctx)) {
+  for (const row of valuationGainRows(valuations, transactions, domain, categories, ctx)) {
     const key = monthKey(row.at);
     if (key in gains) gains[key] += row.gain;
   }
