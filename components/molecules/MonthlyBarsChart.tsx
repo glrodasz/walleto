@@ -1,11 +1,11 @@
 import dynamic from "next/dynamic";
+import { Cell } from "./chartCell";
 import { useMoneyFormat } from "../../hooks/useMoneyFormat";
 import type { Currency } from "../../types";
 
 // recharts is client-only and heavy, so every piece is loaded on demand.
 const BarChart = dynamic(() => import("recharts").then((m) => m.BarChart), { ssr: false });
 const Bar = dynamic(() => import("recharts").then((m) => m.Bar), { ssr: false });
-const Cell = dynamic(() => import("recharts").then((m) => m.Cell), { ssr: false });
 const XAxis = dynamic(() => import("recharts").then((m) => m.XAxis), { ssr: false });
 const YAxis = dynamic(() => import("recharts").then((m) => m.YAxis), { ssr: false });
 const CartesianGrid = dynamic(() => import("recharts").then((m) => m.CartesianGrid), {
@@ -20,7 +20,7 @@ const ResponsiveContainer = dynamic(() => import("recharts").then((m) => m.Respo
 });
 
 export interface MonthBar {
-  /** Stable identity ("2026-09"); selection and clicks speak in keys. */
+  /** Stable identity ("2026-09"); the highlight speaks in keys. */
   key: string;
   label: string;
   /** The month still in progress — drawn lighter, may carry `planned`. */
@@ -43,8 +43,8 @@ interface Props {
   loading: boolean;
   /** Dashed benchmark line ("avg"). */
   average?: number | null;
+  /** Drawn at full strength while the rest dim — the month the page describes. */
   selectedKey?: string;
-  onSelect?: (key: string) => void;
   height?: number;
   /** Stack every series into one bar (e.g. one segment per currency). */
   stacked?: boolean;
@@ -65,7 +65,6 @@ export function MonthlyBarsChart({
   loading,
   average,
   selectedKey,
-  onSelect,
   height = 220,
   stacked = false,
 }: Props) {
@@ -191,11 +190,6 @@ export function MonthlyBarsChart({
                     fill={s.color}
                     radius={rounded ? [6, 6, 0, 0] : [0, 0, 0, 0]}
                     isAnimationActive={false}
-                    onClick={(_entry, index) => {
-                      const bar = data[index];
-                      if (bar && onSelect) onSelect(bar.key);
-                    }}
-                    cursor={onSelect ? "pointer" : undefined}
                   >
                     {data.map((d) => (
                       <Cell
@@ -216,11 +210,6 @@ export function MonthlyBarsChart({
                   fill={`url(#${HATCH_ID})`}
                   radius={[6, 6, 0, 0]}
                   isAnimationActive={false}
-                  onClick={(_entry, index) => {
-                    const bar = data[index];
-                    if (bar && onSelect) onSelect(bar.key);
-                  }}
-                  cursor={onSelect ? "pointer" : undefined}
                 >
                   {data.map((d) => (
                     <Cell

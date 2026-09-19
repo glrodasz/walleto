@@ -2,16 +2,15 @@ import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/nextjs";
 import { fn } from "storybook/test";
 import { CashFlowCard } from "./CashFlowCard";
-import type { CashFlowPeriod } from "./CashFlowCard";
+import type { MonthPeriod } from "../../../constants";
 import type { CashFlowGroupBy } from "../helpers/cashFlowSeries";
 import { column } from "../../../stories/decorators";
 import { cashFlow, CURRENT_WINDOW } from "../../../stories/fixtures";
 
 /** Wires the period and group-by controls to real series, as the dashboard does. */
 function Live(props: React.ComponentProps<typeof CashFlowCard>) {
-  const [period, setPeriod] = useState<CashFlowPeriod>(props.period);
+  const [period, setPeriod] = useState<MonthPeriod>(props.period);
   const [groupBy, setGroupBy] = useState<CashFlowGroupBy>(props.groupBy);
-  const [selectedKey, setSelectedKey] = useState(props.selectedKey);
   const series = cashFlow(period, groupBy);
   return (
     <CashFlowCard
@@ -21,8 +20,6 @@ function Live(props: React.ComponentProps<typeof CashFlowCard>) {
       onPeriod={setPeriod}
       groupBy={groupBy}
       onGroupBy={setGroupBy}
-      selectedKey={selectedKey}
-      onSelect={setSelectedKey}
     />
   );
 }
@@ -39,7 +36,6 @@ const meta = {
     onPeriod: fn(),
     groupBy: "domain",
     onGroupBy: fn(),
-    onSelect: fn(),
   },
   render: (args) => <Live {...args} />,
   decorators: [column],

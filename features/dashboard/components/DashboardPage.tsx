@@ -8,7 +8,6 @@ import Skeleton from "../../../components/Skeleton";
 import { ErrorState } from "../../../components/atoms/ErrorState";
 import { NetFlowCard } from "./NetFlowCard";
 import { CashFlowCard } from "./CashFlowCard";
-import type { CashFlowPeriod } from "./CashFlowCard";
 import { UpcomingPayments } from "./UpcomingPayments";
 import { TipBanner } from "./TipBanner";
 import { DomainValueLine } from "../../investments/components/DomainValueLine";
@@ -18,10 +17,11 @@ import type { CashFlowGroupBy } from "../helpers/cashFlowSeries";
 import { useDashboard } from "../hooks/useDashboard";
 import { useUserDoc } from "../../../hooks/useUserDoc";
 import { useMaterialize } from "../../../hooks/useMaterialize";
-import { useSelectedMonth } from "../../../hooks/useSelectedMonth";
 import { useLocalPreference } from "../../../hooks/useLocalPreference";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { greeting } from "../../../helpers/greeting";
+import { DEFAULT_MONTH_PERIOD, parseMonthPeriod } from "../../../constants";
+import type { MonthPeriod } from "../../../constants";
 import type { Currency, Domain } from "../../../types";
 
 interface CategoryAmount {
@@ -51,10 +51,13 @@ export function DashboardPage() {
   const { user } = useUser();
   const router = useRouter();
   const { userDoc } = useUserDoc();
-  const { select } = useSelectedMonth();
   const { formatAmount } = useMoneyFormat();
   useMaterialize();
-  const [period, setPeriod] = useLocalPreference<CashFlowPeriod>("waletto:dashboard:period", 6);
+  const [period, setPeriod] = useLocalPreference<MonthPeriod>(
+    "waletto:dashboard:period",
+    DEFAULT_MONTH_PERIOD,
+    parseMonthPeriod
+  );
   const [groupBy, setGroupBy] = useLocalPreference<CashFlowGroupBy>(
     "waletto:dashboard:groupBy",
     "domain"
@@ -127,9 +130,6 @@ export function DashboardPage() {
     <PageLayout
       title={`${greeting()}, ${firstName}`}
       subtitle={`Here's your financial overview for ${window.longLabel}.`}
-      /* The dashboard is the whole picture, not one month's ledger: the month
-         is picked on a domain page, or by clicking a bar in the cash flow. */
-      hideMonth
     >
       {error && <ErrorState error={error} />}
       {fxUnavailable && (
@@ -186,7 +186,6 @@ export function DashboardPage() {
           groupBy={groupBy}
           onGroupBy={setGroupBy}
           selectedKey={selectedKey}
-          onSelect={select}
         />
       </section>
 

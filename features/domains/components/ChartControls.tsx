@@ -1,13 +1,13 @@
 import { Select } from "../../../components/atoms/Select";
 import { SegmentedControl } from "../../../components/molecules/SegmentedControl";
+import { MONTH_PERIODS } from "../../../constants";
+import type { MonthPeriod } from "../../../constants";
 
-export const CHART_PERIODS = [7, 12] as const;
-export type ChartPeriod = (typeof CHART_PERIODS)[number];
 export type StackMode = "category" | "currency";
 
 interface Props {
-  period: ChartPeriod;
-  onPeriod: (period: ChartPeriod) => void;
+  period: MonthPeriod;
+  onPeriod: (period: MonthPeriod) => void;
   mode: StackMode;
   onMode: (mode: StackMode) => void;
 }
@@ -29,9 +29,9 @@ export function ChartControls({ period, onPeriod, mode, onMode }: Props) {
       <div className="period">
         <Select
           aria-label="Period"
-          options={CHART_PERIODS.map((p) => ({ value: String(p), label: `Last ${p} months` }))}
+          options={MONTH_PERIODS.map((p) => ({ value: String(p), label: `Last ${p} months` }))}
           value={String(period)}
-          onValueChange={(v) => onPeriod(Number(v) as ChartPeriod)}
+          onValueChange={(v) => onPeriod(Number(v) as MonthPeriod)}
         />
       </div>
       <style jsx>{`

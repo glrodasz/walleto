@@ -6,6 +6,7 @@ import {
   monthDelta,
   monthKey,
   monthOccurrences,
+  monthsApart,
   monthTotals,
   monthTotalsByCurrency,
   monthWindows,
@@ -15,6 +16,7 @@ import {
 } from "./months";
 import { IDENTITY_RATES } from "../../../helpers/fx";
 import { occurrenceId } from "../../../helpers/materializeOccurrences";
+import { DEFAULT_MONTH_PERIOD } from "../../../constants";
 import type { Currency, RecurrentTransaction, Timestamp, Transaction } from "../../../types";
 
 const now = new Date(2026, 8, 6, 15); // Sep 6 2026, 3pm
@@ -89,6 +91,30 @@ describe("monthWindows", () => {
       "2026-01",
     ]);
     expect(monthKey(new Date(2025, 11, 3))).toBe("2025-12");
+  });
+});
+
+describe("monthWindows — the default period", () => {
+  it("draws the shared default when no count is given", () => {
+    expect(monthWindows(undefined, now)).toHaveLength(DEFAULT_MONTH_PERIOD);
+  });
+});
+
+describe("monthsApart", () => {
+  const at = (y: number, m: number) => new Date(y, m - 1, 1);
+
+  it("counts whole calendar months, across a year boundary", () => {
+    expect(monthsApart(at(2026, 9), at(2026, 9))).toBe(0);
+    expect(monthsApart(at(2026, 3), at(2026, 9))).toBe(6);
+    expect(monthsApart(at(2025, 11), at(2026, 2))).toBe(3);
+  });
+
+  it("goes negative for a month ahead of the other", () => {
+    expect(monthsApart(at(2026, 9), at(2026, 6))).toBe(-3);
+  });
+
+  it("ignores the day of the month", () => {
+    expect(monthsApart(new Date(2026, 2, 31), new Date(2026, 8, 1))).toBe(6);
   });
 });
 

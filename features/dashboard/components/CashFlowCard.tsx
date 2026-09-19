@@ -3,10 +3,9 @@ import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { Select } from "../../../components/atoms/Select";
 import { GroupedStackedBarsChart } from "../../../components/molecules/GroupedStackedBarsChart";
 import type { CashFlowGroup, CashFlowGroupBy, GroupedBar } from "../helpers/cashFlowSeries";
+import { MONTH_PERIODS } from "../../../constants";
+import type { MonthPeriod } from "../../../constants";
 import type { Currency } from "../../../types";
-
-export const CASH_FLOW_PERIODS = [3, 6, 12] as const;
-export type CashFlowPeriod = (typeof CASH_FLOW_PERIODS)[number];
 
 const GROUP_BY_OPTIONS: { value: CashFlowGroupBy; label: string }[] = [
   { value: "domain", label: "Group by domain" },
@@ -19,12 +18,11 @@ interface Props {
   groups: CashFlowGroup[];
   currency: Currency;
   loading: boolean;
-  period: CashFlowPeriod;
-  onPeriod: (period: CashFlowPeriod) => void;
+  period: MonthPeriod;
+  onPeriod: (period: MonthPeriod) => void;
   groupBy: CashFlowGroupBy;
   onGroupBy: (groupBy: CashFlowGroupBy) => void;
   selectedKey?: string;
-  onSelect?: (key: string) => void;
 }
 
 /** "Monthly cash flow": four domains per month, each stacked, with its controls and legend. */
@@ -38,7 +36,6 @@ export function CashFlowCard({
   groupBy,
   onGroupBy,
   selectedKey,
-  onSelect,
 }: Props) {
   return (
     <Card>
@@ -46,12 +43,12 @@ export function CashFlowCard({
         <div className="control">
           <Select
             aria-label="Period"
-            options={CASH_FLOW_PERIODS.map((p) => ({
+            options={MONTH_PERIODS.map((p) => ({
               value: String(p),
               label: `Last ${p} months`,
             }))}
             value={String(period)}
-            onValueChange={(v) => onPeriod(Number(v) as CashFlowPeriod)}
+            onValueChange={(v) => onPeriod(Number(v) as MonthPeriod)}
           />
         </div>
         <div className="control">
@@ -70,7 +67,6 @@ export function CashFlowCard({
         currency={currency}
         loading={loading}
         selectedKey={selectedKey}
-        onSelect={onSelect}
       />
 
       <ul className="legend" aria-label="Legend">

@@ -24,7 +24,7 @@ interface SelectedMonth {
   /** One clock per app mount, so every page agrees on what "now" is. */
   now: Date;
   currentKey: string;
-  /** Never later than `currentKey`. */
+  /** Always one of `pickerWindows`. */
   selectedKey: string;
   window: MonthWindow;
   /** The months the header picker offers, oldest first, ending with the current one. */
@@ -33,8 +33,21 @@ interface SelectedMonth {
   step: (delta: -1 | 1) => void;
 }
 
-function clampKey(key: string, currentKey: string): string {
-  return key > currentKey ? currentKey : key;
+/** The oldest month the picker offers. */
+function oldestKey(now: Date): string {
+  return monthKey(new Date(now.getFullYear(), now.getMonth() - (PICKER_MONTHS - 1), 1));
+}
+
+/**
+ * Always a month the picker offers. The upper bound keeps the app out of the
+ * future; the lower one matters because `?month=` takes any well-formed key,
+ * and a month from 1990 would have the pages building windows and subscribing
+ * back to it — and would leave both picker arrows dead, since the key is in
+ * no window it knows.
+ */
+function clampKey(key: string, currentKey: string, oldest: string): string {
+  if (key > currentKey) return currentKey;
+  return key < oldest ? oldest : key;
 }
 
 function defaultValue(now: Date): SelectedMonth {
@@ -62,13 +75,14 @@ export function MonthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const now = useMemo(() => new Date(), []);
   const currentKey = monthKey(now);
+  const oldest = useMemo(() => oldestKey(now), [now]);
   const [selectedKey, setSelectedKey] = useState(currentKey);
 
   // Hydrate from the URL once the router knows the query.
   useEffect(() => {
     if (!router.isReady) return;
     const fromUrl = router.query[MONTH_QUERY];
-    if (isMonthKey(fromUrl)) setSelectedKey(clampKey(fromUrl, currentKey));
+    if (isMonthKey(fromUrl)) setSelectedKey(clampKey(fromUrl, currentKey, oldest));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady]);
 
@@ -86,11 +100,11 @@ export function MonthProvider({ children }: { children: ReactNode }) {
   const select = useCallback(
     (key: string) => {
       if (!isMonthKey(key)) return;
-      const next = clampKey(key, currentKey);
+      const next = clampKey(key, currentKey, oldest);
       setSelectedKey(next);
       writeUrl(next);
     },
-    [currentKey, writeUrl]
+    [currentKey, oldest, writeUrl]
   );
 
   const step = useCallback(

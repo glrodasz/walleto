@@ -107,3 +107,24 @@ export const ICON_KEYS = [
 
 /** Where the commit of a preview build links to. */
 export const GITHUB_REPO_URL = "https://github.com/glrodasz/walleto";
+
+/**
+ * How many months a chart can look back over. One list for every chart: the
+ * domain pages and the dashboard's cash flow offer the same choice.
+ */
+export const MONTH_PERIODS = [3, 6, 12] as const;
+export type MonthPeriod = (typeof MONTH_PERIODS)[number];
+export const DEFAULT_MONTH_PERIOD: MonthPeriod = 6;
+
+/**
+ * A stored period, for `useLocalPreference`. A browser that saved a period
+ * from before this list changed (7) holds a number nothing offers any more,
+ * and a `<select>` with no matching option silently shows the first one — so
+ * anything off the list falls back to the default instead.
+ */
+export function parseMonthPeriod(raw: string): MonthPeriod {
+  const n = Number(JSON.parse(raw));
+  return (MONTH_PERIODS as readonly number[]).includes(n)
+    ? (n as MonthPeriod)
+    : DEFAULT_MONTH_PERIOD;
+}

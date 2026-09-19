@@ -10,10 +10,11 @@ import type { BarSeries, MonthBar } from "../../../components/molecules/MonthlyB
 import { CategoryBreakdown } from "../../../components/molecules/CategoryBreakdown";
 import { GroupedTotalsList } from "../../../components/molecules/GroupedTotalsList";
 import { TransactionsTable } from "../../../components/molecules/TransactionsTable";
-import { CURRENCY_COLORS } from "../../../constants";
+import { CURRENCY_COLORS, DEFAULT_MONTH_PERIOD, parseMonthPeriod } from "../../../constants";
+import type { MonthPeriod } from "../../../constants";
 import { MonthSummary } from "./MonthSummary";
 import { ChartControls } from "./ChartControls";
-import type { ChartPeriod, StackMode } from "./ChartControls";
+import type { StackMode } from "./ChartControls";
 import { ViewTabs, isDomainView } from "./ViewTabs";
 import type { DomainView } from "./ViewTabs";
 import { CategoryMonthList, categoryMonthRows } from "./CategoryMonthList";
@@ -40,6 +41,7 @@ import {
   monthDelta,
   monthTotals,
   monthKey,
+  monthsApart,
   monthTotalsByCurrency,
   monthWindows,
   trailingAverage,
@@ -83,21 +85,27 @@ export function DomainPage({ domain }: Props) {
 
   // One clock for the whole app: the windows, "still planned" and the
   // checklist all agree on what "now" is.
-  const { now, selectedKey, select } = useSelectedMonth();
-  const [period, setPeriod] = useLocalPreference<ChartPeriod>(`waletto:chart:${domain}:period`, 7);
+  const { now, window } = useSelectedMonth();
+  const [period, setPeriod] = useLocalPreference<MonthPeriod>(
+    `waletto:chart:${domain}:period`,
+    DEFAULT_MONTH_PERIOD,
+    parseMonthPeriod
+  );
   const [mode, setMode] = useLocalPreference<StackMode>(`waletto:chart:${domain}:mode`, "category");
   const [showHidden, setShowHidden] = useLocalPreference(`waletto:showHidden:${domain}`, false);
-  const windows = useMemo(() => monthWindows(period, now), [period, now]);
 
-  // The bars always end with the current month; a month older than the
-  // window clamps to its first bar, and the header follows.
-  const effectiveKey = selectedKey < windows[0].key ? windows[0].key : selectedKey;
-  useEffect(() => {
-    if (effectiveKey !== selectedKey) select(effectiveKey);
-  }, [effectiveKey, selectedKey, select]);
-  const window = windows.find((w) => w.key === effectiveKey) ?? windows[windows.length - 1];
-  const windowIndex = windows.indexOf(window);
-  const previousWindow = windowIndex > 0 ? windows[windowIndex - 1] : null;
+  // The bars draw `period` months ending with the current one. The figures
+  // reach back as far as the header picker does, because the page has to
+  // describe whatever month it names — and one more, for the delta. The bars
+  // are the tail of that list, so the two never disagree about a month they
+  // share, and the chart no longer decides which month the page is about.
+  const windows = useMemo(
+    () => monthWindows(Math.max(period, monthsApart(window.start, now) + 2), now),
+    [period, window.start, now]
+  );
+  const chartWindows = useMemo(() => windows.slice(-period), [windows, period]);
+  const previousWindow = useMemo(() => monthWindows(2, window.start)[0], [window.start]);
+  const selectedOnChart = chartWindows.some((w) => w.key === window.key);
 
   const [view, setView] = useState<DomainView>("transactions");
   const [drillCategoryId, setDrillCategoryId] = useState<string | null>(null);
@@ -189,15 +197,22 @@ export function DomainPage({ domain }: Props) {
   // same paths a contribution does — one ranking, one "Other" cap, one set of
   // shares. What nobody filed stays a segment of its own.
   const gainLedger = useMemo(() => gainRowsAsTransactions(gainRows, ctx), [gainRows, ctx]);
+  // Chart-scoped on purpose: `withGains` adds its series as soon as one month
+  // is non-zero, so a gain in a month the bars do not draw would leave an empty
+  // "Gain" segment and legend entry behind.
   const unfiledByMonth = useMemo(() => {
     const out: Record<string, number> = {};
-    for (const w of windows) out[w.key] = 0;
+    for (const w of chartWindows) out[w.key] = 0;
     for (const r of gainRows) {
       const key = monthKey(r.at);
       if (!r.categoryId && key in out) out[key] += r.gain;
     }
     return out;
-  }, [gainRows, windows]);
+  }, [gainRows, chartWindows]);
+  const chartGains = useMemo(
+    () => Object.fromEntries(chartWindows.map((w) => [w.key, gains[w.key] ?? 0])),
+    [chartWindows, gains]
+  );
   const txTotals = useMemo(
     () => monthTotals(chartTransactions, ctx, windows),
     [chartTransactions, ctx, windows]
@@ -230,7 +245,7 @@ export function DomainPage({ domain }: Props) {
     () => expectedForMonth(window, realized, chartItems, ctx, now),
     [window, realized, chartItems, ctx, now]
   );
-  const average = useMemo(() => trailingAverage(totals, windows), [totals, windows]);
+  const average = useMemo(() => trailingAverage(totals, chartWindows), [totals, chartWindows]);
   const delta = useMemo(
     () => monthDelta(totals, windows, window.key),
     [totals, windows, window.key]
@@ -254,7 +269,7 @@ export function DomainPage({ domain }: Props) {
     const base =
       mode === "currency"
         ? (() => {
-            const byCurrency = monthTotalsByCurrency(chartTransactions, ctx, windows);
+            const byCurrency = monthTotalsByCurrency(chartTransactions, ctx, chartWindows);
             return {
               totals: byCurrency.totals as Record<string, Record<string, number>>,
               series: byCurrency.currencies.map((c) => ({
@@ -264,10 +279,13 @@ export function DomainPage({ domain }: Props) {
               })),
             };
           })()
-        : monthTotalsByCategory([...chartTransactions, ...gainLedger], categories, ctx, windows, {
-            domain,
-            top: 5,
-          });
+        : monthTotalsByCategory(
+            [...chartTransactions, ...gainLedger],
+            categories,
+            ctx,
+            chartWindows,
+            { domain, top: 5 }
+          );
     // Nothing to split by (no transactions at all) still needs one series, so
     // a month that is pure gain has something to stack on.
     const withFallback =
@@ -276,34 +294,34 @@ export function DomainPage({ domain }: Props) {
         : {
             series: [{ key: "amount", label: config.spentLabel, color: config.accent }],
             totals: Object.fromEntries(
-              windows.map((w) => [w.key, { amount: txTotals[w.key] ?? 0 }])
+              chartWindows.map((w) => [w.key, { amount: txTotals[w.key] ?? 0 }])
             ),
           };
-    return withGains(withFallback, mode === "currency" ? gains : unfiledByMonth);
+    return withGains(withFallback, mode === "currency" ? chartGains : unfiledByMonth);
   }, [
     mode,
     chartTransactions,
     gainLedger,
     categories,
     ctx,
-    windows,
+    chartWindows,
     domain,
     config,
     txTotals,
-    gains,
+    chartGains,
     unfiledByMonth,
   ]);
   const series: BarSeries[] = stacks.series;
   const bars: MonthBar[] = useMemo(
     () =>
-      windows.map((w) => ({
+      chartWindows.map((w) => ({
         key: w.key,
         label: w.label,
         isCurrent: w.isCurrent,
         ...Object.fromEntries(series.map((s) => [s.key, stacks.totals[w.key]?.[s.key] ?? 0])),
         ...(w.isCurrent && expected > realized ? { planned: expected - realized } : {}),
       })),
-    [windows, series, stacks, expected, realized]
+    [chartWindows, series, stacks, expected, realized]
   );
 
   // The selected month by category, for the side card and the Categories
@@ -578,8 +596,9 @@ export function DomainPage({ domain }: Props) {
             currency={currency}
             loading={txLoading}
             average={average}
-            selectedKey={window.key}
-            onSelect={select}
+            /* Only when the bars actually draw it — otherwise every bar
+               dims and the whole chart greys out. */
+            selectedKey={selectedOnChart ? window.key : undefined}
             height={220}
           />
           {anythingHidden && (

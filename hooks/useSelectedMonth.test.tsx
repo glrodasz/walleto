@@ -28,10 +28,19 @@ const wrapper = ({ children }: { children: ReactNode }) => (
   <MonthProvider>{children}</MonthProvider>
 );
 
-const currentKey = (() => {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-})();
+const NOW = new Date();
+/** `back` months before the current one — the picker only offers 24. */
+const keyBack = (back: number) => {
+  const d = new Date(NOW.getFullYear(), NOW.getMonth() - back, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+};
+const longLabelBack = (back: number) =>
+  new Date(NOW.getFullYear(), NOW.getMonth() - back, 1).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+const currentKey = keyBack(0);
+const oldestKey = keyBack(23);
 
 describe("useSelectedMonth", () => {
   beforeEach(() => {
@@ -46,49 +55,61 @@ describe("useSelectedMonth", () => {
     expect(result.current.selectedKey).toBe(currentKey);
     expect(result.current.window.isCurrent).toBe(true);
 
-    act(() => result.current.select("2024-03"));
-    expect(result.current.selectedKey).toBe("2024-03");
-    expect(result.current.window.longLabel).toBe("March 2024");
+    act(() => result.current.select(keyBack(6)));
+    expect(result.current.selectedKey).toBe(keyBack(6));
+    expect(result.current.window.longLabel).toBe(longLabelBack(6));
     expect(result.current.window.isCurrent).toBe(false);
     expect(replace).toHaveBeenCalledWith(
-      { pathname: "/expenses", query: { month: "2024-03" } },
+      { pathname: "/expenses", query: { month: keyBack(6) } },
       undefined,
       { shallow: true }
     );
   });
 
-  it("hydrates from ?month= and never goes past the current month", () => {
-    query = { month: "2024-01" };
+  it("hydrates from ?month= and stays inside the months the picker offers", () => {
+    query = { month: keyBack(9) };
     const { result } = renderHook(() => useSelectedMonth(), { wrapper });
-    expect(result.current.selectedKey).toBe("2024-01");
+    expect(result.current.selectedKey).toBe(keyBack(9));
 
     act(() => result.current.select("2999-12"));
     expect(result.current.selectedKey).toBe(currentKey);
 
+    // Older than the picker goes: clamped up, not accepted — otherwise the
+    // pages build windows back to it and its arrows have nothing to step through.
+    act(() => result.current.select("1990-01"));
+    expect(result.current.selectedKey).toBe(oldestKey);
+
     act(() => result.current.select("garbage"));
-    expect(result.current.selectedKey).toBe(currentKey);
+    expect(result.current.selectedKey).toBe(oldestKey);
+  });
+
+  it("clamps a ?month= older than the picker when hydrating", () => {
+    query = { month: "1990-01" };
+    const { result } = renderHook(() => useSelectedMonth(), { wrapper });
+    expect(result.current.selectedKey).toBe(oldestKey);
+    expect(result.current.pickerWindows[0].key).toBe(oldestKey);
   });
 
   it("steps one month at a time", () => {
-    query = { month: "2024-03" };
+    query = { month: keyBack(6) };
     const { result } = renderHook(() => useSelectedMonth(), { wrapper });
     act(() => result.current.step(-1));
-    expect(result.current.selectedKey).toBe("2024-02");
+    expect(result.current.selectedKey).toBe(keyBack(7));
     act(() => result.current.step(1));
-    expect(result.current.selectedKey).toBe("2024-03");
+    expect(result.current.selectedKey).toBe(keyBack(6));
   });
 
   it("re-applies the month after a navigation that dropped the query", () => {
-    query = { month: "2024-03" };
+    query = { month: keyBack(6) };
     const { result } = renderHook(() => useSelectedMonth(), { wrapper });
-    expect(result.current.selectedKey).toBe("2024-03");
+    expect(result.current.selectedKey).toBe(keyBack(6));
     replace.mockClear();
     query = {};
     act(() => {
       for (const fn of listeners.routeChangeComplete ?? []) fn("/incomes");
     });
     expect(replace).toHaveBeenCalledWith(
-      { pathname: "/incomes", query: { month: "2024-03" } },
+      { pathname: "/incomes", query: { month: keyBack(6) } },
       undefined,
       { shallow: true }
     );
@@ -96,7 +117,7 @@ describe("useSelectedMonth", () => {
     // A destination that already names a month is left alone.
     replace.mockClear();
     act(() => {
-      for (const fn of listeners.routeChangeComplete ?? []) fn("/incomes?month=2024-02");
+      for (const fn of listeners.routeChangeComplete ?? []) fn(`/incomes?month=${keyBack(7)}`);
     });
     expect(replace).not.toHaveBeenCalled();
   });
@@ -104,7 +125,7 @@ describe("useSelectedMonth", () => {
   it("falls back to a fixed current month without a provider", () => {
     const { result } = renderHook(() => useSelectedMonth());
     expect(result.current.selectedKey).toBe(currentKey);
-    act(() => result.current.select("2024-03"));
+    act(() => result.current.select(keyBack(6)));
     expect(result.current.selectedKey).toBe(currentKey);
   });
 
