@@ -148,9 +148,15 @@ The gain it reports since the previous check of the same account is booked as
 that month's market gain on the Investments and Savings pages, so "total
 invested" there means contributions **plus** gain, and the category it names
 carries its share of it.
-Because each check snapshots the cost basis, the chain reconciles exactly:
-what went in, plus every gain since, is what the last check said the position
-was worth. Two consequences are deliberate: the first check on a position
+The chain reconciles exactly because each check is measured against the
+previous check's value plus whatever went in since, all converted at today's
+rate: what went in, plus every gain since, is what the last check said plus
+what was deposited after it — the same figure the Value tab shows for an
+account without a rate, on any day and in any display currency. (The cost
+basis a check snapshots is kept for its history row and its own percentage;
+it froze one day's exchange rate, so totals never read it.) A consequence:
+editing or back-dating a contribution re-attributes an already-closed month's
+gain — the ledger is the truth. Two consequences are deliberate: the first check on a position
 whose contributions were never logged books its whole value as one month's
 gain, and a page's bars only ever move on a _stated_ value — an interest
 estimate is not something that happened, so it never becomes a bar.

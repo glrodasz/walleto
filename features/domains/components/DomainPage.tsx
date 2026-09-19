@@ -31,6 +31,7 @@ import {
 } from "../../investments/helpers/valuationGains";
 import { GAIN_KEY, GAIN_LABEL, withGains } from "../helpers/gainStack";
 import { isAccountDomain } from "../../../helpers/accounts";
+import { INCEPTION } from "../../investments/helpers/valuation";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import {
   expectedForMonth,
@@ -120,11 +121,14 @@ export function DomainPage({ domain }: Props) {
     globalThis.history.replaceState(null, "", next === "transactions" ? base : `${base}#${next}`);
   };
 
+  // Investments and savings read their whole ledger: a value check is
+  // measured against everything paid in before it, not just the bars' window.
+  // Every figure below filters by month anyway, so nothing else moves.
   const {
     transactions,
     loading: txLoading,
     error: txError,
-  } = useDomainTransactions(domain, windows[0].start);
+  } = useDomainTransactions(domain, accountDomain ? INCEPTION : windows[0].start);
   const { items, error: itemsError, remove, update } = useRecurrentTransactions(domain);
   const {
     categories,
@@ -173,7 +177,14 @@ export function DomainPage({ domain }: Props) {
   // account really holds — so it counts toward the month, on top of what was
   // paid in. Contributions and gain are kept apart so the summary can say
   // which is which.
-  const { gains, rows: gainRows } = useDomainGains(accountDomain, categories, ctx, windows);
+  const { gains, rows: gainRows } = useDomainGains(
+    accountDomain,
+    transactions,
+    !txLoading,
+    categories,
+    ctx,
+    windows
+  );
   // A gain names the category the owner filed it under, so it can travel the
   // same paths a contribution does — one ranking, one "Other" cap, one set of
   // shares. What nobody filed stays a segment of its own.

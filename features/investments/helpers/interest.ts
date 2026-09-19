@@ -55,9 +55,11 @@ export function valueAt(
   asOf: Date
 ): number {
   const r = monthlyRate(rate);
+  // Checks arrive oldest first (`valueChecks` sorts them), so on a tie the
+  // later one in the array is the later-recorded one and wins.
   let latest: ValuePoint | null = null;
   for (const c of checks) {
-    if (c.asOf <= asOf && (!latest || c.asOf > latest.asOf)) latest = c;
+    if (c.asOf <= asOf && (!latest || c.asOf >= latest.asOf)) latest = c;
   }
   if (!latest) return estimateWithInterest(deposits, r, asOf);
   const anchor = latest;

@@ -210,6 +210,11 @@ export interface InvestmentValuation {
   /** 0 = break-even, 100 = doubled, -20 = lost a fifth. */
   gainPct: number;
   value: number;
+  /**
+   * Contributions to date as the form saw them, converted at that day's rate.
+   * Serves the history row and `gainPct`; the totals never read it, because a
+   * snapshot freezes one day's exchange rate and the ledger does not.
+   */
   costBasis: number;
   currency: Currency;
   note?: string;
