@@ -12,13 +12,14 @@ import { monthTotals, monthWindows, monthDelta } from "../../features/domains/he
 import type { MonthWindow } from "../../features/domains/helpers/months";
 import { DOMAIN_CONFIG } from "../../features/domains/helpers/domainConfig";
 import type { Domain } from "../../types";
+import { DEFAULT_MONTH_PERIOD } from "../../constants";
 import { STORY_CATEGORIES } from "./categories";
 import { STORY_CTX } from "./rates";
 import { NOW } from "./time";
 import { STORY_TRANSACTIONS, transactionsFor } from "./transactions";
 
-/** The seven months a domain page charts, oldest first. */
-export const STORY_WINDOWS: MonthWindow[] = monthWindows(7, NOW);
+/** The months a domain page charts by default, oldest first. */
+export const STORY_WINDOWS: MonthWindow[] = monthWindows(DEFAULT_MONTH_PERIOD, NOW);
 export const CURRENT_WINDOW: MonthWindow = STORY_WINDOWS[STORY_WINDOWS.length - 1];
 
 /** One bar per month for a domain, stacked by its top categories. */

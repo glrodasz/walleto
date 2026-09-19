@@ -225,8 +225,9 @@ Down the page:
 4. **Monthly cash flow**: per month, four bars side by side (one per domain),
    each stacked by its top five categories plus "Other" — or by currency, or
    plain — over the last 3, 6 or 12 months. Built from real transactions. A
-   legend chip per domain opens the list of slices. Clicking a bar selects that
-   month everywhere.
+   legend chip per domain opens the list of slices. The selected month's group
+   is drawn at full strength; like every chart, the bars only show — the month
+   is picked in the header.
 5. **Top expense categories** (icon, name, amount, bar, share; "View all") and
    **Upcoming payments** (calendar-leaf date, name, category, amount; "View
    all").
@@ -252,11 +253,14 @@ month that carries a value check says what its figure is made of underneath:
 "SEK 5,000.00 contributed · SEK 3,100.00 gain" (or "loss").
 
 **Chart card** ("Monthly expenses · Actual expenses, split by category"): one
-bar per month over the last 7 or 12 months, stacked by the **top five
+bar per month over the last 3, 6 or 12 months, stacked by the **top five
 categories + Other** in shades of the domain colour, or by **currency** (a
-toggle). The dashed line is the six-month average; the current month carries a
-hatched "still planned" segment; the selected month is highlighted and clicking
-a bar selects it. A "Show hidden" checkbox appears when something is hidden. On
+toggle). The dashed line averages the window's finished months; the current
+month carries a hatched "still planned" segment; the month the page is about is
+drawn at full strength while the rest dim. The bars are a picture, not a
+control — the month comes from the header picker, which reaches back two years,
+so a month older than the chart shows simply highlights nothing rather than
+moving the page. A "Show hidden" checkbox appears when something is hidden. On
 investments and savings a filed gain joins its own category's segment, so the
 bars and Top categories read the same; what nobody filed, and everything in
 the currency split (a gain is denominated in nothing), rides in a separate

@@ -70,7 +70,9 @@ features/
                 top categorías, próximos pagos, tip
   domains/      DomainPage — la pantalla month-first que comparten incomes/expenses/investments/savings:
                 el mes viene del header (hooks/useSelectedMonth), MonthSummary (total vs mes anterior, planeado),
-                barras apiladas por categoría o moneda (ChartControls), Top categories, y las vistas
+                barras apiladas por categoría o moneda (ChartControls; los charts solo muestran — el mes
+                lo pone el picker del header, y por eso la lista de meses que la página calcula es más larga
+                que la que dibujan las barras), Top categories, y las vistas
                 Transactions (TransactionsTable con búsqueda/filtros) / Recurring / Categories / Tags / Payment methods (/ Value)
   methods/      MethodsList + EditMethodModal — los usa Settings › Payment methods (la página /methods redirige)
   insights/     SubscriptionInsights — costo mensual/anualizado de suscripciones
@@ -106,7 +108,8 @@ components/atoms|molecules|organisms/   Atomic Design
 hooks/                                  hooks reutilizables
 schemas/                                esquemas Zod
 types/                                  tipos del dominio
-constants.ts                            constantes y mapas de presentación
+constants.ts                            constantes y mapas de presentación; MONTH_PERIODS (3/6/12) +
+                                        parseMonthPeriod los comparten el chart de dominio y el cash flow
 ```
 
 `components/atoms/EmptyState.tsx` y `components/atoms/ErrorState.tsx` son **distintos a propósito**: una regla de Firestore rota o un índice building deben leerse como error, nunca como "sin datos" — esa ambigüedad ya vació la lista de categorías del wizard una vez (ver §3). `components/molecules/Modal.tsx` y `KebabMenu.tsx` son los building blocks de cualquier CRUD nuevo (crear/editar en un modal, acciones por fila en un kebab) — no reinventes overlay ni dropdown. `Modal` es un diálogo centrado en desktop y un **bottom sheet** bajo 768px (ancho completo, `dvh`, safe-area, scroll del body bloqueado); los formularios largos fijan su fila de acciones con `position: sticky; bottom: 0` para que Cancelar/Guardar no queden fuera de vista. `components/molecules/CategoryField.tsx` y `PaymentMethodField.tsx` son los selects de categoría y de método de pago con creación inline que comparten los dos formularios de alta.

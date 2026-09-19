@@ -6,7 +6,8 @@ import type { Domain, Transaction } from "../../types";
 import { STORY_RECURRENT } from "./recurrent";
 import { monthsAgo, NOW, ts, STORY_USER_ID } from "./time";
 
-/** How far back the ledger goes: the seven months the domain charts show. */
+/** How far back the ledger goes — one month past the charts, so an older
+ *  month picked in the header still has something to show. */
 const HISTORY_START = monthsAgo(6);
 
 /** The current month's charges after today are still pending. */

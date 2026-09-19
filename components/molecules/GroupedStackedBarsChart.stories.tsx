@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
-import { fn } from "storybook/test";
 import { GroupedStackedBarsChart } from "./GroupedStackedBarsChart";
 import { boxed } from "../../stories/decorators";
 import { cashFlow, CURRENT_WINDOW } from "../../stories/fixtures";
@@ -12,7 +11,7 @@ const meta = {
   title: "Molecules/GroupedStackedBarsChart",
   component: GroupedStackedBarsChart,
   tags: ["autodocs"],
-  args: { ...byDomain, currency: "USD", loading: false, onSelect: fn() },
+  args: { ...byDomain, currency: "USD", loading: false },
   decorators: [boxed(760)],
 } satisfies Meta<typeof GroupedStackedBarsChart>;
 

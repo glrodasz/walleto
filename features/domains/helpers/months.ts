@@ -6,6 +6,7 @@ import { formatRelativeDay } from "../../../helpers/formatRelativeDay";
 import { formatDate, monthKey } from "../../../helpers/dates";
 import { paymentMethodLabel } from "../../../helpers/paymentMethodLabel";
 import type { GroupedTotal } from "../../../components/molecules/GroupedTotalsList";
+import { DEFAULT_MONTH_PERIOD } from "../../../constants";
 import type {
   Currency,
   PaymentMethod,
@@ -34,7 +35,10 @@ export { monthKey };
  * The last `count` months ending with the current one, oldest first. Built
  * from y/m/d so the 29th–31st never overflow into the following month.
  */
-export function monthWindows(count = 7, now: Date = new Date()): MonthWindow[] {
+export function monthWindows(
+  count: number = DEFAULT_MONTH_PERIOD,
+  now: Date = new Date()
+): MonthWindow[] {
   const windows: MonthWindow[] = [];
   for (let n = count - 1; n >= 0; n--) {
     const start = new Date(now.getFullYear(), now.getMonth() - n, 1);
@@ -49,6 +53,15 @@ export function monthWindows(count = 7, now: Date = new Date()): MonthWindow[] {
     });
   }
   return windows;
+}
+
+/**
+ * Whole calendar months from `from` to `to` — how far back a window sits.
+ * (`interest.monthsBetween` is a different thing: a fractional elapsed span
+ * for compounding.)
+ */
+export function monthsApart(from: Date, to: Date): number {
+  return (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
 }
 
 interface MoneyTransaction extends MoneyFields {

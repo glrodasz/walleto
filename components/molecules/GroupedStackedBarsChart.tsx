@@ -1,4 +1,5 @@
 import dynamic from "next/dynamic";
+import { Cell } from "./chartCell";
 import { useMoneyFormat } from "../../hooks/useMoneyFormat";
 import { flatKey } from "../../features/dashboard/helpers/cashFlowSeries";
 import type { CashFlowGroup, GroupedBar } from "../../features/dashboard/helpers/cashFlowSeries";
@@ -7,7 +8,6 @@ import type { Currency } from "../../types";
 // recharts is client-only and heavy, so every piece is loaded on demand.
 const BarChart = dynamic(() => import("recharts").then((m) => m.BarChart), { ssr: false });
 const Bar = dynamic(() => import("recharts").then((m) => m.Bar), { ssr: false });
-const Cell = dynamic(() => import("recharts").then((m) => m.Cell), { ssr: false });
 const XAxis = dynamic(() => import("recharts").then((m) => m.XAxis), { ssr: false });
 const YAxis = dynamic(() => import("recharts").then((m) => m.YAxis), { ssr: false });
 const CartesianGrid = dynamic(() => import("recharts").then((m) => m.CartesianGrid), {
@@ -24,7 +24,6 @@ interface Props {
   currency: Currency;
   loading: boolean;
   selectedKey?: string;
-  onSelect?: (key: string) => void;
   height?: number;
 }
 
@@ -39,7 +38,6 @@ export function GroupedStackedBarsChart({
   currency,
   loading,
   selectedKey,
-  onSelect,
   height = 260,
 }: Props) {
   const { formatAmount, formatTick } = useMoneyFormat();
@@ -126,11 +124,6 @@ export function GroupedStackedBarsChart({
                       fill={s.color}
                       radius={top ? [5, 5, 0, 0] : [0, 0, 0, 0]}
                       isAnimationActive={false}
-                      onClick={(_entry, index) => {
-                        const bar = data[index];
-                        if (bar && onSelect) onSelect(bar.key);
-                      }}
-                      cursor={onSelect ? "pointer" : undefined}
                     >
                       {data.map((d) => (
                         <Cell
