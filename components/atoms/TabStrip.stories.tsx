@@ -16,6 +16,7 @@ const DOMAINS = [
   { key: "EXPENSE", label: "Expenses", accent: "var(--domain-expense)" },
   { key: "INVESTMENT", label: "Investments", accent: "var(--domain-investment)" },
   { key: "SAVING", label: "Savings", accent: "var(--domain-saving)" },
+  { key: "DEBT", label: "Debts", accent: "var(--domain-debt)" },
 ];
 
 function Interactive(props: React.ComponentProps<typeof TabStrip>) {

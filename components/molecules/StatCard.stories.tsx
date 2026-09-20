@@ -50,6 +50,23 @@ export const Income: Story = {
     ],
   },
 };
+export const Debts: Story = {
+  args: {
+    title: "Debts",
+    domain: "DEBT",
+    href: "/debts",
+    amount: 1180.5,
+    byCurrency: [
+      { currency: "SEK", pct: 79 },
+      { currency: "USD", pct: 21 },
+    ],
+    rows: [
+      { name: "Mortgage", value: "79%" },
+      { name: "Credit cards", value: "21%" },
+    ],
+    categoryCount: 2,
+  },
+};
 export const SingleCurrency: Story = {
   args: {
     title: "Savings",

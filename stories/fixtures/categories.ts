@@ -41,6 +41,11 @@ export const STORY_CATEGORIES: Category[] = [
 
   cat("cat-saving-banking", "SAVING", "Banking", { icon: "piggy" }),
   cat("cat-saving-emergency", "SAVING", "Emergency fund", { icon: "lifebuoy" }),
+
+  cat("cat-debt-cards", "DEBT", "Credit cards", { icon: "credit-card" }),
+  cat("cat-debt-loans", "DEBT", "Loans", { icon: "credit-card" }),
+  cat("cat-debt-mortgage", "DEBT", "Mortgage", { icon: "landmark" }),
+  cat("cat-debt-friends", "DEBT", "Friends & family", { icon: "family" }),
 ];
 
 export function categoriesFor(domain?: Domain): Category[] {

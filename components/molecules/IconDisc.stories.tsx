@@ -10,7 +10,7 @@ const meta = {
   argTypes: {
     domain: {
       control: "select",
-      options: [undefined, "INCOME", "EXPENSE", "INVESTMENT", "SAVING"],
+      options: [undefined, "INCOME", "EXPENSE", "INVESTMENT", "SAVING", "DEBT"],
     },
   },
 } satisfies Meta<typeof IconDisc>;

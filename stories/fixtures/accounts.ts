@@ -42,6 +42,26 @@ export const STORY_ACCOUNTS: Account[] = [
     currency: "EUR",
     createdAt: created,
   },
+  {
+    id: "acc-visa",
+    userId: STORY_USER_ID,
+    domain: "DEBT",
+    name: "Visa Gold",
+    provider: "SEB",
+    currency: "USD",
+    interestRate: { value: 19.9, period: "YEARLY" },
+    createdAt: created,
+  },
+  {
+    id: "acc-mortgage",
+    userId: STORY_USER_ID,
+    domain: "DEBT",
+    name: "Apartment mortgage",
+    provider: "SEB",
+    currency: "SEK",
+    interestRate: { value: 3.2, period: "YEARLY" },
+    createdAt: created,
+  },
 ];
 
 export function accountsFor(domain: AccountDomain | "ALL" | null): Account[] {

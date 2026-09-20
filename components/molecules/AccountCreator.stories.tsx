@@ -27,3 +27,5 @@ type Story = StoryObj<typeof meta>;
 export const Investment: Story = {};
 /** Savings call them pockets. */
 export const SavingPocket: Story = { args: { domain: "SAVING", accounts: accountsFor("SAVING") } };
+/** A debt names its lender instead of a bank or broker. */
+export const Debt: Story = { args: { domain: "DEBT", accounts: accountsFor("DEBT") } };

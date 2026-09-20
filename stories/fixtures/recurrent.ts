@@ -24,7 +24,7 @@ function item(seed: Seed): RecurrentTransaction {
   };
 }
 
-/** The plan: what repeats every month, across the four domains and three currencies. */
+/** The plan: what repeats every month, across the five domains and three currencies. */
 export const STORY_RECURRENT: RecurrentTransaction[] = [
   // ── Income ──────────────────────────────────────────────
   item({
@@ -232,6 +232,34 @@ export const STORY_RECURRENT: RecurrentTransaction[] = [
     tags: ["tag-trip"],
     inheritTags: true,
     day: 26,
+  }),
+
+  // ── Debts ───────────────────────────────────────────────
+  item({
+    id: "rt-visa",
+    domain: "DEBT",
+    categoryId: "cat-debt-cards",
+    accountId: "acc-visa",
+    name: "Visa Gold payment",
+    amount: 250,
+    currency: "USD",
+    frequency: "MONTHLY",
+    type: "LOAN_PAYMENT",
+    paymentMethodId: "pm-wise",
+    day: 5,
+  }),
+  item({
+    id: "rt-mortgage",
+    domain: "DEBT",
+    categoryId: "cat-debt-mortgage",
+    accountId: "acc-mortgage",
+    name: "Mortgage instalment",
+    amount: 9800,
+    currency: "SEK",
+    frequency: "MONTHLY",
+    type: "LOAN_PAYMENT",
+    paymentMethodId: "pm-wise",
+    day: 27,
   }),
 ];
 
