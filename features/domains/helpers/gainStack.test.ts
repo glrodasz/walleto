@@ -1,4 +1,4 @@
-import { GAIN_KEY, withGains } from "./gainStack";
+import { GAIN_KEY, gainLabel, withGains } from "./gainStack";
 import type { StackedTotals } from "../../../helpers/stacks";
 
 const byCategory: StackedTotals = {
@@ -43,5 +43,19 @@ describe("withGains", () => {
   it("fills in zero for a window the gains record never mentions", () => {
     const out = withGains(byCategory, { "2026-01": 120 });
     expect(out.totals["2026-02"][GAIN_KEY]).toBe(0);
+  });
+});
+
+describe("gainLabel", () => {
+  it("calls a debt's delta interest and everything else a gain", () => {
+    expect(gainLabel("INVESTMENT")).toBe("Gain");
+    expect(gainLabel("SAVING")).toBe("Gain");
+    expect(gainLabel("DEBT")).toBe("Interest");
+  });
+
+  it("labels the appended series accordingly", () => {
+    const out = withGains(byCategory, { "2026-01": -40, "2026-02": 0 }, gainLabel("DEBT"));
+    expect(out.series[out.series.length - 1]).toMatchObject({ key: GAIN_KEY, label: "Interest" });
+    expect(withGains(byCategory, { "2026-01": 40 }).series[2].label).toBe("Gain");
   });
 });

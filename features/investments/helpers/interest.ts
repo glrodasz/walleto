@@ -66,3 +66,30 @@ export function valueAt(
   const since = deposits.filter((d) => d.at > anchor.asOf);
   return grow(anchor.value, r, anchor.asOf, asOf) + estimateWithInterest(since, r, asOf);
 }
+
+/**
+ * What a debt has cost since its first balance check: what is owed at `asOf`
+ * minus that first balance, plus every repayment made in between — the part
+ * of the balance that repayments did not explain. `checks` are signed the way
+ * `valueAt` reads a debt (a balance owed is a negative value) and `deposits`
+ * are the repayments. Null before any check: with no balance there is no
+ * interest to measure.
+ */
+export function interestAccrued(
+  deposits: Deposit[],
+  checks: ValuePoint[],
+  rate: InterestRate | undefined,
+  asOf: Date
+): number | null {
+  let first: ValuePoint | null = null;
+  for (const c of checks) {
+    if (c.asOf <= asOf && (!first || c.asOf < first.asOf)) first = c;
+  }
+  if (!first) return null;
+  const anchor = first;
+  const owedNow = -valueAt(deposits, checks, rate, asOf);
+  const repaid = deposits
+    .filter((d) => d.at > anchor.asOf && d.at <= asOf)
+    .reduce((sum, d) => sum + d.amount, 0);
+  return owedNow - -anchor.value + repaid;
+}
