@@ -12,15 +12,19 @@ import { toDateInputValue } from "../../../helpers/scheduleAnchor";
 import { gainFromValue, valueFromGain } from "../helpers/valuation";
 import type { ValueSelector } from "../helpers/valuation";
 import { CURRENCY_SYMBOL } from "../../../constants";
-import type { Category, Currency, InvestmentValuation } from "../../../types";
+import type { AccountDomain, Category, Currency, InvestmentValuation } from "../../../types";
 
 interface Props {
   open: boolean;
+  /** A debt records a balance owed; the others a value, as a gain % or a figure. */
+  domain: AccountDomain;
   /** The account / pocket — or pre-account category — being valued. */
   selector: ValueSelector;
   name: string;
-  /** What's been paid in so far, in `currency`. */
+  /** What's been paid in (or repaid) so far, in `currency`. */
   costBasis: number;
+  /** Debts: what the balance is estimated to be today, to open the form on. */
+  latestValue?: number;
   currency: Currency;
   /** Present = edit. */
   valuation?: InvestmentValuation;
@@ -36,13 +40,16 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 /**
  * Gain % and Value are two views of one number. Typing either recomputes the
  * other from the basis; whichever was edited last is what gets saved — so
- * "+100% → 260, but actually it's 230" is a two-keystroke correction.
+ * "+100% → 260, but actually it's 230" is a two-keystroke correction. A debt
+ * has no gain to type: the form is just the balance owed, saved with a 0 %.
  */
 export function ValuationModal({
   open,
+  domain,
   selector,
   name,
   costBasis,
+  latestValue,
   currency,
   valuation,
   categories,
@@ -57,6 +64,7 @@ export function ValuationModal({
   const [categoryId, setCategoryId] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const owes = domain === "DEBT";
 
   useEffect(() => {
     if (!open) return;
@@ -70,11 +78,11 @@ export function ValuationModal({
     } else {
       setDate(toDateInputValue(new Date()));
       setGain("0");
-      setValue(String(round2(costBasis)));
+      setValue(String(round2(owes ? (latestValue ?? 0) : costBasis)));
       setNote("");
       setCategoryId(suggestedCategoryId ?? "");
     }
-  }, [open, valuation, costBasis, suggestedCategoryId]);
+  }, [open, valuation, costBasis, suggestedCategoryId, owes, latestValue]);
 
   const basis = valuation ? valuation.costBasis : costBasis;
 
@@ -87,6 +95,7 @@ export function ValuationModal({
   const onValueChange = (raw: string) => {
     const cleaned = raw.replace(/[^\d.]/g, "");
     setValue(cleaned);
+    if (owes) return;
     const v = Number(cleaned);
     const pct = gainFromValue(basis, v);
     if (Number.isFinite(v) && pct !== null) setGain(String(round2(pct)));
@@ -94,8 +103,10 @@ export function ValuationModal({
 
   const submit = async () => {
     const v = Number(value);
-    const pct = Number(gain);
-    if (!(v >= 0) || !Number.isFinite(pct)) return setError("Enter a value or a gain %");
+    const pct = owes ? 0 : Number(gain);
+    if (!(v >= 0) || !Number.isFinite(pct)) {
+      return setError(owes ? "Enter the balance owed" : "Enter a value or a gain %");
+    }
     if (!date) return setError("Pick a date");
 
     setBusy(true);
@@ -135,36 +146,57 @@ export function ValuationModal({
   return (
     <Modal
       open={open}
-      title={valuation ? `Edit valuation — ${name}` : `Value ${name}`}
+      title={
+        owes
+          ? valuation
+            ? `Edit balance — ${name}`
+            : `Balance — ${name}`
+          : valuation
+            ? `Edit valuation — ${name}`
+            : `Value ${name}`
+      }
       onClose={onClose}
     >
       <div className="form">
         <p className="basis">
-          Invested so far: <strong>{formatAmount(basis, currency)}</strong>
+          {owes ? "Repaid" : "Invested"} so far: <strong>{formatAmount(basis, currency)}</strong>
         </p>
 
         <TextField label="As of" type="date" value={date} onValueChange={setDate} />
 
-        <div className="pair">
+        {owes ? (
           <TextField
-            label="Gain %"
-            inputMode="decimal"
-            align="right"
-            value={gain}
-            onValueChange={(v) => onGainChange(v.replace(/[^\d.-]/g, ""))}
-          />
-          <TextField
-            label="Current value"
+            label="Balance owed"
             inputMode="decimal"
             prefix={CURRENCY_SYMBOL[currency]}
             align="right"
             value={value}
             onValueChange={onValueChange}
           />
-        </div>
-        <p className="hint">
-          Type either one — the other follows. Override the value if your broker says otherwise.
-        </p>
+        ) : (
+          <>
+            <div className="pair">
+              <TextField
+                label="Gain %"
+                inputMode="decimal"
+                align="right"
+                value={gain}
+                onValueChange={(v) => onGainChange(v.replace(/[^\d.-]/g, ""))}
+              />
+              <TextField
+                label="Current value"
+                inputMode="decimal"
+                prefix={CURRENCY_SYMBOL[currency]}
+                align="right"
+                value={value}
+                onValueChange={onValueChange}
+              />
+            </div>
+            <p className="hint">
+              Type either one — the other follows. Override the value if your broker says otherwise.
+            </p>
+          </>
+        )}
 
         {categories && (
           <>
@@ -182,8 +214,9 @@ export function ValuationModal({
               onValueChange={setCategoryId}
             />
             <p className="hint">
-              Where this gain belongs in the month&apos;s breakdown. An account can hold several
-              holdings and only you know which one moved.
+              {owes
+                ? "Where the interest & charges this balance reveals belong in the month's breakdown. A debt can hold several categories and only you know which one moved."
+                : "Where this gain belongs in the month's breakdown. An account can hold several holdings and only you know which one moved."}
             </p>
           </>
         )}

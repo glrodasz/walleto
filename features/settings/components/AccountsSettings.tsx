@@ -43,9 +43,9 @@ const draftOf = (a: Account): Draft => ({
 });
 
 /**
- * Investment accounts and savings pockets: create, rename, change the bank
- * or broker, the currency and the interest rate, or archive. The entry
- * forms offer the same creator inline.
+ * Investment accounts, savings pockets and debts: create, rename, change the
+ * bank or broker (the lender), the currency and the interest rate, or
+ * archive. The entry forms offer the same creator inline.
  */
 export function AccountsSettings() {
   const [domain, setDomain] = useState<AccountDomain>("INVESTMENT");
@@ -148,7 +148,7 @@ export function AccountsSettings() {
                       onValueChange={(v) => setDraft({ ...draft, name: v })}
                     />
                     <TextField
-                      label="Bank or broker"
+                      label={domain === "DEBT" ? "Lender" : "Bank or broker"}
                       placeholder="Optional"
                       value={draft.provider}
                       onValueChange={(v) => setDraft({ ...draft, provider: v })}

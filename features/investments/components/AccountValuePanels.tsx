@@ -45,6 +45,7 @@ export function AccountValuePanels({ domain, category, categories, ctx, currency
   if (!category.id) return null;
 
   const shared = {
+    domain,
     transactions,
     valuations,
     loading: loading || valLoading,

@@ -25,10 +25,10 @@ const PERIOD_OPTIONS: { value: InterestPeriod; label: string }[] = [
 ];
 
 /**
- * The inline "new account / pocket" form: name, bank or broker, currency and
- * an optional interest rate as the bank quotes it. Shared by the entry forms
- * (`AccountField`) and Settings. Mounted fresh each time, so its state needs
- * no reset.
+ * The inline "new account / pocket / debt" form: name, bank or broker (the
+ * lender, for a debt), currency and an optional interest rate as the bank
+ * quotes it. Shared by the entry forms (`AccountField`) and Settings.
+ * Mounted fresh each time, so its state needs no reset.
  */
 export function AccountCreator({
   domain,
@@ -83,15 +83,21 @@ export function AccountCreator({
       <legend className="legend">New {noun}</legend>
       <TextField
         label="Name"
-        placeholder={domain === "SAVING" ? "Emergency fund" : "Broker account"}
+        placeholder={
+          domain === "SAVING"
+            ? "Emergency fund"
+            : domain === "DEBT"
+              ? "Credit card"
+              : "Broker account"
+        }
         autoFocus
         value={name}
         onValueChange={setName}
       />
       <div className="pair">
         <TextField
-          label="Bank or broker (optional)"
-          placeholder="Avanza"
+          label={domain === "DEBT" ? "Lender (optional)" : "Bank or broker (optional)"}
+          placeholder={domain === "DEBT" ? "Bank or a friend's name" : "Avanza"}
           value={provider}
           onValueChange={setProvider}
         />

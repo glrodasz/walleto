@@ -22,6 +22,7 @@ const meta = {
   parameters: { layout: "fullscreen" },
   args: {
     open: true,
+    domain: "INVESTMENT",
     selector: { accountId: "acc-coinbase" },
     name: "Coinbase",
     costBasis: 1200,

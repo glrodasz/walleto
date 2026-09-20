@@ -87,10 +87,11 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
               className="glass glass--tap option"
               onClick={() => choose("value")}
             >
-              <strong>Record current value</strong>
+              <strong>Record current {domain === "DEBT" ? "balance" : "value"}</strong>
               <span>
-                What {domain === "SAVING" ? "a pocket" : "an account"} is worth today, as a gain %
-                or a value
+                {domain === "DEBT"
+                  ? "What you still owe on a debt today"
+                  : `What ${domain === "SAVING" ? "a pocket" : "an account"} is worth today, as a gain % or a value`}
               </span>
             </button>
           )}
