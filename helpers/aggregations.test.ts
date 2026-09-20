@@ -150,13 +150,14 @@ describe("groupByCategory", () => {
 });
 
 describe("computeFlow", () => {
-  it("net is what remains unallocated after spending, saving and investing", () => {
+  it("net is what remains unallocated after spending, saving, investing and repaying", () => {
     const flow = computeFlow(
       {
         INCOME: [makeItem("MONTHLY", 5000, "c", "USD", { domain: "INCOME" })],
         EXPENSE: [makeItem("MONTHLY", 2000)],
         SAVING: [makeItem("MONTHLY", 300, "c", "USD", { domain: "SAVING" })],
         INVESTMENT: [makeItem("MONTHLY", 700, "c", "USD", { domain: "INVESTMENT" })],
+        DEBT: [makeItem("MONTHLY", 400, "c", "USD", { domain: "DEBT" })],
       },
       USD
     );
@@ -165,7 +166,8 @@ describe("computeFlow", () => {
       expenses: 2000,
       savings: 300,
       investments: 700,
-      net: 2000,
+      debts: 400,
+      net: 1600,
     });
   });
 

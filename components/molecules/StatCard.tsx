@@ -3,7 +3,14 @@ import type { ComponentType, ReactNode } from "react";
 import type { Currency, Domain } from "../../types";
 import { Card } from "../atoms/Card";
 import { Amount } from "../atoms/Amount";
-import { ArrowDown, ArrowUpRight, ChevronRight, Circle, TrendingUp } from "../atoms/Icons";
+import {
+  ArrowDown,
+  ArrowUpRight,
+  ChevronRight,
+  Circle,
+  CreditCard,
+  TrendingUp,
+} from "../atoms/Icons";
 import type { IconProps } from "../atoms/Icons";
 import { IconDisc } from "./IconDisc";
 import { KebabMenu } from "./KebabMenu";
@@ -37,6 +44,7 @@ const ICON: Record<Domain, ComponentType<IconProps>> = {
   EXPENSE: ArrowDown,
   INVESTMENT: TrendingUp,
   SAVING: Circle,
+  DEBT: CreditCard,
 };
 
 /** A domain's monthly figure on the dashboard, tinted in its colour. */

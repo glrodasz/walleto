@@ -15,6 +15,7 @@ const DOMAIN_COLOR: Record<Domain, string> = {
   EXPENSE: "var(--domain-expense)",
   INVESTMENT: "var(--domain-investment)",
   SAVING: "var(--domain-saving)",
+  DEBT: "var(--domain-debt)",
 };
 
 /** The round tinted disc behind an icon on cards and rows. */

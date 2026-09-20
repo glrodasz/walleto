@@ -19,6 +19,8 @@ export const Default: Story = {};
 /** Mixed currencies converted with rates: the figure is marked approximate. */
 export const Approximate: Story = { args: { approximate: true } };
 export const Negative: Story = {
-  args: { flow: { income: 3000, expenses: 2600, investments: 400, savings: 300, net: -300 } },
+  args: {
+    flow: { income: 3000, expenses: 2400, investments: 400, savings: 300, debts: 200, net: -300 },
+  },
 };
 export const Mobile: Story = { globals: { viewport: { value: "mobile1", isRotated: false } } };

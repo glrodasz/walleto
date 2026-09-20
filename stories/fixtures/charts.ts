@@ -49,7 +49,7 @@ export function domainTotals(domain: Domain) {
   return { totals, delta: monthDelta(totals, STORY_WINDOWS, CURRENT_WINDOW.key) };
 }
 
-/** The dashboard's four-domain cash flow for the last `months` months. */
+/** The dashboard's five-domain cash flow for the last `months` months. */
 export function cashFlow(months = 6, groupBy: CashFlowGroupBy = "domain") {
   const windows = monthWindows(months, NOW);
   const byDomain = {
@@ -57,6 +57,7 @@ export function cashFlow(months = 6, groupBy: CashFlowGroupBy = "domain") {
     EXPENSE: transactionsFor("EXPENSE"),
     INVESTMENT: transactionsFor("INVESTMENT"),
     SAVING: transactionsFor("SAVING"),
+    DEBT: transactionsFor("DEBT"),
   };
   return cashFlowSeries(byDomain, STORY_CATEGORIES, STORY_CTX, windows, { groupBy, top: 5 });
 }

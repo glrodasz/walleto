@@ -41,6 +41,7 @@ describe("Sidebar mobile navigation", () => {
     const sheet = screen.getByRole("dialog", { name: "More" });
     for (const [label, href] of [
       ["Savings", "/savings"],
+      ["Debts", "/debts"],
       ["Prospect", "/prospect"],
       ["Settings", "/settings"],
       ["Log out", "/api/auth/logout"],

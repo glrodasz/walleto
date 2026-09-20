@@ -22,6 +22,7 @@ describe("defaultIconFor", () => {
     expect(defaultIconFor("Misc", "EXPENSE")).toBe("tag");
     expect(defaultIconFor("Misc", "INVESTMENT")).toBe("chart");
     expect(defaultIconFor("Misc", "SAVING")).toBe("piggy");
+    expect(defaultIconFor("Misc", "DEBT")).toBe("credit-card");
   });
 });
 

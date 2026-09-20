@@ -11,7 +11,7 @@ export interface WhatIfImpact {
 
 /**
  * The effect of hypothetically cancelling a set of recurrent items. Cancelling
- * an EXPENSE, INVESTMENT or SAVING item all raise net the same way — each is
+ * an EXPENSE, INVESTMENT, SAVING or DEBT item all raise net the same way — each is
  * subtracted in the flow formula, so removing it adds its monthly amount back
  * to unallocated cash. INCOME items are the caller's responsibility to
  * exclude from the candidate list; "cancelling" income isn't this feature.

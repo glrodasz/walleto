@@ -18,7 +18,7 @@ import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import { useEnabledCurrencies } from "../../../hooks/useEnabledCurrencies";
 import type { Account, AccountDomain, Currency, InterestPeriod } from "../../../types";
 
-const DOMAINS: AccountDomain[] = ["INVESTMENT", "SAVING"];
+const DOMAINS: AccountDomain[] = ["INVESTMENT", "SAVING", "DEBT"];
 const PAGE_SIZE = 25;
 
 const PERIOD_OPTIONS: { value: InterestPeriod; label: string }[] = [
@@ -106,7 +106,7 @@ export function AccountsSettings() {
 
   return (
     <Card>
-      <SectionTitle title="Accounts & pockets" />
+      <SectionTitle title="Accounts & debts" />
       <TabStrip
         label="Domain"
         tabs={DOMAINS.map((d) => ({

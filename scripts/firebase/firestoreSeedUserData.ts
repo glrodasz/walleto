@@ -96,6 +96,7 @@ function monthlyFlow(items: RecurrentTransaction[]) {
       EXPENSE: byDomain("EXPENSE"),
       INVESTMENT: byDomain("INVESTMENT"),
       SAVING: byDomain("SAVING"),
+      DEBT: byDomain("DEBT"),
     },
     CTX
   );
@@ -463,6 +464,7 @@ function printSummary(items: RecurrentTransaction[], counts: Record<string, numb
   console.log(`  expenses     ${usd(flow.expenses)}`);
   console.log(`  savings      ${usd(flow.savings)}`);
   console.log(`  investments  ${usd(flow.investments)}`);
+  console.log(`  debts        ${usd(flow.debts)}`);
   console.log(`  net          ${usd(flow.net)}`);
   console.log("\nDocuments:");
   for (const [label, n] of Object.entries(counts)) {

@@ -27,26 +27,34 @@ export function ProspectPage() {
   const { items: expenses, loading: l2, error: e2 } = useRecurrentTransactions("EXPENSE");
   const { items: investments, loading: l3, error: e3 } = useRecurrentTransactions("INVESTMENT");
   const { items: savings, loading: l4, error: e4 } = useRecurrentTransactions("SAVING");
-  const loading = l1 || l2 || l3 || l4;
-  const error = e1 ?? e2 ?? e3 ?? e4;
+  const { items: debts, loading: l5, error: e5 } = useRecurrentTransactions("DEBT");
+  const loading = l1 || l2 || l3 || l4 || l5;
+  const error = e1 ?? e2 ?? e3 ?? e4 ?? e5;
 
   const { excludedIds, toggle } = useWhatIf();
   const [horizonIdx, setHorizonIdx] = useState(0);
 
-  // Income can't be "cancelled" here — only spending, savings transfers and
-  // investment contributions are candidates, matching the net formula's terms.
+  // Income can't be "cancelled" here — only spending, savings transfers,
+  // investment contributions and debt repayments are candidates, matching
+  // the net formula's terms.
   const cancelable = useMemo(
-    () => [...expenses, ...investments, ...savings],
-    [expenses, investments, savings]
+    () => [...expenses, ...investments, ...savings, ...debts],
+    [expenses, investments, savings, debts]
   );
 
   const currentFlow = useMemo(
     () =>
       computeFlow(
-        { INCOME: incomes, EXPENSE: expenses, INVESTMENT: investments, SAVING: savings },
+        {
+          INCOME: incomes,
+          EXPENSE: expenses,
+          INVESTMENT: investments,
+          SAVING: savings,
+          DEBT: debts,
+        },
         ctx
       ),
-    [incomes, expenses, investments, savings, ctx]
+    [incomes, expenses, investments, savings, debts, ctx]
   );
 
   const impact = useMemo(

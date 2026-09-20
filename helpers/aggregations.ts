@@ -74,14 +74,16 @@ export function shareByCurrency(
 }
 
 /**
- * Monthly money flow across all four domains. `net` follows the owner's
- * definition: what is left unallocated after spending, saving and investing.
+ * Monthly money flow across all five domains. `net` follows the owner's
+ * definition: what is left unallocated after spending, saving, investing and
+ * paying down debt.
  */
 export interface MoneyFlow {
   income: number;
   expenses: number;
   savings: number;
   investments: number;
+  debts: number;
   net: number;
 }
 
@@ -93,7 +95,15 @@ export function computeFlow(
   const expenses = sumMonthly(itemsByDomain.EXPENSE ?? [], ctx);
   const savings = sumMonthly(itemsByDomain.SAVING ?? [], ctx);
   const investments = sumMonthly(itemsByDomain.INVESTMENT ?? [], ctx);
-  return { income, expenses, savings, investments, net: income - expenses - savings - investments };
+  const debts = sumMonthly(itemsByDomain.DEBT ?? [], ctx);
+  return {
+    income,
+    expenses,
+    savings,
+    investments,
+    debts,
+    net: income - expenses - savings - investments - debts,
+  };
 }
 
 interface MoMOptions extends MoneyContext {

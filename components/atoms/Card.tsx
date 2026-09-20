@@ -17,6 +17,7 @@ const TINT: Record<Domain, string> = {
   EXPENSE: "var(--domain-expense-soft)",
   INVESTMENT: "var(--domain-investment-soft)",
   SAVING: "var(--domain-saving-soft)",
+  DEBT: "var(--domain-debt-soft)",
 };
 
 /** A pane of glass over the backdrop. Everything on a page sits in one. */

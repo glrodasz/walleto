@@ -8,7 +8,7 @@ const SECTIONS = [
   { key: "categories", label: "Categories" },
   { key: "tags", label: "Tags" },
   { key: "methods", label: "Payment methods" },
-  { key: "accounts", label: "Accounts & pockets" },
+  { key: "accounts", label: "Accounts & debts" },
 ];
 
 const DOMAINS = [

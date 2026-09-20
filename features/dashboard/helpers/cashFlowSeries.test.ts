@@ -30,12 +30,13 @@ const byDomain: Record<Domain, Transaction[]> = {
   EXPENSE: [tx("EXPENSE", 2, 300, "home"), tx("EXPENSE", 3, 100, "food", "EUR")],
   INVESTMENT: [],
   SAVING: [tx("SAVING", 4, 50, "pocket")],
+  DEBT: [],
 };
 
 describe("cashFlowSeries", () => {
   it("grouped by domain: one series per domain, empty domains still present", () => {
     const { data, groups } = cashFlowSeries(byDomain, cats, ctx, windows, { groupBy: "domain" });
-    expect(groups.map((g) => g.key)).toEqual(["INCOME", "EXPENSE", "INVESTMENT", "SAVING"]);
+    expect(groups.map((g) => g.key)).toEqual(["INCOME", "EXPENSE", "INVESTMENT", "SAVING", "DEBT"]);
     expect(groups.every((g) => g.series.length === 1)).toBe(true);
     const sep = data[1];
     expect(sep.key).toBe("2026-09");
