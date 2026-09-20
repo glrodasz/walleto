@@ -9,20 +9,22 @@ what every number and label means.
 
 ## 1. What the app is
 
-Waletto is a personal-finance tracker built around **four domains** rather than
+Waletto is a personal-finance tracker built around **five domains** rather than
 the usual two:
 
-| Domain      | What it holds                                     | Accent |
-| ----------- | ------------------------------------------------- | ------ |
-| Income      | Salary, invoices, anything arriving               | Green  |
-| Expenses    | Subscriptions, rent, groceries, anything leaving  | Red    |
-| Investments | Money moved into brokerage or retirement accounts | Cyan   |
-| Savings     | Money moved into savings pockets                  | Amber  |
+| Domain      | What it holds                                            | Accent  |
+| ----------- | -------------------------------------------------------- | ------- |
+| Income      | Salary, invoices, anything arriving                      | Green   |
+| Expenses    | Subscriptions, rent, groceries, anything leaving         | Red     |
+| Investments | Money moved into brokerage or retirement accounts        | Cyan    |
+| Savings     | Money moved into savings pockets                         | Amber   |
+| Debts       | Repayments on credit cards, loans, mortgages, money owed | Fuchsia |
 
-**Net flow = income − expenses − savings − investments.** Savings and
-investments are deliberately subtracted, not counted as spending: the headline
-number answers "what is left unallocated each month", so money that stays yours
-still leaves the pot.
+**Net flow = income − expenses − savings − investments − debt repayments.**
+Savings and investments are deliberately subtracted, not counted as spending:
+the headline number answers "what is left unallocated each month", so money
+that stays yours still leaves the pot. A repayment is money that stops being
+owed, and gets its own slice for the same reason.
 
 ### The two ideas everything rests on
 
@@ -87,17 +89,18 @@ calls it), an optional **last 4 digits**, and the currencies it can charge in
 with one default. Two methods clash only when type, network and alias all
 match, so "Salary" bank transfers at two different banks coexist.
 
-### Account / pocket
+### Account / pocket / debt
 
-_Investments and savings only._ Where the money physically sits — "Avanza ISK",
-"Emergency fund" — as opposed to what it is classified as. This distinction
-matters because **value and interest attach to the account, not the category**:
-you can hold two categories inside one brokerage account, and the account is
-what has a balance. An account has a name, an optional **bank or broker**, a
-currency, and optionally an **interest rate** as the bank quotes it (a
-percentage plus monthly or yearly). Filing an entry under an account is
-optional; everything unfiled lands in a single **"No account"** bucket per
-domain.
+_Investments, savings and debts only._ Where the money physically sits —
+"Avanza ISK", "Emergency fund" — or, for a debt, what is owed to whom —
+"Visa Gold", "Apartment mortgage" — as opposed to what it is classified as.
+This distinction matters because **value and interest attach to the account,
+not the category**: you can hold two categories inside one brokerage account,
+and the account is what has a balance. An account has a name, an optional
+**bank or broker** (the lender, for a debt), a currency, and optionally an
+**interest rate** as the bank quotes it (a percentage plus monthly or yearly).
+Filing an entry under an account is optional; everything unfiled lands in a
+single **"No account"** bucket per domain ("Unassigned" on debts).
 
 ### Recurring item (the plan)
 
@@ -139,6 +142,16 @@ all snapshotted so history stays truthful when rates change later. Between
 checks, an account with a quoted interest rate is _estimated_ by compounding
 each deposit monthly; a recorded check overrides the estimate from its date
 forward.
+
+On a debt the same record is a **balance check**: what was owed on that day.
+A debt is treated as a negative position, so the same maths apply with the
+sign flipped — the balance compounds _up_ at the quoted rate, each repayment
+compounds it _down_, and a check that comes in higher than "previous balance
+minus repayments since" reveals the **interest and charges** that accrued,
+booked as a negative gain in the month the check lands. The first balance
+only anchors the chain (the borrowing was never a repayment to measure it
+against), and before any balance exists a debt shows a dash rather than an
+estimate: repayments alone say nothing about what is owed.
 
 A check also **counts**, and it names **which category** the gain belongs to —
 an account can hold several holdings and only its owner knows which one moved,
@@ -191,9 +204,9 @@ it survives navigation, and a link can carry it (`?month=2026-07`). A floating
 "+" button is the single entry point for creating anything.
 
 The sidebar lists **Dashboard**, then **Money** (Incomes, Expenses,
-Investments, Savings), **Planning** (Prospect) and **Account** (Settings). The
-phone tab bar shows Home, Incomes, Expenses and Invest, with the rest behind a
-"More" sheet.
+Investments, Savings, Debts), **Planning** (Prospect) and **Account**
+(Settings). The phone tab bar shows Home, Incomes, Expenses and Invest, with
+the rest behind a "More" sheet.
 
 The interface is light by default — frosted "glass" cards over a soft mountain
 backdrop — with a dark variant and a "system" setting that follows the OS.
@@ -212,17 +225,18 @@ Down the page:
 1. **Error banners** (conditional): data errors verbatim, and the
    exchange-rates-unavailable notice.
 2. **Monthly plan hero**: the label "MONTHLY PLAN" with a "RECURRING" pill, the
-   net figure ("left to allocate this month"), four mini stats (Income,
-   Expenses, Investments, Savings) with an **allocation bar** splitting the
-   month's income into expenses / investments / savings / left, and the quote
-   _"A clear plan today, a more free tomorrow."_
-3. **Four domain cards**, tinted in their colour, each with an icon, the name
+   net figure ("left to allocate this month"), five mini stats (Income,
+   Expenses, Investments, Savings, Debts) with an **allocation bar** splitting
+   the month's income into expenses / investments / savings / debts / left,
+   and the quote _"A clear plan today, a more free tomorrow."_
+3. **Five domain cards**, tinted in their colour, each with an icon, the name
    (linking to the domain page), the monthly figure, two top categories (amounts
    for income, shares for the rest), the per-currency mix when currencies are
    mixed, and "N categories" with a menu. Investments and savings add a quiet
    second line — "Worth SEK 312,400.00 · checked Sep 12" — what those accounts
-   hold today; the headline figure above it is still the recurring run-rate.
-4. **Monthly cash flow**: per month, four bars side by side (one per domain),
+   hold today, and debts "Owed …" once a balance has been recorded; the
+   headline figure above it is still the recurring run-rate.
+4. **Monthly cash flow**: per month, five bars side by side (one per domain),
    each stacked by its top five categories plus "Other" — or by currency, or
    plain — over the last 3, 6 or 12 months. Built from real transactions. A
    legend chip per domain opens the list of slices. The selected month's group
@@ -235,14 +249,19 @@ Down the page:
 
 ---
 
-### 3.2 Domain page (Incomes · Expenses · Investments · Savings)
+### 3.2 Domain page (Incomes · Expenses · Investments · Savings · Debts)
 
-| Domain      | Title       | Subtitle                                                      | Accent |
-| ----------- | ----------- | ------------------------------------------------------------- | ------ |
-| Income      | Incomes     | See what comes in, month by month, and where it comes from.   | Green  |
-| Expenses    | Expenses    | Track what you spend, see your patterns, and stay in control. | Red    |
-| Investments | Investments | Follow what you put aside to grow, and what it is worth.      | Cyan   |
-| Savings     | Savings     | Watch your pockets fill up, one deposit at a time.            | Amber  |
+| Domain      | Title       | Subtitle                                                      | Accent  |
+| ----------- | ----------- | ------------------------------------------------------------- | ------- |
+| Income      | Incomes     | See what comes in, month by month, and where it comes from.   | Green   |
+| Expenses    | Expenses    | Track what you spend, see your patterns, and stay in control. | Red     |
+| Investments | Investments | Follow what you put aside to grow, and what it is worth.      | Cyan    |
+| Savings     | Savings     | Watch your pockets fill up, one deposit at a time.            | Amber   |
+| Debts       | Debts       | Keep track of what you owe, and watch it shrink.              | Fuchsia |
+
+On debts the month figure is "Total repaid so far", and when a balance check
+lands the line under it says what it is made of — "$1,000.00 repaid · $100.00
+interest & charges" — so the month reads as repaid minus interest.
 
 **Month summary** (two panels): **Total spent so far** — the figure, a delta
 pill against the previous month ("↑ 12%", coloured by whether a rise is good
@@ -292,6 +311,10 @@ never filed under one.
   narrows the Transactions view.
 - **Value** (investments, savings) — accounts and pockets with their current
   value, gain and history (unchanged).
+- **Balance** (debts) — the same view for debts: what was repaid, what is still
+  owed (a dash until a balance is recorded), the interest accrued since the
+  first balance, and the balance history. "Record balance" is a single field
+  that opens on today's estimate.
 
 ---
 
@@ -299,7 +322,7 @@ never filed under one.
 
 Title "Settings", subtitle "Manage your preferences, categories, tags, and
 accounts." A section strip — **General · Categories · Tags · Payment methods ·
-Accounts & pockets** — remembered in the URL hash.
+Accounts & debts** — remembered in the URL hash.
 
 **General** is six cards in two columns:
 
@@ -317,7 +340,7 @@ Accounts & pockets** — remembered in the URL hash.
 
 **Categories** — per domain, each row with its icon; the menu offers Rename,
 Change icon (a grid of 26 icons) and Archive. **Tags**, **Payment methods**
-and **Accounts & pockets** keep their lists (25 per page).
+and **Accounts & debts** keep their lists (25 per page).
 
 ---
 
@@ -354,9 +377,10 @@ DD/MM/YYYY or MM/DD/YYYY); month labels ("Sep", "September 2026") never change.
 Two palettes chosen by a `data-theme` attribute. Light: page `#e9eef5` under
 the backdrop, glass cards (white at 64%), text `#0f172a` / `#3b465a` /
 `#6b7688`, primary accent blue `#2563eb`, domains green `#16a34a`, red
-`#f43f5e`, cyan `#0ea5e9`, amber `#f59e0b`. Dark: the original noir values
-(`#0a0a0f` page, `#14141b` cards, `#7cffb2` green, `#ff3d68` red, `#5ee8ff`
-cyan, `#ffb84d` amber). Each domain also has a soft tint (card washes, icon
+`#f43f5e`, cyan `#0ea5e9`, amber `#f59e0b`, fuchsia `#d946ef`. Dark: the
+original noir values (`#0a0a0f` page, `#14141b` cards, `#7cffb2` green,
+`#ff3d68` red, `#5ee8ff` cyan, `#ffb84d` amber, `#f472ff` fuchsia). Each
+domain also has a soft tint (card washes, icon
 discs) and a six-step ramp for category-stacked bars. Corner radii are 6, 10,
 16 and 20 pixels.
 

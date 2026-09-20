@@ -32,6 +32,17 @@ export const WithInterestRate: Story = {
     rate: { value: 7, period: "YEARLY" },
   },
 };
+/** A debt: repaid against owed, and the interest accrued since the first balance. */
+export const Debt: Story = {
+  args: {
+    domain: "DEBT",
+    selector: { accountId: "acc-visa" },
+    title: "Visa Gold",
+    rate: { value: 19.9, period: "YEARLY" },
+    transactions: transactionsFor("DEBT"),
+    accent: "var(--domain-debt)",
+  },
+};
 export const NoValuations: Story = {
   args: { selector: { domain: "INVESTMENT" }, title: "No account", valuations: [] },
 };

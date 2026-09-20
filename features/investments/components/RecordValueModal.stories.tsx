@@ -29,3 +29,4 @@ type Story = StoryObj<typeof meta>;
 
 export const Investment: Story = {};
 export const Saving: Story = { args: { domain: "SAVING" } };
+export const Debt: Story = { args: { domain: "DEBT" } };
