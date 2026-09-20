@@ -8,6 +8,8 @@ stored in the currency it was entered in and converted only for display.
 Next.js 14 (Pages Router) · TypeScript · Firestore · Auth0 · Jest · pnpm.
 
 - What each screen does: [`docs/product-overview.md`](./docs/product-overview.md)
+- Data protection, applicable regulation and the operator checklist:
+  [`docs/compliance.md`](./docs/compliance.md)
 - Code conventions: [`AGENTS.md`](./AGENTS.md)
 
 ## Requirements
@@ -71,6 +73,9 @@ get preview deployments. CI (type check, lint, test, build) runs on every push
 and PR.
 
 Set the same variables from `.env.local.example` in the Vercel project.
+Before going live with real users, work through the operational checklist in
+[`docs/compliance.md`](./docs/compliance.md) §6 (data region, DPAs, backups,
+Auth0 Management credentials for account deletion, support address).
 `AUTH0_BASE_URL` must be set for _Production_ only; leaving it unset for
 _Preview_ lets each preview build its callback URL from the request host. Add
 the preview hostnames to Auth0's _Allowed Callback URLs_ and _Allowed Logout

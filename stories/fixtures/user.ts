@@ -21,4 +21,5 @@ export const STORY_USER_DOC: UserDoc = {
   dateFormat: "MDY",
   weekStart: 1,
   language: "en",
+  showGravatar: false,
 };

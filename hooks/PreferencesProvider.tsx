@@ -12,8 +12,9 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       dateFormat: userDoc?.dateFormat ?? DEFAULT_PREFERENCES.dateFormat,
       weekStart: userDoc?.weekStart ?? DEFAULT_PREFERENCES.weekStart,
       language: userDoc?.language ?? DEFAULT_PREFERENCES.language,
+      showGravatar: userDoc?.showGravatar ?? DEFAULT_PREFERENCES.showGravatar,
     }),
-    [userDoc?.dateFormat, userDoc?.weekStart, userDoc?.language]
+    [userDoc?.dateFormat, userDoc?.weekStart, userDoc?.language, userDoc?.showGravatar]
   );
   return <PreferencesContext.Provider value={value}>{children}</PreferencesContext.Provider>;
 }

@@ -51,6 +51,8 @@ export interface User {
   dateFormat?: DateFormat;
   weekStart?: WeekStart;
   language?: Language;
+  /** Opt-in: fetch the profile picture from gravatar.com (sends a hash of the email). */
+  showGravatar?: boolean;
   createdAt: Timestamp;
 }
 

@@ -8,12 +8,19 @@ export interface Preferences {
   dateFormat: DateFormat;
   weekStart: WeekStart;
   language: Language;
+  /**
+   * Whether the avatar may be fetched from gravatar.com. Off by default: the
+   * request carries a hash of the email plus the browser's IP to a third
+   * party, so it only happens once the person has said yes in Settings.
+   */
+  showGravatar: boolean;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
   dateFormat: DEFAULT_DATE_FORMAT,
   weekStart: 1,
   language: DEFAULT_LANGUAGE,
+  showGravatar: false,
 };
 
 /**

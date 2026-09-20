@@ -23,6 +23,7 @@ export function AboutCard() {
         <SettingsRow label="Help & support" value="Get in touch" href={`mailto:${support}`} />
       )}
       {feedback && <SettingsRow label="Feedback" value="Share your thoughts" href={feedback} />}
+      <SettingsRow label="Privacy policy" value="How your data is handled" href="/privacy" />
       <style jsx>{`
         .built {
           display: inline-flex;

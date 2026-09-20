@@ -1,5 +1,5 @@
 import { Select } from "../../../components/atoms/Select";
-import { Monitor, Moon, Sliders, Sun } from "../../../components/atoms/Icons";
+import { Monitor, Moon, Sliders, Sun, User } from "../../../components/atoms/Icons";
 import { SegmentedControl } from "../../../components/molecules/SegmentedControl";
 import { DATE_FORMAT_LABELS, formatDate } from "../../../helpers/dates";
 import { LANGUAGE_LABELS, t } from "../../../helpers/i18n";
@@ -12,10 +12,12 @@ import { SettingsRow } from "./SettingsRow";
 
 const DATE_FORMATS: DateFormat[] = ["YMD", "DMY", "MDY"];
 
-/** Start of week, date format, language and theme — saved on the user doc. */
+type AvatarSource = "initials" | "gravatar";
+
+/** Start of week, date format, language, theme and avatar — saved on the user doc. */
 export function PreferencesCard() {
   const { update } = useUserDoc();
-  const { dateFormat, weekStart, language } = usePreferences();
+  const { dateFormat, weekStart, language, showGravatar } = usePreferences();
   const { preference, setPreference } = useTheme();
 
   const save = (patch: Parameters<typeof update>[0]) =>
@@ -83,6 +85,21 @@ export function PreferencesCard() {
             }
           />
         }
+      />
+      <SettingsRow
+        label="Profile picture"
+        control={
+          <SegmentedControl<AvatarSource>
+            label="Profile picture"
+            options={[
+              { key: "initials", label: "Initials", icon: User },
+              { key: "gravatar", label: "Gravatar" },
+            ]}
+            value={showGravatar ? "gravatar" : "initials"}
+            onChange={(next) => save({ showGravatar: next === "gravatar" })}
+          />
+        }
+        hint="Gravatar sends a hash of your email to gravatar.com to look up a picture."
       />
     </SettingsCard>
   );

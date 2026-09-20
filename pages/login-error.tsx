@@ -9,7 +9,7 @@ export default function LoginError() {
   return (
     <>
       <Head>
-        <title>Sign-in failed · Sublr</title>
+        <title>Sign-in failed · Waletto</title>
       </Head>
       <main className="wrap">
         <section className="panel" role="alert">
@@ -33,6 +33,9 @@ export default function LoginError() {
               Back to home
             </Link>
           </div>
+          <p className="legal">
+            <Link href="/privacy">Privacy policy</Link>
+          </p>
         </section>
       </main>
       <style jsx>{`
@@ -114,6 +117,16 @@ export default function LoginError() {
           background: transparent;
           color: var(--fg-1, #b8b8c8);
           border: 1px solid var(--line-strong, #3a3a4d);
+        }
+
+        .legal {
+          margin: 0;
+          font-size: 0.8rem;
+          text-align: right;
+        }
+
+        .legal :global(a) {
+          color: var(--fg-2, #6e6e85);
         }
       `}</style>
     </>

@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { Sidebar } from "./Sidebar";
+import { DEFAULT_PREFERENCES, PreferencesContext } from "../../hooks/usePreferences";
 
 let pathname = "/";
 jest.mock("next/router", () => ({
@@ -79,5 +80,26 @@ describe("Sidebar mobile navigation", () => {
 
     fireEvent.click(within(sheet).getByRole("link", { name: "Prospect" }));
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});
+
+describe("Sidebar avatar", () => {
+  const gravatarImages = () =>
+    Array.from(document.querySelectorAll("img")).filter((img) =>
+      img.getAttribute("src")?.includes("gravatar.com")
+    );
+
+  it("never calls gravatar.com unless the person opted in", () => {
+    render(<Sidebar />);
+    expect(gravatarImages()).toHaveLength(0);
+  });
+
+  it("fetches the Gravatar once the preference is on", () => {
+    render(
+      <PreferencesContext.Provider value={{ ...DEFAULT_PREFERENCES, showGravatar: true }}>
+        <Sidebar />
+      </PreferencesContext.Provider>
+    );
+    expect(gravatarImages().length).toBeGreaterThan(0);
   });
 });

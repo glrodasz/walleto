@@ -38,4 +38,11 @@ describe("PreferencesCard", () => {
     fireEvent.click(screen.getByRole("radio", { name: "Dark" }));
     expect(setPreference).toHaveBeenCalledWith("dark");
   });
+
+  it("turns Gravatar on and off through the profile-picture control", () => {
+    render(<PreferencesCard />);
+    expect(screen.getByRole("radio", { name: "Initials" })).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(screen.getByRole("radio", { name: "Gravatar" }));
+    expect(update).toHaveBeenCalledWith({ showGravatar: true });
+  });
 });

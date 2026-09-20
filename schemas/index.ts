@@ -301,6 +301,7 @@ export const UserUpdateSchema = z
     dateFormat: DateFormatSchema.optional(),
     weekStart: WeekStartSchema.optional(),
     language: LanguageSchema.optional(),
+    showGravatar: z.boolean().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, {
     message: "At least one field is required",

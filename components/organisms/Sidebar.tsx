@@ -2,6 +2,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useUser } from "@auth0/nextjs-auth0/client";
+import { usePreferences } from "../../hooks/usePreferences";
 import type { ComponentType } from "react";
 import { Modal } from "../molecules/Modal";
 import { Avatar } from "../atoms/Avatar";
@@ -65,6 +66,7 @@ const MORE_NAV: NavItem[] = [
 export function Sidebar() {
   const { pathname } = useRouter();
   const { user } = useUser();
+  const { showGravatar } = usePreferences();
   const [moreOpen, setMoreOpen] = useState(false);
 
   const name = user?.name ?? user?.nickname ?? "Account";
@@ -109,7 +111,7 @@ export function Sidebar() {
 
         <div className="account">
           <div className="who">
-            <Avatar name={name} email={user?.email} />
+            <Avatar name={name} email={showGravatar ? user?.email : null} />
             <span className="who-text">
               <span className="who-name">{name}</span>
               {user?.email && <span className="who-mail">{user.email}</span>}
@@ -175,7 +177,7 @@ export function Sidebar() {
             <BuildBadge />
           </div>
           <div className="more-account">
-            <Avatar name={name} email={user?.email} />
+            <Avatar name={name} email={showGravatar ? user?.email : null} />
             <span className="who-text">
               <span className="who-name">{name}</span>
               {user?.email && <span className="who-mail">{user.email}</span>}

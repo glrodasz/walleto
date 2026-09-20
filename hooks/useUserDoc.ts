@@ -16,6 +16,7 @@ export interface UserDoc {
   dateFormat?: DateFormat;
   weekStart?: WeekStart;
   language?: Language;
+  showGravatar?: boolean;
 }
 
 export function useUserDoc() {
