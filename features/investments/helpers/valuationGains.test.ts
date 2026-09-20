@@ -122,6 +122,66 @@ const FEB = new Date(2026, 1, 15, 12);
 const MAR = new Date(2026, 2, 15, 12);
 const WINDOWS = [{ key: "2026-01" }, { key: "2026-02" }, { key: "2026-03" }];
 
+describe("valuationGainRows on a debt", () => {
+  const visa = { accountId: "visa", domain: "DEBT" as const };
+  const repay = (amount: number, date: Date) =>
+    tx(amount, date, { ...visa, categoryId: "cards", name: "Card payment" });
+  const balance = (value: number, date: Date) =>
+    check(value, 0, date, { ...visa, gainPct: 0, categoryId: "cards" });
+  const cards = [category("cards", "DEBT")];
+
+  it("anchors on the first balance and reports interest as a negative gain after it", () => {
+    // 5,000 owed on Jan 1; 500 repaid Feb 1 and Mar 1; 5,100 owed on Apr 1.
+    const rows = valuationGainRows(
+      [balance(5000, new Date(2026, 0, 1)), balance(5100, new Date(2026, 3, 1))],
+      [repay(500, new Date(2026, 1, 1)), repay(500, new Date(2026, 2, 1))],
+      "DEBT",
+      cards,
+      ctx
+    );
+    // The principal is not a loss; owing 5,100 after paying 1,000 on 5,000 is 1,100 of interest.
+    expect(rows.map((r) => r.gain)).toEqual([0, -1100]);
+    expect(rows[1].categoryId).toBe("cards");
+  });
+
+  it("a balance that came in lower than expected reads as a reduction", () => {
+    const rows = valuationGainRows(
+      [balance(5000, new Date(2026, 0, 1)), balance(3900, new Date(2026, 3, 1))],
+      [repay(1000, new Date(2026, 1, 1))],
+      "DEBT",
+      cards,
+      ctx
+    );
+    expect(rows.map((r) => r.gain)).toEqual([0, 100]);
+  });
+
+  it("telescopes: repayments between checks + Σ gains = principal paid down", () => {
+    const checks = [
+      balance(5000, new Date(2026, 0, 1)),
+      balance(4700, new Date(2026, 1, 20)),
+      balance(4450, new Date(2026, 3, 1)),
+    ];
+    const repayments = [repay(400, new Date(2026, 1, 1)), repay(400, new Date(2026, 3, 1))];
+    const rows = valuationGainRows(checks, repayments, "DEBT", cards, ctx);
+    const gains = rows.reduce((s, r) => s + r.gain, 0);
+    expect(800 + gains).toBeCloseTo(5000 - 4450, 6);
+  });
+
+  it("dresses the interest as a debt-domain ledger row and skips the zero anchor", () => {
+    const rows = valuationGainRows(
+      [balance(5000, new Date(2026, 0, 1)), balance(5100, new Date(2026, 3, 1))],
+      [repay(1000, new Date(2026, 1, 1))],
+      "DEBT",
+      cards,
+      ctx
+    );
+    const ledger = gainRowsAsTransactions(rows, ctx, "DEBT");
+    expect(ledger).toHaveLength(1);
+    expect(ledger[0]).toMatchObject({ domain: "DEBT", name: "Interest", amount: -1100 });
+    expect(isSyntheticRow(ledger[0])).toBe(true);
+  });
+});
+
 describe("valuationGainRows", () => {
   it("books the first check's whole gain, then only each delta", () => {
     const rows = gainsOf([check(1100, 1000, JAN), check(1400, 1200, FEB)]);

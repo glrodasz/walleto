@@ -2,12 +2,21 @@ import { convert } from "../../../helpers/fx";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { monthKey } from "../../../helpers/dates";
 import { rootIdMap, rootIdOf } from "../../../helpers/categoryTree";
-import { byAsOfAsc, depositsFor, selectorKey, valuationSelector, withDomain } from "./valuation";
+import {
+  byAsOfAsc,
+  depositsFor,
+  positionSign,
+  selectorKey,
+  valuationSelector,
+  withDomain,
+} from "./valuation";
 import type { ValueSelector } from "./valuation";
+import { gainLabel } from "../../domains/helpers/gainStack";
 import type {
   AccountDomain,
   Category,
   Currency,
+  Domain,
   InvestmentValuation,
   Transaction,
 } from "../../../types";
@@ -58,6 +67,13 @@ export interface GainRow {
  * the later one reports the value difference alone. Rows written before
  * accounts existed carry no `domain`; `withDomain` resolves theirs through
  * their category first, so they chain in the right place.
+ *
+ * A debt runs through the same chain as a negative position
+ * (`positionSign`): each balance owed enters as `−value`, so a check that
+ * comes in higher than "previous balance − repayments since" reports the
+ * interest it accrued as a negative gain. Its first check reports nothing:
+ * it establishes the principal, and the borrowing was never a transaction
+ * to measure it against.
  */
 export function valuationGainRows(
   valuations: InvestmentValuation[],
@@ -70,6 +86,7 @@ export function valuationGainRows(
     .filter((v) => v.domain === domain)
     .sort(byAsOfAsc);
   const roots = rootIdMap(categories);
+  const sign = positionSign(domain);
 
   // Deposits per chain, built once each; the previous check's value and date
   // so the next one knows what "since" means.
@@ -92,8 +109,8 @@ export function valuationGainRows(
     const since = depositsOf(key, selector)
       .filter((d) => (prev ? d.at > prev.asOf : true) && d.at <= at)
       .reduce((sum, d) => sum + d.amount, 0);
-    const value = convert(v.value, v.currency, ctx.target, ctx.rates);
-    const gain = value - ((prev?.value ?? 0) + since);
+    const value = sign * convert(v.value, v.currency, ctx.target, ctx.rates);
+    const gain = !prev && sign < 0 ? 0 : value - ((prev?.value ?? 0) + since);
     previous.set(key, { value, asOf: at });
     return {
       id: v.id,
@@ -111,19 +128,25 @@ export function valuationGainRows(
  * stacks, the breakdown and the month list fold them in through the paths
  * they already have — one ranking, one "Other" cap, one set of shares. The
  * amount is already converted, so it carries the reporting currency; the row
- * is marked synthetic so it never counts as a transaction.
+ * is marked synthetic so it never counts as a transaction. A gain of zero
+ * (every debt's first balance) adds nothing and would only claim a legend
+ * slot, so it is left out.
  */
-export function gainRowsAsTransactions(rows: GainRow[], ctx: MoneyContext): Transaction[] {
+export function gainRowsAsTransactions(
+  rows: GainRow[],
+  ctx: MoneyContext,
+  domain: Domain = "INVESTMENT"
+): Transaction[] {
   return rows
-    .filter((r) => r.categoryId)
+    .filter((r) => r.categoryId && r.gain !== 0)
     .map(
       (r) =>
         ({
           id: `gain:${r.id ?? r.selector}`,
           userId: "",
-          domain: "INVESTMENT",
+          domain,
           categoryId: r.categoryId!,
-          name: "Gain",
+          name: gainLabel(domain),
           amount: r.gain,
           currency: ctx.target,
           occurredAt: {

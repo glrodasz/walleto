@@ -15,7 +15,14 @@ import { plannedOccurrences } from "../helpers/months";
 import { isSyntheticRow } from "../helpers/spread";
 import type { MonthWindow } from "../helpers/months";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
+import { gainLabel } from "../helpers/gainStack";
 import type { Category, Currency, Domain, RecurrentTransaction, Transaction } from "../../../types";
+
+/** "gain" / "loss" for an asset; on a debt a check that came in high is "interest", low is "reduced". */
+function gainWord(domain: Domain, gain: number): string {
+  if (domain === "DEBT") return gain < 0 ? "interest" : "reduced";
+  return gain > 0 ? "gain" : "loss";
+}
 
 interface Props {
   domain: Domain;
@@ -163,7 +170,7 @@ export function CategoryMonthList({
                   r.share > 0 ? ` · ${r.share.toFixed(0)}%` : ""
                 }${
                   r.gain !== 0
-                    ? ` · ${formatAmount(Math.abs(r.gain), currency)} ${r.gain > 0 ? "gain" : "loss"}`
+                    ? ` · ${formatAmount(Math.abs(r.gain), currency)} ${gainWord(domain, r.gain)}`
                     : ""
                 }${r.planned > 0 ? ` · ${formatAmount(r.planned, currency)} planned` : ""}`}
                 progress={
@@ -205,8 +212,8 @@ export function CategoryMonthList({
                   <MoreHorizontal size={16} />
                 </IconDisc>
               }
-              name="Gain"
-              meta="From value checks that name no category"
+              name={gainLabel(domain)}
+              meta={`From ${domain === "DEBT" ? "balance" : "value"} checks that name no category`}
               amount={formatAmount(unfiledGain, currency)}
             />
           )}
