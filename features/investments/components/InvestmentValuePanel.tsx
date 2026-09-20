@@ -12,13 +12,18 @@ import type { MoneyContext } from "../../../helpers/aggregations";
 import {
   costBasisAt,
   currentValue,
+  depositsFor,
   gainFromValue,
   matchesSelector,
+  positionSign,
   valuationSeries,
+  valueChecks,
 } from "../helpers/valuation";
 import type { ValueSelector } from "../helpers/valuation";
+import { interestAccrued } from "../helpers/interest";
 import { ValuationModal } from "./ValuationModal";
 import type {
+  AccountDomain,
   Category,
   Currency,
   InterestRate,
@@ -28,6 +33,8 @@ import type {
 import { useDateFormat } from "../../../hooks/usePreferences";
 
 interface Props {
+  /** Decides the sign of the maths and the words: a debt shows repaid / owed / interest. */
+  domain: AccountDomain;
   selector: ValueSelector;
   /** Account name, or "{category} · no account" for pre-account entries. */
   title: string;
@@ -53,8 +60,12 @@ const CHART_MONTHS = 12;
  * What one position is worth versus what went into it: the latest value
  * check carried forward — compounding at the account's rate when it quotes
  * one — plus every deposit since; before any check, the interest estimate.
+ * For a debt the same panel reads repaid against owed, with the interest
+ * accrued since the first balance in place of the gain, and a dash for the
+ * balance until one has been recorded.
  */
 export function InvestmentValuePanel({
+  domain,
   selector,
   title,
   rate,
@@ -69,6 +80,8 @@ export function InvestmentValuePanel({
 }: Props) {
   const { formatDate } = useDateFormat();
   const { formatAmount } = useMoneyFormat();
+  const owes = domain === "DEBT";
+  const sign = positionSign(domain);
   const valuations = useMemo(
     () =>
       allValuations
@@ -87,23 +100,38 @@ export function InvestmentValuePanel({
     [transactions, selector, now, ctx]
   );
   const value = useMemo(
-    () => currentValue(transactions, valuations, selector, rate, now, ctx),
-    [transactions, valuations, selector, rate, now, ctx]
+    () => currentValue(transactions, valuations, selector, rate, now, ctx, sign),
+    [transactions, valuations, selector, rate, now, ctx, sign]
   );
   const latest = valuations[0] ?? null;
   const gain = value - invested;
   const gainPct = gainFromValue(invested, value);
+  // A debt's third figure: what repayments did not explain since the first balance.
+  const interest = useMemo(
+    () =>
+      owes
+        ? interestAccrued(
+            depositsFor(transactions, selector, ctx),
+            valueChecks(valuations, selector, ctx, sign),
+            rate,
+            now
+          )
+        : null,
+    [owes, transactions, valuations, selector, ctx, sign, rate, now]
+  );
 
   const series = useMemo(
-    () => valuationSeries(transactions, valuations, selector, ctx, CHART_MONTHS, now, rate),
-    [transactions, valuations, selector, ctx, now, rate]
+    () => valuationSeries(transactions, valuations, selector, ctx, CHART_MONTHS, now, rate, sign),
+    [transactions, valuations, selector, ctx, now, rate, sign]
   );
 
   const valueMeta = latest
     ? `checked ${formatDate(latest.asOf.toDate(), "dayYear")}${rate ? `, ${formatInterestRate(rate)} since` : ""}`
-    : rate
-      ? `estimated at ${formatInterestRate(rate)}`
-      : "no value check yet";
+    : owes
+      ? "no balance check yet"
+      : rate
+        ? `estimated at ${formatInterestRate(rate)}`
+        : "no value check yet";
 
   const del = async (id: string) => {
     setDeletingId(id);
@@ -120,45 +148,64 @@ export function InvestmentValuePanel({
     <>
       <Card accentColor={accent}>
         <div className="head">
-          <SectionTitle title={`${title} — value`} />
+          <SectionTitle title={`${title} — ${owes ? "balance" : "value"}`} />
           <Button variant="primary" size="sm" onClick={() => setModal({ open: true })}>
-            Record value
+            {owes ? "Record balance" : "Record value"}
           </Button>
         </div>
 
         <div className="figures">
           <div>
-            <span className="label">Invested</span>
+            <span className="label">{owes ? "Repaid" : "Invested"}</span>
             <Amount value={invested} currency={currency} size="md" />
           </div>
           <div>
-            <span className="label">Current value</span>
-            <Amount
-              value={value}
-              currency={currency}
-              size="md"
-              approximate={Boolean(rate) || (!!latest && latest.currency !== currency)}
-            />
+            <span className="label">{owes ? "Owed" : "Current value"}</span>
+            {owes && !latest ? (
+              <span className="dash">—</span>
+            ) : (
+              <Amount
+                value={value}
+                currency={currency}
+                size="md"
+                approximate={Boolean(rate) || (!!latest && latest.currency !== currency)}
+              />
+            )}
             <span className="meta">{valueMeta}</span>
           </div>
-          <div>
-            <span className="label">Gain</span>
-            <Amount value={gain} currency={currency} size="md" colorize />
-            {gainPct !== null && (
-              <span className={`meta ${gain >= 0 ? "up" : "down"}`}>
-                {gain >= 0 ? "+" : ""}
-                {gainPct.toFixed(1)}%
-              </span>
-            )}
-          </div>
+          {owes ? (
+            interest !== null && (
+              <div>
+                <span className="label">Interest</span>
+                <Amount
+                  value={interest}
+                  currency={currency}
+                  size="md"
+                  approximate={Boolean(rate)}
+                />
+                <span className="meta">since the first balance</span>
+              </div>
+            )
+          ) : (
+            <div>
+              <span className="label">Gain</span>
+              <Amount value={gain} currency={currency} size="md" colorize />
+              {gainPct !== null && (
+                <span className={`meta ${gain >= 0 ? "up" : "down"}`}>
+                  {gain >= 0 ? "+" : ""}
+                  {gainPct.toFixed(1)}%
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         <FlowChart
           data={series}
           currency={currency}
           loading={Boolean(loading)}
-          labelA="Invested"
-          labelB="Value"
+          labelA={owes ? "Repaid" : "Invested"}
+          labelB={owes ? "Owed" : "Value"}
           colorA="var(--fg-2)"
           colorB={accent}
           height={200}
@@ -171,10 +218,12 @@ export function InvestmentValuePanel({
                 <span className="row-date">{formatDate(v.asOf.toDate(), "dayYear")}</span>
                 <span className="row-figures">
                   <span className="row-value">{formatAmount(v.value, v.currency)}</span>
-                  <span className={`row-pct ${v.gainPct >= 0 ? "up" : "down"}`}>
-                    {v.gainPct >= 0 ? "+" : ""}
-                    {v.gainPct.toFixed(1)}% on {formatAmount(v.costBasis, v.currency)}
-                  </span>
+                  {!owes && (
+                    <span className={`row-pct ${v.gainPct >= 0 ? "up" : "down"}`}>
+                      {v.gainPct >= 0 ? "+" : ""}
+                      {v.gainPct.toFixed(1)}% on {formatAmount(v.costBasis, v.currency)}
+                    </span>
+                  )}
                   {v.note && <span className="row-note">{v.note}</span>}
                 </span>
                 <KebabMenu
@@ -225,6 +274,13 @@ export function InvestmentValuePanel({
 
           .meta {
             font-size: 0.75rem;
+            color: var(--fg-2);
+          }
+
+          .dash {
+            font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
+            font-size: 1.1rem;
+            font-weight: 600;
             color: var(--fg-2);
           }
 
@@ -290,9 +346,11 @@ export function InvestmentValuePanel({
           would size itself to the card instead of the viewport. */}
       <ValuationModal
         open={modal.open}
+        domain={domain}
         selector={selector}
         name={title}
         costBasis={invested}
+        latestValue={owes && latest ? value : undefined}
         currency={currency}
         categories={categories}
         suggestedCategoryId={suggestedCategoryId}

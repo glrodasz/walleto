@@ -62,7 +62,7 @@ interface Props {
 
 interface FormState extends ScheduleValue {
   categoryId: string;
-  /** INVESTMENT / SAVING only. */
+  /** INVESTMENT / SAVING / DEBT only. */
   accountId: string;
   name: string;
   amount: string;

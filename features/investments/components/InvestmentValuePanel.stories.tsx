@@ -8,6 +8,7 @@ const meta = {
   component: InvestmentValuePanel,
   tags: ["autodocs"],
   args: {
+    domain: "INVESTMENT",
     selector: { accountId: "acc-coinbase" },
     title: "Coinbase",
     transactions: transactionsFor("INVESTMENT"),

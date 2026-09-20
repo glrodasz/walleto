@@ -122,7 +122,28 @@ describe("AccountValueList", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: "Record value" })[1]);
     expect(valuationModalMock).toHaveBeenCalledWith(
-      expect.objectContaining({ selector: { domain: "SAVING" }, costBasis: 130 })
+      expect.objectContaining({ selector: { domain: "SAVING" }, costBasis: 130, domain: "SAVING" })
     );
+  });
+
+  it("reads a debt as repaid and owed, with a dash until a balance is recorded", () => {
+    render(<AccountValueList domain="DEBT" categories={categories} ctx={ctx} currency="USD" />);
+    expect(screen.getByText("Balances")).toBeInTheDocument();
+
+    // The mocked rows count as repayments, but with no balance recorded the
+    // debt reads as unknown — never as $0.00 owed, and never estimated.
+    const seb = screen.getByRole("button", { name: /SEB savings/ });
+    expect(seb).toHaveTextContent("SEB · Repaid $1,000.00 · no balance yet");
+    expect(seb).not.toHaveTextContent("estimated");
+    expect(screen.getAllByText("—").length).toBeGreaterThan(0);
+    expect(screen.queryByText(/\+\d+\.\d%/)).toBeNull();
+    expect(screen.queryByRole("button", { name: /No pocket|No debt/ })).toBeNull();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Record balance" })[0]);
+    expect(valuationModalMock).toHaveBeenCalledWith(
+      expect.objectContaining({ domain: "DEBT", latestValue: undefined })
+    );
+    fireEvent.click(seb);
+    expect(panelMock).toHaveBeenCalledWith(expect.objectContaining({ domain: "DEBT" }));
   });
 });

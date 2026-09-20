@@ -20,9 +20,12 @@ interface Props {
   previousLabel: string | null;
   currency: Currency;
   approximate?: boolean;
-  /** Investments / savings: the part of the figure that is money in. */
+  /** Investments / savings / debts: the part of the figure that is money in (or repaid). */
   contributed?: number;
-  /** Investments / savings: what the month's value checks reported; negative is a loss. */
+  /**
+   * Investments / savings: what the month's value checks reported; negative
+   * is a loss. Debts: negative is the interest the balance checks revealed.
+   */
   gain?: number;
 }
 
@@ -46,10 +49,18 @@ export function MonthSummary({
   const config = DOMAIN_CONFIG[domain];
   const ratio = expected > 0 ? realized / expected : 0;
   const left = Math.max(0, expected - realized);
-  // Investments and savings fold a market gain into the figure, so it says
-  // what it is made of. Silent when no value check landed: the month then
-  // reads exactly like one on the other two domains.
+  // Investments and savings fold a market gain into the figure — and a debt
+  // the interest it accrued — so it says what it is made of. Silent when no
+  // check landed: the month then reads exactly like one on the other domains.
   const showBreakdown = contributed !== undefined && gain !== undefined && gain !== 0;
+  const owes = domain === "DEBT";
+  const gainWord = owes
+    ? gain! < 0
+      ? "interest & charges"
+      : "reduced"
+    : gain! >= 0
+      ? "gain"
+      : "loss";
 
   return (
     <Card>
@@ -67,10 +78,10 @@ export function MonthSummary({
           </span>
           {showBreakdown && (
             <span className="line breakdown">
-              {`${formatAmount(contributed!, currency)} contributed · ${formatAmount(
+              {`${formatAmount(contributed!, currency)} ${owes ? "repaid" : "contributed"} · ${formatAmount(
                 Math.abs(gain!),
                 currency
-              )} ${gain! >= 0 ? "gain" : "loss"}`}
+              )} ${gainWord}`}
             </span>
           )}
           <span className="line">

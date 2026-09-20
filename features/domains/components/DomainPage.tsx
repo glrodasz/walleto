@@ -592,7 +592,11 @@ export function DomainPage({ domain }: Props) {
         <Card>
           <SectionTitle
             title={`Monthly ${config.noun}`}
-            subtitle={`${accountDomain ? `Actual ${config.noun} and reported gain` : `Actual ${config.noun}`}, split by ${mode === "category" ? "category" : "currency"}.`}
+            subtitle={`${
+              accountDomain
+                ? `Actual ${config.noun} and ${domain === "DEBT" ? "accrued interest" : "reported gain"}`
+                : `Actual ${config.noun}`
+            }, split by ${mode === "category" ? "category" : "currency"}.`}
           >
             <ChartControls period={period} onPeriod={setPeriod} mode={mode} onMode={setMode} />
           </SectionTitle>
@@ -641,7 +645,8 @@ export function DomainPage({ domain }: Props) {
           value={view}
           onChange={changeView}
           accent={config.accent}
-          showValue={Boolean(accountDomain) && domain !== "DEBT"}
+          showValue={Boolean(accountDomain)}
+          valueLabel={domain === "DEBT" ? "Balance" : undefined}
           showMethods={config.showPaymentMethod}
         />
         {panel}

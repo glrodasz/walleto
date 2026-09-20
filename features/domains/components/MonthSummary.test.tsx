@@ -75,4 +75,29 @@ describe("MonthSummary", () => {
     render(investments(0));
     expect(screen.queryByText(/contributed/)).not.toBeInTheDocument();
   });
+
+  const debts = (gain: number, repaid = 1_000) => (
+    <MonthSummary
+      domain="DEBT"
+      window={sep}
+      realized={repaid + gain}
+      expected={repaid + gain}
+      delta={{ current: 0, previous: 0, deltaPct: null, previousKey: null }}
+      previousLabel={null}
+      currency="USD"
+      contributed={repaid}
+      gain={gain}
+    />
+  );
+
+  it("says what a debt month is made of: repaid, and the interest the balance revealed", () => {
+    render(debts(-100));
+    expect(screen.getByText("Total repaid so far")).toBeInTheDocument();
+    expect(screen.getByText("$1,000.00 repaid · $100.00 interest & charges")).toBeInTheDocument();
+  });
+
+  it("calls a balance that came in low a reduction", () => {
+    render(debts(40));
+    expect(screen.getByText("$1,000.00 repaid · $40.00 reduced")).toBeInTheDocument();
+  });
 });
