@@ -10,6 +10,7 @@ const COLOR: Record<AllocationKey, string> = {
   expenses: "var(--domain-expense)",
   investments: "var(--domain-investment)",
   savings: "var(--domain-saving)",
+  debts: "var(--domain-debt)",
   left: "var(--domain-income)",
 };
 
@@ -17,6 +18,7 @@ const LABEL: Record<AllocationKey, string> = {
   expenses: "Expenses",
   investments: "Investments",
   savings: "Savings",
+  debts: "Debts",
   left: "Left to allocate",
 };
 

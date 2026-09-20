@@ -34,6 +34,7 @@ const DOMAIN_COLOR: Record<Domain, string> = {
   EXPENSE: "var(--domain-expense)",
   INVESTMENT: "var(--domain-investment)",
   SAVING: "var(--domain-saving)",
+  DEBT: "var(--domain-debt)",
 };
 
 /** "Top categories": icon, name, amount, share bar and percentage per row. */

@@ -9,7 +9,7 @@ import type { CURRENCIES, ICON_KEYS } from "../constants";
 export type IconKey = (typeof ICON_KEYS)[number];
 
 export type Currency = (typeof CURRENCIES)[number];
-export type Domain = "INCOME" | "EXPENSE" | "INVESTMENT" | "SAVING";
+export type Domain = "INCOME" | "EXPENSE" | "INVESTMENT" | "SAVING" | "DEBT";
 export type Frequency = "ONE_TIME" | "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY";
 
 export type TransactionStatus = "PENDING" | "PAID" | "SKIPPED";
@@ -96,8 +96,11 @@ export interface PaymentMethod {
   createdAt: Timestamp;
 }
 
-/** Domains whose entries can be filed under an account / pocket. */
-export type AccountDomain = "INVESTMENT" | "SAVING";
+/**
+ * Domains whose entries can be filed under an account / pocket / debt. A debt
+ * is a negative position: its "value checks" record what is owed.
+ */
+export type AccountDomain = "INVESTMENT" | "SAVING" | "DEBT";
 export type InterestPeriod = "MONTHLY" | "YEARLY";
 
 /** A rate as quoted by the bank or broker; `helpers/interest` normalises it. */
@@ -129,7 +132,7 @@ export interface RecurrentTransaction {
   userId: string;
   domain: Domain;
   categoryId: string;
-  /** INVESTMENT / SAVING only: the account or pocket the money goes into. */
+  /** INVESTMENT / SAVING / DEBT only: the account, pocket or debt the money goes into. */
   accountId?: string;
   name: string;
   amount: number;
@@ -169,7 +172,7 @@ export interface Transaction {
   domain: Domain;
   recurrentTransactionId?: string;
   categoryId: string;
-  /** INVESTMENT / SAVING only: inherited from the item or picked on the form. */
+  /** INVESTMENT / SAVING / DEBT only: inherited from the item or picked on the form. */
   accountId?: string;
   name: string;
   amount: number;

@@ -25,7 +25,7 @@ interface Props {
   selectedKey?: string;
 }
 
-/** "Monthly cash flow": four domains per month, each stacked, with its controls and legend. */
+/** "Monthly cash flow": five domains per month, each stacked, with its controls and legend. */
 export function CashFlowCard({
   data,
   groups,

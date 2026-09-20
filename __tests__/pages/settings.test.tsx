@@ -75,7 +75,7 @@ describe("SettingsPage", () => {
   it("lands on the section named in the hash", () => {
     window.location.hash = "#accounts";
     render(<SettingsPage />);
-    expect(screen.getByRole("tab", { name: "Accounts & pockets" })).toHaveAttribute(
+    expect(screen.getByRole("tab", { name: "Accounts & debts" })).toHaveAttribute(
       "aria-selected",
       "true"
     );

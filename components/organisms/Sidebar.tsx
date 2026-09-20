@@ -11,6 +11,7 @@ import {
   ArrowUp,
   Circle,
   Compass,
+  CreditCard,
   Home,
   MoreHorizontal,
   Settings,
@@ -27,7 +28,7 @@ interface NavItem {
 
 const DASHBOARD: NavItem = { label: "Dashboard", href: "/", icon: Home };
 
-/** Grouped so seven destinations read as three ideas instead of one long list. */
+/** Grouped so eight destinations read as three ideas instead of one long list. */
 const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
   {
     title: "Money",
@@ -36,6 +37,7 @@ const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
       { label: "Expenses", href: "/expenses", icon: ArrowDown },
       { label: "Investments", href: "/investments", icon: TrendingUp },
       { label: "Savings", href: "/savings", icon: Circle },
+      { label: "Debts", href: "/debts", icon: CreditCard },
     ],
   },
   {
@@ -58,6 +60,7 @@ const BOTTOM_NAV: NavItem[] = [
 
 const MORE_NAV: NavItem[] = [
   { label: "Savings", href: "/savings", icon: Circle },
+  { label: "Debts", href: "/debts", icon: CreditCard },
   { label: "Prospect", href: "/prospect", icon: Compass },
   { label: "Settings", href: "/settings", icon: Settings },
 ];

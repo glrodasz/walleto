@@ -4,11 +4,15 @@ import type { AccountDomain, Domain, InterestRate } from "../types";
 export const ACCOUNT_NOUN: Record<AccountDomain, { singular: string; article: string }> = {
   INVESTMENT: { singular: "account", article: "an investment account" },
   SAVING: { singular: "pocket", article: "a savings pocket" },
+  DEBT: { singular: "debt", article: "a debt" },
 };
 
-/** Only investments and savings sit somewhere; incomes and expenses have payment methods. */
+/**
+ * Investments and savings sit somewhere, and a debt is owed to someone;
+ * incomes and expenses have payment methods instead.
+ */
 export function isAccountDomain(domain: Domain): domain is AccountDomain {
-  return domain === "INVESTMENT" || domain === "SAVING";
+  return domain === "INVESTMENT" || domain === "SAVING" || domain === "DEBT";
 }
 
 /** "2.5% yearly" / "0.4% monthly", for pills and rows. */

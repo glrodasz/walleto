@@ -3,7 +3,7 @@ import { CURRENCIES, ICON_KEYS } from "../constants";
 
 export const CurrencySchema = z.enum(CURRENCIES);
 
-export const DomainSchema = z.enum(["INCOME", "EXPENSE", "INVESTMENT", "SAVING"]);
+export const DomainSchema = z.enum(["INCOME", "EXPENSE", "INVESTMENT", "SAVING", "DEBT"]);
 
 export const FrequencySchema = z.enum([
   "ONE_TIME",
@@ -127,7 +127,7 @@ export const TagUpdateSchema = z
 const TagIdsSchema = z.array(z.string().min(1)).max(20);
 const NoteSchema = z.string().trim().max(500);
 
-export const AccountDomainSchema = z.enum(["INVESTMENT", "SAVING"]);
+export const AccountDomainSchema = z.enum(["INVESTMENT", "SAVING", "DEBT"]);
 export const InterestPeriodSchema = z.enum(["MONTHLY", "YEARLY"]);
 
 export const InterestRateSchema = z.object({

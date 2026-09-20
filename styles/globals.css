@@ -37,7 +37,7 @@
   --glow: rgba(37, 99, 235, 0.1);
 
   /* The market-gain segment on the monthly bars. Deliberately clear of the
-     four domain ramps: a gain belongs to no domain colour. */
+     five domain ramps: a gain belongs to no domain colour. */
   --bar-gain: #7c3aed;
 
   /*
@@ -104,10 +104,12 @@
   --domain-expense: #f43f5e;
   --domain-investment: #0ea5e9;
   --domain-saving: #f59e0b;
+  --domain-debt: #d946ef;
   --domain-income-soft: color-mix(in srgb, var(--domain-income) 16%, transparent);
   --domain-expense-soft: color-mix(in srgb, var(--domain-expense) 16%, transparent);
   --domain-investment-soft: color-mix(in srgb, var(--domain-investment) 16%, transparent);
   --domain-saving-soft: color-mix(in srgb, var(--domain-saving) 16%, transparent);
+  --domain-debt-soft: color-mix(in srgb, var(--domain-debt) 16%, transparent);
 
   /* Categorical palette for "by currency" charts, in legend order. */
   --palette-1: #16a34a;
@@ -198,10 +200,12 @@
   --domain-expense: #ff3d68;
   --domain-investment: #5ee8ff;
   --domain-saving: #ffb84d;
+  --domain-debt: #f472ff;
   --domain-income-soft: color-mix(in srgb, var(--domain-income) 18%, transparent);
   --domain-expense-soft: color-mix(in srgb, var(--domain-expense) 18%, transparent);
   --domain-investment-soft: color-mix(in srgb, var(--domain-investment) 18%, transparent);
   --domain-saving-soft: color-mix(in srgb, var(--domain-saving) 18%, transparent);
+  --domain-debt-soft: color-mix(in srgb, var(--domain-debt) 18%, transparent);
 
   --palette-1: #7cffb2;
   --palette-2: #5ee8ff;
@@ -241,6 +245,12 @@
   --tint-saving-4: color-mix(in srgb, var(--domain-saving) 46%, var(--bg-1));
   --tint-saving-5: color-mix(in srgb, var(--domain-saving) 32%, var(--bg-1));
   --tint-saving-6: color-mix(in srgb, var(--domain-saving) 20%, var(--bg-1));
+  --tint-debt-1: var(--domain-debt);
+  --tint-debt-2: color-mix(in srgb, var(--domain-debt) 80%, var(--bg-1));
+  --tint-debt-3: color-mix(in srgb, var(--domain-debt) 62%, var(--bg-1));
+  --tint-debt-4: color-mix(in srgb, var(--domain-debt) 46%, var(--bg-1));
+  --tint-debt-5: color-mix(in srgb, var(--domain-debt) 32%, var(--bg-1));
+  --tint-debt-6: color-mix(in srgb, var(--domain-debt) 20%, var(--bg-1));
 }
 
 /*

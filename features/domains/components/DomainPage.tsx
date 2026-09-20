@@ -72,7 +72,7 @@ interface Props {
 }
 
 /**
- * Month-first page shared by the four domains. The month comes from the
+ * Month-first page shared by the five domains. The month comes from the
  * header picker; the summary, the bars and the panel below all speak about
  * it. The month in progress carries what the plan still owes before month end.
  */
@@ -634,7 +634,7 @@ export function DomainPage({ domain }: Props) {
           value={view}
           onChange={changeView}
           accent={config.accent}
-          showValue={Boolean(accountDomain)}
+          showValue={Boolean(accountDomain) && domain !== "DEBT"}
           showMethods={config.showPaymentMethod}
         />
         {panel}

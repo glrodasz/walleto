@@ -82,6 +82,7 @@ const DOMAIN_FALLBACK: Record<Domain, IconKey> = {
   EXPENSE: "tag",
   INVESTMENT: "chart",
   SAVING: "piggy",
+  DEBT: "credit-card",
 };
 
 /** The icon a category shows when the user has not picked one. */

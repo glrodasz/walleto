@@ -2,7 +2,13 @@ import { useState } from "react";
 import { useCategories } from "../../../hooks/useCategories";
 import { Chip } from "../../../components/atoms/Chip";
 import { Combobox } from "../../../components/atoms/Combobox";
-import { TrendingUp, TrendingDown, Briefcase, Lifebuoy } from "../../../components/atoms/Icons";
+import {
+  TrendingUp,
+  TrendingDown,
+  Briefcase,
+  Lifebuoy,
+  CreditCard,
+} from "../../../components/atoms/Icons";
 import suggestionsByDomain from "../data/categorySuggestions.json";
 import type { Domain } from "../../../types";
 
@@ -11,6 +17,7 @@ const SECTIONS: { domain: Domain; label: string; Icon: typeof TrendingUp }[] = [
   { domain: "EXPENSE", label: "Expenses", Icon: TrendingDown },
   { domain: "INVESTMENT", label: "Investments", Icon: Briefcase },
   { domain: "SAVING", label: "Savings", Icon: Lifebuoy },
+  { domain: "DEBT", label: "Debts", Icon: CreditCard },
 ];
 
 function CategorySection({ domain, label, Icon }: (typeof SECTIONS)[number]) {

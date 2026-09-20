@@ -46,15 +46,18 @@ export function useDashboard({ period, groupBy }: Options) {
   const { items: allExpenses, loading: l2, error: e2 } = useRecurrentTransactions("EXPENSE");
   const { items: allInvestments, loading: l3, error: e3 } = useRecurrentTransactions("INVESTMENT");
   const { items: allSavings, loading: l7, error: e7 } = useRecurrentTransactions("SAVING");
+  const { items: allDebts, loading: l8, error: e8 } = useRecurrentTransactions("DEBT");
   const incomes = useMemo(() => visible(allIncomes), [allIncomes]);
   const expenses = useMemo(() => visible(allExpenses), [allExpenses]);
   const investments = useMemo(() => visible(allInvestments), [allInvestments]);
   const savings = useMemo(() => visible(allSavings), [allSavings]);
+  const debts = useMemo(() => visible(allDebts), [allDebts]);
   const { categories, loading: l4, error: e4 } = useCategories();
   // Hidden is a property of the recurring item; its ledger rows follow it.
   const hiddenItems = useMemo(
-    () => hiddenItemIds([...allIncomes, ...allExpenses, ...allInvestments, ...allSavings]),
-    [allIncomes, allExpenses, allInvestments, allSavings]
+    () =>
+      hiddenItemIds([...allIncomes, ...allExpenses, ...allInvestments, ...allSavings, ...allDebts]),
+    [allIncomes, allExpenses, allInvestments, allSavings, allDebts]
   );
   const { items: upcoming, loading: l6, error: e6, markPaid } = useUpcomingItems(5);
 
@@ -69,18 +72,21 @@ export function useDashboard({ period, groupBy }: Options) {
   const expense = useDomainTransactions("EXPENSE", chartStart);
   const investment = useDomainTransactions("INVESTMENT", chartStart);
   const saving = useDomainTransactions("SAVING", chartStart);
+  const debt = useDomainTransactions("DEBT", chartStart);
   const txByDomain = useMemo<Record<Domain, Transaction[]>>(
     () => ({
       INCOME: withoutHidden(income.transactions, hiddenItems),
       EXPENSE: withoutHidden(expense.transactions, hiddenItems),
       INVESTMENT: withoutHidden(investment.transactions, hiddenItems),
       SAVING: withoutHidden(saving.transactions, hiddenItems),
+      DEBT: withoutHidden(debt.transactions, hiddenItems),
     }),
     [
       income.transactions,
       expense.transactions,
       investment.transactions,
       saving.transactions,
+      debt.transactions,
       hiddenItems,
     ]
   );
@@ -92,10 +98,12 @@ export function useDashboard({ period, groupBy }: Options) {
     l4 ||
     l6 ||
     l7 ||
+    l8 ||
     income.loading ||
     expense.loading ||
     investment.loading ||
-    saving.loading;
+    saving.loading ||
+    debt.loading;
   const error =
     e1 ??
     e2 ??
@@ -103,24 +111,32 @@ export function useDashboard({ period, groupBy }: Options) {
     e4 ??
     e6 ??
     e7 ??
+    e8 ??
     income.error ??
     expense.error ??
     investment.error ??
-    saving.error;
+    saving.error ??
+    debt.error;
 
   // "≈" only means something when conversion actually happened: at least one
   // item lives in a currency other than the reporting target.
-  const hasForeign = [incomes, expenses, investments, savings].some((arr) =>
+  const hasForeign = [incomes, expenses, investments, savings, debts].some((arr) =>
     arr.some((i) => i.currency !== target)
   );
 
   const flow = useMemo(
     () =>
       computeFlow(
-        { INCOME: incomes, EXPENSE: expenses, INVESTMENT: investments, SAVING: savings },
+        {
+          INCOME: incomes,
+          EXPENSE: expenses,
+          INVESTMENT: investments,
+          SAVING: savings,
+          DEBT: debts,
+        },
         ctx
       ),
-    [incomes, expenses, investments, savings, ctx]
+    [incomes, expenses, investments, savings, debts, ctx]
   );
 
   const totals = useMemo(
@@ -129,6 +145,7 @@ export function useDashboard({ period, groupBy }: Options) {
       expense: flow.expenses,
       investment: flow.investments,
       saving: flow.savings,
+      debt: flow.debts,
     }),
     [flow]
   );
@@ -149,6 +166,10 @@ export function useDashboard({ period, groupBy }: Options) {
     () => buildCategoryList(savings, categories, ctx),
     [savings, categories, ctx]
   );
+  const debtsByCategory = useMemo(
+    () => buildCategoryList(debts, categories, ctx),
+    [debts, categories, ctx]
+  );
 
   const currencyMix = useMemo(
     () => ({
@@ -156,8 +177,9 @@ export function useDashboard({ period, groupBy }: Options) {
       expense: shareByCurrency(expenses, ctx),
       investment: shareByCurrency(investments, ctx),
       saving: shareByCurrency(savings, ctx),
+      debt: shareByCurrency(debts, ctx),
     }),
-    [incomes, expenses, investments, savings, ctx]
+    [incomes, expenses, investments, savings, debts, ctx]
   );
 
   const momDelta = useMemo(
@@ -183,6 +205,7 @@ export function useDashboard({ period, groupBy }: Options) {
     incomesByCategory,
     investmentsByCategory,
     savingsByCategory,
+    debtsByCategory,
     currencyMix,
     categories,
     upcoming,

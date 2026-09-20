@@ -17,8 +17,10 @@ type Story = StoryObj<typeof meta>;
 /** How the month's income splits into expenses, investments, savings and what is left. */
 export const Default: Story = {};
 export const Overspent: Story = {
-  args: { flow: { income: 3000, expenses: 2600, investments: 400, savings: 300, net: -300 } },
+  args: {
+    flow: { income: 3000, expenses: 2400, investments: 400, savings: 300, debts: 200, net: -300 },
+  },
 };
 export const NothingAllocated: Story = {
-  args: { flow: { income: 3000, expenses: 0, investments: 0, savings: 0, net: 3000 } },
+  args: { flow: { income: 3000, expenses: 0, investments: 0, savings: 0, debts: 0, net: 3000 } },
 };

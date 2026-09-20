@@ -66,4 +66,15 @@ export const DOMAIN_CONFIG: Record<Domain, DomainConfig> = {
     upIsGood: true,
     oneOff: { title: "Record a deposit", placeholder: "Emergency fund" },
   },
+  DEBT: {
+    title: "Debts",
+    subtitle: "Keep track of what you owe, and watch it shrink.",
+    noun: "repayments",
+    spentLabel: "Repaid",
+    runRateLabel: "Planned monthly repayments",
+    accent: "var(--domain-debt)",
+    showPaymentMethod: true,
+    upIsGood: true,
+    oneOff: { title: "Record a repayment", placeholder: "Credit card payment" },
+  },
 };

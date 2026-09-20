@@ -7,13 +7,15 @@ describe("allocationSegments", () => {
       expenses: 500,
       investments: 100,
       savings: 150,
-      net: 250,
+      debts: 50,
+      net: 200,
     });
     expect(segs).toEqual([
       { key: "expenses", share: 0.5 },
       { key: "investments", share: 0.1 },
       { key: "savings", share: 0.15 },
-      { key: "left", share: 0.25 },
+      { key: "debts", share: 0.05 },
+      { key: "left", share: 0.2 },
     ]);
     expect(segs.reduce((s, x) => s + x.share, 0)).toBeCloseTo(1);
   });
@@ -24,6 +26,7 @@ describe("allocationSegments", () => {
       expenses: 600,
       investments: 0,
       savings: 200,
+      debts: 0,
       net: -400,
     });
     expect(segs.map((s) => s.key)).toEqual(["expenses", "savings"]);
@@ -32,7 +35,7 @@ describe("allocationSegments", () => {
 
   it("is empty without any money", () => {
     expect(
-      allocationSegments({ income: 0, expenses: 0, investments: 0, savings: 0, net: 0 })
+      allocationSegments({ income: 0, expenses: 0, investments: 0, savings: 0, debts: 0, net: 0 })
     ).toEqual([]);
   });
 });

@@ -18,7 +18,7 @@ const SECTIONS: { key: Section; label: string }[] = [
   { key: "categories", label: "Categories" },
   { key: "tags", label: "Tags" },
   { key: "methods", label: "Payment methods" },
-  { key: "accounts", label: "Accounts & pockets" },
+  { key: "accounts", label: "Accounts & debts" },
 ];
 const isSection = (s: string): s is Section => SECTIONS.some((x) => x.key === s);
 

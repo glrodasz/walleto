@@ -19,9 +19,10 @@ const DOMAIN_LABEL: Record<Domain, string> = {
   INVESTMENT: "Investment",
   SAVING: "Saving",
   INCOME: "Income",
+  DEBT: "Debt",
 };
 
-/** Checkbox per active EXPENSE/INVESTMENT/SAVING item — checked means "simulate cancelling this". */
+/** Checkbox per active EXPENSE/INVESTMENT/SAVING/DEBT item — checked means "simulate cancelling this". */
 export function CancelableItemsList({
   items,
   excludedIds,
@@ -42,7 +43,7 @@ export function CancelableItemsList({
       {loading ? (
         <p className="empty">Loading…</p>
       ) : items.length === 0 ? (
-        <p className="empty">No recurring expenses, investments or savings yet.</p>
+        <p className="empty">No recurring expenses, investments, savings or repayments yet.</p>
       ) : (
         <ul className="list">
           {items.map((item) => {
