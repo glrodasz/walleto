@@ -117,7 +117,8 @@ function occurred(t: Transaction): Date {
 
 /**
  * Every PAID contribution matching the selector, converted into the
- * reporting currency, oldest first. A skipped or pending row never left
+ * reporting currency and signed (a withdrawal is a negative deposit; on a
+ * debt, money borrowed), oldest first. A skipped or pending row never left
  * the account.
  */
 export function depositsFor(
@@ -177,7 +178,13 @@ export function dominantCategoryId(
   const roots = rootIdMap(categories);
   const byCategory = new Map<string, number>();
   for (const t of transactions) {
-    if (!isAccountDomain(t.domain) || t.status !== "PAID" || !matchesSelector(t, selector))
+    // Only money that came in says which holding it went to.
+    if (
+      !isAccountDomain(t.domain) ||
+      t.status !== "PAID" ||
+      t.direction === "OUT" ||
+      !matchesSelector(t, selector)
+    )
       continue;
     const key = rootIdOf(t.categoryId, roots);
     byCategory.set(key, (byCategory.get(key) ?? 0) + convertedAmount(t, ctx));

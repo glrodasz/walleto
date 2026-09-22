@@ -112,13 +112,13 @@ function CategoryBreakdownRow({ row, category, domain, currency, color }: RowPro
           <span className="amount">{formatAmount(row.amount, currency)}</span>
         </span>
         <ProgressBar
-          ratio={row.percent / 100}
+          ratio={Math.max(0, row.percent) / 100}
           color={color}
           height={6}
           label={`${row.name} share`}
         />
       </span>
-      <span className="pct">{row.percent.toFixed(0)}%</span>
+      <span className="pct">{Math.max(0, row.percent).toFixed(0)}%</span>
       <style jsx>{`
         .row {
           display: flex;

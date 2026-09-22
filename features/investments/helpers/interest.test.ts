@@ -126,3 +126,18 @@ describe("a debt as a negative position", () => {
     expect(interestAccrued(repayments, [], rate, apr)).toBeNull();
   });
 });
+
+describe("interestAccrued with money borrowed", () => {
+  it("counts a draw as balance that repayments did not explain — not as interest", () => {
+    // Owed 5,000 on Jan 1; borrowed 300 more in Feb; repaid 500 in Mar; owed 5,000 on Apr 1.
+    const checks = [
+      { value: -5000, asOf: jan },
+      { value: -5000, asOf: new Date(2026, 3, 1) },
+    ];
+    const deposits = [
+      { amount: -300, at: feb },
+      { amount: 500, at: new Date(2026, 2, 1) },
+    ];
+    expect(interestAccrued(deposits, checks, undefined, new Date(2026, 3, 1))).toBe(200);
+  });
+});

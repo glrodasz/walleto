@@ -144,6 +144,21 @@ describe("valuationGainRows on a debt", () => {
     expect(rows[1].categoryId).toBe("cards");
   });
 
+  it("money borrowed between checks is balance, not interest", () => {
+    // 5,000 owed; 300 borrowed, 500 repaid; 5,000 owed again → 200 of interest & charges.
+    const rows = valuationGainRows(
+      [balance(5000, new Date(2026, 0, 1)), balance(5000, new Date(2026, 3, 1))],
+      [
+        tx(300, new Date(2026, 1, 1), { ...visa, categoryId: "cards", direction: "OUT" }),
+        repay(500, new Date(2026, 2, 1)),
+      ],
+      "DEBT",
+      cards,
+      ctx
+    );
+    expect(rows.map((r) => r.gain)).toEqual([0, -200]);
+  });
+
   it("a balance that came in lower than expected reads as a reduction", () => {
     const rows = valuationGainRows(
       [balance(5000, new Date(2026, 0, 1)), balance(3900, new Date(2026, 3, 1))],

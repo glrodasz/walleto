@@ -79,6 +79,9 @@ export function GroupedStackedBarsChart({
           <ResponsiveContainer width="100%" height={height}>
             <BarChart
               data={data}
+              /* A withdrawal month is negative; "sign" splits each stack at
+                 zero instead of drawing it over the positive segments. */
+              stackOffset="sign"
               margin={{ top: 12, right: 8, bottom: 0, left: 0 }}
               barCategoryGap="22%"
               barGap={4}

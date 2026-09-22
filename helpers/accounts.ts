@@ -1,6 +1,6 @@
 import { formatNumber } from "./money";
 import type { DecimalSeparator } from "../utils/decimal";
-import type { AccountDomain, Domain, InterestRate } from "../types";
+import type { AccountDomain, Domain, InterestRate, TransactionDirection } from "../types";
 
 /** How the UI names an account in each domain that has them. */
 export const ACCOUNT_NOUN: Record<AccountDomain, { singular: string; article: string }> = {
@@ -35,4 +35,10 @@ export function sortAccountsByLabel<T extends { name: string; provider?: string 
   return [...accounts].sort((a, b) =>
     accountLabel(a).localeCompare(accountLabel(b), undefined, { sensitivity: "base" })
   );
+}
+
+/** What a one-off row's direction is called on this kind of account. */
+export function directionLabel(domain: AccountDomain, direction: TransactionDirection): string {
+  if (domain === "DEBT") return direction === "OUT" ? "Borrowed" : "Repayment";
+  return direction === "OUT" ? "Withdrawal" : "Deposit";
 }

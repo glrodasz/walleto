@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import auth0 from "../../../lib/auth0";
 import admin from "../../../firebase/admin";
 import { TransactionInputSchema } from "../../../schemas";
+import { isAccountDomain } from "../../../helpers/accounts";
 
 export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await auth0.getSession(req, res);
@@ -30,7 +31,13 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       paymentMethodId,
       occurredAt,
       status,
+      direction,
     } = parsed.data;
+
+    // Only money sitting somewhere can flow both ways.
+    if (direction && !isAccountDomain(domain)) {
+      return res.status(400).json({ error: "Direction only applies to accounts" });
+    }
 
     const catSnap = await db.collection("categories").doc(categoryId).get();
     if (!catSnap.exists) {
@@ -96,6 +103,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       ...(paymentMethodId ? { paymentMethodId } : {}),
       occurredAt: admin.firestore.Timestamp.fromDate(new Date(occurredAt)),
       status: status ?? "PAID",
+      ...(direction === "OUT" ? { direction } : {}),
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 

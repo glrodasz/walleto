@@ -281,3 +281,27 @@ describe("shareByCurrency", () => {
     expect(shareByCurrency([], USD)).toEqual([]);
   });
 });
+
+describe("rowSign / direction", () => {
+  const row = (direction?: "IN" | "OUT") =>
+    ({
+      userId: "u1",
+      domain: "SAVING",
+      categoryId: "c",
+      name: "t",
+      amount: 100,
+      currency: "USD",
+      ...(direction ? { direction } : {}),
+    }) as unknown as Transaction;
+
+  it("counts an OUT row against the position, IN and absent for it", () => {
+    expect(convertedAmount(row(), USD)).toBe(100);
+    expect(convertedAmount(row("IN"), USD)).toBe(100);
+    expect(convertedAmount(row("OUT"), USD)).toBe(-100);
+  });
+
+  it("keeps the charged pair's precedence under the sign", () => {
+    const charged = { ...row("OUT"), chargedAmount: 90, chargedCurrency: "USD" } as Transaction;
+    expect(convertedAmount(charged, USD)).toBe(-90);
+  });
+});

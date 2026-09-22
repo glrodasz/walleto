@@ -14,6 +14,13 @@ export type Domain = "INCOME" | "EXPENSE" | "INVESTMENT" | "SAVING" | "DEBT";
 export type Frequency = "ONE_TIME" | "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY";
 
 export type TransactionStatus = "PENDING" | "PAID" | "SKIPPED";
+/**
+ * Which way a one-off row moves money on an account domain: IN (the default,
+ * a deposit / contribution / repayment) or OUT (a withdrawal — or, on a debt,
+ * money borrowed). Incomes and expenses never carry one; recurring items
+ * never carry one.
+ */
+export type TransactionDirection = "IN" | "OUT";
 
 export type PaymentMethodType =
   | "CREDIT_CARD"
@@ -180,6 +187,8 @@ export interface Transaction {
   categoryId: string;
   /** INVESTMENT / SAVING / DEBT only: inherited from the item or picked on the form. */
   accountId?: string;
+  /** INVESTMENT / SAVING / DEBT one-offs only; absent means IN. */
+  direction?: TransactionDirection;
   name: string;
   amount: number;
   currency: Currency;

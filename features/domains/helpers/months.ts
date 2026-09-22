@@ -307,6 +307,11 @@ export function monthDelta(
 export const NO_TAG = "__none";
 export const NO_METHOD_KEY = "__none";
 
+/**
+ * Shares are of what came in: `whole` is the positive part of the month, and
+ * a group that netted out below zero (withdrawals) takes no share, so the
+ * others cannot read past 100%.
+ */
 function toGroupedTotals(
   buckets: Map<string, { label: string; total: number; count: number }>,
   whole: number
@@ -317,7 +322,7 @@ function toGroupedTotals(
       label: b.label,
       total: b.total,
       count: b.count,
-      share: whole > 0 ? b.total / whole : 0,
+      share: whole > 0 ? Math.max(0, b.total) / whole : 0,
     }))
     .sort((a, b) => b.total - a.total);
 }
@@ -336,7 +341,7 @@ export function groupByTag(
   let whole = 0;
   for (const t of transactions) {
     const value = convertedAmount(t, ctx);
-    whole += value;
+    whole += Math.max(0, value);
     const keys = (t.tags ?? []).filter((id) => names.has(id));
     for (const key of keys.length > 0 ? keys : [NO_TAG]) {
       const b = buckets.get(key) ?? { label: names.get(key) ?? "No tag", total: 0, count: 0 };
@@ -359,7 +364,7 @@ export function groupByMethod(
   let whole = 0;
   for (const t of transactions) {
     const value = convertedAmount(t, ctx);
-    whole += value;
+    whole += Math.max(0, value);
     const key =
       t.paymentMethodId && byId.has(t.paymentMethodId) ? t.paymentMethodId : NO_METHOD_KEY;
     const b = buckets.get(key) ?? {
