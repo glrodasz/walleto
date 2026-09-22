@@ -133,7 +133,7 @@ describe("AccountValueList", () => {
     // The mocked rows count as repayments, but with no balance recorded the
     // debt reads as unknown — never as $0.00 owed, and never estimated.
     const seb = screen.getByRole("button", { name: /SEB savings/ });
-    expect(seb).toHaveTextContent("SEB · Repaid $1,000.00 · no balance yet");
+    expect(seb).toHaveTextContent("SEB · Repaid (net) $1,000.00 · no balance yet");
     expect(seb).not.toHaveTextContent("estimated");
     expect(screen.getAllByText("—").length).toBeGreaterThan(0);
     expect(screen.queryByText(/\+\d+\.\d%/)).toBeNull();

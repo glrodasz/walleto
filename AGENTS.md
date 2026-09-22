@@ -27,7 +27,7 @@ utils/decimal.ts               parseDecimal / sanitizeDecimal / toInputString / 
 Misma idea de "utilidad", pero conoce el negocio de sublr.
 
 ```
-helpers/aggregations.ts           montos mensuales por dominio, rate-aware (ver §3.1); shareByCurrency para la mezcla de monedas
+helpers/aggregations.ts           montos mensuales por dominio, rate-aware (ver §3.1); rowSign / convertedAmount con signo (direction OUT); shareByCurrency para la mezcla de monedas
 helpers/fx.ts                     convert()/tryConvert() por cross-rates a USD, IDENTITY_RATES
 helpers/currencies.ts             qué monedas ofrece un picker (elección del usuario o USD/EUR/GBP) + opciones "$ USD"
 helpers/chartData.ts              buckets por día/semana/mes + serie income/expense para FlowChart y MonthlyBarsChart
@@ -252,7 +252,7 @@ useEffect(() => {
 
 ### 3.1 Dinero y monedas
 
-Todo monto se **guarda en su moneda nativa** y se **convierte solo al leer**. El punto único de conversión es `helpers/aggregations.ts` (`convertedAmount`/`toMonthlyAmount`/`sumMonthly`/`groupByCategory`/`computeMoM`/`computeFlow`), todas reciben un `MoneyContext = { rates, target }`.
+Todo monto se **guarda en su moneda nativa** y se **convierte solo al leer**. El punto único de conversión es `helpers/aggregations.ts` (`convertedAmount`/`toMonthlyAmount`/`sumMonthly`/`groupByCategory`/`computeMoM`/`computeFlow`), todas reciben un `MoneyContext = { rates, target }`. Es también **el único sitio donde una fila lleva signo**: `amount` se guarda siempre positivo y una transacción puntual de un dominio con cuentas puede llevar `direction: "OUT"` (retiro; en una deuda, dinero prestado), que `convertedAmount` devuelve en negativo vía `rowSign`. Así los cost basis, los totales del mes, los stacks, la cadena de ganancias y el interés netean los retiros sin saber que existen. Los recurrentes nunca llevan dirección; incomes y expenses tampoco (la ruta lo rechaza con 400). Consecuencias: la cifra del mes en Investments/Savings/Debts es **neta** (`MonthSummary` desglosa "contributed · withdrawn"), las participaciones (shares) se calculan sobre lo que entró — `Σ max(0, total)` — para que un grupo negativo no infle a los demás por encima del 100%, `dominantCategoryId` solo mira filas que entraron, un `costBasis` puede ser negativo, y "Largest amount" ordena por magnitud.
 
 - **`useSelectedMonth()`** (`hooks/useSelectedMonth.tsx`) es el mes que mira toda la app: estado en React, espejo en `?month=YYYY-MM` (replace shallow), nunca posterior al mes actual; el `MonthPicker` del header lo cambia y las páginas de dominio lo acotan a su ventana de barras. `usePreferences()` / `useDateFormat()` (`hooks/usePreferences.ts`) leen formato de fecha, inicio de semana e idioma desde un contexto que `PreferencesProvider` llena con el user doc — los componentes de presentación nunca tocan Firestore por esto.
 - **`useMoneyContext()`** (`hooks/useMoneyContext.ts`) es el único lugar que decide moneda objetivo y tasas: `target = displayCurrency ?? mainCurrency`, `rates = useExchangeRates() ?? IDENTITY_RATES`. Cualquier pantalla que muestre montos agregados lo usa — no leas `mainCurrency` directo de `useUserDoc`.

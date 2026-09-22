@@ -65,3 +65,14 @@ export const Incomes: Story = {
   },
 };
 export const Limited: Story = { args: { limit: 5 } };
+
+/** An account ledger: a withdrawal reads negative, with a badge saying so. */
+export const Withdrawals: Story = {
+  args: {
+    rows: STORY_TRANSACTIONS.filter((t) => t.domain === "INVESTMENT"),
+    domain: "INVESTMENT",
+    categories: categoriesFor("INVESTMENT"),
+    items: recurrentFor("INVESTMENT"),
+    showMethod: false,
+  },
+};

@@ -86,6 +86,9 @@ export function ValuationModal({
   }, [open, valuation, costBasis, suggestedCategoryId, owes, latestValue, toInput, decimals]);
 
   const basis = valuation ? valuation.costBasis : costBasis;
+  // A gain % needs something to be a percentage of: with withdrawals the net
+  // basis can be zero or below, and then the value is all there is to say.
+  const valueOnly = owes || basis <= 0;
 
   const onGainChange = (raw: string) => {
     const cleaned = sanitize(raw, { negative: true });
@@ -97,7 +100,7 @@ export function ValuationModal({
   const onValueChange = (raw: string) => {
     const cleaned = sanitize(raw);
     setValue(cleaned);
-    if (owes) return;
+    if (valueOnly) return;
     const v = parse(cleaned);
     const pct = v === null ? null : gainFromValue(basis, v);
     if (pct !== null) setGain(toInput(roundTo(pct, 2)));
@@ -105,7 +108,7 @@ export function ValuationModal({
 
   const submit = async () => {
     const v = parse(value) ?? NaN;
-    const pct = owes ? 0 : (parse(gain) ?? NaN);
+    const pct = valueOnly ? 0 : (parse(gain) ?? NaN);
     if (!(v >= 0) || !Number.isFinite(pct)) {
       return setError(owes ? "Enter the balance owed" : "Enter a value or a gain %");
     }
@@ -166,15 +169,23 @@ export function ValuationModal({
 
         <TextField label="As of" type="date" value={date} onValueChange={setDate} />
 
-        {owes ? (
-          <TextField
-            label="Balance owed"
-            inputMode="decimal"
-            prefix={CURRENCY_SYMBOL[currency]}
-            align="right"
-            value={value}
-            onValueChange={onValueChange}
-          />
+        {valueOnly ? (
+          <>
+            <TextField
+              label={owes ? "Balance owed" : "Current value"}
+              inputMode="decimal"
+              prefix={CURRENCY_SYMBOL[currency]}
+              align="right"
+              value={value}
+              onValueChange={onValueChange}
+            />
+            {!owes && (
+              <p className="hint">
+                Nothing is net invested after withdrawals, so there is no gain % to type — just what
+                the position is worth.
+              </p>
+            )}
+          </>
         ) : (
           <>
             <div className="pair">

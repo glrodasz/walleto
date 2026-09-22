@@ -43,5 +43,7 @@ export const EditTransaction: Story = {
 };
 /** Investments pick an account and can record the value in the same go. */
 export const Investment: Story = { args: { domain: "INVESTMENT" } };
+/** A one-off on an account can go either way: deposit or withdrawal (borrowed, on a debt). */
+export const Withdrawal: Story = { args: { domain: "SAVING", initialFrequency: "ONE_TIME" } };
 export const Income: Story = { args: { domain: "INCOME" } };
 export const Mobile: Story = { globals: { viewport: { value: "mobile1", isRotated: false } } };

@@ -17,6 +17,7 @@ import type { TransactionFilters } from "../../features/domains/helpers/transact
 import { useDateFormat } from "../../hooks/usePreferences";
 import { paymentMethodLabel, paymentMethodOptionLabel } from "../../helpers/paymentMethodLabel";
 import { tagNames } from "../../helpers/tags";
+import { directionLabel, isAccountDomain } from "../../helpers/accounts";
 import { toDate } from "../../helpers/chartData";
 import { FREQUENCY_LABELS } from "../../constants";
 import type { MoneyContext } from "../../helpers/aggregations";
@@ -372,6 +373,12 @@ function TransactionListRow({
       ? "recurring"
       : `recurring · ${FREQUENCY_LABELS[item.frequency]}${item.name !== t.name ? ` · ${item.name}` : ""}`;
 
+  // Money that left the account: the amount reads negative and the row says
+  // why ("Withdrawal", or "Borrowed" on a debt).
+  const out = t.direction === "OUT";
+  const outLabel = out && isAccountDomain(domain) ? directionLabel(domain, "OUT") : null;
+  const signed = (value: number) => (out ? -value : value);
+
   // One string, not one span per fact: the row reads as a sentence, and the
   // ellipsis lands at the end instead of inside a column.
   const meta = [
@@ -394,8 +401,13 @@ function TransactionListRow({
       }
       name={t.name}
       badges={
-        hidden || labels.length > 0 ? (
+        hidden || outLabel || labels.length > 0 ? (
           <>
+            {outLabel && (
+              <Badge variant="outline" tone="info" caps>
+                {outLabel}
+              </Badge>
+            )}
             {hidden && (
               <Badge
                 variant="outline"
@@ -417,10 +429,10 @@ function TransactionListRow({
       meta={meta}
       note={t.note}
       muted={Boolean(hidden)}
-      amount={formatNative(t.amount, t.currency, displayCurrency)}
+      amount={formatNative(signed(t.amount), t.currency, displayCurrency)}
       amountMeta={
         t.chargedAmount !== undefined && t.chargedCurrency
-          ? `charged ${formatNative(t.chargedAmount, t.chargedCurrency, displayCurrency)}`
+          ? `charged ${formatNative(signed(t.chargedAmount), t.chargedCurrency, displayCurrency)}`
           : undefined
       }
       trailing={

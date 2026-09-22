@@ -128,6 +128,15 @@ skipped — skipping is how a single occurrence is deleted). If a recurring item
 wrote it, the row remembers which one, which is how the interface can say
 "recurring · Monthly · Netflix" and offer a jump to the rule.
 
+On investments, savings and debts a one-off row also has a **direction**: money
+in (a deposit, a contribution, a repayment) or money **out** — a withdrawal, or
+on a debt money borrowed. Withdrawals read as negative amounts with a badge in
+the ledger, net out of the month's figure ("$1,200.00 contributed · $500.00
+withdrawn"), lower what the value view says went in, and lower the balance a
+check is measured against; a card charge raises what is owed. Moving money
+between two accounts is two rows: a withdrawal from one, a deposit into the
+other. Recurring rules never carry a direction.
+
 A transaction can also record a **charged pair**: what the card was actually
 debited, in a different currency, when it differs from the amount. A 15.49 USD
 subscription billed as 62,700 COP stores both, and the conversion uses the rate

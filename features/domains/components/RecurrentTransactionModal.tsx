@@ -10,6 +10,7 @@ import { TextArea } from "../../../components/atoms/TextArea";
 import { Select } from "../../../components/atoms/Select";
 import { TextField } from "../../../components/atoms/TextField";
 import { Button } from "../../../components/atoms/Button";
+import { SegmentedControl } from "../../../components/molecules/SegmentedControl";
 import { useCategories } from "../../../hooks/useCategories";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { useAccounts } from "../../../hooks/useAccounts";
@@ -22,7 +23,7 @@ import { createInvestmentValuation } from "../../../hooks/useInvestmentValuation
 import { valueFromGain } from "../../investments/helpers/valuation";
 import { FREQ_TO_MONTHS } from "../../../helpers/aggregations";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
-import { isAccountDomain } from "../../../helpers/accounts";
+import { directionLabel, isAccountDomain } from "../../../helpers/accounts";
 import {
   BACKFILL_MONTHS,
   anchorStartDate,
@@ -39,6 +40,7 @@ import type {
   Frequency,
   RecurrentTransaction,
   Transaction,
+  TransactionDirection,
 } from "../../../types";
 import { useDateFormat } from "../../../hooks/usePreferences";
 
@@ -87,6 +89,8 @@ interface FormState extends ScheduleValue {
   chargedEnabled: boolean;
   chargedAmount: string;
   chargedCurrency: Currency | "";
+  /** One-offs on account domains: money in, or a withdrawal (borrowed, on a debt). */
+  direction: TransactionDirection;
 }
 
 export function RecurrentTransactionModal({
@@ -141,6 +145,7 @@ export function RecurrentTransactionModal({
       chargedEnabled: false,
       chargedAmount: "",
       chargedCurrency: "",
+      direction: "IN",
     }),
     [initialFrequency]
   );
@@ -171,6 +176,7 @@ export function RecurrentTransactionModal({
         chargedAmount:
           transaction.chargedAmount !== undefined ? decimal.toInput(transaction.chargedAmount) : "",
         chargedCurrency: transaction.chargedCurrency ?? "",
+        direction: transaction.direction ?? "IN",
       });
       return;
     }
@@ -206,6 +212,7 @@ export function RecurrentTransactionModal({
       chargedEnabled: false,
       chargedAmount: "",
       chargedCurrency: "",
+      direction: "IN",
     });
   }, [open, item, transaction, empty, decimal]);
 
@@ -254,7 +261,11 @@ export function RecurrentTransactionModal({
   // A charged pair is what the card actually did on one payment, so it lives
   // on ledger rows only: one-off create and transaction edit.
   const offersCharged = !isRecurring && !item;
-  const offersGain = !editing && domain === "INVESTMENT" && !isRecurring;
+  // A one-off on an account can go either way; a plan only ever puts money in.
+  const accountDomain = isAccountDomain(domain) ? domain : null;
+  const offersDirection = accountDomain !== null && !isRecurring;
+  const offersGain =
+    !editing && domain === "INVESTMENT" && !isRecurring && form.direction !== "OUT";
   // Yearly, quarterly, weekly…: the plan can show it as a monthly amount.
   const offersSpread = isRecurring && form.frequency !== "MONTHLY";
   const monthlySlice = (decimal.parse(form.amount) ?? 0) * FREQ_TO_MONTHS[form.frequency];
@@ -327,6 +338,9 @@ export function RecurrentTransactionModal({
                 chargedCurrency: form.chargedEnabled ? (form.chargedCurrency as Currency) : null,
               }
             : {}),
+          ...(offersDirection && form.direction !== (transaction.direction ?? "IN")
+            ? { direction: form.direction === "OUT" ? ("OUT" as const) : null }
+            : {}),
         };
         if (Object.keys(patch).length > 0) await updateTransaction(transaction.id, patch);
       } else if (item?.id) {
@@ -377,6 +391,7 @@ export function RecurrentTransactionModal({
           currency: effectiveCurrency,
           occurredAt: startDate.toISOString(),
           status: "PAID",
+          ...(offersDirection && form.direction === "OUT" ? { direction: "OUT" as const } : {}),
           ...(form.paymentMethodId ? { paymentMethodId: form.paymentMethodId } : {}),
           ...(form.tags.length ? { tags: form.tags } : {}),
           ...(form.note.trim() ? { note: form.note.trim() } : {}),
@@ -485,6 +500,19 @@ export function RecurrentTransactionModal({
           value={form.name}
           onValueChange={(v) => patch({ name: v })}
         />
+
+        {offersDirection && accountDomain && (
+          <SegmentedControl<TransactionDirection>
+            label="Direction"
+            size="sm"
+            options={[
+              { key: "IN", label: directionLabel(accountDomain, "IN") },
+              { key: "OUT", label: directionLabel(accountDomain, "OUT") },
+            ]}
+            value={form.direction}
+            onChange={(direction) => patch({ direction })}
+          />
+        )}
 
         <div className="pair">
           <TextField
