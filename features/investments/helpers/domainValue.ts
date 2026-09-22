@@ -86,7 +86,8 @@ export function domainValueRows(
     .map((a) => build({ accountId: a.id! }, a.name, a.provider, a.interestRate));
 
   const bucket = build({ domain }, sign < 0 ? "Unassigned" : `No ${noun}`, undefined, undefined);
-  const unassigned = bucket.invested > 0 || bucket.latest ? [bucket] : [];
+  // Net of withdrawals, so "anything at all" rather than "more than nothing".
+  const unassigned = bucket.invested !== 0 || bucket.latest ? [bucket] : [];
 
   return [...byAccount, ...unassigned].sort((a, b) => b.value - a.value);
 }

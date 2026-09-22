@@ -368,7 +368,7 @@ export function DomainPage({ domain }: Props) {
         categoryId: GAIN_KEY,
         name: gainLabel(domain),
         amount: monthUnfiledGain,
-        percent: realized > 0 ? (monthUnfiledGain / realized) * 100 : 0,
+        percent: realized > 0 ? (Math.max(0, monthUnfiledGain) / realized) * 100 : 0,
       },
     ];
   }, [categoryRows, monthUnfiledGain, realized, domain]);

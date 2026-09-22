@@ -1,6 +1,12 @@
 import { convert } from "./fx";
 import type { ExchangeRates } from "./fx";
-import type { Currency, Domain, RecurrentTransaction, Transaction } from "../types";
+import type {
+  Currency,
+  Domain,
+  RecurrentTransaction,
+  Transaction,
+  TransactionDirection,
+} from "../types";
 
 /** Every aggregation converts into one reporting currency — never a raw mixed sum. */
 export interface MoneyContext {
@@ -23,19 +29,32 @@ export interface MoneyFields {
   currency: Currency;
   chargedAmount?: number;
   chargedCurrency?: Currency;
+  /** One-off rows on account domains: OUT is a withdrawal (or money borrowed). */
+  direction?: TransactionDirection;
 }
 
 /**
- * The item's value expressed in the target currency.
+ * The one place a row carries a sign. Amounts are stored positive; an OUT
+ * row counts against the position it belongs to, so every sum built on
+ * `convertedAmount` — cost bases, month totals, stacks, the gain chain —
+ * nets withdrawals out without knowing they exist.
+ */
+export function rowSign(row: Pick<MoneyFields, "direction">): 1 | -1 {
+  return row.direction === "OUT" ? -1 : 1;
+}
+
+/**
+ * The item's value expressed in the target currency, signed by direction.
  *
  * Charged-pair precedence: when the doc records what was actually debited in
  * the target currency, that ground truth beats any market rate.
  */
 export function convertedAmount(item: MoneyFields, ctx: MoneyContext): number {
-  if (item.chargedAmount !== undefined && item.chargedCurrency === ctx.target) {
-    return item.chargedAmount;
-  }
-  return convert(item.amount, item.currency, ctx.target, ctx.rates);
+  const magnitude =
+    item.chargedAmount !== undefined && item.chargedCurrency === ctx.target
+      ? item.chargedAmount
+      : convert(item.amount, item.currency, ctx.target, ctx.rates);
+  return rowSign(item) * magnitude;
 }
 
 export function toMonthlyAmount(item: RecurrentTransaction, ctx: MoneyContext): number {

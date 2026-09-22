@@ -169,6 +169,46 @@ describe("PATCH /api/transactions/[id]", () => {
   });
 });
 
+describe("PATCH /api/transactions/[id] — direction", () => {
+  it("sets and clears the direction on an account row", async () => {
+    const update = wireDoc({ data: { userId: "user1", currency: "USD", domain: "SAVING" } });
+    await handler(
+      {
+        method: "PATCH",
+        query: { id: "tx1" },
+        body: { direction: "OUT" },
+      } as unknown as NextApiRequest,
+      mockRes()
+    );
+    expect(update).toHaveBeenCalledWith({ direction: "OUT" });
+
+    await handler(
+      {
+        method: "PATCH",
+        query: { id: "tx1" },
+        body: { direction: null },
+      } as unknown as NextApiRequest,
+      mockRes()
+    );
+    expect(update.mock.calls[1][0]).toHaveProperty("direction");
+    expect(update.mock.calls[1][0].direction).not.toBe("OUT");
+  });
+
+  it("rejects a direction on an expense row", async () => {
+    wireDoc({ data: { userId: "user1", currency: "USD", domain: "EXPENSE" } });
+    const res = mockRes();
+    await handler(
+      {
+        method: "PATCH",
+        query: { id: "tx1" },
+        body: { direction: "OUT" },
+      } as unknown as NextApiRequest,
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+});
+
 describe("DELETE /api/transactions/[id]", () => {
   it("soft deletes by marking the transaction SKIPPED", async () => {
     const update = wireDoc({});

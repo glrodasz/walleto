@@ -47,7 +47,8 @@ export function MonthSummary({
 }: Props) {
   const { formatAmount } = useMoneyFormat();
   const config = DOMAIN_CONFIG[domain];
-  const ratio = expected > 0 ? realized / expected : 0;
+  // A net-negative month (withdrawals) has landed nothing of the plan.
+  const ratio = expected > 0 ? Math.max(0, realized) / expected : 0;
   const left = Math.max(0, expected - realized);
   // Investments and savings fold a market gain into the figure — and a debt
   // the interest it accrued — so it says what it is made of. Silent when no

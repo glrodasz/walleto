@@ -294,3 +294,33 @@ describe("groupByTag / groupByMethod", () => {
     ]);
   });
 });
+
+describe("withdrawals", () => {
+  it("nets an OUT row out of the month total", () => {
+    const windows = monthWindows(1, now);
+    const rows = [
+      tx("in", 1000, new Date(2026, 8, 1), { domain: "SAVING" }),
+      tx("out", 400, new Date(2026, 8, 2), { domain: "SAVING", direction: "OUT" }),
+    ];
+    expect(monthTotals(rows, ctx, windows)[windows[0].key]).toBe(600);
+  });
+
+  it("shares are of what came in, so a net-negative group takes none", () => {
+    const rows = [
+      tx("a", 1000, new Date(2026, 8, 1), { tags: ["t1"] }),
+      tx("b", 500, new Date(2026, 8, 2), { tags: ["t2"], direction: "OUT" }),
+    ];
+    const groups = groupByTag(
+      rows,
+      [
+        { id: "t1", name: "Trip" },
+        { id: "t2", name: "Work" },
+      ],
+      ctx
+    );
+    expect(groups.map((g) => [g.key, g.total, g.share])).toEqual([
+      ["t1", 1000, 1],
+      ["t2", -500, 0],
+    ]);
+  });
+});

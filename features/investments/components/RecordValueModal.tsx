@@ -56,7 +56,7 @@ export function RecordValueModal({ open, onClose, domain }: Props) {
     const bucket: ValueSelector = { domain };
     const valuations = withDomain(rawValuations, categories);
     const hasBucket =
-      costBasisAt(transactions, bucket, now, ctx) > 0 ||
+      costBasisAt(transactions, bucket, now, ctx) !== 0 ||
       valuations.some((v) => matchesSelector(v, bucket));
     const unassigned = hasBucket ? [{ selector: bucket, label: `No ${noun}` }] : [];
     return [...byAccount, ...unassigned].map((c) => ({ ...c, key: selectorKey(c.selector) }));

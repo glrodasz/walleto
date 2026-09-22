@@ -97,3 +97,20 @@ describe("domainTint", () => {
     expect(domainTint("SAVING", 9)).toBe("var(--tint-saving-6)");
   });
 });
+
+describe("monthTotalsBy with a net-negative key", () => {
+  it("ranks it last and folds it into Other past the cap", () => {
+    const rows = [
+      row(new Date(2026, 8, 1), 50, "a"),
+      row(new Date(2026, 8, 1), 30, "b"),
+      { ...row(new Date(2026, 8, 1), 20, "c"), direction: "OUT" as const },
+    ];
+    const out = monthTotalsBy(rows, ctx, windows, (r) => r.categoryId, {
+      top: 2,
+      label: (k) => k,
+      color: (i) => `c${i}`,
+    });
+    expect(out.series.map((s) => s.key)).toEqual(["a", "b", OTHER_KEY]);
+    expect(out.totals["2026-09"]).toEqual({ a: 50, b: 30, [OTHER_KEY]: -20 });
+  });
+});

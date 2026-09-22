@@ -187,6 +187,45 @@ describe("POST /api/transactions", () => {
   });
 });
 
+describe("POST /api/transactions — direction", () => {
+  it("stores an OUT direction on a savings row and drops IN", async () => {
+    const add = jest.fn().mockResolvedValue({ id: "new-tx" });
+    wireCollections({
+      category: { exists: true, data: { userId: "user1", domain: "SAVING" } },
+      add,
+    });
+    const res = mockRes();
+    await handler(
+      {
+        method: "POST",
+        body: { ...validBody, domain: "SAVING", direction: "OUT" },
+      } as NextApiRequest,
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(add).toHaveBeenCalledWith(expect.objectContaining({ direction: "OUT" }));
+
+    await handler(
+      {
+        method: "POST",
+        body: { ...validBody, domain: "SAVING", direction: "IN" },
+      } as NextApiRequest,
+      mockRes()
+    );
+    expect(add.mock.calls[1][0]).not.toHaveProperty("direction");
+  });
+
+  it("rejects a direction on an expense", async () => {
+    wireCollections({});
+    const res = mockRes();
+    await handler(
+      { method: "POST", body: { ...validBody, direction: "OUT" } } as NextApiRequest,
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+});
+
 describe("POST /api/transactions — accounts", () => {
   const savingBody = { ...validBody, domain: "SAVING", accountId: "acc1" };
 

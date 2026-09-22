@@ -81,11 +81,7 @@ export function categoryMonthRows(
   const planned = window.isCurrent
     ? plannedOccurrences(items, ctx, now, new Date(window.end.getTime() - 1))
     : [];
-  const monthTotal =
-    transactions.reduce((sum, t) => sum + convertedAmount(t, ctx), 0) +
-    Object.values(gains).reduce((sum, g) => sum + g, 0);
-
-  return categories
+  const rows = categories
     .filter((c) => !c.parentId)
     .map((category) => {
       const ids = categoryIdSet(category, categories);
@@ -99,13 +95,21 @@ export function categoryMonthRows(
         category,
         total,
         count: mine.filter((t) => !isSyntheticRow(t)).length,
-        share: monthTotal > 0 ? (total / monthTotal) * 100 : 0,
+        share: 0,
         planned: plannedHere,
         gain,
       };
-    })
-    .filter((r) => r.total !== 0 || r.planned > 0)
-    .sort((a, b) => b.total + b.planned - (a.total + a.planned));
+    });
+  // Shares are of what came in: a category that netted out below zero
+  // (withdrawals) takes none, so the others cannot read past 100%.
+  const whole = rows.reduce((sum, r) => sum + Math.max(0, r.total), 0);
+  return (
+    rows
+      .map((r) => ({ ...r, share: whole > 0 ? (Math.max(0, r.total) / whole) * 100 : 0 }))
+      // A category with rows that cancelled out still has something to show.
+      .filter((r) => r.count > 0 || r.total !== 0 || r.planned > 0)
+      .sort((a, b) => b.total + b.planned - (a.total + a.planned))
+  );
 }
 
 /**

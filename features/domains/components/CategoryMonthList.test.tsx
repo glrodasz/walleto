@@ -65,6 +65,28 @@ describe("categoryMonthRows", () => {
     ]);
   });
 
+  it("keeps a category whose rows cancelled out, and clamps shares at what came in", () => {
+    const rows = categoryMonthRows(
+      [
+        { id: "funds", userId: "u", domain: "INVESTMENT", name: "Funds" },
+        { id: "crypto", userId: "u", domain: "INVESTMENT", name: "Crypto" },
+      ] as Category[],
+      [
+        { ...tx("in", "funds", 1_000), domain: "INVESTMENT" },
+        { ...tx("buy", "crypto", 500), domain: "INVESTMENT" },
+        { ...tx("sell", "crypto", 500), domain: "INVESTMENT", direction: "OUT" },
+      ],
+      [],
+      ctx,
+      sep,
+      now
+    );
+    expect(rows.map((r) => [r.category.name, r.total, r.count, r.share])).toEqual([
+      ["Funds", 1_000, 1, 100],
+      ["Crypto", 0, 2, 0],
+    ]);
+  });
+
   it("skips planned amounts for a finished month", () => {
     const aug = monthWindows(2, now)[0];
     const rows = categoryMonthRows(categories, transactions, [rentItem], ctx, aug, now);

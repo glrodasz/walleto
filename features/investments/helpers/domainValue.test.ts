@@ -217,3 +217,22 @@ describe("domainValueRows for debts", () => {
     });
   });
 });
+
+describe("domainValueRows with withdrawals", () => {
+  it("keeps a bucket that withdrawals took below zero, and reads the net", () => {
+    const rows = domainValueRows(
+      [],
+      [tx(100), { ...tx(150), direction: "OUT" }],
+      [],
+      "INVESTMENT",
+      "account",
+      ctx,
+      NOW
+    );
+    expect(rows.find((r) => r.key === "dom:INVESTMENT")).toMatchObject({
+      invested: -50,
+      value: -50,
+      gainPct: null,
+    });
+  });
+});

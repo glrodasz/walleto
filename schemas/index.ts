@@ -33,6 +33,7 @@ export const RecurrentTransactionTypeSchema = z.enum([
   "OTHER",
 ]);
 
+export const TransactionDirectionSchema = z.enum(["IN", "OUT"]);
 export const TransactionStatusSchema = z.enum(["PENDING", "PAID", "SKIPPED"]);
 
 /**
@@ -225,6 +226,8 @@ export const TransactionInputSchema = z
     paymentMethodId: z.string().optional(),
     occurredAt: z.iso.datetime(),
     status: TransactionStatusSchema.optional(),
+    /** Account domains only; the route rejects it elsewhere. */
+    direction: TransactionDirectionSchema.optional(),
   })
   .superRefine(refineChargedPair);
 
@@ -242,6 +245,8 @@ export const TransactionUpdateSchema = z
     paymentMethodId: z.string().min(1).nullable().optional(),
     tags: TagIdsSchema.nullable().optional(),
     note: NoteSchema.nullable().optional(),
+    // null clears it: the row is a deposit again.
+    direction: TransactionDirectionSchema.nullable().optional(),
   })
   .superRefine((v, ctx) => {
     if (Object.keys(v).length === 0) {
@@ -261,7 +266,8 @@ export const InvestmentValuationInputSchema = z
     asOf: z.iso.datetime(),
     gainPct: z.number().finite(),
     value: z.number().min(0),
-    costBasis: z.number().min(0),
+    // Net of withdrawals, so it can be negative; a snapshot, never summed.
+    costBasis: z.number().finite(),
     currency: CurrencySchema,
     note: z.string().max(200).trim().optional(),
   })
@@ -277,7 +283,7 @@ export const InvestmentValuationUpdateSchema = z
     asOf: z.iso.datetime().optional(),
     gainPct: z.number().finite().optional(),
     value: z.number().min(0).optional(),
-    costBasis: z.number().min(0).optional(),
+    costBasis: z.number().finite().optional(),
     note: z.string().max(200).trim().nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "At least one field is required" });

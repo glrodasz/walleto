@@ -62,7 +62,7 @@ export function filterTransactions(
   return kept.sort((a, b) => {
     const diff =
       filters.sort.by === "amount"
-        ? convertedAmount(a, ctx) - convertedAmount(b, ctx)
+        ? Math.abs(convertedAmount(a, ctx)) - Math.abs(convertedAmount(b, ctx))
         : toDate(a.occurredAt).getTime() - toDate(b.occurredAt).getTime();
     return diff * sign;
   });
