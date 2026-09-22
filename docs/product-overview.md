@@ -332,7 +332,9 @@ Accounts & debts** — remembered in the URL hash.
 - **Currency** — Main currency ("Default for new entries."), Display currency
   ("Used for totals and conversions."), and the supported-currencies list.
 - **Preferences** — Start week on, Date format (with a live example), Language
-  (English), Theme (Light / Dark / System).
+  (English), Decimal separator (point or comma; typing accepts either key, this
+  is how numbers are written back), Decimals (0–4 shown, default 2, with a live
+  example; zero-decimal currencies stay at 0), Theme (Light / Dark / System).
 - **Setup** — Redo onboarding.
 - **Data & privacy** — informational rows; export and deletion are not
   self-service yet and say so.

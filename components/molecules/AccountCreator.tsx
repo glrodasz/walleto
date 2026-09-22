@@ -4,6 +4,7 @@ import { TextField } from "../atoms/TextField";
 import { Button } from "../atoms/Button";
 import { ACCOUNT_NOUN } from "../../helpers/accounts";
 import { useEnabledCurrencies } from "../../hooks/useEnabledCurrencies";
+import { useDecimalInput } from "../../hooks/useDecimalInput";
 import type { Account, AccountDomain, Currency, InterestPeriod } from "../../types";
 import type { AccountInput } from "../../schemas";
 
@@ -41,6 +42,7 @@ export function AccountCreator({
 }: Props) {
   const noun = ACCOUNT_NOUN[domain].singular;
   const { optionsFor } = useEnabledCurrencies();
+  const { sanitize, parse } = useDecimalInput();
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState("");
   const [provider, setProvider] = useState("");
@@ -56,7 +58,7 @@ export function AccountCreator({
       onCreated(existing.id);
       return;
     }
-    const rateValue = rate.trim() === "" ? null : Number(rate);
+    const rateValue = rate.trim() === "" ? null : (parse(rate) ?? NaN);
     if (rateValue !== null && !(rateValue >= 0 && rateValue <= 100)) {
       return onError?.("Interest rate must be between 0 and 100");
     }
@@ -115,7 +117,7 @@ export function AccountCreator({
           inputMode="decimal"
           align="right"
           value={rate}
-          onValueChange={(v) => setRate(v.replace(/[^\d.]/g, ""))}
+          onValueChange={(v) => setRate(sanitize(v))}
         />
         <Select
           label="Rate period"

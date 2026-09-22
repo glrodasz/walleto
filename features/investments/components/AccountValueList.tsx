@@ -33,7 +33,7 @@ interface Props {
  */
 export function AccountValueList({ domain, categories, ctx, currency }: Props) {
   const { formatDate } = useDateFormat();
-  const { formatAmount } = useMoneyFormat();
+  const { formatAmount, formatPercent, separator } = useMoneyFormat();
   const {
     rows,
     transactions,
@@ -79,7 +79,9 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
                 >
                   <span className="name">
                     {r.name}
-                    {r.rate && <span className="pill">{formatInterestRate(r.rate)}</span>}
+                    {r.rate && (
+                      <span className="pill">{formatInterestRate(r.rate, separator)}</span>
+                    )}
                   </span>
                   <span className="meta">
                     {r.sub ? `${r.sub} · ` : ""}
@@ -100,7 +102,7 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
                   {r.gainPct !== null && (
                     <span className={`gain ${r.value - r.invested >= 0 ? "up" : "down"}`}>
                       {r.value - r.invested >= 0 ? "+" : ""}
-                      {r.gainPct.toFixed(1)}%
+                      {formatPercent(r.gainPct)}
                     </span>
                   )}
                 </span>

@@ -6,6 +6,7 @@ export interface Timestamp {
 }
 
 import type { CURRENCIES, ICON_KEYS } from "../constants";
+import type { DecimalSeparator, Decimals } from "../utils/decimal";
 export type IconKey = (typeof ICON_KEYS)[number];
 
 export type Currency = (typeof CURRENCIES)[number];
@@ -37,6 +38,7 @@ export type DateFormat = "MDY" | "DMY" | "YMD";
 /** 0 = Sunday, 1 = Monday, as in Date#getDay(). */
 export type WeekStart = 0 | 1;
 export type Language = "en";
+export type { DecimalSeparator, Decimals } from "../utils/decimal";
 
 export interface User {
   id: string;
@@ -51,6 +53,10 @@ export interface User {
   dateFormat?: DateFormat;
   weekStart?: WeekStart;
   language?: Language;
+  /** How numbers are written: "." → 1,234.56, "," → 1.234,56. */
+  decimalSeparator?: DecimalSeparator;
+  /** Fraction digits to print, 0–4; the stored value keeps its precision. */
+  decimals?: Decimals;
   createdAt: Timestamp;
 }
 

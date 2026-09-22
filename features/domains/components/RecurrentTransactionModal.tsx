@@ -32,6 +32,7 @@ import {
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import { CURRENCY_SYMBOL, FREQUENCY_LABELS } from "../../../constants";
 import { useEnabledCurrencies } from "../../../hooks/useEnabledCurrencies";
+import { useDecimalInput } from "../../../hooks/useDecimalInput";
 import type {
   Currency,
   Domain,
@@ -99,6 +100,7 @@ export function RecurrentTransactionModal({
 }: Props) {
   const { formatDate } = useDateFormat();
   const { formatAmount } = useMoneyFormat();
+  const decimal = useDecimalInput();
   const config = DOMAIN_CONFIG[domain];
   const noun = config.noun.replace(/s$/, "");
   const { userDoc } = useUserDoc();
@@ -157,7 +159,7 @@ export function RecurrentTransactionModal({
         categoryId: transaction.categoryId,
         accountId: transaction.accountId ?? "",
         name: transaction.name,
-        amount: String(transaction.amount),
+        amount: decimal.toInput(transaction.amount),
         currency: transaction.currency,
         frequency: "ONE_TIME",
         paymentMethodId: transaction.paymentMethodId ?? "",
@@ -167,7 +169,7 @@ export function RecurrentTransactionModal({
         backfill: false,
         chargedEnabled: transaction.chargedAmount !== undefined,
         chargedAmount:
-          transaction.chargedAmount !== undefined ? String(transaction.chargedAmount) : "",
+          transaction.chargedAmount !== undefined ? decimal.toInput(transaction.chargedAmount) : "",
         chargedCurrency: transaction.chargedCurrency ?? "",
       });
       return;
@@ -185,7 +187,7 @@ export function RecurrentTransactionModal({
       categoryId: item.categoryId,
       accountId: item.accountId ?? "",
       name: item.name,
-      amount: String(item.amount),
+      amount: decimal.toInput(item.amount),
       currency: item.currency,
       frequency: item.frequency,
       paymentMethodId: item.paymentMethodId ?? "",
@@ -205,7 +207,7 @@ export function RecurrentTransactionModal({
       chargedAmount: "",
       chargedCurrency: "",
     });
-  }, [open, item, transaction, empty]);
+  }, [open, item, transaction, empty, decimal]);
 
   const patch = (p: Partial<FormState>) => setForm((f) => ({ ...f, ...p }));
 
@@ -255,17 +257,18 @@ export function RecurrentTransactionModal({
   const offersGain = !editing && domain === "INVESTMENT" && !isRecurring;
   // Yearly, quarterly, weekly…: the plan can show it as a monthly amount.
   const offersSpread = isRecurring && form.frequency !== "MONTHLY";
-  const monthlySlice = (Number(form.amount) || 0) * FREQ_TO_MONTHS[form.frequency];
-  const gainPct = offersGain && form.gainPct.trim() !== "" ? Number(form.gainPct) : null;
+  const monthlySlice = (decimal.parse(form.amount) ?? 0) * FREQ_TO_MONTHS[form.frequency];
+  const gainPct =
+    offersGain && form.gainPct.trim() !== "" ? (decimal.parse(form.gainPct) ?? NaN) : null;
 
   const submit = async () => {
-    const amount = Number(form.amount);
+    const amount = decimal.parse(form.amount) ?? NaN;
     if (!form.categoryId) return setFormError("Pick a category");
     if (!form.name.trim()) return setFormError("Give it a name");
     if (!(amount > 0)) return setFormError("Amount must be greater than zero");
 
     const chargedAmount =
-      offersCharged && form.chargedEnabled ? Number(form.chargedAmount) : undefined;
+      offersCharged && form.chargedEnabled ? (decimal.parse(form.chargedAmount) ?? NaN) : undefined;
     if (offersCharged && form.chargedEnabled) {
       if (!(chargedAmount! > 0) || !form.chargedCurrency)
         return setFormError("Fill both charged fields or turn the toggle off");
@@ -491,7 +494,7 @@ export function RecurrentTransactionModal({
             prefix={CURRENCY_SYMBOL[effectiveCurrency]}
             align="right"
             value={form.amount}
-            onValueChange={(v) => patch({ amount: v.replace(/[^\d.]/g, "") })}
+            onValueChange={(v) => patch({ amount: decimal.sanitize(v) })}
           />
           <Select
             label="Currency"
@@ -612,7 +615,7 @@ export function RecurrentTransactionModal({
               inputMode="decimal"
               align="right"
               value={form.gainPct}
-              onValueChange={(v) => patch({ gainPct: v.replace(/[^\d.-]/g, "") })}
+              onValueChange={(v) => patch({ gainPct: decimal.sanitize(v, { negative: true }) })}
             />
             <p className="field-hint">
               0 = break-even, 100 = doubled. Records a first value check for the account (or the
@@ -647,7 +650,7 @@ export function RecurrentTransactionModal({
                   inputMode="decimal"
                   align="right"
                   value={form.chargedAmount}
-                  onValueChange={(v) => patch({ chargedAmount: v.replace(/[^\d.]/g, "") })}
+                  onValueChange={(v) => patch({ chargedAmount: decimal.sanitize(v) })}
                 />
                 <Select
                   label="Charged currency"

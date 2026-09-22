@@ -32,6 +32,20 @@ describe("PreferencesCard", () => {
     expect(screen.getByRole("combobox", { name: "Language" })).toHaveValue("en");
   });
 
+  it("saves the decimal separator and the decimals shown, with a live example", async () => {
+    render(<PreferencesCard />);
+    expect(screen.getByText("Example: $1,234.57")).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("combobox", { name: "Decimal separator" }), {
+      target: { value: "," },
+    });
+    await waitFor(() => expect(update).toHaveBeenCalledWith({ decimalSeparator: "," }));
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Decimals" }), {
+      target: { value: "3" },
+    });
+    await waitFor(() => expect(update).toHaveBeenCalledWith({ decimals: 3 }));
+  });
+
   it("switches the theme through the segmented control", () => {
     render(<PreferencesCard />);
     expect(screen.getByRole("radio", { name: "System" })).toHaveAttribute("aria-checked", "true");

@@ -17,6 +17,7 @@ utils/request.ts               wrapper de fetch
 utils/sortByCreatedAt.ts       ordenar por createdAt, nulls al final
 utils/startOfPreviousMonth.ts  medianoche del 1° del mes anterior
 utils/formatList.ts            "A", "A y B", "A, B y C"
+utils/decimal.ts               parseDecimal / sanitizeDecimal / toInputString / roundTo — números tal como los teclea la gente (coma o punto)
 ```
 
 > Si una utilidad necesita importar un tipo del dominio (`Domain`, `Currency`, `Frequency`…), **no es un util: es un helper**. Esa es la prueba rápida.
@@ -260,7 +261,7 @@ Todo monto se **guarda en su moneda nativa** y se **convierte solo al leer**. El
 - **`IDENTITY_RATES`** (`helpers/fx.ts`) son tasas 1:1 — útiles en tests y como fallback cuando no hay tasas reales; con ellas la salida es la suma cruda (para verificar mecánicamente un refactor).
 - **Honestidad ante la falta de datos**: `fxMissing` (nunca hubo cache) y `fxStale` (sirviendo cache vencido o el fallback del servidor) se propagan hasta la UI. Nunca se inventa un número — cuando `fxMissing` y hay monedas mezcladas, se muestra un aviso en vez de una suma falsa (ver `pages/index.tsx`).
 - **`Amount`** (`components/atoms/Amount.tsx`): `colorize` para netos (verde ≥0, rojo <0), `showCode` cuando la moneda difiere del target, `approximate` antepone "≈" en agregados convertidos. Decimales por moneda vía `ZERO_DECIMAL_CURRENCIES` en `constants.ts` (JPY, COP sin centavos), no un `maximumFractionDigits` fijo.
-- **Todo monto se escribe con `useMoneyFormat()`** (`hooks/useMoneyFormat.ts`), no con las funciones de `helpers/money` directamente: el hook las ata al modo privacidad (§3.5). Las puras quedan para tests y para lo que no es React; si una función auxiliar fuera del componente necesita formatear (`cardRows` en `pages/index.tsx`), recibe el formateador por parámetro.
+- **Todo monto se escribe con `useMoneyFormat()`** (`hooks/useMoneyFormat.ts`), no con las funciones de `helpers/money` directamente: el hook las ata al modo privacidad (§3.5) y a las preferencias de número del usuario (`decimalSeparator` "." o ",", `decimals` 0–4; Settings › Preferences). El separador se aplica sobre `formatToParts` en locale `en-US` — nunca cambiando de locale, que mueve el símbolo — y el valor se guarda con toda su precisión: solo se redondea al mostrar. Los porcentajes y tasas van por `formatPercent` / `formatNumber` del mismo hook. **Todo número tecleado pasa por `useDecimalInput()`** (`hooks/useDecimalInput.ts` sobre `utils/decimal.ts`): `sanitize` deja dígitos y ambos separadores (el teclado del móvil muestra el de su locale), `parse` decide qué quiso decir el usuario (el último separador es el decimal; uno repetido agrupa; uno solo es decimal salvo que no sea el suyo y le sigan exactamente tres dígitos: "1.000" para quien escribe "1,5" es mil) y `toInput` escribe un valor guardado en el campo. Nada de `Number(raw)` ni `replace(/[^\d.]/g, "")` en los formularios. Las puras quedan para tests y para lo que no es React; si una función auxiliar fuera del componente necesita formatear (`cardRows` en `pages/index.tsx`), recibe el formateador por parámetro.
 - **`/api/currencies`**: cache in-memory de 12h + mirror diario a Firestore (`rates/{YYYY-MM-DD}`) como fallback; el cliente cachea 24h en `localStorage` (`hooks/useExchangeRates.ts`). Nunca lo llames sin pasar por ese hook.
 
 ---

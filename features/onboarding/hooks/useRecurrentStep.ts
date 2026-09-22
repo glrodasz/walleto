@@ -11,6 +11,7 @@ import {
   toDateInputValue,
 } from "../../../helpers/scheduleAnchor";
 import { sectionFor } from "../helpers/cadenceSections";
+import { useDecimalInput } from "../../../hooks/useDecimalInput";
 import type { Currency, Domain, Frequency, RecurrentTransactionType } from "../../../types";
 
 export interface RecurrentRow extends DraftRow {
@@ -44,6 +45,7 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
   const { items, loading, create, remove } = useRecurrentTransactions(domain);
   const { categories } = useCategories(domain);
   const { methods } = usePaymentMethods();
+  const { parse, toInput } = useDecimalInput();
   const [backfill, setBackfill] = useState(true);
 
   const saved = useMemo(
@@ -58,7 +60,7 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
           id: i.id,
           categoryId: i.categoryId,
           name: i.name,
-          amount: String(i.amount),
+          amount: toInput(i.amount),
           currency: i.currency,
           frequency: i.frequency,
           paymentMethodId: i.paymentMethodId ?? "",
@@ -68,7 +70,7 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
           date: choice.date ?? toDateInputValue(new Date()),
         };
       }),
-    [items]
+    [items, toInput]
   );
 
   const draft = useDraftRows<RecurrentRow>(
@@ -100,7 +102,7 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
   const save = async () => {
     let created = 0;
     for (const row of draft.rows) {
-      const amount = Number(row.amount);
+      const amount = parse(row.amount) ?? NaN;
       // Skip rows the user left blank or only partially filled.
       if (row.id || !row.categoryId || !row.name.trim() || !(amount > 0)) continue;
 
