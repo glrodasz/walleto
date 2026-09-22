@@ -4,6 +4,8 @@ import { TextField } from "../../../components/atoms/TextField";
 import { Select } from "../../../components/atoms/Select";
 import { Button } from "../../../components/atoms/Button";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
+import { useDecimalInput } from "../../../hooks/useDecimalInput";
+import { roundTo } from "../../../utils/decimal";
 import {
   createInvestmentValuation,
   updateInvestmentValuation,
@@ -35,8 +37,6 @@ interface Props {
   onClose: () => void;
 }
 
-const round2 = (n: number) => Math.round(n * 100) / 100;
-
 /**
  * Gain % and Value are two views of one number. Typing either recomputes the
  * other from the basis; whichever was edited last is what gets saved — so
@@ -56,7 +56,8 @@ export function ValuationModal({
   suggestedCategoryId,
   onClose,
 }: Props) {
-  const { formatAmount } = useMoneyFormat();
+  const { formatAmount, decimals } = useMoneyFormat();
+  const { sanitize, parse, toInput } = useDecimalInput();
   const [date, setDate] = useState(toDateInputValue(new Date()));
   const [gain, setGain] = useState("0");
   const [value, setValue] = useState("");
@@ -71,39 +72,40 @@ export function ValuationModal({
     setError(null);
     if (valuation) {
       setDate(toDateInputValue(valuation.asOf.toDate()));
-      setGain(String(round2(valuation.gainPct)));
-      setValue(String(round2(valuation.value)));
+      setGain(toInput(roundTo(valuation.gainPct, 2)));
+      setValue(toInput(roundTo(valuation.value, decimals)));
       setNote(valuation.note ?? "");
       setCategoryId(valuation.categoryId ?? "");
     } else {
       setDate(toDateInputValue(new Date()));
       setGain("0");
-      setValue(String(round2(owes ? (latestValue ?? 0) : costBasis)));
+      setValue(toInput(roundTo(owes ? (latestValue ?? 0) : costBasis, decimals)));
       setNote("");
       setCategoryId(suggestedCategoryId ?? "");
     }
-  }, [open, valuation, costBasis, suggestedCategoryId, owes, latestValue]);
+  }, [open, valuation, costBasis, suggestedCategoryId, owes, latestValue, toInput, decimals]);
 
   const basis = valuation ? valuation.costBasis : costBasis;
 
   const onGainChange = (raw: string) => {
-    setGain(raw);
-    const pct = Number(raw);
-    if (Number.isFinite(pct)) setValue(String(round2(valueFromGain(basis, pct))));
+    const cleaned = sanitize(raw, { negative: true });
+    setGain(cleaned);
+    const pct = parse(cleaned);
+    if (pct !== null) setValue(toInput(roundTo(valueFromGain(basis, pct), decimals)));
   };
 
   const onValueChange = (raw: string) => {
-    const cleaned = raw.replace(/[^\d.]/g, "");
+    const cleaned = sanitize(raw);
     setValue(cleaned);
     if (owes) return;
-    const v = Number(cleaned);
-    const pct = gainFromValue(basis, v);
-    if (Number.isFinite(v) && pct !== null) setGain(String(round2(pct)));
+    const v = parse(cleaned);
+    const pct = v === null ? null : gainFromValue(basis, v);
+    if (pct !== null) setGain(toInput(roundTo(pct, 2)));
   };
 
   const submit = async () => {
-    const v = Number(value);
-    const pct = owes ? 0 : Number(gain);
+    const v = parse(value) ?? NaN;
+    const pct = owes ? 0 : (parse(gain) ?? NaN);
     if (!(v >= 0) || !Number.isFinite(pct)) {
       return setError(owes ? "Enter the balance owed" : "Enter a value or a gain %");
     }
@@ -181,7 +183,7 @@ export function ValuationModal({
                 inputMode="decimal"
                 align="right"
                 value={gain}
-                onValueChange={(v) => onGainChange(v.replace(/[^\d.-]/g, ""))}
+                onValueChange={onGainChange}
               />
               <TextField
                 label="Current value"

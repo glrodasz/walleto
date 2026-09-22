@@ -1,4 +1,11 @@
-import { formatAmount, formatCompact, formatNative, MONEY_MASK } from "./money";
+import {
+  formatAmount,
+  formatCompact,
+  formatNative,
+  formatNumber,
+  formatPercent,
+  MONEY_MASK,
+} from "./money";
 
 /** Intl separates an ISO code from the number with a non-breaking space. */
 const norm = (s: string) => s.replace(/\u00a0/g, " ");
@@ -84,5 +91,34 @@ describe("privacy mode", () => {
   it("still distinguishes a foreign row from a local one", () => {
     expect(norm(formatNative(449, "SEK", "USD", { hidden: true }))).toBe(`SEK ${MONEY_MASK}`);
     expect(formatNative(449, "USD", "USD", { hidden: true })).toBe(`$${MONEY_MASK}`);
+  });
+});
+
+describe("number preferences", () => {
+  it("swaps the separators without moving the symbol", () => {
+    expect(formatAmount(1234.5, "EUR", { separator: "," })).toBe("€1.234,50");
+    expect(formatAmount(-42.5, "USD", { separator: "," })).toBe("-$42,50");
+    expect(norm(formatNative(220000, "COP", "USD", { separator: "," }))).toBe("COP 220.000");
+    expect(norm(formatCompact(58_275, "SEK", { separator: "," }))).toBe("SEK 58,3K");
+  });
+
+  it("prints the decimals asked for, except on zero-decimal currencies", () => {
+    expect(formatAmount(1234.5678, "USD", { decimals: 0 })).toBe("$1,235");
+    expect(formatAmount(1234.5678, "USD", { decimals: 3 })).toBe("$1,234.568");
+    expect(formatAmount(1234.5678, "USD", { decimals: 4, separator: "," })).toBe("$1.234,5678");
+    expect(formatAmount(1499.4, "JPY", { decimals: 4 })).toBe("¥1,499");
+  });
+
+  it("formats plain numbers and percentages the same way", () => {
+    expect(formatNumber(2.5)).toBe("2.5");
+    expect(formatNumber(19.9, { separator: "," })).toBe("19,9");
+    expect(formatNumber(1234.5678, { maxDecimals: 2 })).toBe("1,234.57");
+    expect(formatNumber(3, { minDecimals: 2, maxDecimals: 2 })).toBe("3.00");
+    expect(formatPercent(16.666)).toBe("16.7%");
+    expect(formatPercent(-1.25, 1, ",")).toBe("-1,3%");
+  });
+
+  it("masks with either separator", () => {
+    expect(formatAmount(1150, "USD", { hidden: true, separator: "," })).toBe(`$${MONEY_MASK}`);
   });
 });

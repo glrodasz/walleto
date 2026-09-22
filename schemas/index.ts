@@ -288,6 +288,16 @@ export const DateFormatSchema = z.enum(["MDY", "DMY", "YMD"]);
 /** 0 = Sunday, 1 = Monday, as in Date#getDay(). */
 export const WeekStartSchema = z.union([z.literal(0), z.literal(1)]);
 export const LanguageSchema = z.enum(["en"]);
+/** "." writes 1,234.56; "," writes 1.234,56. */
+export const DecimalSeparatorSchema = z.enum([".", ","]);
+/** Fraction digits shown, 0–4. */
+export const DecimalsSchema = z.union([
+  z.literal(0),
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+]);
 
 export const UserUpdateSchema = z
   .object({
@@ -301,6 +311,8 @@ export const UserUpdateSchema = z
     dateFormat: DateFormatSchema.optional(),
     weekStart: WeekStartSchema.optional(),
     language: LanguageSchema.optional(),
+    decimalSeparator: DecimalSeparatorSchema.optional(),
+    decimals: DecimalsSchema.optional(),
   })
   .refine((v) => Object.keys(v).length > 0, {
     message: "At least one field is required",

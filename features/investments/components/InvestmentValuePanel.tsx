@@ -79,7 +79,7 @@ export function InvestmentValuePanel({
   accent = "var(--domain-investment)",
 }: Props) {
   const { formatDate } = useDateFormat();
-  const { formatAmount } = useMoneyFormat();
+  const { formatAmount, formatPercent, separator } = useMoneyFormat();
   const owes = domain === "DEBT";
   const sign = positionSign(domain);
   const valuations = useMemo(
@@ -126,11 +126,11 @@ export function InvestmentValuePanel({
   );
 
   const valueMeta = latest
-    ? `checked ${formatDate(latest.asOf.toDate(), "dayYear")}${rate ? `, ${formatInterestRate(rate)} since` : ""}`
+    ? `checked ${formatDate(latest.asOf.toDate(), "dayYear")}${rate ? `, ${formatInterestRate(rate, separator)} since` : ""}`
     : owes
       ? "no balance check yet"
       : rate
-        ? `estimated at ${formatInterestRate(rate)}`
+        ? `estimated at ${formatInterestRate(rate, separator)}`
         : "no value check yet";
 
   const del = async (id: string) => {
@@ -193,7 +193,7 @@ export function InvestmentValuePanel({
               {gainPct !== null && (
                 <span className={`meta ${gain >= 0 ? "up" : "down"}`}>
                   {gain >= 0 ? "+" : ""}
-                  {gainPct.toFixed(1)}%
+                  {formatPercent(gainPct)}
                 </span>
               )}
             </div>
@@ -221,7 +221,7 @@ export function InvestmentValuePanel({
                   {!owes && (
                     <span className={`row-pct ${v.gainPct >= 0 ? "up" : "down"}`}>
                       {v.gainPct >= 0 ? "+" : ""}
-                      {v.gainPct.toFixed(1)}% on {formatAmount(v.costBasis, v.currency)}
+                      {formatPercent(v.gainPct)} on {formatAmount(v.costBasis, v.currency)}
                     </span>
                   )}
                   {v.note && <span className="row-note">{v.note}</span>}

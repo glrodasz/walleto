@@ -21,6 +21,11 @@ describe("isAccountDomain", () => {
 });
 
 describe("formatInterestRate", () => {
+  it("writes the rate with the user's decimal separator", () => {
+    expect(formatInterestRate({ value: 19.9, period: "YEARLY" }, ",")).toBe("19,9% yearly");
+    expect(formatInterestRate({ value: 3, period: "MONTHLY" }, ",")).toBe("3% monthly");
+  });
+
   it("keeps whole numbers short and rounds the rest to two decimals", () => {
     expect(formatInterestRate({ value: 3, period: "YEARLY" })).toBe("3% yearly");
     expect(formatInterestRate({ value: 2.5, period: "YEARLY" })).toBe("2.5% yearly");

@@ -2,18 +2,25 @@ import { createContext, useCallback, useContext } from "react";
 import { DEFAULT_DATE_FORMAT, formatDate } from "../helpers/dates";
 import type { DateStyle } from "../helpers/dates";
 import { DEFAULT_LANGUAGE } from "../helpers/i18n";
-import type { DateFormat, Language, WeekStart } from "../types";
+import { DEFAULT_DECIMAL_SEPARATOR, DEFAULT_DECIMALS } from "../utils/decimal";
+import type { DateFormat, DecimalSeparator, Decimals, Language, WeekStart } from "../types";
 
 export interface Preferences {
   dateFormat: DateFormat;
   weekStart: WeekStart;
   language: Language;
+  /** How numbers are written and typed back: "." or ",". */
+  decimalSeparator: DecimalSeparator;
+  /** Fraction digits the UI prints for amounts. */
+  decimals: Decimals;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
   dateFormat: DEFAULT_DATE_FORMAT,
   weekStart: 1,
   language: DEFAULT_LANGUAGE,
+  decimalSeparator: DEFAULT_DECIMAL_SEPARATOR,
+  decimals: DEFAULT_DECIMALS,
 };
 
 /**

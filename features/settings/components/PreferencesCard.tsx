@@ -3,20 +3,37 @@ import { Monitor, Moon, Sliders, Sun } from "../../../components/atoms/Icons";
 import { SegmentedControl } from "../../../components/molecules/SegmentedControl";
 import { DATE_FORMAT_LABELS, formatDate } from "../../../helpers/dates";
 import { LANGUAGE_LABELS, t } from "../../../helpers/i18n";
+import { formatAmount } from "../../../helpers/money";
 import { usePreferences } from "../../../hooks/usePreferences";
 import { useTheme } from "../../../hooks/useTheme";
 import { useUserDoc } from "../../../hooks/useUserDoc";
-import type { DateFormat, Language, ThemePreference, WeekStart } from "../../../types";
+import { DECIMALS_OPTIONS } from "../../../utils/decimal";
+import type {
+  DateFormat,
+  DecimalSeparator,
+  Decimals,
+  Language,
+  ThemePreference,
+  WeekStart,
+} from "../../../types";
 import { SettingsCard } from "./SettingsCard";
 import { SettingsRow } from "./SettingsRow";
 
 const DATE_FORMATS: DateFormat[] = ["YMD", "DMY", "MDY"];
+const SEPARATORS: { value: DecimalSeparator; label: string }[] = [
+  { value: ".", label: "Point (1,234.56)" },
+  { value: ",", label: "Comma (1.234,56)" },
+];
 
-/** Start of week, date format, language and theme — saved on the user doc. */
+/** Start of week, date format, language, number format and theme — saved on the user doc. */
 export function PreferencesCard() {
-  const { update } = useUserDoc();
-  const { dateFormat, weekStart, language } = usePreferences();
+  const { update, userDoc } = useUserDoc();
+  const { dateFormat, weekStart, language, decimalSeparator, decimals } = usePreferences();
   const { preference, setPreference } = useTheme();
+  const example = formatAmount(1234.5678, userDoc?.mainCurrency ?? "USD", {
+    separator: decimalSeparator,
+    decimals,
+  });
 
   const save = (patch: Parameters<typeof update>[0]) =>
     update(patch).catch((err) => console.error("Failed to save preference:", err));
@@ -66,6 +83,30 @@ export function PreferencesCard() {
             onValueChange={(v) => save({ language: v as Language })}
           />
         }
+      />
+      <SettingsRow
+        label="Decimal separator"
+        control={
+          <Select
+            aria-label="Decimal separator"
+            options={SEPARATORS}
+            value={decimalSeparator}
+            onValueChange={(v) => save({ decimalSeparator: v as DecimalSeparator })}
+          />
+        }
+        hint="Typing accepts either key; this is how numbers are written back."
+      />
+      <SettingsRow
+        label="Decimals"
+        control={
+          <Select
+            aria-label="Decimals"
+            options={DECIMALS_OPTIONS.map((d) => ({ value: String(d), label: String(d) }))}
+            value={String(decimals)}
+            onValueChange={(v) => save({ decimals: Number(v) as Decimals })}
+          />
+        }
+        hint={`Example: ${example}`}
       />
       <SettingsRow
         label="Theme"

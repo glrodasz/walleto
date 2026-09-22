@@ -78,6 +78,24 @@ describe("PATCH /api/user", () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
+  it("saves the number preferences and rejects a fifth decimal", async () => {
+    getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
+    const res = mockRes();
+    await handler(
+      {
+        method: "PATCH",
+        query: {},
+        body: { decimalSeparator: ",", decimals: 3 },
+      } as NextApiRequest,
+      res
+    );
+    expect(setMock).toHaveBeenCalledWith({ decimalSeparator: ",", decimals: 3 }, { merge: true });
+
+    const bad = mockRes();
+    await handler({ method: "PATCH", query: {}, body: { decimals: 5 } } as NextApiRequest, bad);
+    expect(bad.status).toHaveBeenCalledWith(400);
+  });
+
   it("returns 400 for an unknown currency", async () => {
     getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
     const res = mockRes();

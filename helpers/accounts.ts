@@ -1,3 +1,5 @@
+import { formatNumber } from "./money";
+import type { DecimalSeparator } from "../utils/decimal";
 import type { AccountDomain, Domain, InterestRate } from "../types";
 
 /** How the UI names an account in each domain that has them. */
@@ -15,9 +17,9 @@ export function isAccountDomain(domain: Domain): domain is AccountDomain {
   return domain === "INVESTMENT" || domain === "SAVING" || domain === "DEBT";
 }
 
-/** "2.5% yearly" / "0.4% monthly", for pills and rows. */
-export function formatInterestRate(rate: InterestRate): string {
-  const value = String(Number(rate.value.toFixed(2)));
+/** "2.5% yearly" / "0.4% monthly", for pills and rows, in the user's separator. */
+export function formatInterestRate(rate: InterestRate, separator: DecimalSeparator = "."): string {
+  const value = formatNumber(rate.value, { maxDecimals: 2, separator });
   return `${value}% ${rate.period === "YEARLY" ? "yearly" : "monthly"}`;
 }
 
