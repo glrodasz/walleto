@@ -85,7 +85,7 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
                   </span>
                   <span className="meta">
                     {r.sub ? `${r.sub} · ` : ""}
-                    {owes ? "Repaid" : "In"} {formatAmount(r.invested, currency)}
+                    {owes ? "Repaid (net)" : "In"} {formatAmount(r.invested, currency)}
                     {r.latest
                       ? ` · checked ${formatDate(r.latest.asOf.toDate(), "day")}`
                       : owes

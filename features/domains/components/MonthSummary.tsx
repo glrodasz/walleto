@@ -27,6 +27,8 @@ interface Props {
    * is a loss. Debts: negative is the interest the balance checks revealed.
    */
   gain?: number;
+  /** Account domains: what left the accounts this month, as a positive figure. */
+  withdrawn?: number;
 }
 
 /**
@@ -44,6 +46,7 @@ export function MonthSummary({
   approximate,
   contributed,
   gain,
+  withdrawn = 0,
 }: Props) {
   const { formatAmount } = useMoneyFormat();
   const config = DOMAIN_CONFIG[domain];
@@ -53,15 +56,26 @@ export function MonthSummary({
   // Investments and savings fold a market gain into the figure — and a debt
   // the interest it accrued — so it says what it is made of. Silent when no
   // check landed: the month then reads exactly like one on the other domains.
-  const showBreakdown = contributed !== undefined && gain !== undefined && gain !== 0;
+  const hasGain = gain !== undefined && gain !== 0;
+  const showBreakdown = contributed !== undefined && (hasGain || withdrawn > 0);
   const owes = domain === "DEBT";
   const gainWord = owes
-    ? gain! < 0
+    ? (gain ?? 0) < 0
       ? "interest & charges"
       : "reduced"
-    : gain! >= 0
+    : (gain ?? 0) >= 0
       ? "gain"
       : "loss";
+  // `contributed` is net of withdrawals; the line spells out both sides.
+  const breakdown = [
+    `${formatAmount((contributed ?? 0) + withdrawn, currency)} ${owes ? "repaid" : "contributed"}`,
+    withdrawn > 0
+      ? `${formatAmount(withdrawn, currency)} ${owes ? "borrowed" : "withdrawn"}`
+      : null,
+    hasGain ? `${formatAmount(Math.abs(gain!), currency)} ${gainWord}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <Card>
@@ -77,14 +91,7 @@ export function MonthSummary({
               <DeltaPill pct={delta.deltaPct} upIsGood={config.upIsGood} />
             )}
           </span>
-          {showBreakdown && (
-            <span className="line breakdown">
-              {`${formatAmount(contributed!, currency)} ${owes ? "repaid" : "contributed"} · ${formatAmount(
-                Math.abs(gain!),
-                currency
-              )} ${gainWord}`}
-            </span>
-          )}
+          {showBreakdown && <span className="line breakdown">{breakdown}</span>}
           <span className="line">
             {delta.previousKey && previousLabel
               ? `Compared to ${formatAmount(delta.previous, currency)} in ${previousLabel}`

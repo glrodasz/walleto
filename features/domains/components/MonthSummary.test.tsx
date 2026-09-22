@@ -76,6 +76,41 @@ describe("MonthSummary", () => {
     expect(screen.queryByText(/contributed/)).not.toBeInTheDocument();
   });
 
+  it("spells out withdrawals on both sides of a net figure", () => {
+    render(
+      <MonthSummary
+        domain="INVESTMENT"
+        window={sep}
+        realized={700}
+        expected={700}
+        delta={{ current: 0, previous: 0, deltaPct: null, previousKey: null }}
+        previousLabel={null}
+        currency="USD"
+        contributed={700}
+        gain={0}
+        withdrawn={500}
+      />
+    );
+    expect(screen.getByText("$1,200.00 contributed · $500.00 withdrawn")).toBeInTheDocument();
+    // Nothing of the plan has landed when the month is net negative.
+    render(
+      <MonthSummary
+        domain="SAVING"
+        window={sep}
+        realized={-300}
+        expected={500}
+        delta={{ current: 0, previous: 0, deltaPct: null, previousKey: null }}
+        previousLabel={null}
+        currency="USD"
+        contributed={-300}
+        gain={0}
+        withdrawn={800}
+      />
+    );
+    expect(screen.getByText("$500.00 contributed · $800.00 withdrawn")).toBeInTheDocument();
+    expect(screen.getAllByRole("progressbar")[1]).toHaveAttribute("aria-valuenow", "0");
+  });
+
   const debts = (gain: number, repaid = 1_000) => (
     <MonthSummary
       domain="DEBT"

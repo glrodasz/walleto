@@ -64,3 +64,16 @@ export const InvestmentsLoss: Story = {
     gain: -1_200,
   },
 };
+
+/** A month with money leaving: the figure is net, and the line shows both sides. */
+export const Withdrawals: Story = {
+  args: {
+    domain: "INVESTMENT",
+    realized: 700,
+    expected: 700,
+    delta: { current: 700, previous: 1_200, deltaPct: -41.7, previousKey: previous.key },
+    contributed: 700,
+    gain: 0,
+    withdrawn: 500,
+  },
+};

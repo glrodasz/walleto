@@ -124,6 +124,50 @@ describe("RecurrentTransactionModal — one-off entry point", () => {
   });
 });
 
+describe("RecurrentTransactionModal — direction on an account", () => {
+  it("offers deposit / withdrawal on a one-off and sends OUT only when chosen", async () => {
+    const onClose = jest.fn();
+    render(
+      <RecurrentTransactionModal
+        domain="SAVING"
+        open
+        initialFrequency="ONE_TIME"
+        onClose={onClose}
+      />
+    );
+    fill();
+    expect(screen.getByRole("radio", { name: "Deposit" })).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(screen.getByRole("radio", { name: "Withdrawal" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(createTransaction).toHaveBeenCalledWith(expect.objectContaining({ direction: "OUT" }));
+  });
+
+  it("calls it borrowed on a debt, and hides it on expenses and on a plan", () => {
+    const { unmount } = render(
+      <RecurrentTransactionModal
+        domain="DEBT"
+        open
+        initialFrequency="ONE_TIME"
+        onClose={jest.fn()}
+      />
+    );
+    expect(screen.getByRole("radio", { name: "Borrowed" })).toBeInTheDocument();
+    unmount();
+    render(
+      <RecurrentTransactionModal
+        domain="EXPENSE"
+        open
+        initialFrequency="ONE_TIME"
+        onClose={jest.fn()}
+      />
+    );
+    expect(screen.queryByRole("radiogroup", { name: "Direction" })).toBeNull();
+    fireEvent.change(screen.getByLabelText("Frequency"), { target: { value: "MONTHLY" } });
+    expect(screen.queryByRole("radiogroup", { name: "Direction" })).toBeNull();
+  });
+});
+
 describe("RecurrentTransactionModal — editing a transaction", () => {
   const existing = {
     id: "t9",

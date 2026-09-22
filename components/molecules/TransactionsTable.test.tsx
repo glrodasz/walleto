@@ -179,6 +179,28 @@ describe("TransactionsTable", () => {
     expect(bodyRows()[0]).toHaveTextContent("Hidden");
   });
 
+  it("reads a withdrawal as a negative amount with a badge saying so", () => {
+    render(
+      <TransactionsTable
+        {...base}
+        domain="SAVING"
+        onDelete={jest.fn()}
+        rows={[
+          tx("w", "Moved to broker", new Date(2026, 8, 6, 9), {
+            domain: "SAVING",
+            amount: 500,
+            direction: "OUT",
+            chargedAmount: 4600,
+            chargedCurrency: "SEK",
+          }),
+        ]}
+      />
+    );
+    expect(screen.getByText("-$500.00")).toBeInTheDocument();
+    expect(screen.getByText("Withdrawal")).toBeInTheDocument();
+    expect(screen.getByText(/charged -SEK 4,600/)).toBeInTheDocument();
+  });
+
   it("caps the rows and leaves the method out when asked", () => {
     render(
       <TransactionsTable {...base} rows={rows} onDelete={jest.fn()} limit={2} showMethod={false} />

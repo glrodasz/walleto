@@ -32,6 +32,7 @@ import {
 } from "../../investments/helpers/valuationGains";
 import { GAIN_KEY, gainLabel, withGains } from "../helpers/gainStack";
 import { isAccountDomain } from "../../../helpers/accounts";
+import { convertedAmount } from "../../../helpers/aggregations";
 import { INCEPTION } from "../../investments/helpers/valuation";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import {
@@ -244,6 +245,14 @@ export function DomainPage({ domain }: Props) {
   const realized = totals[window.key] ?? 0;
   const contributed = txTotals[window.key] ?? 0;
   const monthGain = gains[window.key] ?? 0;
+  // What left the accounts this month, so the summary can show both sides of the net figure.
+  const monthWithdrawn = useMemo(
+    () =>
+      monthTransactions
+        .filter((t) => t.direction === "OUT")
+        .reduce((sum, t) => sum + Math.abs(convertedAmount(t, ctx)), 0),
+    [monthTransactions, ctx]
+  );
   const expected = useMemo(
     () => expectedForMonth(window, realized, chartItems, ctx, now),
     [window, realized, chartItems, ctx, now]
@@ -586,6 +595,7 @@ export function DomainPage({ domain }: Props) {
         approximate={hasForeign}
         contributed={accountDomain ? contributed : undefined}
         gain={accountDomain ? monthGain : undefined}
+        withdrawn={accountDomain ? monthWithdrawn : undefined}
       />
 
       <div className="charts">
