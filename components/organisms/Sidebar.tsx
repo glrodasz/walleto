@@ -23,6 +23,8 @@ interface NavItem {
   label: string;
   href: string;
   icon: ComponentType<IconProps>;
+  /** Rendered in place but inert — used for sections that are hidden while in progress. */
+  disabled?: boolean;
 }
 
 const DASHBOARD: NavItem = { label: "Dashboard", href: "/", icon: Home };
@@ -40,7 +42,7 @@ const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
   },
   {
     title: "Planning",
-    items: [{ label: "Prospect", href: "/prospect", icon: Compass }],
+    items: [{ label: "Prospect", href: "/prospect", icon: Compass, disabled: true }],
   },
   {
     title: "Account",
@@ -58,7 +60,7 @@ const BOTTOM_NAV: NavItem[] = [
 
 const MORE_NAV: NavItem[] = [
   { label: "Savings", href: "/savings", icon: Circle },
-  { label: "Prospect", href: "/prospect", icon: Compass },
+  { label: "Prospect", href: "/prospect", icon: Compass, disabled: true },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 
@@ -72,6 +74,14 @@ export function Sidebar() {
 
   const navLink = (item: NavItem, size: number) => {
     const Icon = item.icon;
+    if (item.disabled) {
+      return (
+        <span key={item.href} className="nav-item is-disabled" aria-disabled="true">
+          <Icon size={size} />
+          <span>{item.label}</span>
+        </span>
+      );
+    }
     return (
       <Link
         key={item.href}
@@ -158,6 +168,14 @@ export function Sidebar() {
         <div className="more">
           {MORE_NAV.map((item) => {
             const Icon = item.icon;
+            if (item.disabled) {
+              return (
+                <span key={item.href} className="more-item is-disabled" aria-disabled="true">
+                  <Icon size={20} />
+                  <span>{item.label}</span>
+                </span>
+              );
+            }
             return (
               <Link
                 key={item.href}
@@ -286,6 +304,12 @@ export function Sidebar() {
           box-shadow:
             inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent),
             inset 0 1px 0 var(--glass-edge);
+        }
+
+        .nav :global(.nav-item.is-disabled) {
+          color: var(--fg-2);
+          opacity: 0.5;
+          cursor: not-allowed;
         }
 
         .account {
@@ -424,6 +448,12 @@ export function Sidebar() {
           background-color: var(--accent-soft);
           background-image: var(--glass-sheen);
           box-shadow: inset 0 1px 0 var(--glass-edge);
+        }
+
+        .more :global(.more-item.is-disabled) {
+          color: var(--fg-2);
+          opacity: 0.5;
+          cursor: not-allowed;
         }
 
         .more-build {
