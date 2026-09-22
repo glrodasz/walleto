@@ -15,7 +15,7 @@ import { useCategories } from "../../../hooks/useCategories";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { useAccounts } from "../../../hooks/useAccounts";
 import { useTags } from "../../../hooks/useTags";
-import { useRecurrentTransactions } from "../../../hooks/useRecurrentTransactions";
+import { convertItem, useRecurrentTransactions } from "../../../hooks/useRecurrentTransactions";
 import { useUserDoc } from "../../../hooks/useUserDoc";
 import { materializeNow } from "../../../hooks/useMaterialize";
 import { createTransaction, updateTransaction } from "../../../hooks/useTransactions";
@@ -91,6 +91,8 @@ interface FormState extends ScheduleValue {
   chargedCurrency: Currency | "";
   /** One-offs on account domains: money in, or a withdrawal (borrowed, on a debt). */
   direction: TransactionDirection;
+  /** EXPENSE only: file this under Debts instead — the instalment repays a debt. */
+  paysDebt: boolean;
 }
 
 export function RecurrentTransactionModal({
@@ -109,18 +111,6 @@ export function RecurrentTransactionModal({
   const noun = config.noun.replace(/s$/, "");
   const { userDoc } = useUserDoc();
   const { optionsFor } = useEnabledCurrencies();
-  const { categories, create: createCategory } = useCategories(domain);
-  const { methods, create: createMethod } = usePaymentMethods();
-  const hasAccounts = isAccountDomain(domain);
-  const { accounts, create: createAccount } = useAccounts(hasAccounts ? domain : null);
-  const { tags: allTags, create: createTag } = useTags();
-  const { items, create, update } = useRecurrentTransactions(domain);
-  // The row's recurring item — only active ones are listed, so a stopped
-  // item leaves the row with nothing to link to.
-  const parent = transaction?.recurrentTransactionId
-    ? items.find((i) => i.id === transaction.recurrentTransactionId)
-    : undefined;
-
   const empty: FormState = useMemo(
     () => ({
       categoryId: "",
@@ -146,11 +136,29 @@ export function RecurrentTransactionModal({
       chargedAmount: "",
       chargedCurrency: "",
       direction: "IN",
+      paysDebt: false,
     }),
     [initialFrequency]
   );
 
   const [form, setForm] = useState<FormState>(empty);
+  // "This pays off a debt": an expense that is really a repayment files under
+  // Debts. Offered on create and on a recurring item; a one-off row's domain
+  // cannot move, so it records its repayments from the Debts page instead.
+  const offersDebtToggle = domain === "EXPENSE" && !transaction;
+  const effectiveDomain: Domain = offersDebtToggle && form.paysDebt ? "DEBT" : domain;
+  const { categories, create: createCategory } = useCategories(effectiveDomain);
+  const { methods, create: createMethod } = usePaymentMethods();
+  const hasAccounts = isAccountDomain(effectiveDomain);
+  const { accounts, create: createAccount } = useAccounts(hasAccounts ? effectiveDomain : null);
+  const { tags: allTags, create: createTag } = useTags();
+  const { items, create, update } = useRecurrentTransactions(domain);
+  // The row's recurring item — only active ones are listed, so a stopped
+  // item leaves the row with nothing to link to.
+  const parent = transaction?.recurrentTransactionId
+    ? items.find((i) => i.id === transaction.recurrentTransactionId)
+    : undefined;
+
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -177,6 +185,7 @@ export function RecurrentTransactionModal({
           transaction.chargedAmount !== undefined ? decimal.toInput(transaction.chargedAmount) : "",
         chargedCurrency: transaction.chargedCurrency ?? "",
         direction: transaction.direction ?? "IN",
+        paysDebt: false,
       });
       return;
     }
@@ -213,10 +222,35 @@ export function RecurrentTransactionModal({
       chargedAmount: "",
       chargedCurrency: "",
       direction: "IN",
+      paysDebt: false,
     });
   }, [open, item, transaction, empty, decimal]);
 
   const patch = (p: Partial<FormState>) => setForm((f) => ({ ...f, ...p }));
+
+  // Flipping the toggle swaps the category list, so the pick has to move
+  // with it: the debt category with the same name, else "Loans", else the
+  // first one; and the expense category comes back when it is flipped off.
+  const [expenseCategory, setExpenseCategory] = useState<{ id: string; name: string } | null>(null);
+  const togglePaysDebt = (on: boolean) => {
+    if (on) {
+      const current = categories.find((c) => c.id === form.categoryId);
+      setExpenseCategory(current?.id ? { id: current.id, name: current.name } : null);
+      patch({ paysDebt: true, categoryId: "", accountId: "" });
+    } else {
+      patch({ paysDebt: false, categoryId: expenseCategory?.id ?? "", accountId: "" });
+    }
+  };
+  useEffect(() => {
+    if (!form.paysDebt || form.categoryId || categories.length === 0) return;
+    const roots = categories.filter((c) => !c.parentId && c.id);
+    const wanted = expenseCategory?.name.trim().toLowerCase();
+    const match =
+      roots.find((c) => wanted && c.name.trim().toLowerCase() === wanted) ??
+      roots.find((c) => c.name.trim().toLowerCase() === "loans") ??
+      roots[0];
+    if (match?.id) setForm((f) => ({ ...f, categoryId: match.id! }));
+  }, [form.paysDebt, form.categoryId, categories, expenseCategory]);
 
   // Per-item currency default: the account's currency, then the chosen
   // method's defaultCurrency, then the user's main currency.
@@ -262,7 +296,7 @@ export function RecurrentTransactionModal({
   // on ledger rows only: one-off create and transaction edit.
   const offersCharged = !isRecurring && !item;
   // A one-off on an account can go either way; a plan only ever puts money in.
-  const accountDomain = isAccountDomain(domain) ? domain : null;
+  const accountDomain = isAccountDomain(effectiveDomain) ? effectiveDomain : null;
   const offersDirection = accountDomain !== null && !isRecurring;
   const offersGain =
     !editing && domain === "INVESTMENT" && !isRecurring && form.direction !== "OUT";
@@ -349,9 +383,19 @@ export function RecurrentTransactionModal({
           form.frequency !== item.frequency ||
           startDate.getTime() !== item.startDate.toDate().getTime() ||
           twiceMonthly !== (item.secondDayOfMonth ?? null);
+        // Moving to Debts goes first and carries the category and the debt:
+        // a PATCH checks both against the item's domain as it stands.
+        const converting = offersDebtToggle && form.paysDebt;
+        if (converting) {
+          await convertItem(item.id, {
+            domain: "DEBT",
+            categoryId: form.categoryId,
+            ...(form.accountId ? { accountId: form.accountId } : {}),
+          });
+        }
         await update(item.id, {
-          categoryId: form.categoryId,
-          ...(hasAccounts ? { accountId: form.accountId || null } : {}),
+          ...(converting ? {} : { categoryId: form.categoryId }),
+          ...(hasAccounts && !converting ? { accountId: form.accountId || null } : {}),
           name: form.name.trim(),
           amount,
           currency: effectiveCurrency,
@@ -383,7 +427,7 @@ export function RecurrentTransactionModal({
         // "One time" is not a plan, it is a line in the ledger: a dated
         // transaction, no recurrent item behind it and nothing to materialize.
         await createTransaction({
-          domain,
+          domain: effectiveDomain,
           categoryId: form.categoryId,
           ...(form.accountId ? { accountId: form.accountId } : {}),
           name: form.name.trim(),
@@ -401,9 +445,10 @@ export function RecurrentTransactionModal({
         });
       } else {
         await create({
-          domain,
+          domain: effectiveDomain,
           categoryId: form.categoryId,
           ...(form.accountId ? { accountId: form.accountId } : {}),
+          ...(effectiveDomain === "DEBT" ? { type: "LOAN_PAYMENT" as const } : {}),
           name: form.name.trim(),
           amount,
           currency: effectiveCurrency,
@@ -456,18 +501,36 @@ export function RecurrentTransactionModal({
       onClose={onClose}
     >
       <div className="form">
+        {offersDebtToggle && (
+          <label className="toggle">
+            <input
+              type="checkbox"
+              checked={form.paysDebt}
+              onChange={(e) => togglePaysDebt(e.currentTarget.checked)}
+            />
+            <span>
+              This pays off a debt
+              <span className="hint">
+                {" "}
+                — files it under Debts, where the debt, its rate and its balance live. Expenses
+                drops by the instalment; your monthly net does not change.
+              </span>
+            </span>
+          </label>
+        )}
+
         <CategoryField
           categories={categories}
           value={form.categoryId}
           onChange={(categoryId) => patch({ categoryId })}
-          createCategory={(name, icon) => createCategory({ domain, name, icon })}
-          newLabel={`New ${config.title.toLowerCase()} category`}
+          createCategory={(name, icon) => createCategory({ domain: effectiveDomain, name, icon })}
+          newLabel={`New ${DOMAIN_CONFIG[effectiveDomain].title.toLowerCase()} category`}
           onError={setFormError}
         />
 
-        {hasAccounts && (
+        {hasAccounts && accountDomain && (
           <AccountField
-            domain={domain}
+            domain={accountDomain}
             accounts={accounts}
             value={form.accountId}
             onChange={onSelectAccount}

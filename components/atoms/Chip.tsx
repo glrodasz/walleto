@@ -34,6 +34,9 @@ export function Chip({
     `chip--${variant}`,
     selected ? "chip--selected" : "",
     onClick && !disabled ? "chip--clickable" : "",
+    // A class rather than `:has(.remove)`: jsdom's selector engine cannot parse
+    // `:has()`, and any test that reads computed styles near a chip would throw.
+    !onClick && onRemove ? "chip--removable" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -89,7 +92,7 @@ export function Chip({
           min-height: 34px;
         }
 
-        .chip:has(.remove) {
+        .chip--removable {
           padding-right: 6px;
         }
 
