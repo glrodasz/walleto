@@ -4,7 +4,11 @@ import { useUser } from "@auth0/nextjs-auth0/client";
 import { db } from "../firebase/client";
 import { useFirebaseAuth } from "./useFirebaseAuth";
 import type { Domain, RecurrentTransaction } from "../types";
-import type { RecurrentTransactionInput, RecurrentTransactionUpdate } from "../schemas";
+import type {
+  RecurrentTransactionConvert,
+  RecurrentTransactionInput,
+  RecurrentTransactionUpdate,
+} from "../schemas";
 
 export function useRecurrentTransactions(domain?: Domain) {
   const { user } = useUser();
@@ -85,6 +89,20 @@ export async function updateRecurrentItem(
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(patch),
+  });
+  if (!res.ok) throw new Error(await res.text());
+}
+
+/**
+ * "This pays off a debt": moves an expense item and every payment it wrote
+ * into the DEBT domain. Its own route because the domain is otherwise
+ * immutable; call it before any PATCH that names a debt category or account.
+ */
+export async function convertItem(id: string, body: RecurrentTransactionConvert): Promise<void> {
+  const res = await fetch(`/api/recurrent-transactions/${id}/convert`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(await res.text());
 }

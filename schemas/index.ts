@@ -211,6 +211,14 @@ export const RecurrentTransactionUpdateSchema = z
     refineChargedPair(v, ctx);
   });
 
+/** "This pays off a debt": an expense item moves, with its history, under a debt. */
+export const RecurrentTransactionConvertSchema = z.object({
+  domain: z.literal("DEBT"),
+  categoryId: z.string().min(1),
+  /** The debt it repays; omitted = the domain's "Unassigned" bucket. */
+  accountId: z.string().min(1).optional(),
+});
+
 export const TransactionInputSchema = z
   .object({
     domain: DomainSchema,
@@ -334,6 +342,7 @@ export type PaymentMethodInput = z.infer<typeof PaymentMethodInputSchema>;
 export type PaymentMethodUpdate = z.infer<typeof PaymentMethodUpdateSchema>;
 export type RecurrentTransactionInput = z.infer<typeof RecurrentTransactionInputSchema>;
 export type RecurrentTransactionUpdate = z.infer<typeof RecurrentTransactionUpdateSchema>;
+export type RecurrentTransactionConvert = z.infer<typeof RecurrentTransactionConvertSchema>;
 export type TransactionInput = z.infer<typeof TransactionInputSchema>;
 export type TransactionUpdate = z.infer<typeof TransactionUpdateSchema>;
 export type InvestmentValuationInput = z.infer<typeof InvestmentValuationInputSchema>;

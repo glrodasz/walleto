@@ -268,6 +268,14 @@ Down the page:
 | Savings     | Savings     | Watch your pockets fill up, one deposit at a time.            | Amber   |
 | Debts       | Debts       | Keep track of what you owe, and watch it shrink.              | Fuchsia |
 
+An expense that is really an instalment — the car loan, the mortgage — has a
+toggle on its form, **"This pays off a debt"**, which files it under Debts
+instead: the category becomes a debt category, the debt itself can be named
+(or created inline, with its lender and rate), and an item that already
+existed moves together with every payment it has written, so what has been
+paid so far counts as repaid at once. Expenses drops by the instalment,
+Debts rises by it, and the monthly net is unchanged.
+
 On debts the month figure is "Total repaid so far", and when a balance check
 lands the line under it says what it is made of — "$1,000.00 repaid · $100.00
 interest & charges" — so the month reads as repaid minus interest.
