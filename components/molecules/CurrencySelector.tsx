@@ -28,6 +28,13 @@ export function CurrencySelector({ value, onChange }: Props) {
         .selector {
           min-width: 110px;
         }
+
+        /* "kr SEK" fits in less; the room goes to the month picker beside it. */
+        @media (max-width: 767px) {
+          .selector {
+            min-width: 96px;
+          }
+        }
       `}</style>
     </div>
   );
