@@ -28,11 +28,12 @@ interface Props {
  * none (including valuations from before accounts existed). Tapping a row
  * opens its full panel underneath; "Record value" goes straight to the value
  * form. Mounted only on the Value view, so its inception-to-date listener
- * runs nowhere else on this page.
+ * runs nowhere else on this page. On debts the same list reads as balances:
+ * what was repaid, what is still owed — a dash until a balance is recorded.
  */
 export function AccountValueList({ domain, categories, ctx, currency }: Props) {
   const { formatDate } = useDateFormat();
-  const { formatAmount } = useMoneyFormat();
+  const { formatAmount, formatPercent, separator } = useMoneyFormat();
   const {
     rows,
     transactions,
@@ -44,6 +45,8 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
   const [recording, setRecording] = useState<AccountValueRow | null>(null);
   const noun = ACCOUNT_NOUN[domain].singular;
   const accent = DOMAIN_CONFIG[domain].accent;
+  const owes = domain === "DEBT";
+  const entry = owes ? "repayment" : domain === "SAVING" ? "deposit" : "contribution";
 
   const open = rows.find((r) => r.key === selected) ?? null;
   // Prefills the value form: most accounts hold one category, so the common
@@ -54,15 +57,15 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
   return (
     <>
       <Card accentColor={accent}>
-        <SectionTitle title="Value" />
+        <SectionTitle title={owes ? "Balances" : "Value"} />
         {error && <ErrorState error={error} />}
 
         {busy ? (
           <p className="empty">Loading…</p>
         ) : rows.length === 0 ? (
           <p className="empty">
-            Nothing here yet — file a {domain === "SAVING" ? "deposit" : "contribution"} under a{" "}
-            {noun} to track its value
+            Nothing here yet — file a {entry} under a {noun} to track its{" "}
+            {owes ? "balance" : "value"}
           </p>
         ) : (
           <ul className="list">
@@ -76,29 +79,35 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
                 >
                   <span className="name">
                     {r.name}
-                    {r.rate && <span className="pill">{formatInterestRate(r.rate)}</span>}
+                    {r.rate && (
+                      <span className="pill">{formatInterestRate(r.rate, separator)}</span>
+                    )}
                   </span>
                   <span className="meta">
                     {r.sub ? `${r.sub} · ` : ""}
-                    In {formatAmount(r.invested, currency)}
+                    {owes ? "Repaid (net)" : "In"} {formatAmount(r.invested, currency)}
                     {r.latest
                       ? ` · checked ${formatDate(r.latest.asOf.toDate(), "day")}`
-                      : r.rate
-                        ? " · estimated"
-                        : " · no value check yet"}
+                      : owes
+                        ? " · no balance yet"
+                        : r.rate
+                          ? " · estimated"
+                          : " · no value check yet"}
                   </span>
                 </button>
                 <span className="right">
-                  <span className="amount">{formatAmount(r.value, currency)}</span>
+                  <span className="amount">
+                    {owes && !r.latest ? "—" : formatAmount(r.value, currency)}
+                  </span>
                   {r.gainPct !== null && (
                     <span className={`gain ${r.value - r.invested >= 0 ? "up" : "down"}`}>
                       {r.value - r.invested >= 0 ? "+" : ""}
-                      {r.gainPct.toFixed(1)}%
+                      {formatPercent(r.gainPct)}
                     </span>
                   )}
                 </span>
                 <Button size="sm" onClick={() => setRecording(r)}>
-                  Record value
+                  {owes ? "Record balance" : "Record value"}
                 </Button>
               </li>
             ))}
@@ -109,6 +118,7 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
       {open && (
         <InvestmentValuePanel
           key={open.key}
+          domain={domain}
           selector={open.selector}
           title={open.name}
           rate={open.rate}
@@ -126,9 +136,11 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
       {recording && (
         <ValuationModal
           open
+          domain={domain}
           selector={recording.selector}
           name={recording.name}
           costBasis={recording.invested}
+          latestValue={recording.latest ? recording.value : undefined}
           currency={currency}
           categories={categories}
           suggestedCategoryId={suggestFor(recording)}

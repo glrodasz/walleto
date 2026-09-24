@@ -7,6 +7,7 @@ let recurringItems: unknown[] = [];
 const updateItem = jest.fn().mockResolvedValue(undefined);
 const createTransaction = jest.fn().mockResolvedValue("tx1");
 const updateTransaction = jest.fn().mockResolvedValue(undefined);
+const convertItem = jest.fn().mockResolvedValue(undefined);
 const materializeNow = jest.fn().mockResolvedValue(undefined);
 
 jest.mock("../../../hooks/useUserDoc", () => ({
@@ -35,6 +36,7 @@ jest.mock("../../../hooks/useRecurrentTransactions", () => ({
     create: createItem,
     update: updateItem,
   }),
+  convertItem: (...args: unknown[]) => convertItem(...args),
 }));
 jest.mock("../../../hooks/useTransactions", () => ({
   createTransaction: (...args: unknown[]) => createTransaction(...args),
@@ -53,6 +55,7 @@ beforeEach(() => {
   updateItem.mockClear();
   createTransaction.mockClear();
   updateTransaction.mockClear();
+  convertItem.mockClear();
   materializeNow.mockClear();
 });
 
@@ -121,6 +124,127 @@ describe("RecurrentTransactionModal — one-off entry point", () => {
     expect(createTransaction).toHaveBeenCalledWith(
       expect.objectContaining({ domain: "EXPENSE", status: "PAID", amount: 2000 })
     );
+  });
+});
+
+describe("RecurrentTransactionModal — direction on an account", () => {
+  it("offers deposit / withdrawal on a one-off and sends OUT only when chosen", async () => {
+    const onClose = jest.fn();
+    render(
+      <RecurrentTransactionModal
+        domain="SAVING"
+        open
+        initialFrequency="ONE_TIME"
+        onClose={onClose}
+      />
+    );
+    fill();
+    expect(screen.getByRole("radio", { name: "Deposit" })).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(screen.getByRole("radio", { name: "Withdrawal" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(createTransaction).toHaveBeenCalledWith(expect.objectContaining({ direction: "OUT" }));
+  });
+
+  it("calls it borrowed on a debt, and hides it on expenses and on a plan", () => {
+    const { unmount } = render(
+      <RecurrentTransactionModal
+        domain="DEBT"
+        open
+        initialFrequency="ONE_TIME"
+        onClose={jest.fn()}
+      />
+    );
+    expect(screen.getByRole("radio", { name: "Borrowed" })).toBeInTheDocument();
+    unmount();
+    render(
+      <RecurrentTransactionModal
+        domain="EXPENSE"
+        open
+        initialFrequency="ONE_TIME"
+        onClose={jest.fn()}
+      />
+    );
+    expect(screen.queryByRole("radiogroup", { name: "Direction" })).toBeNull();
+    fireEvent.change(screen.getByLabelText("Frequency"), { target: { value: "MONTHLY" } });
+    expect(screen.queryByRole("radiogroup", { name: "Direction" })).toBeNull();
+  });
+});
+
+describe("RecurrentTransactionModal — this pays off a debt", () => {
+  it("files a new expense under Debts as a repayment", async () => {
+    const onClose = jest.fn();
+    render(<RecurrentTransactionModal domain="EXPENSE" open onClose={onClose} />);
+    fill();
+    fireEvent.click(screen.getByRole("checkbox", { name: /This pays off a debt/ }));
+    // The category list is now the debts' one (the mock hands back the same
+    // list); the pick moved with it, and a debt can be named.
+    expect(screen.getByLabelText("Debt")).toBeInTheDocument();
+    expect(screen.getByLabelText("Category")).toHaveValue("c1");
+    fireEvent.click(screen.getByRole("button", { name: "Create" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(createItem).toHaveBeenCalledWith(
+      expect.objectContaining({ domain: "DEBT", type: "LOAN_PAYMENT", categoryId: "c1" })
+    );
+    expect(convertItem).not.toHaveBeenCalled();
+  });
+
+  it("converts an existing expense item first, then patches the rest without the category", async () => {
+    const carLoan = {
+      id: "car",
+      userId: "u",
+      domain: "EXPENSE",
+      categoryId: "c1",
+      name: "Car loan",
+      amount: 420,
+      currency: "USD",
+      frequency: "MONTHLY",
+      active: true,
+      startDate: { toDate: () => new Date(2026, 0, 5, 12) },
+    } as never;
+    recurringItems = [carLoan];
+    const onClose = jest.fn();
+    render(<RecurrentTransactionModal domain="EXPENSE" open item={carLoan} onClose={onClose} />);
+    fireEvent.click(screen.getByRole("checkbox", { name: /This pays off a debt/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(convertItem).toHaveBeenCalledWith("car", { domain: "DEBT", categoryId: "c1" });
+    expect(updateItem).toHaveBeenCalledWith(
+      "car",
+      expect.not.objectContaining({ categoryId: "c1" })
+    );
+    expect(convertItem.mock.invocationCallOrder[0]).toBeLessThan(
+      updateItem.mock.invocationCallOrder[0]
+    );
+  });
+
+  it("is not offered on a ledger row or on other domains", () => {
+    const { unmount } = render(
+      <RecurrentTransactionModal domain="INCOME" open onClose={jest.fn()} />
+    );
+    expect(screen.queryByRole("checkbox", { name: /pays off a debt/ })).toBeNull();
+    unmount();
+    render(
+      <RecurrentTransactionModal
+        domain="EXPENSE"
+        open
+        transaction={
+          {
+            id: "t1",
+            userId: "u",
+            domain: "EXPENSE",
+            categoryId: "c1",
+            name: "Coffee",
+            amount: 4,
+            currency: "USD",
+            status: "PAID",
+            occurredAt: { toDate: () => new Date(2026, 8, 1, 12) },
+          } as never
+        }
+        onClose={jest.fn()}
+      />
+    );
+    expect(screen.queryByRole("checkbox", { name: /pays off a debt/ })).toBeNull();
   });
 });
 

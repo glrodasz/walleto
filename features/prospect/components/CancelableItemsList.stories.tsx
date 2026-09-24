@@ -9,6 +9,7 @@ const CANDIDATES = [
   ...recurrentFor("EXPENSE"),
   ...recurrentFor("INVESTMENT"),
   ...recurrentFor("SAVING"),
+  ...recurrentFor("DEBT"),
 ];
 
 function Controlled(props: React.ComponentProps<typeof CancelableItemsList>) {

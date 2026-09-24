@@ -53,12 +53,14 @@ export function PageLayout({ title, subtitle, domain, hideCurrency, hideMonth, c
               <PrivacyToggle />
               {!hideCurrency && <CurrencySelector value={target} onChange={setDisplayCurrency} />}
               {!hideMonth && (
-                <MonthPicker
-                  value={month.selectedKey}
-                  windows={month.pickerWindows}
-                  onChange={month.select}
-                  onStep={month.step}
-                />
+                <div className="month">
+                  <MonthPicker
+                    value={month.selectedKey}
+                    windows={month.pickerWindows}
+                    onChange={month.select}
+                    onStep={month.step}
+                  />
+                </div>
               )}
             </div>
           </header>
@@ -144,6 +146,13 @@ export function PageLayout({ title, subtitle, domain, hideCurrency, hideMonth, c
 
           .controls {
             flex-wrap: wrap;
+            gap: 8px;
+          }
+
+          /* The month picker takes the right end of the row; when a very
+             narrow screen pushes it to a second line it stays on the right. */
+          .month {
+            margin-left: auto;
           }
 
           .main {

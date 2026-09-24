@@ -26,7 +26,7 @@ interface EditDraft {
   icon: IconKey;
 }
 
-const DOMAINS: Domain[] = ["INCOME", "EXPENSE", "INVESTMENT", "SAVING"];
+const DOMAINS: Domain[] = ["INCOME", "EXPENSE", "INVESTMENT", "SAVING", "DEBT"];
 const PAGE_SIZE = 25;
 const SUGGESTIONS = suggestions as Record<Domain, string[]>;
 

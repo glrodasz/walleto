@@ -3,7 +3,7 @@ import { CURRENCIES, ICON_KEYS } from "../constants";
 
 export const CurrencySchema = z.enum(CURRENCIES);
 
-export const DomainSchema = z.enum(["INCOME", "EXPENSE", "INVESTMENT", "SAVING"]);
+export const DomainSchema = z.enum(["INCOME", "EXPENSE", "INVESTMENT", "SAVING", "DEBT"]);
 
 export const FrequencySchema = z.enum([
   "ONE_TIME",
@@ -33,6 +33,7 @@ export const RecurrentTransactionTypeSchema = z.enum([
   "OTHER",
 ]);
 
+export const TransactionDirectionSchema = z.enum(["IN", "OUT"]);
 export const TransactionStatusSchema = z.enum(["PENDING", "PAID", "SKIPPED"]);
 
 /**
@@ -127,7 +128,7 @@ export const TagUpdateSchema = z
 const TagIdsSchema = z.array(z.string().min(1)).max(20);
 const NoteSchema = z.string().trim().max(500);
 
-export const AccountDomainSchema = z.enum(["INVESTMENT", "SAVING"]);
+export const AccountDomainSchema = z.enum(["INVESTMENT", "SAVING", "DEBT"]);
 export const InterestPeriodSchema = z.enum(["MONTHLY", "YEARLY"]);
 
 export const InterestRateSchema = z.object({
@@ -210,6 +211,14 @@ export const RecurrentTransactionUpdateSchema = z
     refineChargedPair(v, ctx);
   });
 
+/** "This pays off a debt": an expense item moves, with its history, under a debt. */
+export const RecurrentTransactionConvertSchema = z.object({
+  domain: z.literal("DEBT"),
+  categoryId: z.string().min(1),
+  /** The debt it repays; omitted = the domain's "Unassigned" bucket. */
+  accountId: z.string().min(1).optional(),
+});
+
 export const TransactionInputSchema = z
   .object({
     domain: DomainSchema,
@@ -225,6 +234,8 @@ export const TransactionInputSchema = z
     paymentMethodId: z.string().optional(),
     occurredAt: z.iso.datetime(),
     status: TransactionStatusSchema.optional(),
+    /** Account domains only; the route rejects it elsewhere. */
+    direction: TransactionDirectionSchema.optional(),
   })
   .superRefine(refineChargedPair);
 
@@ -242,6 +253,8 @@ export const TransactionUpdateSchema = z
     paymentMethodId: z.string().min(1).nullable().optional(),
     tags: TagIdsSchema.nullable().optional(),
     note: NoteSchema.nullable().optional(),
+    // null clears it: the row is a deposit again.
+    direction: TransactionDirectionSchema.nullable().optional(),
   })
   .superRefine((v, ctx) => {
     if (Object.keys(v).length === 0) {
@@ -261,7 +274,8 @@ export const InvestmentValuationInputSchema = z
     asOf: z.iso.datetime(),
     gainPct: z.number().finite(),
     value: z.number().min(0),
-    costBasis: z.number().min(0),
+    // Net of withdrawals, so it can be negative; a snapshot, never summed.
+    costBasis: z.number().finite(),
     currency: CurrencySchema,
     note: z.string().max(200).trim().optional(),
   })
@@ -277,7 +291,7 @@ export const InvestmentValuationUpdateSchema = z
     asOf: z.iso.datetime().optional(),
     gainPct: z.number().finite().optional(),
     value: z.number().min(0).optional(),
-    costBasis: z.number().min(0).optional(),
+    costBasis: z.number().finite().optional(),
     note: z.string().max(200).trim().nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "At least one field is required" });
@@ -288,6 +302,16 @@ export const DateFormatSchema = z.enum(["MDY", "DMY", "YMD"]);
 /** 0 = Sunday, 1 = Monday, as in Date#getDay(). */
 export const WeekStartSchema = z.union([z.literal(0), z.literal(1)]);
 export const LanguageSchema = z.enum(["en"]);
+/** "." writes 1,234.56; "," writes 1.234,56. */
+export const DecimalSeparatorSchema = z.enum([".", ","]);
+/** Fraction digits shown, 0–4. */
+export const DecimalsSchema = z.union([
+  z.literal(0),
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+]);
 
 export const UserUpdateSchema = z
   .object({
@@ -301,6 +325,8 @@ export const UserUpdateSchema = z
     dateFormat: DateFormatSchema.optional(),
     weekStart: WeekStartSchema.optional(),
     language: LanguageSchema.optional(),
+    decimalSeparator: DecimalSeparatorSchema.optional(),
+    decimals: DecimalsSchema.optional(),
   })
   .refine((v) => Object.keys(v).length > 0, {
     message: "At least one field is required",
@@ -316,6 +342,7 @@ export type PaymentMethodInput = z.infer<typeof PaymentMethodInputSchema>;
 export type PaymentMethodUpdate = z.infer<typeof PaymentMethodUpdateSchema>;
 export type RecurrentTransactionInput = z.infer<typeof RecurrentTransactionInputSchema>;
 export type RecurrentTransactionUpdate = z.infer<typeof RecurrentTransactionUpdateSchema>;
+export type RecurrentTransactionConvert = z.infer<typeof RecurrentTransactionConvertSchema>;
 export type TransactionInput = z.infer<typeof TransactionInputSchema>;
 export type TransactionUpdate = z.infer<typeof TransactionUpdateSchema>;
 export type InvestmentValuationInput = z.infer<typeof InvestmentValuationInputSchema>;

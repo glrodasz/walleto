@@ -4,6 +4,7 @@ import { TextField } from "../atoms/TextField";
 import { Button } from "../atoms/Button";
 import { ACCOUNT_NOUN } from "../../helpers/accounts";
 import { useEnabledCurrencies } from "../../hooks/useEnabledCurrencies";
+import { useDecimalInput } from "../../hooks/useDecimalInput";
 import type { Account, AccountDomain, Currency, InterestPeriod } from "../../types";
 import type { AccountInput } from "../../schemas";
 
@@ -25,10 +26,10 @@ const PERIOD_OPTIONS: { value: InterestPeriod; label: string }[] = [
 ];
 
 /**
- * The inline "new account / pocket" form: name, bank or broker, currency and
- * an optional interest rate as the bank quotes it. Shared by the entry forms
- * (`AccountField`) and Settings. Mounted fresh each time, so its state needs
- * no reset.
+ * The inline "new account / pocket / debt" form: name, bank or broker (the
+ * lender, for a debt), currency and an optional interest rate as the bank
+ * quotes it. Shared by the entry forms (`AccountField`) and Settings.
+ * Mounted fresh each time, so its state needs no reset.
  */
 export function AccountCreator({
   domain,
@@ -41,6 +42,7 @@ export function AccountCreator({
 }: Props) {
   const noun = ACCOUNT_NOUN[domain].singular;
   const { optionsFor } = useEnabledCurrencies();
+  const { sanitize, parse } = useDecimalInput();
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState("");
   const [provider, setProvider] = useState("");
@@ -56,7 +58,7 @@ export function AccountCreator({
       onCreated(existing.id);
       return;
     }
-    const rateValue = rate.trim() === "" ? null : Number(rate);
+    const rateValue = rate.trim() === "" ? null : (parse(rate) ?? NaN);
     if (rateValue !== null && !(rateValue >= 0 && rateValue <= 100)) {
       return onError?.("Interest rate must be between 0 and 100");
     }
@@ -83,15 +85,21 @@ export function AccountCreator({
       <legend className="legend">New {noun}</legend>
       <TextField
         label="Name"
-        placeholder={domain === "SAVING" ? "Emergency fund" : "Broker account"}
+        placeholder={
+          domain === "SAVING"
+            ? "Emergency fund"
+            : domain === "DEBT"
+              ? "Credit card"
+              : "Broker account"
+        }
         autoFocus
         value={name}
         onValueChange={setName}
       />
       <div className="pair">
         <TextField
-          label="Bank or broker (optional)"
-          placeholder="Avanza"
+          label={domain === "DEBT" ? "Lender (optional)" : "Bank or broker (optional)"}
+          placeholder={domain === "DEBT" ? "Bank or a friend's name" : "Avanza"}
           value={provider}
           onValueChange={setProvider}
         />
@@ -109,7 +117,7 @@ export function AccountCreator({
           inputMode="decimal"
           align="right"
           value={rate}
-          onValueChange={(v) => setRate(v.replace(/[^\d.]/g, ""))}
+          onValueChange={(v) => setRate(sanitize(v))}
         />
         <Select
           label="Rate period"

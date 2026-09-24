@@ -30,8 +30,9 @@ import {
   gainsByCategory,
   unfiledGain,
 } from "../../investments/helpers/valuationGains";
-import { GAIN_KEY, GAIN_LABEL, withGains } from "../helpers/gainStack";
+import { GAIN_KEY, gainLabel, withGains } from "../helpers/gainStack";
 import { isAccountDomain } from "../../../helpers/accounts";
+import { convertedAmount } from "../../../helpers/aggregations";
 import { INCEPTION } from "../../investments/helpers/valuation";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import {
@@ -72,7 +73,7 @@ interface Props {
 }
 
 /**
- * Month-first page shared by the four domains. The month comes from the
+ * Month-first page shared by the five domains. The month comes from the
  * header picker; the summary, the bars and the panel below all speak about
  * it. The month in progress carries what the plan still owes before month end.
  */
@@ -196,7 +197,10 @@ export function DomainPage({ domain }: Props) {
   // A gain names the category the owner filed it under, so it can travel the
   // same paths a contribution does — one ranking, one "Other" cap, one set of
   // shares. What nobody filed stays a segment of its own.
-  const gainLedger = useMemo(() => gainRowsAsTransactions(gainRows, ctx), [gainRows, ctx]);
+  const gainLedger = useMemo(
+    () => gainRowsAsTransactions(gainRows, ctx, domain),
+    [gainRows, ctx, domain]
+  );
   // Chart-scoped on purpose: `withGains` adds its series as soon as one month
   // is non-zero, so a gain in a month the bars do not draw would leave an empty
   // "Gain" segment and legend entry behind.
@@ -241,6 +245,14 @@ export function DomainPage({ domain }: Props) {
   const realized = totals[window.key] ?? 0;
   const contributed = txTotals[window.key] ?? 0;
   const monthGain = gains[window.key] ?? 0;
+  // What left the accounts this month, so the summary can show both sides of the net figure.
+  const monthWithdrawn = useMemo(
+    () =>
+      monthTransactions
+        .filter((t) => t.direction === "OUT")
+        .reduce((sum, t) => sum + Math.abs(convertedAmount(t, ctx)), 0),
+    [monthTransactions, ctx]
+  );
   const expected = useMemo(
     () => expectedForMonth(window, realized, chartItems, ctx, now),
     [window, realized, chartItems, ctx, now]
@@ -297,7 +309,11 @@ export function DomainPage({ domain }: Props) {
               chartWindows.map((w) => [w.key, { amount: txTotals[w.key] ?? 0 }])
             ),
           };
-    return withGains(withFallback, mode === "currency" ? chartGains : unfiledByMonth);
+    return withGains(
+      withFallback,
+      mode === "currency" ? chartGains : unfiledByMonth,
+      gainLabel(domain)
+    );
   }, [
     mode,
     chartTransactions,
@@ -359,12 +375,12 @@ export function DomainPage({ domain }: Props) {
       ...rows,
       {
         categoryId: GAIN_KEY,
-        name: GAIN_LABEL,
+        name: gainLabel(domain),
         amount: monthUnfiledGain,
-        percent: realized > 0 ? (monthUnfiledGain / realized) * 100 : 0,
+        percent: realized > 0 ? (Math.max(0, monthUnfiledGain) / realized) * 100 : 0,
       },
     ];
-  }, [categoryRows, monthUnfiledGain, realized]);
+  }, [categoryRows, monthUnfiledGain, realized, domain]);
   const byTag = useMemo(
     () => groupByTag(monthTransactions, tags, ctx),
     [monthTransactions, tags, ctx]
@@ -579,13 +595,18 @@ export function DomainPage({ domain }: Props) {
         approximate={hasForeign}
         contributed={accountDomain ? contributed : undefined}
         gain={accountDomain ? monthGain : undefined}
+        withdrawn={accountDomain ? monthWithdrawn : undefined}
       />
 
       <div className="charts">
         <Card>
           <SectionTitle
             title={`Monthly ${config.noun}`}
-            subtitle={`${accountDomain ? `Actual ${config.noun} and reported gain` : `Actual ${config.noun}`}, split by ${mode === "category" ? "category" : "currency"}.`}
+            subtitle={`${
+              accountDomain
+                ? `Actual ${config.noun} and ${domain === "DEBT" ? "accrued interest" : "reported gain"}`
+                : `Actual ${config.noun}`
+            }, split by ${mode === "category" ? "category" : "currency"}.`}
           >
             <ChartControls period={period} onPeriod={setPeriod} mode={mode} onMode={setMode} />
           </SectionTitle>
@@ -635,6 +656,7 @@ export function DomainPage({ domain }: Props) {
           onChange={changeView}
           accent={config.accent}
           showValue={Boolean(accountDomain)}
+          valueLabel={domain === "DEBT" ? "Balance" : undefined}
           showMethods={config.showPaymentMethod}
         />
         {panel}

@@ -16,9 +16,10 @@ import { useUserDoc } from "../../../hooks/useUserDoc";
 import { ACCOUNT_NOUN, accountLabel, formatInterestRate } from "../../../helpers/accounts";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import { useEnabledCurrencies } from "../../../hooks/useEnabledCurrencies";
+import { useDecimalInput } from "../../../hooks/useDecimalInput";
 import type { Account, AccountDomain, Currency, InterestPeriod } from "../../../types";
 
-const DOMAINS: AccountDomain[] = ["INVESTMENT", "SAVING"];
+const DOMAINS: AccountDomain[] = ["INVESTMENT", "SAVING", "DEBT"];
 const PAGE_SIZE = 25;
 
 const PERIOD_OPTIONS: { value: InterestPeriod; label: string }[] = [
@@ -34,23 +35,24 @@ interface Draft {
   period: InterestPeriod;
 }
 
-const draftOf = (a: Account): Draft => ({
+const draftOf = (a: Account, toInput: (n: number) => string): Draft => ({
   name: a.name,
   provider: a.provider ?? "",
   currency: a.currency,
-  rate: a.interestRate ? String(a.interestRate.value) : "",
+  rate: a.interestRate ? toInput(a.interestRate.value) : "",
   period: a.interestRate?.period ?? "YEARLY",
 });
 
 /**
- * Investment accounts and savings pockets: create, rename, change the bank
- * or broker, the currency and the interest rate, or archive. The entry
- * forms offer the same creator inline.
+ * Investment accounts, savings pockets and debts: create, rename, change the
+ * bank or broker (the lender), the currency and the interest rate, or
+ * archive. The entry forms offer the same creator inline.
  */
 export function AccountsSettings() {
   const [domain, setDomain] = useState<AccountDomain>("INVESTMENT");
   const { accounts, loading, error, create, update, remove } = useAccounts(domain);
   const { userDoc } = useUserDoc();
+  const decimal = useDecimalInput();
   const { optionsFor } = useEnabledCurrencies();
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -76,7 +78,7 @@ export function AccountsSettings() {
 
   const startEdit = (a: Account) => {
     setEditingId(a.id!);
-    setDraft(draftOf(a));
+    setDraft(draftOf(a, decimal.toInput));
     setMessage(null);
   };
 
@@ -86,7 +88,7 @@ export function AccountsSettings() {
     if (!id || !d) return;
     const name = d.name.trim();
     if (!name) return setMessage(`Give the ${noun} a name`);
-    const rate = d.rate.trim() === "" ? null : Number(d.rate);
+    const rate = d.rate.trim() === "" ? null : (decimal.parse(d.rate) ?? NaN);
     if (rate !== null && !(rate >= 0 && rate <= 100)) {
       return setMessage("Interest rate must be between 0 and 100");
     }
@@ -106,7 +108,7 @@ export function AccountsSettings() {
 
   return (
     <Card>
-      <SectionTitle title="Accounts & pockets" />
+      <SectionTitle title="Accounts & debts" />
       <TabStrip
         label="Domain"
         tabs={DOMAINS.map((d) => ({
@@ -148,7 +150,7 @@ export function AccountsSettings() {
                       onValueChange={(v) => setDraft({ ...draft, name: v })}
                     />
                     <TextField
-                      label="Bank or broker"
+                      label={domain === "DEBT" ? "Lender" : "Bank or broker"}
                       placeholder="Optional"
                       value={draft.provider}
                       onValueChange={(v) => setDraft({ ...draft, provider: v })}
@@ -168,9 +170,7 @@ export function AccountsSettings() {
                         inputMode="decimal"
                         align="right"
                         value={draft.rate}
-                        onValueChange={(v) =>
-                          setDraft({ ...draft, rate: v.replace(/[^\d.]/g, "") })
-                        }
+                        onValueChange={(v) => setDraft({ ...draft, rate: decimal.sanitize(v) })}
                       />
                       <Select
                         label="Period"
@@ -195,7 +195,9 @@ export function AccountsSettings() {
                     <span className="name">{accountLabel(a)}</span>
                     <span className="meta">
                       {a.currency}
-                      {a.interestRate ? ` · ${formatInterestRate(a.interestRate)}` : ""}
+                      {a.interestRate
+                        ? ` · ${formatInterestRate(a.interestRate, decimal.separator)}`
+                        : ""}
                     </span>
                   </span>
                   <KebabMenu

@@ -1,4 +1,11 @@
-import { estimateWithInterest, grow, monthlyRate, monthsBetween, valueAt } from "./interest";
+import {
+  estimateWithInterest,
+  grow,
+  interestAccrued,
+  monthlyRate,
+  monthsBetween,
+  valueAt,
+} from "./interest";
 
 const jan = new Date(2026, 0, 1);
 const feb = new Date(2026, 1, 1);
@@ -79,5 +86,58 @@ describe("valueAt", () => {
     ];
     expect(valueAt(deposits, checks, undefined, new Date(2026, 5, 1))).toBe(1200);
     expect(valueAt(deposits, checks, undefined, nextJan)).toBe(5000);
+  });
+});
+
+describe("a debt as a negative position", () => {
+  // 5,000 owed on Jan 1 at 12% yearly, 500 repaid on Feb 1 and on Mar 1.
+  const rate = { value: 12, period: "YEARLY" as const };
+  const mar = new Date(2026, 2, 1);
+  const apr = new Date(2026, 3, 1);
+  const repayments = [
+    { amount: 500, at: feb },
+    { amount: 500, at: mar },
+  ];
+  const balance = [{ value: -5000, asOf: jan }];
+
+  it("valueAt compounds the balance up and each repayment down", () => {
+    const r = monthlyRate(rate);
+    const owed = grow(5000, r, jan, apr) - grow(500, r, feb, apr) - grow(500, r, mar, apr);
+    expect(-valueAt(repayments, balance, rate, apr)).toBeCloseTo(owed, 6);
+    // Roughly 4,000 of principal plus a quarter's interest on it (mean-month exponents).
+    expect(-valueAt(repayments, balance, rate, apr)).toBeCloseTo(4127.5, 0);
+    // Without a rate the balance simply shrinks by what was repaid.
+    expect(-valueAt(repayments, balance, undefined, apr)).toBe(4000);
+  });
+
+  it("interestAccrued is what repayments did not explain since the first balance", () => {
+    const r = monthlyRate(rate);
+    const owed = grow(5000, r, jan, apr) - grow(500, r, feb, apr) - grow(500, r, mar, apr);
+    expect(interestAccrued(repayments, balance, rate, apr)).toBeCloseTo(owed - 5000 + 1000, 6);
+    expect(interestAccrued(repayments, balance, undefined, apr)).toBe(0);
+  });
+
+  it("interestAccrued measures from the first balance, through later checks", () => {
+    // A second check of 5,100 on Apr 1 after 1,000 repaid: 1,100 of interest and charges.
+    const checks = [...balance, { value: -5100, asOf: apr }];
+    expect(interestAccrued(repayments, checks, undefined, apr)).toBe(1100);
+    // Nothing to measure before any balance exists.
+    expect(interestAccrued(repayments, checks, rate, new Date(2025, 11, 1))).toBeNull();
+    expect(interestAccrued(repayments, [], rate, apr)).toBeNull();
+  });
+});
+
+describe("interestAccrued with money borrowed", () => {
+  it("counts a draw as balance that repayments did not explain — not as interest", () => {
+    // Owed 5,000 on Jan 1; borrowed 300 more in Feb; repaid 500 in Mar; owed 5,000 on Apr 1.
+    const checks = [
+      { value: -5000, asOf: jan },
+      { value: -5000, asOf: new Date(2026, 3, 1) },
+    ];
+    const deposits = [
+      { amount: -300, at: feb },
+      { amount: 500, at: new Date(2026, 2, 1) },
+    ];
+    expect(interestAccrued(deposits, checks, undefined, new Date(2026, 3, 1))).toBe(200);
   });
 });

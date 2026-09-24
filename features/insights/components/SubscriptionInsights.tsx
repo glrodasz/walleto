@@ -25,7 +25,7 @@ interface Props {
  */
 export function SubscriptionInsights({ items, categories, ctx, currency }: Props) {
   const { formatDate } = useDateFormat();
-  const { formatAmount } = useMoneyFormat();
+  const { formatAmount, formatNumber, formatPercent } = useMoneyFormat();
   // Only mounted on the Subscriptions tab, so this listener is scoped to when
   // it's actually needed rather than always running on every expenses visit.
   const { items: incomeItems } = useRecurrentTransactions("INCOME");
@@ -53,7 +53,7 @@ export function SubscriptionInsights({ items, categories, ctx, currency }: Props
         {summary.percentOfIncome !== null && (
           <div>
             <span className="label">Of income</span>
-            <span className="percent">{summary.percentOfIncome.toFixed(1)}%</span>
+            <span className="percent">{formatPercent(summary.percentOfIncome)}</span>
           </div>
         )}
       </div>
@@ -70,7 +70,7 @@ export function SubscriptionInsights({ items, categories, ctx, currency }: Props
               <span className="meta">
                 {sub.nextOccurrence && `Next ${formatDate(sub.nextOccurrence, "day")}`}
                 {sub.nextOccurrence && sub.impliedRate !== null && " · "}
-                {sub.impliedRate !== null && `≈${sub.impliedRate.toFixed(2)} implied rate`}
+                {sub.impliedRate !== null && `≈${formatNumber(sub.impliedRate, 2, 2)} implied rate`}
               </span>
             </span>
           </li>

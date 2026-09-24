@@ -18,3 +18,5 @@ type Story = StoryObj<typeof meta>;
 /** The caption the dashboard card carries under its monthly run-rate. */
 export const Investments: Story = {};
 export const Savings: Story = { args: { domain: "SAVING", categories: categoriesFor("SAVING") } };
+/** "Owed …" for debts, once a balance has been recorded. */
+export const Debts: Story = { args: { domain: "DEBT", categories: categoriesFor("DEBT") } };

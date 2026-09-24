@@ -150,13 +150,14 @@ describe("groupByCategory", () => {
 });
 
 describe("computeFlow", () => {
-  it("net is what remains unallocated after spending, saving and investing", () => {
+  it("net is what remains unallocated after spending, saving, investing and repaying", () => {
     const flow = computeFlow(
       {
         INCOME: [makeItem("MONTHLY", 5000, "c", "USD", { domain: "INCOME" })],
         EXPENSE: [makeItem("MONTHLY", 2000)],
         SAVING: [makeItem("MONTHLY", 300, "c", "USD", { domain: "SAVING" })],
         INVESTMENT: [makeItem("MONTHLY", 700, "c", "USD", { domain: "INVESTMENT" })],
+        DEBT: [makeItem("MONTHLY", 400, "c", "USD", { domain: "DEBT" })],
       },
       USD
     );
@@ -165,7 +166,8 @@ describe("computeFlow", () => {
       expenses: 2000,
       savings: 300,
       investments: 700,
-      net: 2000,
+      debts: 400,
+      net: 1600,
     });
   });
 
@@ -277,5 +279,29 @@ describe("shareByCurrency", () => {
     expect(mix[0].pct).toBeCloseTo(92.0, 0);
     expect(mix[1].pct).toBeCloseTo(8.0, 0);
     expect(shareByCurrency([], USD)).toEqual([]);
+  });
+});
+
+describe("rowSign / direction", () => {
+  const row = (direction?: "IN" | "OUT") =>
+    ({
+      userId: "u1",
+      domain: "SAVING",
+      categoryId: "c",
+      name: "t",
+      amount: 100,
+      currency: "USD",
+      ...(direction ? { direction } : {}),
+    }) as unknown as Transaction;
+
+  it("counts an OUT row against the position, IN and absent for it", () => {
+    expect(convertedAmount(row(), USD)).toBe(100);
+    expect(convertedAmount(row("IN"), USD)).toBe(100);
+    expect(convertedAmount(row("OUT"), USD)).toBe(-100);
+  });
+
+  it("keeps the charged pair's precedence under the sign", () => {
+    const charged = { ...row("OUT"), chargedAmount: 90, chargedCurrency: "USD" } as Transaction;
+    expect(convertedAmount(charged, USD)).toBe(-90);
   });
 });

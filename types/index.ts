@@ -6,13 +6,21 @@ export interface Timestamp {
 }
 
 import type { CURRENCIES, ICON_KEYS } from "../constants";
+import type { DecimalSeparator, Decimals } from "../utils/decimal";
 export type IconKey = (typeof ICON_KEYS)[number];
 
 export type Currency = (typeof CURRENCIES)[number];
-export type Domain = "INCOME" | "EXPENSE" | "INVESTMENT" | "SAVING";
+export type Domain = "INCOME" | "EXPENSE" | "INVESTMENT" | "SAVING" | "DEBT";
 export type Frequency = "ONE_TIME" | "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY";
 
 export type TransactionStatus = "PENDING" | "PAID" | "SKIPPED";
+/**
+ * Which way a one-off row moves money on an account domain: IN (the default,
+ * a deposit / contribution / repayment) or OUT (a withdrawal — or, on a debt,
+ * money borrowed). Incomes and expenses never carry one; recurring items
+ * never carry one.
+ */
+export type TransactionDirection = "IN" | "OUT";
 
 export type PaymentMethodType =
   | "CREDIT_CARD"
@@ -37,6 +45,7 @@ export type DateFormat = "MDY" | "DMY" | "YMD";
 /** 0 = Sunday, 1 = Monday, as in Date#getDay(). */
 export type WeekStart = 0 | 1;
 export type Language = "en";
+export type { DecimalSeparator, Decimals } from "../utils/decimal";
 
 export interface User {
   id: string;
@@ -51,6 +60,10 @@ export interface User {
   dateFormat?: DateFormat;
   weekStart?: WeekStart;
   language?: Language;
+  /** How numbers are written: "." → 1,234.56, "," → 1.234,56. */
+  decimalSeparator?: DecimalSeparator;
+  /** Fraction digits to print, 0–4; the stored value keeps its precision. */
+  decimals?: Decimals;
   createdAt: Timestamp;
 }
 
@@ -96,8 +109,11 @@ export interface PaymentMethod {
   createdAt: Timestamp;
 }
 
-/** Domains whose entries can be filed under an account / pocket. */
-export type AccountDomain = "INVESTMENT" | "SAVING";
+/**
+ * Domains whose entries can be filed under an account / pocket / debt. A debt
+ * is a negative position: its "value checks" record what is owed.
+ */
+export type AccountDomain = "INVESTMENT" | "SAVING" | "DEBT";
 export type InterestPeriod = "MONTHLY" | "YEARLY";
 
 /** A rate as quoted by the bank or broker; `helpers/interest` normalises it. */
@@ -129,7 +145,7 @@ export interface RecurrentTransaction {
   userId: string;
   domain: Domain;
   categoryId: string;
-  /** INVESTMENT / SAVING only: the account or pocket the money goes into. */
+  /** INVESTMENT / SAVING / DEBT only: the account, pocket or debt the money goes into. */
   accountId?: string;
   name: string;
   amount: number;
@@ -169,8 +185,10 @@ export interface Transaction {
   domain: Domain;
   recurrentTransactionId?: string;
   categoryId: string;
-  /** INVESTMENT / SAVING only: inherited from the item or picked on the form. */
+  /** INVESTMENT / SAVING / DEBT only: inherited from the item or picked on the form. */
   accountId?: string;
+  /** INVESTMENT / SAVING / DEBT one-offs only; absent means IN. */
+  direction?: TransactionDirection;
   name: string;
   amount: number;
   currency: Currency;

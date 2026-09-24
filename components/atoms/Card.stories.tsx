@@ -3,7 +3,7 @@ import { Card } from "./Card";
 import { SectionTitle } from "./SectionTitle";
 import { Amount } from "./Amount";
 
-const DOMAINS = ["INCOME", "EXPENSE", "INVESTMENT", "SAVING"] as const;
+const DOMAINS = ["INCOME", "EXPENSE", "INVESTMENT", "SAVING", "DEBT"] as const;
 
 const meta = {
   title: "Atoms/Card",

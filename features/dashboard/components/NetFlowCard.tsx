@@ -1,7 +1,13 @@
 import { Card } from "../../../components/atoms/Card";
 import { Badge } from "../../../components/atoms/Badge";
 import { Amount } from "../../../components/atoms/Amount";
-import { ArrowDown, ArrowUpRight, Circle, TrendingUp } from "../../../components/atoms/Icons";
+import {
+  ArrowDown,
+  ArrowUpRight,
+  Circle,
+  CreditCard,
+  TrendingUp,
+} from "../../../components/atoms/Icons";
 import { IconDisc } from "../../../components/molecules/IconDisc";
 import { AllocationBar } from "./AllocationBar";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
@@ -23,14 +29,16 @@ const STATS: { key: keyof MoneyFlow; label: string; domain: Domain; Icon: typeof
     { key: "expenses", label: "Expenses", domain: "EXPENSE", Icon: ArrowDown },
     { key: "investments", label: "Investments", domain: "INVESTMENT", Icon: TrendingUp },
     { key: "savings", label: "Savings", domain: "SAVING", Icon: Circle },
+    { key: "debts", label: "Debts", domain: "DEBT", Icon: CreditCard },
   ];
 
 /**
- * The hero figure: monthly net = income − expenses − savings − investments
- * (the owner's definition — cash left unallocated). Savings and investments
- * are money that stays yours, so they get their own slice of the allocation
- * bar instead of being lumped in with spending. Every number here is the
- * recurring run-rate — what the plan does each month — and the card says so.
+ * The hero figure: monthly net = income − expenses − savings − investments −
+ * debt repayments (the owner's definition — cash left unallocated). Savings
+ * and investments are money that stays yours, and a repayment is money that
+ * stops being owed, so each gets its own slice of the allocation bar instead
+ * of being lumped in with spending. Every number here is the recurring
+ * run-rate — what the plan does each month — and the card says so.
  */
 export function NetFlowCard({ flow, currency, approximate = false }: Props) {
   const { formatAmount } = useMoneyFormat();
@@ -125,7 +133,7 @@ export function NetFlowCard({ flow, currency, approximate = false }: Props) {
           margin: 0;
           padding: 0;
           display: grid;
-          grid-template-columns: repeat(4, 1fr);
+          grid-template-columns: repeat(5, 1fr);
           gap: 12px;
         }
 

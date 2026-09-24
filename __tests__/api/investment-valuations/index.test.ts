@@ -140,6 +140,14 @@ describe("POST /api/investment-valuations", () => {
     expect(add.mock.calls[0][0]).not.toHaveProperty("accountId");
   });
 
+  it("accepts a negative cost basis — withdrawals can net it below zero", async () => {
+    const add = wire({ exists: true });
+    const res = mockRes();
+    await handler({ method: "POST", body: { ...body, costBasis: -50 } } as NextApiRequest, res);
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(add).toHaveBeenCalledWith(expect.objectContaining({ costBasis: -50 }));
+  });
+
   it("rejects a negative value", async () => {
     wire({ exists: true });
     const res = mockRes();

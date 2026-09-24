@@ -49,5 +49,14 @@
     "Home deposit",
     "Car fund",
     "Education fund"
+  ],
+  "DEBT": [
+    "Credit cards",
+    "Loans",
+    "Mortgage",
+    "Car loan",
+    "Student loan",
+    "Friends & family",
+    "Buy now pay later"
   ]
 }

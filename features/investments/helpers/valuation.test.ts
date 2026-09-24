@@ -1,9 +1,11 @@
 import {
   costBasisAt,
   currentValue,
+  dominantCategoryId,
   gainFromValue,
   latestValuationAt,
   matchesSelector,
+  positionSign,
   selectorKey,
   valuationDomain,
   valueFromGain,
@@ -113,6 +115,13 @@ describe("selectors", () => {
     expect(valuationDomain({ categoryId: "emergency" }, cats)).toBe("SAVING");
     expect(valuationDomain({ categoryId: "funds" }, cats)).toBe("INVESTMENT");
     expect(valuationDomain({}, [])).toBe("INVESTMENT");
+    expect(valuationDomain({ categoryId: "visa" }, [{ id: "visa", domain: "DEBT" }])).toBe("DEBT");
+  });
+
+  it("signs a debt as a negative position", () => {
+    expect(positionSign("INVESTMENT")).toBe(1);
+    expect(positionSign("SAVING")).toBe(1);
+    expect(positionSign("DEBT")).toBe(-1);
   });
 });
 
@@ -135,6 +144,23 @@ describe("currentValue", () => {
       ctx
     );
     expect(withCheck).toBe(1130);
+  });
+
+  it("reads a debt as what is owed: the balance less repayments since, nothing before a balance", () => {
+    const visa = { accountId: "visa" };
+    const repayments = [
+      tx(500, new Date(2026, 1, 1), { ...visa, domain: "DEBT" }),
+      tx(500, new Date(2026, 2, 1), { ...visa, domain: "DEBT" }),
+    ];
+    const balance = [valuation(5000, new Date(2026, 0, 1), { ...visa, domain: "DEBT" })];
+    const apr = new Date(2026, 3, 1);
+    expect(currentValue(repayments, balance, visa, undefined, apr, ctx, -1)).toBe(4000);
+    // With a rate the balance compounds up while each repayment compounds down.
+    const rate = { value: 12, period: "YEARLY" as const };
+    expect(currentValue(repayments, balance, visa, rate, apr, ctx, -1)).toBeCloseTo(4127.5, 0);
+    // Repayments alone say nothing about a balance: unknown reads as 0, never as an estimate.
+    expect(currentValue(repayments, [], visa, rate, apr, ctx, -1)).toBe(0);
+    expect(currentValue(repayments, balance, visa, rate, new Date(2025, 11, 1), ctx, -1)).toBe(0);
   });
 });
 
@@ -176,5 +202,57 @@ describe("valuationSeries", () => {
     const vals = [valuation(100, new Date(2026, 4, 1), { currency: "EUR" })];
     const series = valuationSeries([], vals, FUNDS, { rates, target: "USD" }, 2, now);
     expect(series[1].expense).toBe(200);
+  });
+
+  it("charts a debt as repaid against owed, flat at 0 before the first balance", () => {
+    const visa = { accountId: "visa" };
+    const list = [
+      tx(100, new Date(2026, 1, 10), { ...visa, domain: "DEBT" }),
+      tx(100, new Date(2026, 3, 10), { ...visa, domain: "DEBT" }),
+    ];
+    const vals = [valuation(900, new Date(2026, 2, 20), { ...visa, domain: "DEBT" })];
+    const series = valuationSeries(list, vals, visa, ctx, 6, now, undefined, -1);
+    expect(series.map((p) => p.income)).toEqual([0, 100, 100, 200, 200, 200]);
+    expect(series.map((p) => p.expense)).toEqual([0, 0, 900, 800, 800, 800]);
+  });
+});
+
+describe("withdrawals and borrowing", () => {
+  const coinbase = { accountId: "coinbase" };
+  const apr = new Date(2026, 3, 1);
+
+  it("a withdrawal lowers the cost basis and what a check carries forward", () => {
+    const rows = [
+      tx(1000, new Date(2026, 0, 10), { ...coinbase }),
+      tx(400, new Date(2026, 2, 10), { ...coinbase, direction: "OUT" }),
+    ];
+    expect(costBasisAt(rows, coinbase, apr, ctx)).toBe(600);
+    // No check: the position is what is net in.
+    expect(currentValue(rows, [], coinbase, undefined, apr, ctx)).toBe(600);
+    // A check before the withdrawal: carried forward, then the 400 leaves.
+    const checks = [valuation(1500, new Date(2026, 1, 1), { ...coinbase })];
+    expect(currentValue(rows, checks, coinbase, undefined, apr, ctx)).toBe(1100);
+  });
+
+  it("money borrowed on a debt raises what is owed", () => {
+    const visa = { accountId: "visa" };
+    const rows = [
+      tx(300, new Date(2026, 1, 1), { ...visa, domain: "DEBT", direction: "OUT" }),
+      tx(500, new Date(2026, 2, 1), { ...visa, domain: "DEBT" }),
+    ];
+    const balance = [valuation(5000, new Date(2026, 0, 1), { ...visa, domain: "DEBT" })];
+    expect(currentValue(rows, balance, visa, undefined, apr, ctx, -1)).toBe(4800);
+  });
+
+  it("only money that came in decides the dominant category", () => {
+    const cats = [
+      { id: "funds", userId: "u1", domain: "INVESTMENT", name: "Funds" },
+      { id: "crypto", userId: "u1", domain: "INVESTMENT", name: "Crypto" },
+    ] as never;
+    const rows = [
+      tx(100, new Date(2026, 0, 1), { ...coinbase, categoryId: "funds" }),
+      tx(900, new Date(2026, 0, 2), { ...coinbase, categoryId: "crypto", direction: "OUT" }),
+    ];
+    expect(dominantCategoryId(rows, coinbase, cats, ctx)).toBe("funds");
   });
 });

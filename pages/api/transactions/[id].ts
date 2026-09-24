@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import auth0 from "../../../lib/auth0";
 import admin from "../../../firebase/admin";
 import { TransactionUpdateSchema } from "../../../schemas";
+import { isAccountDomain } from "../../../helpers/accounts";
 
 export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await auth0.getSession(req, res);
@@ -45,7 +46,12 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       paymentMethodId,
       tags,
       note,
+      direction,
     } = parsed.data;
+
+    if (direction && !isAccountDomain(existing.domain)) {
+      return res.status(400).json({ error: "Direction only applies to accounts" });
+    }
 
     // The charged pair must still differ from the doc's own currency —
     // whichever of the two this patch leaves in place.
@@ -122,6 +128,8 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       ...(paymentMethodId !== undefined ? { paymentMethodId: paymentMethodId ?? del } : {}),
       ...(tags !== undefined ? { tags: tags?.length ? Array.from(new Set(tags)) : del } : {}),
       ...(note !== undefined ? { note: note || del } : {}),
+      // IN is the absence of the field, so both null and IN clear it.
+      ...(direction !== undefined ? { direction: direction === "OUT" ? direction : del } : {}),
     });
 
     return res.status(200).json({ id });

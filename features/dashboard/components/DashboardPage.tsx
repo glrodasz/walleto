@@ -72,6 +72,7 @@ export function DashboardPage() {
     incomesByCategory,
     investmentsByCategory,
     savingsByCategory,
+    debtsByCategory,
     currencyMix,
     categories,
     upcoming,
@@ -124,12 +125,21 @@ export function DashboardPage() {
       list: savingsByCategory,
       mix: currencyMix.saving,
     },
+    {
+      domain: "DEBT",
+      title: "Debts",
+      href: "/debts",
+      amount: totals.debt,
+      list: debtsByCategory,
+      mix: currencyMix.debt,
+    },
   ];
 
   return (
     <PageLayout
       title={`${greeting()}, ${firstName}`}
       subtitle={`Here's your financial overview for ${window.longLabel}.`}
+      hideMonth
     >
       {error && <ErrorState error={error} />}
       {fxUnavailable && (
@@ -223,7 +233,7 @@ export function DashboardPage() {
 
         .cards {
           display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
+          grid-template-columns: repeat(5, minmax(0, 1fr));
           gap: 16px;
         }
 
@@ -231,6 +241,12 @@ export function DashboardPage() {
           display: grid;
           grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
           gap: 16px;
+        }
+
+        @media (max-width: 1280px) {
+          .cards {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
         }
 
         @media (max-width: 1100px) {

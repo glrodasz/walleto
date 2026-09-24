@@ -12,12 +12,13 @@ interface Props {
   domain?: Domain;
 }
 
-const DOMAINS: Domain[] = ["EXPENSE", "INCOME", "INVESTMENT", "SAVING"];
+const DOMAINS: Domain[] = ["EXPENSE", "INCOME", "INVESTMENT", "SAVING", "DEBT"];
 const DOMAIN_LABEL: Record<Domain, string> = {
   EXPENSE: "Expense",
   INCOME: "Income",
   INVESTMENT: "Investment",
   SAVING: "Saving",
+  DEBT: "Debt",
 };
 
 type Kind = "quick" | "recurring" | "value";
@@ -86,10 +87,11 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
               className="glass glass--tap option"
               onClick={() => choose("value")}
             >
-              <strong>Record current value</strong>
+              <strong>Record current {domain === "DEBT" ? "balance" : "value"}</strong>
               <span>
-                What {domain === "SAVING" ? "a pocket" : "an account"} is worth today, as a gain %
-                or a value
+                {domain === "DEBT"
+                  ? "What you still owe on a debt today"
+                  : `What ${domain === "SAVING" ? "a pocket" : "an account"} is worth today, as a gain % or a value`}
               </span>
             </button>
           )}
@@ -145,7 +147,7 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
 
         .domains {
           display: grid;
-          grid-template-columns: repeat(4, 1fr);
+          grid-template-columns: repeat(5, 1fr);
           gap: 6px;
           margin-bottom: 6px;
         }
@@ -192,6 +194,12 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
 
         .option:hover {
           border-color: var(--line-strong);
+        }
+
+        @media (max-width: 480px) {
+          .domains {
+            grid-template-columns: repeat(3, 1fr);
+          }
         }
 
         /* Desktop: same button, clear of the page corner; no bottom nav to dodge. */

@@ -24,6 +24,16 @@ import type { Deposit, ValuePoint } from "./interest";
 export type ValueSelector = { accountId: string } | { domain: AccountDomain };
 
 /**
+ * +1 for what you own, −1 for what you owe. A debt is a negative position:
+ * its balance checks are fed into the interest and gain maths as `−value`, so
+ * the balance compounds up, each repayment compounds down, and the gain
+ * chain reports interest as a loss — the same code, one sign.
+ */
+export function positionSign(domain: AccountDomain): 1 | -1 {
+  return domain === "DEBT" ? -1 : 1;
+}
+
+/**
  * Where "the whole history" starts. A cost basis, a value and the gain chain
  * all need every contribution ever made, not a page's window — and every
  * query that reaches back must use this same instant, so the Firestore SDK
@@ -67,7 +77,7 @@ export function valuationDomain(
 ): AccountDomain {
   if (v.domain) return v.domain;
   const viaCategory = categories.find((c) => c.id === v.categoryId)?.domain;
-  return viaCategory === "SAVING" ? "SAVING" : "INVESTMENT";
+  return viaCategory === "SAVING" || viaCategory === "DEBT" ? viaCategory : "INVESTMENT";
 }
 
 /**
@@ -107,7 +117,8 @@ function occurred(t: Transaction): Date {
 
 /**
  * Every PAID contribution matching the selector, converted into the
- * reporting currency, oldest first. A skipped or pending row never left
+ * reporting currency and signed (a withdrawal is a negative deposit; on a
+ * debt, money borrowed), oldest first. A skipped or pending row never left
  * the account.
  */
 export function depositsFor(
@@ -133,17 +144,21 @@ export function costBasisAt(
     .reduce((sum, d) => sum + d.amount, 0);
 }
 
-/** The selector's value checks converted into the reporting currency. */
+/**
+ * The selector's value checks converted into the reporting currency, signed
+ * for the maths: a debt's balance owed becomes a negative value.
+ */
 export function valueChecks(
   valuations: InvestmentValuation[],
   selector: ValueSelector,
-  ctx: MoneyContext
+  ctx: MoneyContext,
+  sign: 1 | -1 = 1
 ): ValuePoint[] {
   return valuations
     .filter((v) => matchesSelector(v, selector))
     .sort(byAsOfAsc)
     .map((v) => ({
-      value: convert(v.value, v.currency, ctx.target, ctx.rates),
+      value: sign * convert(v.value, v.currency, ctx.target, ctx.rates),
       asOf: v.asOf.toDate(),
     }));
 }
@@ -163,7 +178,13 @@ export function dominantCategoryId(
   const roots = rootIdMap(categories);
   const byCategory = new Map<string, number>();
   for (const t of transactions) {
-    if (!isAccountDomain(t.domain) || t.status !== "PAID" || !matchesSelector(t, selector))
+    // Only money that came in says which holding it went to.
+    if (
+      !isAccountDomain(t.domain) ||
+      t.status !== "PAID" ||
+      t.direction === "OUT" ||
+      !matchesSelector(t, selector)
+    )
       continue;
     const key = rootIdOf(t.categoryId, roots);
     byCategory.set(key, (byCategory.get(key) ?? 0) + convertedAmount(t, ctx));
@@ -190,7 +211,10 @@ export function latestValuationAt(
 /**
  * What the position is worth at `asOf` in the reporting currency: the
  * latest recorded check carried forward (with interest, when the account
- * quotes a rate) plus what went in since — see `interest.valueAt`.
+ * quotes a rate) plus what went in since — see `interest.valueAt`. For a
+ * debt (`sign` −1) the figure is what is owed, and it is 0 until a balance
+ * has been recorded: repayments alone say nothing about the balance, so the
+ * interest estimate that serves an asset would be meaningless here.
  */
 export function currentValue(
   transactions: Transaction[],
@@ -198,14 +222,12 @@ export function currentValue(
   selector: ValueSelector,
   rate: InterestRate | undefined,
   asOf: Date,
-  ctx: MoneyContext
+  ctx: MoneyContext,
+  sign: 1 | -1 = 1
 ): number {
-  return valueAt(
-    depositsFor(transactions, selector, ctx),
-    valueChecks(valuations, selector, ctx),
-    rate,
-    asOf
-  );
+  const checks = valueChecks(valuations, selector, ctx, sign);
+  if (sign < 0 && !checks.some((c) => c.asOf <= asOf)) return 0;
+  return sign * valueAt(depositsFor(transactions, selector, ctx), checks, rate, asOf);
 }
 
 /**
@@ -222,16 +244,19 @@ export function valuationSeries(
   ctx: MoneyContext,
   months: number,
   now: Date = new Date(),
-  rate?: InterestRate
+  rate?: InterestRate,
+  sign: 1 | -1 = 1
 ): FlowPoint[] {
   const deposits = depositsFor(transactions, selector, ctx);
-  const checks = valueChecks(valuations, selector, ctx);
+  const checks = valueChecks(valuations, selector, ctx, sign);
   const points: FlowPoint[] = [];
   for (let i = months - 1; i >= 0; i--) {
     const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const monthEnd = i === 0 ? now : new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59);
     const invested = deposits.filter((d) => d.at <= monthEnd).reduce((s, d) => s + d.amount, 0);
-    const value = valueAt(deposits, checks, rate, monthEnd);
+    // A debt has no balance before its first check — see `currentValue`.
+    const known = sign > 0 || checks.some((c) => c.asOf <= monthEnd);
+    const value = known ? sign * valueAt(deposits, checks, rate, monthEnd) : 0;
     points.push({ label: formatDate(monthStart, "month"), income: invested, expense: value });
   }
   return points;

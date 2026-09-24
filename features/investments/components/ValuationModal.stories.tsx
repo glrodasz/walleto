@@ -22,6 +22,7 @@ const meta = {
   parameters: { layout: "fullscreen" },
   args: {
     open: true,
+    domain: "INVESTMENT",
     selector: { accountId: "acc-coinbase" },
     name: "Coinbase",
     costBasis: 1200,
@@ -38,4 +39,14 @@ type Story = StoryObj<typeof meta>;
 export const New: Story = {};
 export const Edit: Story = {
   args: { valuation: STORY_VALUATIONS.find((v) => v.id === "iv-coinbase-0") },
+};
+/** A debt records a balance owed — one field, opened on today's estimate. */
+export const DebtBalance: Story = {
+  args: {
+    domain: "DEBT",
+    selector: { accountId: "acc-visa" },
+    name: "Visa Gold",
+    costBasis: 2000,
+    latestValue: 4210,
+  },
 };

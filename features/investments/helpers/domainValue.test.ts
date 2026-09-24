@@ -162,3 +162,77 @@ describe("domainValueTotals", () => {
     expect(domainValueTotals(rows).lastCheckedAt).toBeNull();
   });
 });
+
+describe("domainValueRows for debts", () => {
+  const visa = account("visa", "Visa", {
+    domain: "DEBT",
+    interestRate: { value: 12, period: "YEARLY" },
+  });
+  const loan = account("loan", "Car loan", { domain: "DEBT" });
+  const repay = (amount: number, accountId: string): Transaction => ({
+    ...tx(amount, accountId),
+    domain: "DEBT",
+    categoryId: "cards",
+    name: "Repayment",
+  });
+
+  it("shows what is owed and what was repaid, with no gain %", () => {
+    const rows = domainValueRows(
+      [visa, loan],
+      [repay(300, "visa"), repay(200, "visa"), repay(100, "loan")],
+      [{ ...check(5000, 0, new Date(2026, 0, 1), "visa"), domain: "DEBT", gainPct: 0 }],
+      "DEBT",
+      "debt",
+      ctx,
+      NOW
+    );
+    const card = rows.find((r) => r.key === "acc:visa")!;
+    expect(card.invested).toBe(500);
+    // 4,500 of principal left plus most of a year's interest on it.
+    expect(card.value).toBeGreaterThan(4500);
+    expect(card.gainPct).toBeNull();
+    // No balance recorded: owed is unknown and never reads as a figure.
+    expect(rows.find((r) => r.key === "acc:loan")).toMatchObject({
+      invested: 100,
+      value: 0,
+      latest: null,
+      gainPct: null,
+    });
+    expect(domainValueTotals(rows).invested).toBe(600);
+  });
+
+  it("names the bucket Unassigned rather than something that reads as debt-free", () => {
+    const rows = domainValueRows(
+      [],
+      [repay(50, undefined as unknown as string)],
+      [],
+      "DEBT",
+      "debt",
+      ctx,
+      NOW
+    );
+    expect(rows.find((r) => r.key === "dom:DEBT")).toMatchObject({
+      name: "Unassigned",
+      invested: 50,
+    });
+  });
+});
+
+describe("domainValueRows with withdrawals", () => {
+  it("keeps a bucket that withdrawals took below zero, and reads the net", () => {
+    const rows = domainValueRows(
+      [],
+      [tx(100), { ...tx(150), direction: "OUT" }],
+      [],
+      "INVESTMENT",
+      "account",
+      ctx,
+      NOW
+    );
+    expect(rows.find((r) => r.key === "dom:INVESTMENT")).toMatchObject({
+      invested: -50,
+      value: -50,
+      gainPct: null,
+    });
+  });
+});

@@ -10,11 +10,12 @@ import { TextArea } from "../../../components/atoms/TextArea";
 import { Select } from "../../../components/atoms/Select";
 import { TextField } from "../../../components/atoms/TextField";
 import { Button } from "../../../components/atoms/Button";
+import { SegmentedControl } from "../../../components/molecules/SegmentedControl";
 import { useCategories } from "../../../hooks/useCategories";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { useAccounts } from "../../../hooks/useAccounts";
 import { useTags } from "../../../hooks/useTags";
-import { useRecurrentTransactions } from "../../../hooks/useRecurrentTransactions";
+import { convertItem, useRecurrentTransactions } from "../../../hooks/useRecurrentTransactions";
 import { useUserDoc } from "../../../hooks/useUserDoc";
 import { materializeNow } from "../../../hooks/useMaterialize";
 import { createTransaction, updateTransaction } from "../../../hooks/useTransactions";
@@ -22,7 +23,7 @@ import { createInvestmentValuation } from "../../../hooks/useInvestmentValuation
 import { valueFromGain } from "../../investments/helpers/valuation";
 import { FREQ_TO_MONTHS } from "../../../helpers/aggregations";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
-import { isAccountDomain } from "../../../helpers/accounts";
+import { directionLabel, isAccountDomain } from "../../../helpers/accounts";
 import {
   BACKFILL_MONTHS,
   anchorStartDate,
@@ -32,12 +33,14 @@ import {
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import { CURRENCY_SYMBOL, FREQUENCY_LABELS } from "../../../constants";
 import { useEnabledCurrencies } from "../../../hooks/useEnabledCurrencies";
+import { useDecimalInput } from "../../../hooks/useDecimalInput";
 import type {
   Currency,
   Domain,
   Frequency,
   RecurrentTransaction,
   Transaction,
+  TransactionDirection,
 } from "../../../types";
 import { useDateFormat } from "../../../hooks/usePreferences";
 
@@ -62,7 +65,7 @@ interface Props {
 
 interface FormState extends ScheduleValue {
   categoryId: string;
-  /** INVESTMENT / SAVING only. */
+  /** INVESTMENT / SAVING / DEBT only. */
   accountId: string;
   name: string;
   amount: string;
@@ -86,6 +89,10 @@ interface FormState extends ScheduleValue {
   chargedEnabled: boolean;
   chargedAmount: string;
   chargedCurrency: Currency | "";
+  /** One-offs on account domains: money in, or a withdrawal (borrowed, on a debt). */
+  direction: TransactionDirection;
+  /** EXPENSE only: file this under Debts instead — the instalment repays a debt. */
+  paysDebt: boolean;
 }
 
 export function RecurrentTransactionModal({
@@ -99,22 +106,11 @@ export function RecurrentTransactionModal({
 }: Props) {
   const { formatDate } = useDateFormat();
   const { formatAmount } = useMoneyFormat();
+  const decimal = useDecimalInput();
   const config = DOMAIN_CONFIG[domain];
   const noun = config.noun.replace(/s$/, "");
   const { userDoc } = useUserDoc();
   const { optionsFor } = useEnabledCurrencies();
-  const { categories, create: createCategory } = useCategories(domain);
-  const { methods, create: createMethod } = usePaymentMethods();
-  const hasAccounts = isAccountDomain(domain);
-  const { accounts, create: createAccount } = useAccounts(hasAccounts ? domain : null);
-  const { tags: allTags, create: createTag } = useTags();
-  const { items, create, update } = useRecurrentTransactions(domain);
-  // The row's recurring item — only active ones are listed, so a stopped
-  // item leaves the row with nothing to link to.
-  const parent = transaction?.recurrentTransactionId
-    ? items.find((i) => i.id === transaction.recurrentTransactionId)
-    : undefined;
-
   const empty: FormState = useMemo(
     () => ({
       categoryId: "",
@@ -139,11 +135,30 @@ export function RecurrentTransactionModal({
       chargedEnabled: false,
       chargedAmount: "",
       chargedCurrency: "",
+      direction: "IN",
+      paysDebt: false,
     }),
     [initialFrequency]
   );
 
   const [form, setForm] = useState<FormState>(empty);
+  // "This pays off a debt": an expense that is really a repayment files under
+  // Debts. Offered on create and on a recurring item; a one-off row's domain
+  // cannot move, so it records its repayments from the Debts page instead.
+  const offersDebtToggle = domain === "EXPENSE" && !transaction;
+  const effectiveDomain: Domain = offersDebtToggle && form.paysDebt ? "DEBT" : domain;
+  const { categories, create: createCategory } = useCategories(effectiveDomain);
+  const { methods, create: createMethod } = usePaymentMethods();
+  const hasAccounts = isAccountDomain(effectiveDomain);
+  const { accounts, create: createAccount } = useAccounts(hasAccounts ? effectiveDomain : null);
+  const { tags: allTags, create: createTag } = useTags();
+  const { items, create, update } = useRecurrentTransactions(domain);
+  // The row's recurring item — only active ones are listed, so a stopped
+  // item leaves the row with nothing to link to.
+  const parent = transaction?.recurrentTransactionId
+    ? items.find((i) => i.id === transaction.recurrentTransactionId)
+    : undefined;
+
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -157,7 +172,7 @@ export function RecurrentTransactionModal({
         categoryId: transaction.categoryId,
         accountId: transaction.accountId ?? "",
         name: transaction.name,
-        amount: String(transaction.amount),
+        amount: decimal.toInput(transaction.amount),
         currency: transaction.currency,
         frequency: "ONE_TIME",
         paymentMethodId: transaction.paymentMethodId ?? "",
@@ -167,8 +182,10 @@ export function RecurrentTransactionModal({
         backfill: false,
         chargedEnabled: transaction.chargedAmount !== undefined,
         chargedAmount:
-          transaction.chargedAmount !== undefined ? String(transaction.chargedAmount) : "",
+          transaction.chargedAmount !== undefined ? decimal.toInput(transaction.chargedAmount) : "",
         chargedCurrency: transaction.chargedCurrency ?? "",
+        direction: transaction.direction ?? "IN",
+        paysDebt: false,
       });
       return;
     }
@@ -185,7 +202,7 @@ export function RecurrentTransactionModal({
       categoryId: item.categoryId,
       accountId: item.accountId ?? "",
       name: item.name,
-      amount: String(item.amount),
+      amount: decimal.toInput(item.amount),
       currency: item.currency,
       frequency: item.frequency,
       paymentMethodId: item.paymentMethodId ?? "",
@@ -204,10 +221,36 @@ export function RecurrentTransactionModal({
       chargedEnabled: false,
       chargedAmount: "",
       chargedCurrency: "",
+      direction: "IN",
+      paysDebt: false,
     });
-  }, [open, item, transaction, empty]);
+  }, [open, item, transaction, empty, decimal]);
 
   const patch = (p: Partial<FormState>) => setForm((f) => ({ ...f, ...p }));
+
+  // Flipping the toggle swaps the category list, so the pick has to move
+  // with it: the debt category with the same name, else "Loans", else the
+  // first one; and the expense category comes back when it is flipped off.
+  const [expenseCategory, setExpenseCategory] = useState<{ id: string; name: string } | null>(null);
+  const togglePaysDebt = (on: boolean) => {
+    if (on) {
+      const current = categories.find((c) => c.id === form.categoryId);
+      setExpenseCategory(current?.id ? { id: current.id, name: current.name } : null);
+      patch({ paysDebt: true, categoryId: "", accountId: "" });
+    } else {
+      patch({ paysDebt: false, categoryId: expenseCategory?.id ?? "", accountId: "" });
+    }
+  };
+  useEffect(() => {
+    if (!form.paysDebt || form.categoryId || categories.length === 0) return;
+    const roots = categories.filter((c) => !c.parentId && c.id);
+    const wanted = expenseCategory?.name.trim().toLowerCase();
+    const match =
+      roots.find((c) => wanted && c.name.trim().toLowerCase() === wanted) ??
+      roots.find((c) => c.name.trim().toLowerCase() === "loans") ??
+      roots[0];
+    if (match?.id) setForm((f) => ({ ...f, categoryId: match.id! }));
+  }, [form.paysDebt, form.categoryId, categories, expenseCategory]);
 
   // Per-item currency default: the account's currency, then the chosen
   // method's defaultCurrency, then the user's main currency.
@@ -252,20 +295,25 @@ export function RecurrentTransactionModal({
   // A charged pair is what the card actually did on one payment, so it lives
   // on ledger rows only: one-off create and transaction edit.
   const offersCharged = !isRecurring && !item;
-  const offersGain = !editing && domain === "INVESTMENT" && !isRecurring;
+  // A one-off on an account can go either way; a plan only ever puts money in.
+  const accountDomain = isAccountDomain(effectiveDomain) ? effectiveDomain : null;
+  const offersDirection = accountDomain !== null && !isRecurring;
+  const offersGain =
+    !editing && domain === "INVESTMENT" && !isRecurring && form.direction !== "OUT";
   // Yearly, quarterly, weekly…: the plan can show it as a monthly amount.
   const offersSpread = isRecurring && form.frequency !== "MONTHLY";
-  const monthlySlice = (Number(form.amount) || 0) * FREQ_TO_MONTHS[form.frequency];
-  const gainPct = offersGain && form.gainPct.trim() !== "" ? Number(form.gainPct) : null;
+  const monthlySlice = (decimal.parse(form.amount) ?? 0) * FREQ_TO_MONTHS[form.frequency];
+  const gainPct =
+    offersGain && form.gainPct.trim() !== "" ? (decimal.parse(form.gainPct) ?? NaN) : null;
 
   const submit = async () => {
-    const amount = Number(form.amount);
+    const amount = decimal.parse(form.amount) ?? NaN;
     if (!form.categoryId) return setFormError("Pick a category");
     if (!form.name.trim()) return setFormError("Give it a name");
     if (!(amount > 0)) return setFormError("Amount must be greater than zero");
 
     const chargedAmount =
-      offersCharged && form.chargedEnabled ? Number(form.chargedAmount) : undefined;
+      offersCharged && form.chargedEnabled ? (decimal.parse(form.chargedAmount) ?? NaN) : undefined;
     if (offersCharged && form.chargedEnabled) {
       if (!(chargedAmount! > 0) || !form.chargedCurrency)
         return setFormError("Fill both charged fields or turn the toggle off");
@@ -324,6 +372,9 @@ export function RecurrentTransactionModal({
                 chargedCurrency: form.chargedEnabled ? (form.chargedCurrency as Currency) : null,
               }
             : {}),
+          ...(offersDirection && form.direction !== (transaction.direction ?? "IN")
+            ? { direction: form.direction === "OUT" ? ("OUT" as const) : null }
+            : {}),
         };
         if (Object.keys(patch).length > 0) await updateTransaction(transaction.id, patch);
       } else if (item?.id) {
@@ -332,9 +383,19 @@ export function RecurrentTransactionModal({
           form.frequency !== item.frequency ||
           startDate.getTime() !== item.startDate.toDate().getTime() ||
           twiceMonthly !== (item.secondDayOfMonth ?? null);
+        // Moving to Debts goes first and carries the category and the debt:
+        // a PATCH checks both against the item's domain as it stands.
+        const converting = offersDebtToggle && form.paysDebt;
+        if (converting) {
+          await convertItem(item.id, {
+            domain: "DEBT",
+            categoryId: form.categoryId,
+            ...(form.accountId ? { accountId: form.accountId } : {}),
+          });
+        }
         await update(item.id, {
-          categoryId: form.categoryId,
-          ...(hasAccounts ? { accountId: form.accountId || null } : {}),
+          ...(converting ? {} : { categoryId: form.categoryId }),
+          ...(hasAccounts && !converting ? { accountId: form.accountId || null } : {}),
           name: form.name.trim(),
           amount,
           currency: effectiveCurrency,
@@ -366,7 +427,7 @@ export function RecurrentTransactionModal({
         // "One time" is not a plan, it is a line in the ledger: a dated
         // transaction, no recurrent item behind it and nothing to materialize.
         await createTransaction({
-          domain,
+          domain: effectiveDomain,
           categoryId: form.categoryId,
           ...(form.accountId ? { accountId: form.accountId } : {}),
           name: form.name.trim(),
@@ -374,6 +435,7 @@ export function RecurrentTransactionModal({
           currency: effectiveCurrency,
           occurredAt: startDate.toISOString(),
           status: "PAID",
+          ...(offersDirection && form.direction === "OUT" ? { direction: "OUT" as const } : {}),
           ...(form.paymentMethodId ? { paymentMethodId: form.paymentMethodId } : {}),
           ...(form.tags.length ? { tags: form.tags } : {}),
           ...(form.note.trim() ? { note: form.note.trim() } : {}),
@@ -383,9 +445,10 @@ export function RecurrentTransactionModal({
         });
       } else {
         await create({
-          domain,
+          domain: effectiveDomain,
           categoryId: form.categoryId,
           ...(form.accountId ? { accountId: form.accountId } : {}),
+          ...(effectiveDomain === "DEBT" ? { type: "LOAN_PAYMENT" as const } : {}),
           name: form.name.trim(),
           amount,
           currency: effectiveCurrency,
@@ -438,18 +501,36 @@ export function RecurrentTransactionModal({
       onClose={onClose}
     >
       <div className="form">
+        {offersDebtToggle && (
+          <label className="toggle">
+            <input
+              type="checkbox"
+              checked={form.paysDebt}
+              onChange={(e) => togglePaysDebt(e.currentTarget.checked)}
+            />
+            <span>
+              This pays off a debt
+              <span className="hint">
+                {" "}
+                — files it under Debts, where the debt, its rate and its balance live. Expenses
+                drops by the instalment; your monthly net does not change.
+              </span>
+            </span>
+          </label>
+        )}
+
         <CategoryField
           categories={categories}
           value={form.categoryId}
           onChange={(categoryId) => patch({ categoryId })}
-          createCategory={(name, icon) => createCategory({ domain, name, icon })}
-          newLabel={`New ${config.title.toLowerCase()} category`}
+          createCategory={(name, icon) => createCategory({ domain: effectiveDomain, name, icon })}
+          newLabel={`New ${DOMAIN_CONFIG[effectiveDomain].title.toLowerCase()} category`}
           onError={setFormError}
         />
 
-        {hasAccounts && (
+        {hasAccounts && accountDomain && (
           <AccountField
-            domain={domain}
+            domain={accountDomain}
             accounts={accounts}
             value={form.accountId}
             onChange={onSelectAccount}
@@ -483,6 +564,19 @@ export function RecurrentTransactionModal({
           onValueChange={(v) => patch({ name: v })}
         />
 
+        {offersDirection && accountDomain && (
+          <SegmentedControl<TransactionDirection>
+            label="Direction"
+            size="sm"
+            options={[
+              { key: "IN", label: directionLabel(accountDomain, "IN") },
+              { key: "OUT", label: directionLabel(accountDomain, "OUT") },
+            ]}
+            value={form.direction}
+            onChange={(direction) => patch({ direction })}
+          />
+        )}
+
         <div className="pair">
           <TextField
             label="Amount"
@@ -491,7 +585,7 @@ export function RecurrentTransactionModal({
             prefix={CURRENCY_SYMBOL[effectiveCurrency]}
             align="right"
             value={form.amount}
-            onValueChange={(v) => patch({ amount: v.replace(/[^\d.]/g, "") })}
+            onValueChange={(v) => patch({ amount: decimal.sanitize(v) })}
           />
           <Select
             label="Currency"
@@ -612,7 +706,7 @@ export function RecurrentTransactionModal({
               inputMode="decimal"
               align="right"
               value={form.gainPct}
-              onValueChange={(v) => patch({ gainPct: v.replace(/[^\d.-]/g, "") })}
+              onValueChange={(v) => patch({ gainPct: decimal.sanitize(v, { negative: true }) })}
             />
             <p className="field-hint">
               0 = break-even, 100 = doubled. Records a first value check for the account (or the
@@ -647,7 +741,7 @@ export function RecurrentTransactionModal({
                   inputMode="decimal"
                   align="right"
                   value={form.chargedAmount}
-                  onValueChange={(v) => patch({ chargedAmount: v.replace(/[^\d.]/g, "") })}
+                  onValueChange={(v) => patch({ chargedAmount: decimal.sanitize(v) })}
                 />
                 <Select
                   label="Charged currency"

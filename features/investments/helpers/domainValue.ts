@@ -5,6 +5,7 @@ import {
   gainFromValue,
   latestValuationAt,
   matchesSelector,
+  positionSign,
   selectorKey,
 } from "./valuation";
 import type { ValueSelector } from "./valuation";
@@ -38,6 +39,11 @@ export interface AccountValueRow {
  * `transactions` must reach back to inception: a cost basis is the whole
  * history of the position, not the page's month. `valuations` must already
  * carry their domain (`withDomain`).
+ *
+ * For debts `invested` is what has been repaid and `value` what is still
+ * owed (0 until a balance is recorded); a gain % means nothing there, and
+ * the bucket is "Unassigned" rather than "No debt", which would read as
+ * debt-free.
  */
 export function domainValueRows(
   accounts: Account[],
@@ -49,6 +55,7 @@ export function domainValueRows(
   ctx: MoneyContext,
   now: Date
 ): AccountValueRow[] {
+  const sign = positionSign(domain);
   const build = (
     selector: ValueSelector,
     name: string,
@@ -56,7 +63,7 @@ export function domainValueRows(
     rate: InterestRate | undefined
   ): AccountValueRow => {
     const invested = costBasisAt(transactions, selector, now, ctx);
-    const value = currentValue(transactions, valuations, selector, rate, now, ctx);
+    const value = currentValue(transactions, valuations, selector, rate, now, ctx, sign);
     const latest = latestValuationAt(
       valuations.filter((v) => matchesSelector(v, selector)),
       now
@@ -70,7 +77,7 @@ export function domainValueRows(
       invested,
       value,
       latest,
-      gainPct: gainFromValue(invested, value),
+      gainPct: sign < 0 ? null : gainFromValue(invested, value),
     };
   };
 
@@ -78,8 +85,9 @@ export function domainValueRows(
     .filter((a) => a.id)
     .map((a) => build({ accountId: a.id! }, a.name, a.provider, a.interestRate));
 
-  const bucket = build({ domain }, `No ${noun}`, undefined, undefined);
-  const unassigned = bucket.invested > 0 || bucket.latest ? [bucket] : [];
+  const bucket = build({ domain }, sign < 0 ? "Unassigned" : `No ${noun}`, undefined, undefined);
+  // Net of withdrawals, so "anything at all" rather than "more than nothing".
+  const unassigned = bucket.invested !== 0 || bucket.latest ? [bucket] : [];
 
   return [...byAccount, ...unassigned].sort((a, b) => b.value - a.value);
 }

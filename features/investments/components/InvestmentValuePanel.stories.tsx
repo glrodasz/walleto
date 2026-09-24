@@ -8,6 +8,7 @@ const meta = {
   component: InvestmentValuePanel,
   tags: ["autodocs"],
   args: {
+    domain: "INVESTMENT",
     selector: { accountId: "acc-coinbase" },
     title: "Coinbase",
     transactions: transactionsFor("INVESTMENT"),
@@ -29,6 +30,17 @@ export const WithInterestRate: Story = {
     selector: { accountId: "acc-avanza" },
     title: "Avanza ISK",
     rate: { value: 7, period: "YEARLY" },
+  },
+};
+/** A debt: repaid against owed, and the interest accrued since the first balance. */
+export const Debt: Story = {
+  args: {
+    domain: "DEBT",
+    selector: { accountId: "acc-visa" },
+    title: "Visa Gold",
+    rate: { value: 19.9, period: "YEARLY" },
+    transactions: transactionsFor("DEBT"),
+    accent: "var(--domain-debt)",
   },
 };
 export const NoValuations: Story = {

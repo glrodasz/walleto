@@ -112,6 +112,35 @@ function buildLedger(): Transaction[] {
         accountId: "acc-coinbase",
         paymentMethodId: "pm-wise",
       }
+    ),
+    // Money leaving an account, and money borrowed on a debt.
+    oneOff(
+      "tx-eth-sell",
+      "INVESTMENT",
+      "cat-investment-crypto",
+      "Ethereum sale",
+      180,
+      "USD",
+      monthsAgo(1, 14),
+      {
+        accountId: "acc-coinbase",
+        paymentMethodId: "pm-wise",
+        direction: "OUT",
+        note: "Moved to the emergency fund",
+      }
+    ),
+    oneOff(
+      "tx-visa-flights",
+      "DEBT",
+      "cat-debt-cards",
+      "Flights on the card",
+      320,
+      "USD",
+      monthsAgo(1, 9),
+      {
+        accountId: "acc-visa",
+        direction: "OUT",
+      }
     )
   );
 

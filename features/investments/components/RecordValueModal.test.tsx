@@ -90,6 +90,34 @@ describe("RecordValueModal", () => {
     );
   });
 
+  it("records a balance on a debt, opening on what it is estimated to owe", () => {
+    accounts = [
+      {
+        id: "visa",
+        userId: "u",
+        domain: "DEBT",
+        name: "Visa",
+        provider: "SEB",
+        currency: "USD",
+      },
+    ];
+    categories = [{ id: "cards", userId: "u", domain: "DEBT", name: "Credit cards" }];
+    render(<RecordValueModal open domain="DEBT" onClose={jest.fn()} />);
+    expect(screen.getByRole("dialog", { name: "Record current balance" })).toBeInTheDocument();
+    const select = screen.getByLabelText("Debt") as HTMLSelectElement;
+    expect(Array.from(select.options).map((o) => o.textContent)).toEqual([
+      "Pick a debt",
+      "SEB - Visa",
+    ]);
+
+    fireEvent.change(select, { target: { value: "acc:visa" } });
+    expect(screen.getByText(/Repaid so far/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect(valuationModalMock).toHaveBeenCalledWith(
+      expect.objectContaining({ domain: "DEBT", selector: { accountId: "visa" }, latestValue: 0 })
+    );
+  });
+
   it("explains when there is nothing to value", () => {
     accounts = [];
     categories = [];

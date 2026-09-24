@@ -3,7 +3,15 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { db } from "../firebase/client";
 import { useFirebaseAuth } from "./useFirebaseAuth";
-import type { Currency, DateFormat, Language, ThemePreference, WeekStart } from "../types";
+import type {
+  Currency,
+  DateFormat,
+  DecimalSeparator,
+  Decimals,
+  Language,
+  ThemePreference,
+  WeekStart,
+} from "../types";
 import type { UserUpdate } from "../schemas";
 
 export interface UserDoc {
@@ -16,6 +24,8 @@ export interface UserDoc {
   dateFormat?: DateFormat;
   weekStart?: WeekStart;
   language?: Language;
+  decimalSeparator?: DecimalSeparator;
+  decimals?: Decimals;
 }
 
 export function useUserDoc() {

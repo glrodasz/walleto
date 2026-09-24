@@ -21,6 +21,15 @@ describe("MonthPicker", () => {
     expect(onChange).toHaveBeenCalledWith("2026-07");
   });
 
+  it("writes the month as text, short on phones, with no down arrow", () => {
+    const { container } = render(
+      <MonthPicker value="2026-09" windows={windows} onChange={jest.fn()} />
+    );
+    expect(container.querySelector(".long")).toHaveTextContent("September 2026");
+    expect(container.querySelector(".short")).toHaveTextContent("Sep 2026");
+    expect(container.querySelector("svg.chevron, .chevron")).toBeNull();
+  });
+
   it("steps with the arrows and stops at both ends", () => {
     const onChange = jest.fn();
     const { rerender } = render(

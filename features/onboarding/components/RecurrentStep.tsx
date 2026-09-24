@@ -12,6 +12,7 @@ import { BACKFILL_MONTHS } from "../../../helpers/scheduleAnchor";
 import { ScheduleFields } from "../../../components/molecules/ScheduleFields";
 import { CURRENCY_SYMBOL, FREQUENCY_LABELS } from "../../../constants";
 import { useEnabledCurrencies } from "../../../hooks/useEnabledCurrencies";
+import { useDecimalInput } from "../../../hooks/useDecimalInput";
 import type { Currency, Frequency } from "../../../types";
 
 interface Props {
@@ -22,6 +23,7 @@ interface Props {
 export function RecurrentStep({ state, showPaymentMethod = false }: Props) {
   const { rows, addTo, update, removeAt, categories, methods, backfill, setBackfill } = state;
   const { optionsFor } = useEnabledCurrencies();
+  const { sanitize } = useDecimalInput();
 
   const categoryOptions = categories
     .filter((c) => !c.parentId)
@@ -117,9 +119,7 @@ export function RecurrentStep({ state, showPaymentMethod = false }: Props) {
                         align="right"
                         value={row.amount}
                         disabled={disabled}
-                        onValueChange={(value) =>
-                          update(row.key, { amount: value.replace(/[^\d.]/g, "") })
-                        }
+                        onValueChange={(value) => update(row.key, { amount: sanitize(value) })}
                       />
                     </div>
                     <div className="field field--currency">

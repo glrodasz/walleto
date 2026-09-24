@@ -4,6 +4,8 @@ import { TextField } from "../../../components/atoms/TextField";
 import { Select } from "../../../components/atoms/Select";
 import { Button } from "../../../components/atoms/Button";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
+import { useDecimalInput } from "../../../hooks/useDecimalInput";
+import { roundTo } from "../../../utils/decimal";
 import {
   createInvestmentValuation,
   updateInvestmentValuation,
@@ -12,15 +14,19 @@ import { toDateInputValue } from "../../../helpers/scheduleAnchor";
 import { gainFromValue, valueFromGain } from "../helpers/valuation";
 import type { ValueSelector } from "../helpers/valuation";
 import { CURRENCY_SYMBOL } from "../../../constants";
-import type { Category, Currency, InvestmentValuation } from "../../../types";
+import type { AccountDomain, Category, Currency, InvestmentValuation } from "../../../types";
 
 interface Props {
   open: boolean;
+  /** A debt records a balance owed; the others a value, as a gain % or a figure. */
+  domain: AccountDomain;
   /** The account / pocket — or pre-account category — being valued. */
   selector: ValueSelector;
   name: string;
-  /** What's been paid in so far, in `currency`. */
+  /** What's been paid in (or repaid) so far, in `currency`. */
   costBasis: number;
+  /** Debts: what the balance is estimated to be today, to open the form on. */
+  latestValue?: number;
   currency: Currency;
   /** Present = edit. */
   valuation?: InvestmentValuation;
@@ -31,25 +37,27 @@ interface Props {
   onClose: () => void;
 }
 
-const round2 = (n: number) => Math.round(n * 100) / 100;
-
 /**
  * Gain % and Value are two views of one number. Typing either recomputes the
  * other from the basis; whichever was edited last is what gets saved — so
- * "+100% → 260, but actually it's 230" is a two-keystroke correction.
+ * "+100% → 260, but actually it's 230" is a two-keystroke correction. A debt
+ * has no gain to type: the form is just the balance owed, saved with a 0 %.
  */
 export function ValuationModal({
   open,
+  domain,
   selector,
   name,
   costBasis,
+  latestValue,
   currency,
   valuation,
   categories,
   suggestedCategoryId,
   onClose,
 }: Props) {
-  const { formatAmount } = useMoneyFormat();
+  const { formatAmount, decimals } = useMoneyFormat();
+  const { sanitize, parse, toInput } = useDecimalInput();
   const [date, setDate] = useState(toDateInputValue(new Date()));
   const [gain, setGain] = useState("0");
   const [value, setValue] = useState("");
@@ -57,45 +65,53 @@ export function ValuationModal({
   const [categoryId, setCategoryId] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const owes = domain === "DEBT";
 
   useEffect(() => {
     if (!open) return;
     setError(null);
     if (valuation) {
       setDate(toDateInputValue(valuation.asOf.toDate()));
-      setGain(String(round2(valuation.gainPct)));
-      setValue(String(round2(valuation.value)));
+      setGain(toInput(roundTo(valuation.gainPct, 2)));
+      setValue(toInput(roundTo(valuation.value, decimals)));
       setNote(valuation.note ?? "");
       setCategoryId(valuation.categoryId ?? "");
     } else {
       setDate(toDateInputValue(new Date()));
       setGain("0");
-      setValue(String(round2(costBasis)));
+      setValue(toInput(roundTo(owes ? (latestValue ?? 0) : costBasis, decimals)));
       setNote("");
       setCategoryId(suggestedCategoryId ?? "");
     }
-  }, [open, valuation, costBasis, suggestedCategoryId]);
+  }, [open, valuation, costBasis, suggestedCategoryId, owes, latestValue, toInput, decimals]);
 
   const basis = valuation ? valuation.costBasis : costBasis;
+  // A gain % needs something to be a percentage of: with withdrawals the net
+  // basis can be zero or below, and then the value is all there is to say.
+  const valueOnly = owes || basis <= 0;
 
   const onGainChange = (raw: string) => {
-    setGain(raw);
-    const pct = Number(raw);
-    if (Number.isFinite(pct)) setValue(String(round2(valueFromGain(basis, pct))));
+    const cleaned = sanitize(raw, { negative: true });
+    setGain(cleaned);
+    const pct = parse(cleaned);
+    if (pct !== null) setValue(toInput(roundTo(valueFromGain(basis, pct), decimals)));
   };
 
   const onValueChange = (raw: string) => {
-    const cleaned = raw.replace(/[^\d.]/g, "");
+    const cleaned = sanitize(raw);
     setValue(cleaned);
-    const v = Number(cleaned);
-    const pct = gainFromValue(basis, v);
-    if (Number.isFinite(v) && pct !== null) setGain(String(round2(pct)));
+    if (valueOnly) return;
+    const v = parse(cleaned);
+    const pct = v === null ? null : gainFromValue(basis, v);
+    if (pct !== null) setGain(toInput(roundTo(pct, 2)));
   };
 
   const submit = async () => {
-    const v = Number(value);
-    const pct = Number(gain);
-    if (!(v >= 0) || !Number.isFinite(pct)) return setError("Enter a value or a gain %");
+    const v = parse(value) ?? NaN;
+    const pct = valueOnly ? 0 : (parse(gain) ?? NaN);
+    if (!(v >= 0) || !Number.isFinite(pct)) {
+      return setError(owes ? "Enter the balance owed" : "Enter a value or a gain %");
+    }
     if (!date) return setError("Pick a date");
 
     setBusy(true);
@@ -135,36 +151,65 @@ export function ValuationModal({
   return (
     <Modal
       open={open}
-      title={valuation ? `Edit valuation — ${name}` : `Value ${name}`}
+      title={
+        owes
+          ? valuation
+            ? `Edit balance — ${name}`
+            : `Balance — ${name}`
+          : valuation
+            ? `Edit valuation — ${name}`
+            : `Value ${name}`
+      }
       onClose={onClose}
     >
       <div className="form">
         <p className="basis">
-          Invested so far: <strong>{formatAmount(basis, currency)}</strong>
+          {owes ? "Repaid" : "Invested"} so far: <strong>{formatAmount(basis, currency)}</strong>
         </p>
 
         <TextField label="As of" type="date" value={date} onValueChange={setDate} />
 
-        <div className="pair">
-          <TextField
-            label="Gain %"
-            inputMode="decimal"
-            align="right"
-            value={gain}
-            onValueChange={(v) => onGainChange(v.replace(/[^\d.-]/g, ""))}
-          />
-          <TextField
-            label="Current value"
-            inputMode="decimal"
-            prefix={CURRENCY_SYMBOL[currency]}
-            align="right"
-            value={value}
-            onValueChange={onValueChange}
-          />
-        </div>
-        <p className="hint">
-          Type either one — the other follows. Override the value if your broker says otherwise.
-        </p>
+        {valueOnly ? (
+          <>
+            <TextField
+              label={owes ? "Balance owed" : "Current value"}
+              inputMode="decimal"
+              prefix={CURRENCY_SYMBOL[currency]}
+              align="right"
+              value={value}
+              onValueChange={onValueChange}
+            />
+            {!owes && (
+              <p className="hint">
+                Nothing is net invested after withdrawals, so there is no gain % to type — just what
+                the position is worth.
+              </p>
+            )}
+          </>
+        ) : (
+          <>
+            <div className="pair">
+              <TextField
+                label="Gain %"
+                inputMode="decimal"
+                align="right"
+                value={gain}
+                onValueChange={onGainChange}
+              />
+              <TextField
+                label="Current value"
+                inputMode="decimal"
+                prefix={CURRENCY_SYMBOL[currency]}
+                align="right"
+                value={value}
+                onValueChange={onValueChange}
+              />
+            </div>
+            <p className="hint">
+              Type either one — the other follows. Override the value if your broker says otherwise.
+            </p>
+          </>
+        )}
 
         {categories && (
           <>
@@ -182,8 +227,9 @@ export function ValuationModal({
               onValueChange={setCategoryId}
             />
             <p className="hint">
-              Where this gain belongs in the month&apos;s breakdown. An account can hold several
-              holdings and only you know which one moved.
+              {owes
+                ? "Where the interest & charges this balance reveals belong in the month's breakdown. A debt can hold several categories and only you know which one moved."
+                : "Where this gain belongs in the month's breakdown. An account can hold several holdings and only you know which one moved."}
             </p>
           </>
         )}

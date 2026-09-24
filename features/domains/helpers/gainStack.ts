@@ -1,13 +1,18 @@
 import type { StackedTotals } from "../../../helpers/stacks";
+import type { Domain } from "../../../types";
 
 /**
  * Cannot collide with a stack key: category mode keys are Firestore ids plus
  * `__other`, currency mode keys are currency codes.
  */
 export const GAIN_KEY = "__gain";
-export const GAIN_LABEL = "Gain";
 /** A token, never a `color-mix()` string — recharts puts this in a `fill`. */
 export const GAIN_COLOR = "var(--bar-gain)";
+
+/** What a value check's delta is called: a market gain, or on a debt the interest it revealed. */
+export function gainLabel(domain: Domain): string {
+  return domain === "DEBT" ? "Interest" : "Gain";
+}
 
 /**
  * The gain the month's value checks reported, appended as one more segment on
@@ -17,10 +22,14 @@ export const GAIN_COLOR = "var(--bar-gain)";
  * Returns the stack untouched when no month has a gain, so the domains without
  * accounts are unaffected.
  */
-export function withGains(stacks: StackedTotals, gains: Record<string, number>): StackedTotals {
+export function withGains(
+  stacks: StackedTotals,
+  gains: Record<string, number>,
+  label = gainLabel("INVESTMENT")
+): StackedTotals {
   if (!Object.values(gains).some((g) => g !== 0)) return stacks;
   return {
-    series: [...stacks.series, { key: GAIN_KEY, label: GAIN_LABEL, color: GAIN_COLOR }],
+    series: [...stacks.series, { key: GAIN_KEY, label, color: GAIN_COLOR }],
     totals: Object.fromEntries(
       Object.entries(stacks.totals).map(([key, month]) => [
         key,

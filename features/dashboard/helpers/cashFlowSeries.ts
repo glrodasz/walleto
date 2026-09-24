@@ -7,13 +7,14 @@ import type { Category, Currency, Domain, Transaction } from "../../../types";
 
 export type CashFlowGroupBy = "domain" | "category" | "currency";
 
-export const CASH_FLOW_DOMAINS: Domain[] = ["INCOME", "EXPENSE", "INVESTMENT", "SAVING"];
+export const CASH_FLOW_DOMAINS: Domain[] = ["INCOME", "EXPENSE", "INVESTMENT", "SAVING", "DEBT"];
 
 const DOMAIN_LABEL: Record<Domain, string> = {
   INCOME: "Income",
   EXPENSE: "Expenses",
   INVESTMENT: "Investments",
   SAVING: "Savings",
+  DEBT: "Debts",
 };
 
 /** One bar per month per group; each bar is a stack of the group's series. */
@@ -35,7 +36,7 @@ export interface GroupedBar {
 export const flatKey = (group: string, series: string) => `${group}:${series}`;
 
 /**
- * The dashboard's cash flow: four domains side by side per month, each
+ * The dashboard's cash flow: five domains side by side per month, each
  * stacked by category (top five + Other), by currency, or not at all. Built
  * from real transactions, unlike the plan cards above it.
  */
