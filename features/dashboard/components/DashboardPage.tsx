@@ -139,6 +139,7 @@ export function DashboardPage() {
     <PageLayout
       title={`${greeting()}, ${firstName}`}
       subtitle={`Here's your financial overview for ${window.longLabel}.`}
+      hideMonth
     >
       {error && <ErrorState error={error} />}
       {fxUnavailable && (
