@@ -42,7 +42,6 @@ describe("Sidebar mobile navigation", () => {
     for (const [label, href] of [
       ["Savings", "/savings"],
       ["Debts", "/debts"],
-      ["Prospect", "/prospect"],
       ["Settings", "/settings"],
       ["Log out", "/api/auth/logout"],
     ]) {
@@ -51,6 +50,9 @@ describe("Sidebar mobile navigation", () => {
     expect(within(sheet).getByText("ada@example.com")).toBeInTheDocument();
     // Payment methods moved into Settings; the sheet no longer links to /methods.
     expect(within(sheet).queryByRole("link", { name: "Methods" })).toBeNull();
+    // Prospect is hidden while it's reworked: present but inert, not a link.
+    expect(within(sheet).queryByRole("link", { name: "Prospect" })).toBeNull();
+    expect(within(sheet).getByText("Prospect").closest('[aria-disabled="true"]')).not.toBeNull();
   });
 
   it("lists Dashboard first and Settings as the only account destination on desktop", () => {
@@ -78,7 +80,7 @@ describe("Sidebar mobile navigation", () => {
       "page"
     );
 
-    fireEvent.click(within(sheet).getByRole("link", { name: "Prospect" }));
+    fireEvent.click(within(sheet).getByRole("link", { name: "Settings" }));
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 });
