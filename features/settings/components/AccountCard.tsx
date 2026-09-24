@@ -4,6 +4,7 @@ import { User } from "../../../components/atoms/Icons";
 import { t } from "../../../helpers/i18n";
 import { SettingsCard } from "./SettingsCard";
 import { SettingsRow } from "./SettingsRow";
+import { LOGOUT_HREF, useLogout } from "../../../hooks/useLogout";
 
 /**
  * Where the identity is managed. Auth0 owns name, password and second
@@ -12,6 +13,7 @@ import { SettingsRow } from "./SettingsRow";
  */
 export function AccountCard() {
   const { user } = useUser();
+  const logout = useLogout();
   const accountUrl = process.env.NEXT_PUBLIC_AUTH0_ACCOUNT_URL;
 
   return (
@@ -43,7 +45,7 @@ export function AccountCard() {
         href={accountUrl}
       />
       {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-      <a href="/api/auth/logout" className="logout">
+      <a href={LOGOUT_HREF} className="logout" onClick={logout}>
         Log out
       </a>
       <style jsx>{`

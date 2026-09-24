@@ -5,12 +5,14 @@ const collectionMock = jest.fn();
 const docMock = jest.fn();
 const setMock = jest.fn();
 const getMock = jest.fn();
+const updateSessionMock = jest.fn();
 
 jest.mock("../../lib/auth0", () => ({
   __esModule: true,
   default: {
     withApiAuthRequired: (fn: unknown) => fn,
     getSession: (...args: unknown[]) => getSessionMock(...args),
+    updateSession: (...args: unknown[]) => updateSessionMock(...args),
   },
 }));
 jest.mock("../../firebase/admin", () => ({
@@ -39,6 +41,7 @@ const mockRes = () => {
 
 beforeEach(() => {
   getSessionMock.mockReset();
+  updateSessionMock.mockReset().mockResolvedValue(undefined);
   setMock.mockReset().mockResolvedValue(undefined);
   getMock.mockReset().mockResolvedValue({ exists: true, data: () => ({ mainCurrency: "USD" }) });
   docMock.mockReset().mockReturnValue({ set: setMock, get: getMock });
@@ -122,6 +125,24 @@ describe("PATCH /api/user", () => {
       { onboardingCompleted: true, onboardingMode: "ASSISTED", mainCurrency: "EUR" },
       { merge: true }
     );
+  });
+
+  it("mirrors onboardingCompleted into the session the onboarding guard reads", async () => {
+    const session = { user: { sub: "user1" }, onboarded: true };
+    getSessionMock.mockResolvedValue(session);
+    const req = { method: "PATCH", query: {}, body: { onboardingCompleted: false } };
+    const res = mockRes();
+    await handler(req as NextApiRequest, res);
+    expect(updateSessionMock).toHaveBeenCalledWith(req, res, { ...session, onboarded: false });
+  });
+
+  it("leaves the session alone when the patch does not touch onboarding", async () => {
+    getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
+    await handler(
+      { method: "PATCH", query: {}, body: { mainCurrency: "EUR" } } as NextApiRequest,
+      mockRes()
+    );
+    expect(updateSessionMock).not.toHaveBeenCalled();
   });
 });
 

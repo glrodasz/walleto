@@ -8,6 +8,10 @@ jest.mock("next/router", () => ({
 jest.mock("@auth0/nextjs-auth0/client", () => ({
   useUser: () => ({ user: { name: "Ada Lovelace", email: "ada@example.com" } }),
 }));
+jest.mock("../../hooks/useLogout", () => ({
+  LOGOUT_HREF: "/api/auth/logout",
+  useLogout: () => jest.fn(),
+}));
 
 // The bottom nav is display:none outside the mobile media query, which jsdom
 // never matches, so its contents must be queried as hidden.

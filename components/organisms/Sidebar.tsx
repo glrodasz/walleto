@@ -19,6 +19,7 @@ import {
   Waves,
 } from "../atoms/Icons";
 import type { IconProps } from "../atoms/Icons";
+import { LOGOUT_HREF, useLogout } from "../../hooks/useLogout";
 
 interface NavItem {
   label: string;
@@ -66,6 +67,7 @@ const MORE_NAV: NavItem[] = [
 ];
 
 export function Sidebar() {
+  const logout = useLogout();
   const { pathname } = useRouter();
   const { user } = useUser();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -119,7 +121,7 @@ export function Sidebar() {
             </span>
           </div>
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-          <a href="/api/auth/logout" className="logout">
+          <a href={LOGOUT_HREF} className="logout" onClick={logout}>
             Log out
           </a>
         </div>
@@ -184,7 +186,7 @@ export function Sidebar() {
               {user?.email && <span className="who-mail">{user.email}</span>}
             </span>
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-            <a href="/api/auth/logout" className="logout">
+            <a href={LOGOUT_HREF} className="logout" onClick={logout}>
               Log out
             </a>
           </div>

@@ -3,6 +3,7 @@ import auth0 from "../../../lib/auth0";
 import admin from "../../../firebase/admin";
 
 export const ONBOARDING_ENTRY = "/onboarding/categories";
+export const ONBOARDED_SESSION_KEY = "onboarded";
 
 /**
  * Page guard for authenticated routes that also require finished onboarding.
@@ -14,6 +15,11 @@ export const ONBOARDING_ENTRY = "/onboarding/categories";
  * The wizard routes deliberately do NOT use this — they stay on plain
  * withPageAuthRequired, which keeps the redirect target reachable (no loop) and
  * lets a finished user re-run setup.
+ *
+ * Getting through costs a Firestore read, and in the Pages Router this runs on
+ * every client-side navigation too. So once the doc says "onboarded", the flag
+ * is cached in the Auth0 session (`ONBOARDED_SESSION_KEY`) and later requests
+ * skip the read. PATCH /api/user keeps the flag in sync when setup is re-run.
  */
 export function withOnboardingGuard(): GetServerSideProps {
   return auth0.withPageAuthRequired({
@@ -25,10 +31,17 @@ export function withOnboardingGuard(): GetServerSideProps {
         // withPageAuthRequired already handles this; belt and braces.
         return { props: {} };
       }
+      if (session[ONBOARDED_SESSION_KEY] === true) {
+        return { props: {} };
+      }
 
       try {
         const snap = await admin.firestore().collection("users").doc(userId).get();
         if (snap.data()?.onboardingCompleted === true) {
+          await auth0.updateSession(ctx.req, ctx.res, {
+            ...session,
+            [ONBOARDED_SESSION_KEY]: true,
+          });
           return { props: {} };
         }
       } catch (err) {

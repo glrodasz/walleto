@@ -27,6 +27,16 @@ describe("useExchangeRates", () => {
     expect(localStorage.getItem("sublr.exchangeRates")).toContain("4000");
   });
 
+  it("shares one request between every instance mounted with a cold cache", async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => PAYLOAD });
+    const hooks = [1, 2, 3].map(() => renderHook(() => useExchangeRates()));
+
+    for (const { result } of hooks) {
+      await waitFor(() => expect(result.current.rates?.rates.EUR).toBe(0.9));
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("serves a fresh cache without hitting the network", async () => {
     localStorage.setItem(
       "sublr.exchangeRates",
