@@ -1,11 +1,20 @@
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Modal } from "../../../components/molecules/Modal";
 import { Plus } from "../../../components/atoms/Icons";
-import { RecurrentTransactionModal } from "../../domains/components/RecurrentTransactionModal";
-import { RecordValueModal } from "../../investments/components/RecordValueModal";
 import { isAccountDomain } from "../../../helpers/accounts";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import type { Domain } from "../../../types";
+
+// Every page mounts the launcher, but the forms only load once one is picked.
+const RecurrentTransactionModal = dynamic(() =>
+  import("../../domains/components/RecurrentTransactionModal").then(
+    (m) => m.RecurrentTransactionModal
+  )
+);
+const RecordValueModal = dynamic(() =>
+  import("../../investments/components/RecordValueModal").then((m) => m.RecordValueModal)
+);
 
 interface Props {
   /** Fixed by the page (a domain page); absent = the sheet offers a choice. */

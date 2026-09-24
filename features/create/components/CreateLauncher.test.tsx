@@ -20,7 +20,7 @@ jest.mock("../../domains/components/RecurrentTransactionModal", () => ({
 }));
 
 describe("CreateLauncher", () => {
-  it("opens a sheet fixed to the page's domain and mounts the quick form on choice", () => {
+  it("opens a sheet fixed to the page's domain and mounts the quick form on choice", async () => {
     render(<CreateLauncher domain="EXPENSE" />);
     expect(screen.queryByTestId("quick")).toBeNull();
     expect(screen.queryByTestId("recurring")).toBeNull();
@@ -32,10 +32,11 @@ describe("CreateLauncher", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Record a payment/ }));
     expect(screen.queryByRole("dialog", { name: "Add" })).toBeNull();
-    expect(screen.getByTestId("quick")).toHaveTextContent("EXPENSE");
+    // The forms are code-split, so they land a tick after the choice.
+    expect(await screen.findByTestId("quick")).toHaveTextContent("EXPENSE");
   });
 
-  it("lets pages without a domain pick one, then opens the recurring form for it", () => {
+  it("lets pages without a domain pick one, then opens the recurring form for it", async () => {
     render(<CreateLauncher />);
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
     expect(screen.getByRole("group", { name: "Type" })).toBeInTheDocument();
@@ -43,7 +44,7 @@ describe("CreateLauncher", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Income" }));
     fireEvent.click(screen.getByRole("button", { name: /Add a recurring income/ }));
-    expect(screen.getByTestId("recurring")).toHaveTextContent("INCOME");
+    expect(await screen.findByTestId("recurring")).toHaveTextContent("INCOME");
     expect(screen.queryByTestId("quick")).toBeNull();
   });
 });

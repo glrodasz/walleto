@@ -190,7 +190,7 @@ export function DashboardPage() {
           data={cashFlow.data}
           groups={cashFlow.groups}
           currency={currency}
-          loading={loading}
+          loading={loading.cashFlow}
           period={period}
           onPeriod={setPeriod}
           groupBy={groupBy}
@@ -207,13 +207,13 @@ export function DashboardPage() {
           domain="EXPENSE"
           currency={currency}
           href="/expenses"
-          loading={loading}
+          loading={loading.expenseCategories}
         />
         <UpcomingPayments
           items={upcoming}
           categories={categories}
           displayCurrency={currency}
-          loading={loading}
+          loading={loading.upcoming}
         />
       </section>
 

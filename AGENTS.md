@@ -236,6 +236,15 @@ useEffect(() => {
 
 **Escritura** — siempre `fetch` a una API route. El cliente nunca escribe directo a Firestore, aunque las reglas lo permitan.
 
+**Carga rápida** (no lo deshagas sin medir):
+
+- `firebase/client.ts` usa `persistentLocalCache` en el navegador: un reload pinta desde IndexedDB (`fromCache`) y solo sincroniza la diferencia — incluso las queries desde `INCEPTION`. Por eso el "Log out" pasa por `hooks/useLogout` (signOut + `terminate` + `clearIndexedDbPersistence`): nada financiero queda en un equipo compartido.
+- `useFirebaseAuth` espera `auth.authStateReady()` y reusa la sesión restaurada si su uid es el `sub` de Auth0; `/api/firebase` solo se llama en el primer login del dispositivo (o si cambió el usuario).
+- `useUserDoc()` lee la copia de `UserDocProvider` (en `_app`): un solo listener sobre `users/{sub}` para toda la app. Fuera del provider se suscribe solo.
+- `withOnboardingGuard` corre en cada navegación (también las client-side, vía `/_next/data`), así que cachea `onboarded: true` en la sesión de Auth0 y deja de leer Firestore; `PATCH /api/user` lo mantiene sincronizado cuando cambia `onboardingCompleted`.
+- Un formulario (modal) se monta **solo mientras está abierto** y se importa con `next/dynamic`: cerrado no abre listeners ni pesa en el bundle de la página.
+- Un loading por sección, no uno por página: cada card aparece cuando llegan _sus_ datos (`useDashboard().loading.cashFlow | expenseCategories | upcoming`).
+
 **Índices** — una query que combine filtros de igualdad con un `orderBy` sobre otro campo, o con una desigualdad (`>=`), **necesita índice compuesto** en `firestore.indexes.json`. Varios filtros de igualdad solos **no** lo necesitan. Si falta, `onSnapshot` falla y la lista queda vacía. Este error ya vació las categorías del wizard una vez y, más tarde, los totales y las gráficas de todas las pantallas de dominio — porque declarar el índice no basta: **hay que desplegarlo** (`pnpm firebase:deploy`). Para colecciones chicas suele salir más barato filtrar y ordenar en cliente y no depender del deploy (ver `hooks/useCategories.ts` y `features/dashboard/hooks/useUpcomingItems.ts`); para historiales que crecen, el índice es la herramienta correcta.
 
 **Errores visibles** — `ErrorState` recibe el `Error` y muestra su mensaje tal cual; los de índice de Firestore traen la URL de consola que lo crea y se pintan como link. No lo escondas detrás de copy amable: eso es justo lo que convirtió un índice sin desplegar en un dashboard vacío y silencioso.

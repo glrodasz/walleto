@@ -19,6 +19,9 @@ jest.mock("@auth0/nextjs-auth0/client", () => ({
   useUser: () => ({ user: { name: "Ada Lovelace", email: "ada@example.com" } }),
 }));
 
+// PageLayout → Sidebar → useLogout imports the Firebase client, which asks
+// for real credentials on import.
+jest.mock("../../firebase/client", () => ({ auth: {}, db: {} }));
 jest.mock("../../hooks/useMoneyContext", () => ({
   useMoneyContext: () => ({ target: "USD", setDisplayCurrency: jest.fn() }),
 }));

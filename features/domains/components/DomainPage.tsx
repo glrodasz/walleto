@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { PageLayout } from "../../../components/organisms/PageLayout";
 import { ErrorState } from "../../../components/atoms/ErrorState";
 import { Card } from "../../../components/atoms/Card";
@@ -20,7 +21,6 @@ import type { DomainView } from "./ViewTabs";
 import { CategoryMonthList, categoryMonthRows } from "./CategoryMonthList";
 import { CategoryDrilldown } from "./CategoryDrilldown";
 import { RecurringChecklist } from "./RecurringChecklist";
-import { RecurrentTransactionModal } from "./RecurrentTransactionModal";
 import { SubscriptionInsights } from "../../insights/components/SubscriptionInsights";
 import { AccountValuePanels } from "../../investments/components/AccountValuePanels";
 import { AccountValueList } from "../../investments/components/AccountValueList";
@@ -67,6 +67,12 @@ import {
 import { spreadItemIds, spreadTransactions } from "../helpers/spread";
 import type { TransactionFilters } from "../helpers/transactionFilters";
 import type { Category, Currency, Domain, RecurrentTransaction, Transaction } from "../../../types";
+
+// The form is big and only needed once someone opens it; its own listeners
+// (categories, methods, tags…) also only start then.
+const RecurrentTransactionModal = dynamic(() =>
+  import("./RecurrentTransactionModal").then((m) => m.RecurrentTransactionModal)
+);
 
 interface Props {
   domain: Domain;
@@ -662,12 +668,14 @@ export function DomainPage({ domain }: Props) {
         {panel}
       </div>
 
-      <RecurrentTransactionModal
-        domain={domain}
-        open={modalOpen}
-        item={editingItem}
-        onClose={() => setModalOpen(false)}
-      />
+      {modalOpen && (
+        <RecurrentTransactionModal
+          domain={domain}
+          open
+          item={editingItem}
+          onClose={() => setModalOpen(false)}
+        />
+      )}
       {editingTx && (
         <RecurrentTransactionModal
           open

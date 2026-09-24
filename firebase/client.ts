@@ -1,5 +1,10 @@
 import { initializeApp, getApps } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
@@ -11,7 +16,17 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_APP_ID,
 };
 
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const alreadyInitialized = getApps().length > 0;
+const app = alreadyInitialized ? getApps()[0] : initializeApp(firebaseConfig);
 
-export const db = getFirestore(app);
+// In the browser, snapshots persist to IndexedDB so a reload paints from cache
+// first and only syncs the diff from the server. The SDK falls back to the
+// memory cache on its own when IndexedDB is unavailable (private mode, etc.).
+// SSR imports this module too, and there's no IndexedDB there.
+export const db =
+  typeof window === "undefined" || alreadyInitialized
+    ? getFirestore(app)
+    : initializeFirestore(app, {
+        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+      });
 export const auth = getAuth(app);

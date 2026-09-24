@@ -27,6 +27,26 @@ function writeCache(fx: ExchangeRates) {
   }
 }
 
+type Payload = ExchangeRates & { stale?: boolean };
+
+// Every page mounts several money contexts at once; with a cold cache they
+// share one in-flight request instead of each firing their own.
+let inflight: Promise<Payload> | null = null;
+
+function fetchRates(): Promise<Payload> {
+  if (!inflight) {
+    inflight = fetch("/api/currencies")
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`Rates fetch failed (${res.status})`);
+        return (await res.json()) as Payload;
+      })
+      .finally(() => {
+        inflight = null;
+      });
+  }
+  return inflight;
+}
+
 /**
  * Exchange rates for client-side conversion.
  *
@@ -52,11 +72,7 @@ export function useExchangeRates() {
       return;
     }
 
-    fetch("/api/currencies")
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`Rates fetch failed (${res.status})`);
-        return (await res.json()) as ExchangeRates & { stale?: boolean };
-      })
+    fetchRates()
       .then((payload) => {
         if (cancelled) return;
         const fx: ExchangeRates = {

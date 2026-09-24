@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import auth0 from "../../lib/auth0";
 import admin from "../../firebase/admin";
 import { UserUpdateSchema } from "../../schemas";
+import { ONBOARDED_SESSION_KEY } from "../../features/onboarding/helpers/onboardingGuard";
 
 import "../../firebase/admin";
 
@@ -31,6 +32,15 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
     // The user doc is created lazily by /api/firebase, so a PATCH can land
     // before it exists — merge instead of update to cover that.
     await ref.set({ ...parsed.data }, { merge: true });
+
+    // The onboarding guard caches this flag in the session; keep it honest so
+    // "Redo onboarding" sends the user back through the wizard.
+    if (parsed.data.onboardingCompleted !== undefined) {
+      await auth0.updateSession(req, res, {
+        ...session,
+        [ONBOARDED_SESSION_KEY]: parsed.data.onboardingCompleted,
+      });
+    }
     return res.status(200).json({ id: userId });
   }
 

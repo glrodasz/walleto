@@ -91,19 +91,22 @@ export function useDashboard({ period, groupBy }: Options) {
     ]
   );
   const { ctx, target, fxStale, fxMissing, setDisplayCurrency } = useMoneyContext();
-  const loading =
-    l1 ||
-    l2 ||
-    l3 ||
-    l4 ||
-    l6 ||
-    l7 ||
-    l8 ||
-    income.loading ||
-    expense.loading ||
-    investment.loading ||
-    saving.loading ||
-    debt.loading;
+  // One flag per section, so each card shows as soon as its own data lands
+  // instead of waiting on the slowest of the dashboard's queries.
+  const recurrentsLoading = l1 || l2 || l3 || l7 || l8;
+  const loading = {
+    // Needs every recurrent too: hidden items drop their ledger rows.
+    cashFlow:
+      recurrentsLoading ||
+      l4 ||
+      income.loading ||
+      expense.loading ||
+      investment.loading ||
+      saving.loading ||
+      debt.loading,
+    expenseCategories: l2 || l4,
+    upcoming: l6 || l4,
+  };
   const error =
     e1 ??
     e2 ??

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { createContext, createElement, useContext, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { db } from "../firebase/client";
@@ -28,14 +29,23 @@ export interface UserDoc {
   decimals?: Decimals;
 }
 
-export function useUserDoc() {
+interface UserDocState {
+  userDoc: UserDoc | null;
+  error: Error | null;
+}
+
+const UserDocContext = createContext<UserDocState | null>(null);
+
+// One onSnapshot on users/{sub}. `enabled: false` keeps the hook order stable
+// for consumers that already read the provider's copy.
+function useUserDocSubscription(enabled: boolean): UserDocState {
   const { user } = useUser();
   const { ready } = useFirebaseAuth();
   const [userDoc, setUserDoc] = useState<UserDoc | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!ready || !user?.sub) return;
+    if (!enabled || !ready || !user?.sub) return;
     return onSnapshot(
       doc(db, "users", user.sub),
       (snap) => {
@@ -47,16 +57,33 @@ export function useUserDoc() {
         setError(err instanceof Error ? err : new Error(String(err)));
       }
     );
-  }, [ready, user?.sub]);
+  }, [enabled, ready, user?.sub]);
 
-  const update = async (patch: UserUpdate) => {
-    const res = await fetch("/api/user", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch),
-    });
-    if (!res.ok) throw new Error(await res.text());
-  };
+  return { userDoc, error };
+}
 
+/**
+ * Holds the app's single listener on the user doc (mounted in `_app`). Every
+ * `useUserDoc()` below it reads this copy instead of opening its own.
+ */
+export function UserDocProvider({ children }: { children: ReactNode }) {
+  const state = useUserDocSubscription(true);
+  return createElement(UserDocContext.Provider, { value: state }, children);
+}
+
+async function update(patch: UserUpdate) {
+  const res = await fetch("/api/user", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) throw new Error(await res.text());
+}
+
+export function useUserDoc() {
+  const shared = useContext(UserDocContext);
+  // Outside the provider (isolated mounts, tests) it subscribes on its own.
+  const own = useUserDocSubscription(shared === null);
+  const { userDoc, error } = shared ?? own;
   return { userDoc, error, update };
 }
