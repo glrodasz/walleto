@@ -26,7 +26,7 @@ interface Props {
  * Every account / pocket of the domain at a glance — what went in, what it
  * is worth, the gain — plus one "No account" row for whatever is filed under
  * none (including valuations from before accounts existed). Tapping a row
- * opens its full panel underneath; "Record value" goes straight to the value
+ * opens its full panel underneath; "Update value" goes straight to the value
  * form. Mounted only on the Value view, so its inception-to-date listener
  * runs nowhere else on this page. On debts the same list reads as balances:
  * what was repaid, what is still owed — a dash until a balance is recorded.
@@ -107,7 +107,7 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
                   )}
                 </span>
                 <Button size="sm" onClick={() => setRecording(r)}>
-                  {owes ? "Record balance" : "Record value"}
+                  {owes ? "Update balance" : "Update value"}
                 </Button>
               </li>
             ))}

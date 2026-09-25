@@ -19,7 +19,7 @@ describe("OnboardingLayout", () => {
       </OnboardingLayout>
     );
 
-    expect(screen.getByRole("heading", { name: "Assisted setup" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Build your plan" })).toBeInTheDocument();
     ONBOARDING_STEPS.forEach((s, i) => {
       expect(screen.getByText(`${i + 1}. ${s.label}`)).toBeInTheDocument();
     });
@@ -33,7 +33,7 @@ describe("OnboardingLayout", () => {
       </OnboardingLayout>
     );
 
-    const current = screen.getByText("3. Incomes");
+    const current = screen.getByText("3. Income");
     expect(current).toHaveAttribute("aria-current", "step");
     expect(screen.getByText("1. Categories")).not.toHaveAttribute("aria-current");
   });
@@ -98,7 +98,7 @@ describe("OnboardingLayout", () => {
         <p>body</p>
       </OnboardingLayout>
     );
-    expect(screen.getByRole("button", { name: "3. Incomes" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "3. Income" })).toBeDisabled();
 
     rerender(
       <OnboardingLayout step={3} onNavigate={onNavigate} busy>
@@ -125,14 +125,18 @@ describe("OnboardingLayout", () => {
     render(
       <OnboardingLayout
         step={2}
-        description="Add your main payment methods"
+        description="How you pay: your cards and accounts, so each plan item knows where it is charged."
         footer={<span>actions</span>}
       >
         <p>body</p>
       </OnboardingLayout>
     );
 
-    expect(screen.getByText("Add your main payment methods")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "How you pay: your cards and accounts, so each plan item knows where it is charged."
+      )
+    ).toBeInTheDocument();
     expect(screen.getByText("actions")).toBeInTheDocument();
   });
 });

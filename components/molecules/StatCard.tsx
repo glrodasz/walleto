@@ -29,6 +29,8 @@ interface Props {
   domain: Domain;
   /** The domain page; the whole header links there. */
   href: string;
+  /** What kind of number the headline is ("planned per month"). */
+  caption?: string;
   /** A second, quieter figure under the headline one (what accounts are worth). */
   secondary?: ReactNode;
   /** Up to two lines under the figure ("Salary · $57,000"). */
@@ -54,6 +56,7 @@ export function StatCard({
   currency,
   domain,
   href,
+  caption,
   secondary,
   rows = [],
   categoryCount,
@@ -76,7 +79,7 @@ export function StatCard({
       </div>
 
       <Amount value={amount} currency={currency} size="lg" />
-
+      {caption && <span className="caption">{caption}</span>}
       {secondary}
 
       {rows.length > 0 && (
@@ -113,6 +116,11 @@ export function StatCard({
       </div>
 
       <style jsx>{`
+        .caption {
+          font-size: 0.72rem;
+          color: var(--fg-2);
+        }
+
         /* Link is a child component: its className carries no scope hash. */
         .head :global(.stat-head) {
           display: flex;

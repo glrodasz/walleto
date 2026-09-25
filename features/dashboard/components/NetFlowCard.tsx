@@ -21,7 +21,7 @@ interface Props {
   approximate?: boolean;
 }
 
-const QUOTE = "A clear plan today, a more free tomorrow.";
+const QUOTE = "A clear plan today, a freer tomorrow.";
 
 const STATS: { key: keyof MoneyFlow; label: string; domain: Domain; Icon: typeof ArrowUpRight }[] =
   [
@@ -37,11 +37,13 @@ const STATS: { key: keyof MoneyFlow; label: string; domain: Domain; Icon: typeof
  * debt repayments (the owner's definition — cash left unallocated). Savings
  * and investments are money that stays yours, and a repayment is money that
  * stops being owed, so each gets its own slice of the allocation bar instead
- * of being lumped in with spending. Every number here is the recurring
- * run-rate — what the plan does each month — and the card says so.
+ * of being lumped in with spending. Every number here is the plan's monthly
+ * run-rate, and the pill says whether the plan fits inside the income.
  */
 export function NetFlowCard({ flow, currency, approximate = false }: Props) {
   const { formatAmount } = useMoneyFormat();
+  // The verdict the pill gives: does the plan fit inside what comes in?
+  const overCommitted = flow.net < 0;
 
   return (
     <Card>
@@ -49,8 +51,8 @@ export function NetFlowCard({ flow, currency, approximate = false }: Props) {
         <div className="net">
           <span className="head">
             <span className="title">Monthly plan</span>
-            <Badge tone="success" caps>
-              Recurring
+            <Badge tone={overCommitted ? "danger" : "success"} caps>
+              {overCommitted ? "Over-committed" : "On plan"}
             </Badge>
           </span>
           <Amount
@@ -60,7 +62,11 @@ export function NetFlowCard({ flow, currency, approximate = false }: Props) {
             colorize
             approximate={approximate}
           />
-          <span className="sub">left to allocate this month</span>
+          <span className="sub">
+            {overCommitted
+              ? "more planned out than coming in, each month"
+              : "left to allocate each month"}
+          </span>
         </div>
 
         <div className="stats">

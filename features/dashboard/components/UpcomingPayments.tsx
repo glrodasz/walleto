@@ -18,15 +18,15 @@ function nextDate(ts: RecurrentTransaction["nextOccurrence"]): Date | null {
     : new Date(ts as unknown as string);
 }
 
-/** The next recurring charges, soonest first, each with its category. */
+/** What the plan charges next, soonest first, each with its category. */
 export function UpcomingPayments({ items, categories, displayCurrency, loading }: Props) {
   return (
     <Card>
-      <SectionTitle title="Upcoming payments" href="/expenses#recurring" />
+      <SectionTitle title="Coming up in your plan" href="/expenses" />
       {loading ? (
         <p className="empty">Loading…</p>
       ) : items.length === 0 ? (
-        <p className="empty">No upcoming items</p>
+        <p className="empty">Nothing else coming up in your plan</p>
       ) : (
         <ul className="list">
           {items.map((item) => (

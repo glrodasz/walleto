@@ -56,7 +56,7 @@ export default function OnboardingExpenses() {
       }
     >
       <section className="expenses">
-        <h2 className="heading">Set up your expenses</h2>
+        <h2 className="heading">What do you pay every month?</h2>
         <RecurrentStep state={state} showPaymentMethod />
       </section>
 

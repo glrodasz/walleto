@@ -14,7 +14,7 @@ const meta = {
   title: "Organisms/Domains/ViewTabs",
   component: ViewTabs,
   tags: ["autodocs"],
-  args: { value: "transactions", onChange: fn(), accent: "var(--domain-expense)" },
+  args: { value: "plan", onChange: fn(), accent: "var(--domain-expense)" },
   render: (args) => <Controlled {...args} />,
   decorators: [boxed(760)],
 } satisfies Meta<typeof ViewTabs>;
@@ -22,9 +22,9 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Expenses: the payment-method view is on, there is no Value view. */
+/** Expenses: the payment-method view is on, there is no Worth view. */
 export const Expenses: Story = {};
-/** Investments and savings add Value; incomes drop Payment methods. */
+/** Investments and savings add Worth; incomes drop Payment methods. */
 export const Investments: Story = {
   args: { accent: "var(--domain-investment)", showValue: true, showMethods: false, value: "value" },
 };

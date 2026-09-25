@@ -17,5 +17,5 @@ export const FirstStep: Story = { args: { onBack: undefined } };
 export const Finish: Story = { args: { nextLabel: "Finish setup" } };
 export const Busy: Story = { args: { busy: true } };
 export const WithError: Story = {
-  args: { error: "Could not save your incomes. Please try again." },
+  args: { error: "Could not save your income. Please try again." },
 };

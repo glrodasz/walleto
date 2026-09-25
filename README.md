@@ -1,9 +1,11 @@
 # Waletto
 
-A personal-finance tracker built on four domains — **income, expenses,
-investments and savings** — with a money-flow headline (net = income − expenses
-− savings − investments) and native multi-currency support: every amount is
-stored in the currency it was entered in and converted only for display.
+A personal-finance planner: your monthly plan, whether this month is on track,
+and where you stand today. Built on five domains — **income, expenses,
+investments, savings and debts** — with a plan headline (net = income −
+expenses − savings − investments − debt repayments), a net-worth position, and
+native multi-currency support: every amount is stored in the currency it was
+entered in and converted only for display.
 
 Next.js 14 (Pages Router) · TypeScript · Firestore · Auth0 · Jest · pnpm.
 

@@ -103,7 +103,7 @@ describe("RecordValueModal", () => {
     ];
     categories = [{ id: "cards", userId: "u", domain: "DEBT", name: "Credit cards" }];
     render(<RecordValueModal open domain="DEBT" onClose={jest.fn()} />);
-    expect(screen.getByRole("dialog", { name: "Record current balance" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Update current balance" })).toBeInTheDocument();
     const select = screen.getByLabelText("Debt") as HTMLSelectElement;
     expect(Array.from(select.options).map((o) => o.textContent)).toEqual([
       "Pick a debt",

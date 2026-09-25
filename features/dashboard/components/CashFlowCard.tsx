@@ -39,7 +39,7 @@ export function CashFlowCard({
 }: Props) {
   return (
     <Card>
-      <SectionTitle title="Monthly cash flow" subtitle="Actual transactions, split by category.">
+      <SectionTitle title="Monthly cash flow" subtitle="What actually happened, split by category.">
         <div className="control">
           <Select
             aria-label="Period"

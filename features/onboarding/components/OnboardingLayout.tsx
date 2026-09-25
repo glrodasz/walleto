@@ -5,8 +5,8 @@ import { ArrowLeft } from "../../../components/atoms/Icons";
 
 export const ONBOARDING_STEPS = [
   { label: "Categories", href: "/onboarding/categories" },
-  { label: "Input methods", href: "/onboarding/methods" },
-  { label: "Incomes", href: "/onboarding/incomes" },
+  { label: "Payment methods", href: "/onboarding/methods" },
+  { label: "Income", href: "/onboarding/incomes" },
   { label: "Expenses", href: "/onboarding/expenses" },
 ] as const;
 
@@ -45,7 +45,7 @@ export function OnboardingLayout({
   return (
     <>
       <Head>
-        <title>Assisted setup — Waletto</title>
+        <title>Build your plan — Waletto</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
@@ -55,7 +55,7 @@ export function OnboardingLayout({
             <button type="button" className="back" onClick={handleBack} aria-label="Go back">
               <ArrowLeft size={22} />
             </button>
-            <h1 className="title">Assisted setup</h1>
+            <h1 className="title">Build your plan</h1>
           </header>
 
           <nav className="stepper" aria-label="Setup progress">

@@ -13,7 +13,7 @@ export default function Document() {
     <Html lang="en" data-theme="light">
       <Head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
-        <meta name="description" content="A clear plan today, a more free tomorrow." />
+        <meta name="description" content="A clear plan today, a freer tomorrow." />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <body>

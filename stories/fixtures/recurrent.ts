@@ -269,7 +269,7 @@ export function recurrentFor(domain?: Domain): RecurrentTransaction[] {
 
 export const recurrentById = (id: string) => STORY_RECURRENT.find((r) => r.id === id);
 
-/** The five soonest charges, the dashboard's "Upcoming payments". */
+/** The five soonest charges, the dashboard's "Coming up in your plan". */
 export function upcomingItems(count = 5): RecurrentTransaction[] {
   return STORY_RECURRENT.filter(
     (r) => r.domain === "EXPENSE" && r.nextOccurrence && !r.hiddenFromDashboard

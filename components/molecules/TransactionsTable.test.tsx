@@ -117,7 +117,7 @@ describe("TransactionsTable", () => {
     expect(onDelete).toHaveBeenCalledWith("c");
 
     rerender(<TransactionsTable {...base} rows={[]} onDelete={onDelete} />);
-    expect(screen.getByText("Nothing recorded in this period")).toBeInTheDocument();
+    expect(screen.getByText("No activity in this period")).toBeInTheDocument();
   });
 
   it("collapses the filters behind a Filters button that counts what is set", () => {

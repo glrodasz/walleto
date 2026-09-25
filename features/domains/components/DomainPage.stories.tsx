@@ -9,8 +9,8 @@ import { at, MOBILE, screen, withHash } from "../../../stories/templates";
 
 /**
  * The month-first screen the five domain routes share: month summary,
- * stacked bars, top categories, and the Transactions / Recurring /
- * Categories / Tags / Payment methods (/ Value or Balance) views.
+ * stacked bars, top categories, and the Plan / Activity / Categories /
+ * Tags / Payment methods (/ Worth or Owed) views. A bare URL opens on Plan.
  */
 const meta = {
   title: "Templates/Domain page",
@@ -34,9 +34,9 @@ export const Investments: Story = {
 export const Savings: Story = { args: { domain: "SAVING" }, parameters: at("/savings") };
 export const Debts: Story = { args: { domain: "DEBT" }, parameters: at("/debts") };
 
-export const RecurringView: Story = {
+export const ActivityView: Story = {
   parameters: at("/expenses"),
-  beforeEach: withHash("recurring"),
+  beforeEach: withHash("activity"),
 };
 export const CategoriesView: Story = {
   parameters: at("/expenses"),
@@ -49,7 +49,7 @@ export const ValueView: Story = {
   parameters: at("/investments"),
   beforeEach: withHash("value"),
 };
-/** A debt's Value view: balances — repaid, owed, and the interest the checks revealed. */
+/** A debt's Owed view: balances — repaid, owed, and the interest the checks revealed. */
 export const DebtsBalanceView: Story = {
   args: { domain: "DEBT" },
   parameters: at("/debts"),

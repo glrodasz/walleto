@@ -36,7 +36,7 @@ describe("Sidebar mobile navigation", () => {
     render(<Sidebar />);
     const nav = mobileNav();
     expect(nav.link("Home")).toHaveAttribute("href", "/");
-    expect(nav.link("Invest")).toHaveAttribute("href", "/investments");
+    expect(nav.link("Investments")).toHaveAttribute("href", "/investments");
     expect(nav.link("Savings")).toBeNull();
     expect(screen.queryByRole("dialog")).toBeNull();
 
@@ -57,6 +57,18 @@ describe("Sidebar mobile navigation", () => {
     // Prospect is hidden while it's reworked: present but inert, not a link.
     expect(within(sheet).queryByRole("link", { name: "Prospect" })).toBeNull();
     expect(within(sheet).getByText("Prospect").closest('[aria-disabled="true"]')).not.toBeNull();
+  });
+
+  it("groups the money pages into cash flow and net worth", () => {
+    render(<Sidebar />);
+    const nav = screen.getByRole("navigation", { name: "Main navigation" });
+    const section = (title: string) => within(within(nav).getByText(title).parentElement!);
+    expect(section("Cash flow").getByRole("link", { name: "Income" })).toBeInTheDocument();
+    expect(section("Cash flow").getByRole("link", { name: "Expenses" })).toBeInTheDocument();
+    for (const name of ["Investments", "Savings", "Debts"]) {
+      expect(section("Net worth").getByRole("link", { name })).toBeInTheDocument();
+    }
+    expect(within(nav).queryByText("Planning")).toBeNull();
   });
 
   it("lists Dashboard first and Settings as the only account destination on desktop", () => {

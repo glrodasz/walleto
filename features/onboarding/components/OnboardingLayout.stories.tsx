@@ -12,7 +12,8 @@ const meta = {
   parameters: { layout: "fullscreen" },
   args: {
     step: 2,
-    description: "Add your main payment methods",
+    description:
+      "How you pay: your cards and accounts, so each plan item knows where it is charged.",
     onBack: fn(),
     onNavigate: fn(),
     footer: <WizardActions onBack={fn()} onNext={fn()} />,
@@ -30,9 +31,9 @@ type Story = StoryObj<typeof meta>;
 /** The wizard shell: stepper with progress, a description, the body and a footer. */
 export const StepTwo: Story = {};
 export const StepOne: Story = {
-  args: { step: 1, description: "Let's start with your categories." },
+  args: { step: 1, description: "Your plan is sorted by category." },
 };
-export const LastStep: Story = { args: { step: 4, description: "Set up your expenses" } };
+export const LastStep: Story = { args: { step: 4, description: "What do you pay every month?" } };
 /** Saving: the stepper locks. */
 export const Busy: Story = {
   args: { busy: true, footer: <WizardActions onBack={fn()} onNext={fn()} busy /> },

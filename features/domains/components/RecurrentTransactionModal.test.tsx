@@ -92,7 +92,7 @@ describe("RecurrentTransactionModal — one time vs recurring", () => {
     const onClose = jest.fn();
     render(<RecurrentTransactionModal domain="EXPENSE" open onClose={onClose} />);
     fill();
-    fireEvent.click(screen.getByRole("button", { name: "Create" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to plan" }));
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(createTransaction).not.toHaveBeenCalled();
@@ -111,7 +111,7 @@ describe("RecurrentTransactionModal — one-off entry point", () => {
         onClose={onClose}
       />
     );
-    expect(screen.getByRole("dialog", { name: "Record a payment" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Log a one-off expense" })).toBeInTheDocument();
     expect(screen.getByLabelText("Frequency")).toHaveValue("ONE_TIME");
     expect(screen.getByLabelText("Name")).toHaveAttribute("placeholder", "Groceries");
 
@@ -181,7 +181,7 @@ describe("RecurrentTransactionModal — this pays off a debt", () => {
     // list); the pick moved with it, and a debt can be named.
     expect(screen.getByLabelText("Debt")).toBeInTheDocument();
     expect(screen.getByLabelText("Category")).toHaveValue("c1");
-    fireEvent.click(screen.getByRole("button", { name: "Create" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to plan" }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(createItem).toHaveBeenCalledWith(
       expect.objectContaining({ domain: "DEBT", type: "LOAN_PAYMENT", categoryId: "c1" })
@@ -305,7 +305,7 @@ describe("RecurrentTransactionModal — charged pair belongs to one-offs", () =>
     render(<RecurrentTransactionModal domain="EXPENSE" open onClose={onClose} />);
     expect(toggle()).toBeNull();
     fill();
-    fireEvent.click(screen.getByRole("button", { name: "Create" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to plan" }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(createItem.mock.calls[0][0]).not.toHaveProperty("chargedAmount");
   });
@@ -471,7 +471,7 @@ describe("RecurrentTransactionModal — reflect monthly", () => {
     const box = screen.getByLabelText(/Reflect it as a monthly amount/);
     expect(box.closest("label")).toHaveTextContent("$166.67 a month");
     fireEvent.click(box);
-    fireEvent.click(screen.getByRole("button", { name: "Create" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to plan" }));
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(createItem).toHaveBeenCalledWith(

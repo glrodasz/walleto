@@ -30,7 +30,7 @@ export default function OnboardingCategories() {
   return (
     <OnboardingLayout
       step={1}
-      description="Let's start with your categories. Add your main categories."
+      description="Your plan is sorted by category. Keep the defaults or add your own."
       onNavigate={go}
       busy={busy}
       footer={

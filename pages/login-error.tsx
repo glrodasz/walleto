@@ -9,7 +9,7 @@ export default function LoginError() {
   return (
     <>
       <Head>
-        <title>Sign-in failed · Sublr</title>
+        <title>Sign-in failed · Waletto</title>
       </Head>
       <main className="wrap">
         <section className="panel" role="alert">

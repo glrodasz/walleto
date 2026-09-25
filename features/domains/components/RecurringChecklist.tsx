@@ -186,12 +186,18 @@ export function RecurringChecklist({
 
   return (
     <Card>
-      <SectionTitle title="Recurring" />
+      <SectionTitle
+        title="Plan"
+        subtitle={`What repeats, and where it stands in ${window.longLabel}.`}
+      />
 
       {loading ? (
         <p className="empty">Loading…</p>
       ) : occurrences.length === 0 && notThisMonth.length === 0 ? (
-        <p className="empty">No recurring {config.noun} yet</p>
+        <p className="empty">
+          Nothing in your plan yet. Add what repeats (rent, a salary, a subscription) from the +
+          button.
+        </p>
       ) : (
         <>
           {GROUPS.map((g) => {

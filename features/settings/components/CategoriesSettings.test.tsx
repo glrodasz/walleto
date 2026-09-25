@@ -43,7 +43,7 @@ describe("CategoriesSettings", () => {
     expect(screen.getByText("Rent")).toBeInTheDocument();
     expect(screen.queryByText("Bread")).toBeNull();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Incomes" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Income" }));
     expect(screen.getByText("Salary")).toBeInTheDocument();
   });
 

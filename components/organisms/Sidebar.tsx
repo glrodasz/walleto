@@ -31,20 +31,30 @@ interface NavItem {
 
 const DASHBOARD: NavItem = { label: "Dashboard", href: "/", icon: Home };
 
-/** Grouped so eight destinations read as three ideas instead of one long list. */
+/**
+ * Grouped by the question each page answers: what moves every month (cash
+ * flow) and where the owner stands (net worth — the pages that also carry a
+ * balance). Prospect keeps its own group so a disabled item never reads as
+ * "planning is unavailable": the plan lives on every page.
+ */
 const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
   {
-    title: "Money",
+    title: "Cash flow",
     items: [
-      { label: "Incomes", href: "/incomes", icon: ArrowUp },
+      { label: "Income", href: "/incomes", icon: ArrowUp },
       { label: "Expenses", href: "/expenses", icon: ArrowDown },
+    ],
+  },
+  {
+    title: "Net worth",
+    items: [
       { label: "Investments", href: "/investments", icon: TrendingUp },
       { label: "Savings", href: "/savings", icon: Circle },
       { label: "Debts", href: "/debts", icon: CreditCard },
     ],
   },
   {
-    title: "Planning",
+    title: "What-if",
     items: [{ label: "Prospect", href: "/prospect", icon: Compass, disabled: true }],
   },
   {
@@ -56,9 +66,9 @@ const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
 /** Four direct tabs; everything else sits one tap away behind "More". */
 const BOTTOM_NAV: NavItem[] = [
   { label: "Home", href: "/", icon: Home },
-  { label: "Incomes", href: "/incomes", icon: ArrowUp },
+  { label: "Income", href: "/incomes", icon: ArrowUp },
   { label: "Expenses", href: "/expenses", icon: ArrowDown },
-  { label: "Invest", href: "/investments", icon: TrendingUp },
+  { label: "Investments", href: "/investments", icon: TrendingUp },
 ];
 
 const MORE_NAV: NavItem[] = [

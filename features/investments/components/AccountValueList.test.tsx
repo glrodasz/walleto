@@ -120,7 +120,7 @@ describe("AccountValueList", () => {
       })
     );
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Record value" })[1]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Update value" })[1]);
     expect(valuationModalMock).toHaveBeenCalledWith(
       expect.objectContaining({ selector: { domain: "SAVING" }, costBasis: 130, domain: "SAVING" })
     );
@@ -139,7 +139,7 @@ describe("AccountValueList", () => {
     expect(screen.queryByText(/\+\d+\.\d%/)).toBeNull();
     expect(screen.queryByRole("button", { name: /No pocket|No debt/ })).toBeNull();
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Record balance" })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Update balance" })[0]);
     expect(valuationModalMock).toHaveBeenCalledWith(
       expect.objectContaining({ domain: "DEBT", latestValue: undefined })
     );

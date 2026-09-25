@@ -31,7 +31,7 @@ export default function OnboardingIncomes() {
       await update({ mainCurrency: currency });
     }
     await state.save();
-  }, "Could not save your incomes. Please try again.");
+  }, "Could not save your income. Please try again.");
 
   return (
     <OnboardingLayout
@@ -57,7 +57,7 @@ export default function OnboardingIncomes() {
       />
 
       <section className="incomes">
-        <h2 className="heading">Set up your incomes</h2>
+        <h2 className="heading">What do you earn each month?</h2>
         <RecurrentStep state={state} />
       </section>
 

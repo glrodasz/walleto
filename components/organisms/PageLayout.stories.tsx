@@ -49,7 +49,7 @@ export const NoControls: Story = {
 export const CurrencyOnly: Story = {
   args: {
     title: "Good morning, Ada",
-    subtitle: "Here's your financial overview.",
+    subtitle: "Here's where your money stands.",
     domain: undefined,
     hideMonth: true,
   },

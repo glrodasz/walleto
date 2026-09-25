@@ -32,8 +32,9 @@ interface Props {
 }
 
 /**
- * The month's verdict in two panels: the total so far against last month,
- * and the plan — how much of what is expected has landed, and what is left.
+ * The month's verdict in two panels, plan first: what the month is expected
+ * to total (landed plus what the plan still owes) and how much of it has
+ * landed, then the actual figure so far against last month.
  */
 export function MonthSummary({
   domain,
@@ -80,13 +81,41 @@ export function MonthSummary({
   return (
     <Card>
       <div className="summary">
-        <div className="panel">
+        <div className="panel plan">
+          <span className="label">{window.isCurrent ? "Expected this month" : "Month total"}</span>
+          <span className="figure">
+            <Amount value={expected} currency={currency} size="lg" approximate={approximate} />
+          </span>
+          <div className="bar">
+            <ProgressBar
+              ratio={ratio}
+              color={config.accent}
+              label={`${config.spentLabel} of expected`}
+            />
+            <span className="bar-text">
+              <span>
+                <span className="pct">{Math.round(Math.min(1, ratio) * 100)}%</span>{" "}
+                {config.spentLabel.toLowerCase()}
+              </span>
+              <span className="left">
+                {window.isCurrent
+                  ? left > 0
+                    ? `${formatAmount(left, currency)} still to come`
+                    : "Nothing more planned"
+                  : "Month closed"}
+              </span>
+            </span>
+          </div>
+        </div>
+
+        <div className="panel actual">
           <span className="label">
-            Total {config.spentLabel.toLowerCase()}
-            {window.isCurrent ? " so far" : ""}
+            {window.isCurrent
+              ? `${config.spentLabel} so far`
+              : `Total ${config.spentLabel.toLowerCase()}`}
           </span>
           <span className="figure">
-            <Amount value={realized} currency={currency} size="lg" approximate={approximate} />
+            <Amount value={realized} currency={currency} size="md" approximate={approximate} />
             {delta.deltaPct !== null && (
               <DeltaPill pct={delta.deltaPct} upIsGood={config.upIsGood} />
             )}
@@ -97,30 +126,6 @@ export function MonthSummary({
               ? `Compared to ${formatAmount(delta.previous, currency)} in ${previousLabel}`
               : "No previous month to compare with"}
           </span>
-        </div>
-
-        <div className="panel planned">
-          <span className="label">Planned</span>
-          <span className="figure">
-            <Amount value={expected} currency={currency} size="md" approximate={approximate} />
-          </span>
-          <div className="bar">
-            <ProgressBar
-              ratio={ratio}
-              color={config.accent}
-              label={`${config.spentLabel} of planned`}
-            />
-            <span className="bar-text">
-              <span className="pct">{Math.round(Math.min(1, ratio) * 100)}%</span>
-              <span className="left">
-                {window.isCurrent
-                  ? left > 0
-                    ? `${formatAmount(left, currency)} left`
-                    : "Nothing more planned"
-                  : "Month total"}
-              </span>
-            </span>
-          </div>
         </div>
       </div>
 
@@ -138,7 +143,7 @@ export function MonthSummary({
           min-width: 0;
         }
 
-        .planned {
+        .actual {
           padding-left: 24px;
           border-left: 1px solid var(--line);
         }
@@ -191,7 +196,7 @@ export function MonthSummary({
             grid-template-columns: 1fr;
           }
 
-          .planned {
+          .actual {
             padding-left: 0;
             padding-top: 16px;
             border-left: none;
