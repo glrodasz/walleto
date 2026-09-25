@@ -85,7 +85,7 @@ features/
   investments/  valor por cuenta / pocket / deuda (y por categoría para lo que no tiene cuenta): invertido vs valor,
                 % de ganancia, historial; helpers/interest.ts estima con la tasa de la cuenta; una deuda es la
                 misma pieza con el signo cambiado (positionSign): repagado vs adeudado, interés en vez de ganancia;
-                AccountValueList (vista Value), AccountValuePanels (drilldown), RecordValueModal ("+"),
+                AccountValueList (vista Worth / Owed), AccountValuePanels (drilldown), RecordValueModal ("+"),
                 DomainValueLine (el "Worth …" de las cards del dashboard); hooks/useDomainValue
                 (listener desde el origen: móntalo solo donde se muestre la cifra) y hooks/useDomainGains
   settings/     pestañas de sección (General / Categories / Tags / Payment methods / Accounts & debts, la activa
@@ -339,7 +339,7 @@ Otras notas:
 
 ### 3.2 Ocultar del dashboard
 
-El dashboard es el **run-rate de los recurrentes** (las cards y el neto lo dicen con la etiqueta "Recurring"); por eso solo un item recurrente se oculta: `hiddenFromDashboard` en `recurrentTransactions` lo saca de todos los números y listas del dashboard, y sus filas del ledger lo siguen por `recurrentTransactionId` (`helpers/hidden.ts`: `hiddenItemIds`, `withoutHidden`). Las transacciones no tienen flag propio. En las páginas de dominio, además, una categoría raíz puede ocultarse de la gráfica (`Category.hiddenFromChart`, kebab en Categories; los hijos la siguen): barras y cifra del mes excluyen items ocultos y categorías ocultas salvo que el owner active "Show hidden" (preferencia por dominio en `localStorage`). Las listas siempre muestran todo, con la etiqueta "Hidden".
+El dashboard es el **run-rate de los recurrentes** (las cards lo dicen con "planned per month" y el hero con su veredicto "On plan" / "Over-committed"); por eso solo un item recurrente se oculta: `hiddenFromDashboard` en `recurrentTransactions` lo saca de todos los números y listas del dashboard, y sus filas del ledger lo siguen por `recurrentTransactionId` (`helpers/hidden.ts`: `hiddenItemIds`, `withoutHidden`). Las transacciones no tienen flag propio. En las páginas de dominio, además, una categoría raíz puede ocultarse de la gráfica (`Category.hiddenFromChart`, kebab en Categories; los hijos la siguen): barras y cifra del mes excluyen items ocultos y categorías ocultas salvo que el owner active "Show hidden" (preferencia por dominio en `localStorage`). Las listas siempre muestran todo, con la etiqueta "Hidden".
 
 ### 3.3 Reflejar mensualmente (spread)
 
