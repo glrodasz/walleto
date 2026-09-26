@@ -21,6 +21,7 @@ jest.mock("../../../hooks/usePaymentMethods", () => ({
 }));
 
 import { useMethodsStep } from "./useMethodsStep";
+import { LAST4_ERROR } from "../../../helpers/paymentMethodOptions";
 
 beforeEach(() => {
   createMock.mockReset().mockResolvedValue("new-id");
@@ -79,6 +80,85 @@ describe("useMethodsStep", () => {
     });
 
     expect(createMock).toHaveBeenCalledWith(expect.objectContaining({ last4: "3478" }));
+  });
+
+  it("sends a credit card exactly like a debit card", async () => {
+    const { result } = renderHook(() => useMethodsStep());
+
+    act(() => {
+      result.current.update(result.current.rows[0].key, {
+        type: "DEBIT_CARD",
+        name: "Bancolombia",
+        network: "Visa",
+        last4: "3478",
+      });
+      result.current.add();
+    });
+    act(() =>
+      result.current.update(result.current.rows[1].key, {
+        type: "CREDIT_CARD",
+        name: "Bancolombia",
+        network: "Visa",
+        last4: "9012",
+      })
+    );
+    await act(async () => {
+      expect(await result.current.save()).toBe(2);
+    });
+
+    expect(createMock).toHaveBeenNthCalledWith(1, {
+      name: "Bancolombia",
+      type: "DEBIT_CARD",
+      network: "Visa",
+      last4: "3478",
+    });
+    expect(createMock).toHaveBeenNthCalledWith(2, {
+      name: "Bancolombia",
+      type: "CREDIT_CARD",
+      network: "Visa",
+      last4: "9012",
+    });
+  });
+
+  it("saves a card without last4", async () => {
+    const { result } = renderHook(() => useMethodsStep());
+
+    act(() =>
+      result.current.update(result.current.rows[0].key, { type: "CREDIT_CARD", name: "Amex" })
+    );
+    await act(async () => {
+      await result.current.save();
+    });
+
+    expect(createMock).toHaveBeenCalledWith({ name: "Amex", type: "CREDIT_CARD" });
+  });
+
+  it("refuses a partial last4 before sending any row", async () => {
+    const { result } = renderHook(() => useMethodsStep());
+
+    act(() => {
+      result.current.update(result.current.rows[0].key, {
+        type: "DEBIT_CARD",
+        name: "Debit",
+        last4: "3478",
+      });
+      result.current.add();
+    });
+    act(() =>
+      result.current.update(result.current.rows[1].key, {
+        type: "CREDIT_CARD",
+        name: "Credit",
+        last4: "12",
+      })
+    );
+
+    await act(async () => {
+      await expect(result.current.save()).rejects.toThrow(LAST4_ERROR);
+    });
+
+    // Nothing half-saved: the valid debit row isn't sent either.
+    expect(createMock).not.toHaveBeenCalled();
+    expect(result.current.attempted).toBe(true);
   });
 
   it("only sends network when it is not empty", async () => {

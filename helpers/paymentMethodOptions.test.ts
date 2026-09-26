@@ -1,4 +1,4 @@
-import { groupMethodsByType, sortByName } from "./paymentMethodOptions";
+import { LAST4_ERROR, groupMethodsByType, last4Error, sortByName } from "./paymentMethodOptions";
 
 const methods = [
   { name: "revolut", type: "DIGITAL_WALLET" as const },
@@ -23,5 +23,17 @@ describe("groupMethodsByType", () => {
       ["Bank transfer", ["Bancolombia"]],
       ["Digital wallet", ["revolut"]],
     ]);
+  });
+});
+
+describe("last4Error", () => {
+  it("accepts empty or exactly four digits", () => {
+    expect(last4Error("")).toBeNull();
+    expect(last4Error("4242")).toBeNull();
+  });
+
+  it("rejects a partial or non-digit value", () => {
+    expect(last4Error("123")).toBe(LAST4_ERROR);
+    expect(last4Error("12a4")).toBe(LAST4_ERROR);
   });
 });

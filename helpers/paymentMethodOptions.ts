@@ -17,6 +17,17 @@ export const PAYMENT_METHOD_TYPE_OPTIONS: { value: PaymentMethodType; label: str
 /** Only these ask for the last 4 digits. */
 export const CARD_TYPES: PaymentMethodType[] = ["CREDIT_CARD", "DEBIT_CARD"];
 
+export const LAST4_ERROR = "Enter all 4 digits, or leave it empty";
+
+/**
+ * The last 4 is optional, but the API only takes exactly four digits: "123"
+ * used to reach the server, come back as a 400 and leave the wizard stuck
+ * behind a generic "could not save". Checked before sending instead.
+ */
+export function last4Error(value: string): string | null {
+  return value === "" || /^\d{4}$/.test(value) ? null : LAST4_ERROR;
+}
+
 /**
  * Second-field suggestions, shown only for the types listed here — presence in
  * this map is what makes the field appear. Cards get a network, wallets a

@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { PaymentMethodField } from "./PaymentMethodField";
+import { LAST4_ERROR } from "../../helpers/paymentMethodOptions";
 import type { PaymentMethod } from "../../types";
 
 const methods = [
@@ -60,15 +61,30 @@ describe("PaymentMethodField", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /New method/ }));
     fireEvent.change(screen.getByLabelText("Type"), { target: { value: "CASH" } });
-    expect(screen.queryByLabelText("Last 4 numbers")).toBeNull();
+    expect(screen.queryByLabelText("Last 4 digits (optional)")).toBeNull();
 
     fireEvent.change(screen.getByLabelText("Type"), { target: { value: "CREDIT_CARD" } });
-    expect(screen.getByLabelText("Last 4 numbers")).toBeInTheDocument();
+    expect(screen.getByLabelText("Last 4 digits (optional)")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Alias"), { target: { value: "Chase" } });
     fireEvent.click(screen.getByRole("button", { name: "Save method" }));
 
     await waitFor(() =>
       expect(onError).toHaveBeenCalledWith('You already have a Credit card called "Chase"')
     );
+  });
+
+  it("stops a partial last 4 before it reaches the API", () => {
+    const { onError, createMethod } = setup();
+    fireEvent.click(screen.getByRole("button", { name: /New method/ }));
+    fireEvent.change(screen.getByLabelText("Type"), { target: { value: "DEBIT_CARD" } });
+    fireEvent.change(screen.getByLabelText("Last 4 digits (optional)"), {
+      target: { value: "42" },
+    });
+    fireEvent.change(screen.getByLabelText("Alias"), { target: { value: "Debit" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save method" }));
+
+    expect(createMethod).not.toHaveBeenCalled();
+    expect(onError).toHaveBeenCalledWith(LAST4_ERROR);
+    expect(screen.getByText(LAST4_ERROR)).toBeInTheDocument();
   });
 });

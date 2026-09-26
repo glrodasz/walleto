@@ -7,6 +7,7 @@ import { useMethodsStep } from "../../onboarding/hooks/useMethodsStep";
 import { MethodsList } from "../../methods/components/MethodsList";
 import { EditMethodModal } from "../../methods/components/EditMethodModal";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
+import { errorMessage } from "../../../utils/errorMessage";
 import type { PaymentMethod } from "../../../types";
 
 /**
@@ -34,7 +35,7 @@ export function MethodsSettings() {
       if (created > 0) draftState.reset();
     } catch (err) {
       console.error("Failed to save payment methods:", err);
-      setError("Couldn't save — try again");
+      setError(errorMessage(err, "Couldn't save — try again"));
     } finally {
       setBusy(false);
     }
