@@ -6,6 +6,8 @@ import { useRecurrentStep } from "../../features/onboarding/hooks/useRecurrentSt
 import { useStepNavigation } from "../../features/onboarding/hooks/useStepNavigation";
 import { CurrencyPicker } from "../../features/onboarding/components/CurrencyPicker";
 import { WizardActions } from "../../features/onboarding/components/WizardActions";
+import { ContinueLater } from "../../features/onboarding/components/ContinueLater";
+import { useLeaveOnboarding } from "../../features/onboarding/hooks/useLeaveOnboarding";
 import { useUserDoc } from "../../hooks/useUserDoc";
 import type { Currency } from "../../types";
 
@@ -26,25 +28,27 @@ export default function OnboardingIncomes() {
     }
   }, [userDoc?.mainCurrency, currencyTouched]);
 
-  const { busy, error, go } = useStepNavigation(async () => {
+  const { busy, error, flush, go } = useStepNavigation(async () => {
     if (currency !== userDoc?.mainCurrency) {
       await update({ mainCurrency: currency });
     }
     await state.save();
   }, "Could not save your income. Please try again.");
+  const later = useLeaveOnboarding(flush);
 
   return (
     <OnboardingLayout
       step={3}
       onBack={() => go("/onboarding/methods")}
       onNavigate={go}
-      busy={busy}
+      busy={busy || later.leaving}
       footer={
         <WizardActions
+          leading={<ContinueLater step={3} onClick={later.leave} busy={busy || later.leaving} />}
           onBack={() => go("/onboarding/methods")}
           onNext={() => go("/onboarding/expenses")}
-          busy={busy}
-          error={error}
+          busy={busy || later.leaving}
+          error={error ?? later.error}
         />
       }
     >

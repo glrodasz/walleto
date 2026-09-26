@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
 import { fn } from "storybook/test";
 import { WizardActions } from "./WizardActions";
+import { ContinueLater } from "./ContinueLater";
 
 const meta = {
   title: "Organisms/Onboarding/WizardActions",
@@ -18,4 +19,7 @@ export const Finish: Story = { args: { nextLabel: "Finish setup" } };
 export const Busy: Story = { args: { busy: true } };
 export const WithError: Story = {
   args: { error: "Could not save your income. Please try again." },
+};
+export const WithContinueLater: Story = {
+  args: { leading: <ContinueLater step={2} onClick={fn()} /> },
 };
