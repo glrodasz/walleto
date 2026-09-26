@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { useDraftRows } from "../../../hooks/useDraftRows";
 import type { DraftRow } from "../../../hooks/useDraftRows";
-import { CARD_TYPES } from "../../../helpers/paymentMethodOptions";
+import { CARD_TYPES, LAST4_ERROR, last4Error } from "../../../helpers/paymentMethodOptions";
+import { UserFacingError } from "../../../utils/errorMessage";
 import type { PaymentMethodType } from "../../../types";
 
 export interface MethodRow extends DraftRow {
@@ -43,12 +44,31 @@ export function useMethodsStep({ hydrate = true }: Options = {}) {
     rows: saved,
   });
 
-  /** Persists rows that don't have an id yet; returns the number created. */
-  const save = async () => {
-    let created = 0;
-    for (const row of draft.rows) {
-      if (row.id || !row.type || !row.name.trim()) continue;
+  /** Set by a save that found a bad row, so every field shows its error at once. */
+  const [attempted, setAttempted] = useState(false);
 
+  /** New rows that would be sent; the rest are saved already or still blank. */
+  const pending = () =>
+    draft.rows.filter(
+      (row): row is MethodRow & { type: PaymentMethodType } =>
+        !row.id && Boolean(row.type) && Boolean(row.name.trim())
+    );
+
+  /**
+   * Persists rows that don't have an id yet; returns the number created.
+   * Every row is checked before the first POST: rows save one by one, so a
+   * bad one in the middle used to leave the ones before it saved and locked.
+   */
+  const save = async () => {
+    const rows = pending();
+    if (rows.some((row) => CARD_TYPES.includes(row.type) && last4Error(row.last4))) {
+      setAttempted(true);
+      throw new UserFacingError(LAST4_ERROR);
+    }
+    setAttempted(false);
+
+    let created = 0;
+    for (const row of rows) {
       const id = await create({
         name: row.name.trim(),
         type: row.type,
@@ -73,5 +93,10 @@ export function useMethodsStep({ hydrate = true }: Options = {}) {
     }
   };
 
-  return { ...draft, removeAt, save };
+  const reset = () => {
+    setAttempted(false);
+    draft.reset();
+  };
+
+  return { ...draft, reset, removeAt, save, attempted };
 }

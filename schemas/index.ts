@@ -105,9 +105,11 @@ export const PaymentMethodUpdateSchema = z.object({
   type: PaymentMethodTypeSchema.optional(),
   currencies: z.array(CurrencySchema).min(1).optional(),
   defaultCurrency: CurrencySchema.optional(),
+  // null clears it (a card whose last 4 the owner removed).
   last4: z
     .string()
     .regex(/^\d{4}$/, "Must be exactly 4 digits")
+    .nullable()
     .optional(),
   network: z.string().max(40).trim().optional(),
   archived: z.boolean().optional(),

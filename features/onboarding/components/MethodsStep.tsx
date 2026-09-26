@@ -2,6 +2,7 @@ import { Select } from "../../../components/atoms/Select";
 import { TextField } from "../../../components/atoms/TextField";
 import { Combobox } from "../../../components/atoms/Combobox";
 import { Chip } from "../../../components/atoms/Chip";
+import { Last4Field } from "../../../components/molecules/Last4Field";
 import { Close } from "../../../components/atoms/Icons";
 import { useMethodsStep } from "../hooks/useMethodsStep";
 import {
@@ -17,7 +18,7 @@ interface Props {
 }
 
 export function MethodsStep({ state }: Props) {
-  const { rows, add, update, removeAt } = state;
+  const { rows, add, update, removeAt, attempted } = state;
 
   return (
     <div className="rows">
@@ -65,16 +66,11 @@ export function MethodsStep({ state }: Props) {
               )}
 
               {showLast4 && (
-                <TextField
-                  label="Last 4 numbers"
-                  placeholder="0000"
-                  inputMode="numeric"
-                  maxLength={4}
+                <Last4Field
                   value={row.last4}
                   disabled={disabled}
-                  onValueChange={(value) =>
-                    update(row.key, { last4: value.replace(/\D/g, "").slice(0, 4) })
-                  }
+                  showError={attempted}
+                  onChange={(last4) => update(row.key, { last4 })}
                 />
               )}
 
