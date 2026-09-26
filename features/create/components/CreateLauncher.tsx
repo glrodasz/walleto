@@ -34,7 +34,8 @@ type Kind = "quick" | "recurring" | "value";
 
 /**
  * The create entry point on every page and every width: a floating +
- * button opening a sheet that asks what to add. The forms mount only while
+ * button opening a sheet that asks what to add — the plan first, then a
+ * one-off, then (account domains) where a position stands today. The forms mount only while
  * open, so no page pays for their listeners.
  */
 export function CreateLauncher({ domain: fixedDomain }: Props) {
@@ -78,17 +79,17 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
             </div>
           )}
 
-          <button type="button" className="glass glass--tap option" onClick={() => choose("quick")}>
-            <strong>{DOMAIN_CONFIG[domain].oneOff.title}</strong>
-            <span>A single amount on a date, already paid</span>
-          </button>
           <button
             type="button"
             className="glass glass--tap option"
             onClick={() => choose("recurring")}
           >
-            <strong>Add a recurring {singular}</strong>
+            <strong>Add {singular} to your plan</strong>
             <span>Something that repeats: a subscription, a salary, rent</span>
+          </button>
+          <button type="button" className="glass glass--tap option" onClick={() => choose("quick")}>
+            <strong>{DOMAIN_CONFIG[domain].oneOff.title}</strong>
+            <span>A single amount on a date, already paid</span>
           </button>
           {isAccountDomain(domain) && (
             <button
@@ -96,7 +97,7 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
               className="glass glass--tap option"
               onClick={() => choose("value")}
             >
-              <strong>Record current {domain === "DEBT" ? "balance" : "value"}</strong>
+              <strong>Update current {domain === "DEBT" ? "balance" : "value"}</strong>
               <span>
                 {domain === "DEBT"
                   ? "What you still owe on a debt today"

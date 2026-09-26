@@ -7,6 +7,7 @@ import { CategoryBreakdown } from "../../../components/molecules/CategoryBreakdo
 import Skeleton from "../../../components/Skeleton";
 import { ErrorState } from "../../../components/atoms/ErrorState";
 import { NetFlowCard } from "./NetFlowCard";
+import { NetWorthCard } from "./NetWorthCard";
 import { CashFlowCard } from "./CashFlowCard";
 import { UpcomingPayments } from "./UpcomingPayments";
 import { TipBanner } from "./TipBanner";
@@ -15,10 +16,12 @@ import { isAccountDomain } from "../../../helpers/accounts";
 import { topWithOther } from "../helpers/topWithOther";
 import type { CashFlowGroupBy } from "../helpers/cashFlowSeries";
 import { useDashboard } from "../hooks/useDashboard";
+import { useNetWorth } from "../hooks/useNetWorth";
 import { useUserDoc } from "../../../hooks/useUserDoc";
 import { useMaterialize } from "../../../hooks/useMaterialize";
 import { useLocalPreference } from "../../../hooks/useLocalPreference";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
+import { useMoneyContext } from "../../../hooks/useMoneyContext";
 import { greeting } from "../../../helpers/greeting";
 import { DEFAULT_MONTH_PERIOD, parseMonthPeriod } from "../../../constants";
 import type { MonthPeriod } from "../../../constants";
@@ -82,6 +85,8 @@ export function DashboardPage() {
     loading,
     error,
   } = useDashboard({ period, groupBy });
+  const { ctx } = useMoneyContext();
+  const { loading: worthLoading, ...worth } = useNetWorth(categories, ctx);
 
   const firstName = (user?.name ?? user?.nickname ?? "there").split(" ")[0];
 
@@ -138,7 +143,7 @@ export function DashboardPage() {
   return (
     <PageLayout
       title={`${greeting()}, ${firstName}`}
-      subtitle={`Here's your financial overview for ${window.longLabel}.`}
+      subtitle={`Here's where your money stands in ${window.longLabel}.`}
       hideMonth
     >
       {error && <ErrorState error={error} />}
@@ -157,6 +162,15 @@ export function DashboardPage() {
         )}
       </section>
 
+      <section className="block">
+        <NetWorthCard
+          worth={worth}
+          currency={currency}
+          loading={!userDoc || worthLoading}
+          approximate={approximate}
+        />
+      </section>
+
       <section className="cards">
         {userDoc
           ? cards.map((c) => (
@@ -165,6 +179,7 @@ export function DashboardPage() {
                 title={c.title}
                 href={c.href}
                 amount={c.amount}
+                caption="planned per month"
                 currency={currency}
                 domain={c.domain}
                 rows={cardRows(c.list, c.domain, currency, formatAmount)}
@@ -218,7 +233,8 @@ export function DashboardPage() {
       </section>
 
       <TipBanner id="create">
-        You can add a new transaction or recurring item from the + button.
+        Build your plan from the + button: add what repeats (rent, a salary, a subscription), and
+        log one-offs as they happen.
       </TipBanner>
 
       <style jsx>{`

@@ -16,7 +16,7 @@ import type { MonthPeriod } from "../../../constants";
 import { MonthSummary } from "./MonthSummary";
 import { ChartControls } from "./ChartControls";
 import type { StackMode } from "./ChartControls";
-import { ViewTabs, isDomainView } from "./ViewTabs";
+import { DEFAULT_DOMAIN_VIEW, ViewTabs, parseDomainView } from "./ViewTabs";
 import type { DomainView } from "./ViewTabs";
 import { CategoryMonthList, categoryMonthRows } from "./CategoryMonthList";
 import { CategoryDrilldown } from "./CategoryDrilldown";
@@ -114,7 +114,7 @@ export function DomainPage({ domain }: Props) {
   const previousWindow = useMemo(() => monthWindows(2, window.start)[0], [window.start]);
   const selectedOnChart = chartWindows.some((w) => w.key === window.key);
 
-  const [view, setView] = useState<DomainView>("transactions");
+  const [view, setView] = useState<DomainView>(DEFAULT_DOMAIN_VIEW);
   const [drillCategoryId, setDrillCategoryId] = useState<string | null>(null);
   const [preset, setPreset] = useState<Partial<TransactionFilters> | undefined>(undefined);
   const [modalOpen, setModalOpen] = useState(false);
@@ -125,15 +125,19 @@ export function DomainPage({ domain }: Props) {
 
   // The active view lives in the URL hash so a link can point at it.
   useEffect(() => {
-    const fromHash = globalThis.location?.hash.slice(1);
-    if (fromHash && isDomainView(fromHash)) setView(fromHash);
+    const fromHash = parseDomainView(globalThis.location?.hash.slice(1) ?? "");
+    if (fromHash) setView(fromHash);
   }, []);
   const changeView = (next: DomainView) => {
     setView(next);
     setDrillCategoryId(null);
-    if (next !== "transactions") setPreset(undefined);
+    if (next !== "activity") setPreset(undefined);
     const base = globalThis.location.pathname + globalThis.location.search;
-    globalThis.history.replaceState(null, "", next === "transactions" ? base : `${base}#${next}`);
+    globalThis.history.replaceState(
+      null,
+      "",
+      next === DEFAULT_DOMAIN_VIEW ? base : `${base}#${next}`
+    );
   };
 
   // Investments and savings read their whole ledger: a value check is
@@ -435,7 +439,7 @@ export function DomainPage({ domain }: Props) {
   /** A group row (tag, method) narrows the ledger to it. */
   const narrowTo = (filters: Partial<TransactionFilters>) => {
     setPreset(filters);
-    setView("transactions");
+    setView("activity");
     setDrillCategoryId(null);
   };
 
@@ -502,10 +506,10 @@ export function DomainPage({ domain }: Props) {
           onToggleHidden={toggleCategoryHidden}
         />
       )
-    ) : view === "transactions" ? (
+    ) : view === "activity" ? (
       <TransactionsTable
-        title="Transactions"
-        subtitle={`All ${config.noun.replace(/s$/, "")} transactions in ${window.longLabel}.`}
+        title="Activity"
+        subtitle={`What actually happened in ${window.longLabel}, planned or not.`}
         rows={monthTransactions}
         domain={domain}
         categories={categories}
@@ -534,7 +538,7 @@ export function DomainPage({ domain }: Props) {
           currency={currency}
           color={config.accent}
           loading={txLoading}
-          emptyLabel="Nothing recorded in this period"
+          emptyLabel="No activity in this period"
           icon={() => <TagIcon size={16} />}
           onSelect={(key) =>
             narrowTo({
@@ -554,7 +558,7 @@ export function DomainPage({ domain }: Props) {
           currency={currency}
           color={config.accent}
           loading={txLoading}
-          emptyLabel="Nothing recorded in this period"
+          emptyLabel="No activity in this period"
           icon={() => <CreditCard size={16} />}
           onSelect={(key) => narrowTo({ paymentMethodId: key })}
         />
@@ -662,7 +666,7 @@ export function DomainPage({ domain }: Props) {
           onChange={changeView}
           accent={config.accent}
           showValue={Boolean(accountDomain)}
-          valueLabel={domain === "DEBT" ? "Balance" : undefined}
+          valueLabel={domain === "DEBT" ? "Owed" : undefined}
           showMethods={config.showPaymentMethod}
         />
         {panel}

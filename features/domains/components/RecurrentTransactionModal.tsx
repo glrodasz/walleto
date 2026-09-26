@@ -56,7 +56,7 @@ interface Props {
   item?: RecurrentTransaction;
   /** Present = edit this one-off transaction (the frequency stays "One time"). */
   transaction?: Transaction;
-  /** Create only: what the frequency starts as ("Record a payment" opens on One time). */
+  /** Create only: what the frequency starts as ("Log a one-off expense" opens on One time). */
   initialFrequency?: Frequency;
   /** Transaction mode: jump to the recurring item that wrote this row. */
   onOpenItem?: (item: RecurrentTransaction) => void;
@@ -496,7 +496,11 @@ export function RecurrentTransactionModal({
     <Modal
       open={open}
       title={
-        editing ? `Edit ${form.name || noun}` : isRecurring ? `New ${noun}` : config.oneOff.title
+        editing
+          ? `Edit ${form.name || noun}`
+          : isRecurring
+            ? `Add ${noun} to your plan`
+            : config.oneOff.title
       }
       onClose={onClose}
     >
@@ -764,7 +768,7 @@ export function RecurrentTransactionModal({
             Cancel
           </Button>
           <Button variant="primary" onClick={submit} disabled={busy}>
-            {busy ? "Saving…" : editing ? "Save changes" : isRecurring ? "Create" : "Save"}
+            {busy ? "Saving…" : editing ? "Save changes" : isRecurring ? "Add to plan" : "Save"}
           </Button>
         </div>
       </div>

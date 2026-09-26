@@ -150,7 +150,7 @@ export function InvestmentValuePanel({
         <div className="head">
           <SectionTitle title={`${title} — ${owes ? "balance" : "value"}`} />
           <Button variant="primary" size="sm" onClick={() => setModal({ open: true })}>
-            {owes ? "Record balance" : "Record value"}
+            {owes ? "Update balance" : "Update value"}
           </Button>
         </div>
 

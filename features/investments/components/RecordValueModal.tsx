@@ -30,7 +30,7 @@ interface Props {
 }
 
 /**
- * "Record current value" from anywhere: pick the account / pocket — or the
+ * "Update current value" from anywhere: pick the account / pocket — or the
  * "No account" bucket, when something sits in it — see what has gone into
  * it, then the usual gain-% / value form. Mounted only while open, so the
  * inception-to-date listener it needs runs nowhere else.
@@ -99,7 +99,7 @@ export function RecordValueModal({ open, onClose, domain }: Props) {
   const label = noun.charAt(0).toUpperCase() + noun.slice(1);
 
   return (
-    <Modal open={open} title={`Record current ${owes ? "balance" : "value"}`} onClose={onClose}>
+    <Modal open={open} title={`Update current ${owes ? "balance" : "value"}`} onClose={onClose}>
       <div className="form">
         {choices.length === 0 ? (
           <p className="basis">

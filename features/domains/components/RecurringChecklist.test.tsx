@@ -142,6 +142,6 @@ describe("RecurringChecklist", () => {
 
   it("shows the empty state without items", () => {
     setup({ items: [], transactions: [] });
-    expect(screen.getByText("No recurring expenses yet")).toBeInTheDocument();
+    expect(screen.getByText(/Nothing in your plan yet/)).toBeInTheDocument();
   });
 });

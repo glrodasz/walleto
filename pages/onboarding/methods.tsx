@@ -16,7 +16,7 @@ export default function OnboardingMethods() {
   return (
     <OnboardingLayout
       step={2}
-      description="Add your main payment methods"
+      description="How you pay: your cards and accounts, so each plan item knows where it is charged."
       onBack={() => go("/onboarding/categories")}
       onNavigate={go}
       busy={busy}

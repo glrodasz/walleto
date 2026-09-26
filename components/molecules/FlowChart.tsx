@@ -54,7 +54,7 @@ export function FlowChart({
   return (
     <div className="chart-area">
       {!loading && !hasMoney ? (
-        <p className="empty">No transactions in this period</p>
+        <p className="empty">No activity in this period</p>
       ) : (
         <>
           <div className="legend">

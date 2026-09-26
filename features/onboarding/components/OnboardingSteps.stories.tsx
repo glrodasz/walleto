@@ -38,7 +38,7 @@ function Categories() {
   return (
     <OnboardingLayout
       step={1}
-      description="Let's start with your categories. Add your main categories."
+      description="Your plan is sorted by category. Keep the defaults or add your own."
       onNavigate={go}
       busy={busy}
       footer={
@@ -84,7 +84,7 @@ function Methods() {
   return (
     <OnboardingLayout
       step={2}
-      description="Add your main payment methods"
+      description="How you pay: your cards and accounts, so each plan item knows where it is charged."
       onBack={() => go("/onboarding/categories")}
       onNavigate={go}
       busy={busy}
@@ -113,7 +113,7 @@ function Incomes() {
   const { busy, error, go } = useStepNavigation(async () => {
     if (currency !== userDoc?.mainCurrency) await update({ mainCurrency: currency });
     await state.save();
-  }, "Could not save your incomes. Please try again.");
+  }, "Could not save your income. Please try again.");
   return (
     <OnboardingLayout
       step={3}
@@ -138,7 +138,7 @@ function Incomes() {
       />
       <section style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         <h2 style={{ margin: 0, fontSize: "0.9375rem", fontWeight: 600, color: "var(--fg-1)" }}>
-          Set up your incomes
+          What do you earn each month?
         </h2>
         <RecurrentStep state={state} />
       </section>
@@ -155,7 +155,7 @@ function Expenses() {
   return (
     <OnboardingLayout
       step={4}
-      description="Set up your expenses"
+      description="What do you pay every month?"
       onBack={() => go("/onboarding/incomes")}
       onNavigate={go}
       busy={busy}

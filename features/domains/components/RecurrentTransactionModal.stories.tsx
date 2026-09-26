@@ -34,7 +34,7 @@ type Story = StoryObj<typeof meta>;
 
 /** A new monthly expense. */
 export const NewRecurring: Story = {};
-/** "Record a payment": one time, writes a PAID transaction. */
+/** "Log a one-off expense": one time, writes a PAID transaction. */
 export const OneTimePayment: Story = { args: { initialFrequency: "ONE_TIME" } };
 export const EditItem: Story = { args: { item: recurrentById("rt-netflix") } };
 export const EditYearlySpread: Story = { args: { item: recurrentById("rt-car-insurance") } };

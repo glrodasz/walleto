@@ -66,21 +66,27 @@ Todo lo que solo sirve a una feature vive junta:
 ```
 features/
   onboarding/   el wizard de configuración inicial + el guard de acceso
-  dashboard/    la home: hero del plan mensual (NetFlowCard + AllocationBar), stat cards por dominio,
+  dashboard/    la home: hero del plan mensual (NetFlowCard + AllocationBar, con veredicto "On plan" /
+                "Over-committed"), patrimonio de hoy (NetWorthCard + hooks/useNetWorth + helpers/netWorth) — las dos
+                son la misma pieza, `SummaryCard` (título + pill, cifra a la izquierda, desglose a la derecha),
+                stat cards por dominio ("planned per month"),
                 cash flow de 5 dominios apilado por categoría / moneda (CashFlowCard + helpers/cashFlowSeries),
-                top categorías, próximos pagos, tip
+                top categorías, próximos pagos del plan, tip
   domains/      DomainPage — la pantalla month-first que comparten incomes/expenses/investments/savings/debts:
-                el mes viene del header (hooks/useSelectedMonth), MonthSummary (total vs mes anterior, planeado),
+                el mes viene del header (hooks/useSelectedMonth), MonthSummary (primero lo esperado del mes y
+                cuánto llegó; después lo real vs el mes anterior),
                 barras apiladas por categoría o moneda (ChartControls; los charts solo muestran — el mes
                 lo pone el picker del header, y por eso la lista de meses que la página calcula es más larga
                 que la que dibujan las barras), Top categories, y las vistas
-                Transactions (TransactionsTable con búsqueda/filtros) / Recurring / Categories / Tags / Payment methods (/ Value, que en debts se llama Balance)
+                Plan (RecurringChecklist, la vista por defecto) / Activity (TransactionsTable con búsqueda/filtros) /
+                Categories / Tags / Payment methods (/ Worth, que en debts se llama Owed). Las keys del hash son
+                `plan` / `activity` / …; `#recurring` y `#transactions` siguen funcionando (parseDomainView)
   methods/      MethodsList + EditMethodModal — los usa Settings › Payment methods (la página /methods redirige)
   insights/     SubscriptionInsights — costo mensual/anualizado de suscripciones
   investments/  valor por cuenta / pocket / deuda (y por categoría para lo que no tiene cuenta): invertido vs valor,
                 % de ganancia, historial; helpers/interest.ts estima con la tasa de la cuenta; una deuda es la
                 misma pieza con el signo cambiado (positionSign): repagado vs adeudado, interés en vez de ganancia;
-                AccountValueList (vista Value), AccountValuePanels (drilldown), RecordValueModal ("+"),
+                AccountValueList (vista Worth / Owed), AccountValuePanels (drilldown), RecordValueModal ("+"),
                 DomainValueLine (el "Worth …" de las cards del dashboard); hooks/useDomainValue
                 (listener desde el origen: móntalo solo donde se muestre la cifra) y hooks/useDomainGains
   settings/     pestañas de sección (General / Categories / Tags / Payment methods / Accounts & debts, la activa
@@ -334,7 +340,7 @@ Otras notas:
 
 ### 3.2 Ocultar del dashboard
 
-El dashboard es el **run-rate de los recurrentes** (las cards y el neto lo dicen con la etiqueta "Recurring"); por eso solo un item recurrente se oculta: `hiddenFromDashboard` en `recurrentTransactions` lo saca de todos los números y listas del dashboard, y sus filas del ledger lo siguen por `recurrentTransactionId` (`helpers/hidden.ts`: `hiddenItemIds`, `withoutHidden`). Las transacciones no tienen flag propio. En las páginas de dominio, además, una categoría raíz puede ocultarse de la gráfica (`Category.hiddenFromChart`, kebab en Categories; los hijos la siguen): barras y cifra del mes excluyen items ocultos y categorías ocultas salvo que el owner active "Show hidden" (preferencia por dominio en `localStorage`). Las listas siempre muestran todo, con la etiqueta "Hidden".
+El dashboard es el **run-rate de los recurrentes** (las cards lo dicen con "planned per month" y el hero con su veredicto "On plan" / "Over-committed"); por eso solo un item recurrente se oculta: `hiddenFromDashboard` en `recurrentTransactions` lo saca de todos los números y listas del dashboard, y sus filas del ledger lo siguen por `recurrentTransactionId` (`helpers/hidden.ts`: `hiddenItemIds`, `withoutHidden`). Las transacciones no tienen flag propio. En las páginas de dominio, además, una categoría raíz puede ocultarse de la gráfica (`Category.hiddenFromChart`, kebab en Categories; los hijos la siguen): barras y cifra del mes excluyen items ocultos y categorías ocultas salvo que el owner active "Show hidden" (preferencia por dominio en `localStorage`). Las listas siempre muestran todo, con la etiqueta "Hidden".
 
 ### 3.3 Reflejar mensualmente (spread)
 
@@ -342,13 +348,23 @@ Un item no mensual (anual, trimestral, semanal…) con `spreadMonthly` se pinta 
 
 ### 3.4 Puntual vs recurrente
 
-Hay **un solo formulario** para todo lo que entra: `RecurrentTransactionModal`. "Record a payment" del "+" lo abre con `initialFrequency="ONE_TIME"`; editar una fila del ledger lo abre con `transaction` (frecuencia fija en One time, PATCH con solo lo que cambió). Un `frequency: "ONE_TIME"` elegido ahí o en la sección One-time del wizard **no crea un item recurrente**: escribe una transacción PAID directa (`POST /api/transactions`). El plan (recurrentTransactions) es solo lo que se repite; el ledger (transactions) es lo que pasó. Los items ONE_TIME antiguos siguen funcionando, pero no se crean más. **"This pays off a debt"**: en el formulario de un gasto (alta o edición de un recurrente, nunca de una fila del ledger) un toggle lo archiva bajo DEBT — la categoría pasa a ser una de deudas (la del mismo nombre, si no "Loans"), aparece el `AccountField` de deudas y el item sale con `type: "LOAN_PAYMENT"`. Un item que ya existe se mueve con `POST /api/recurrent-transactions/[id]/convert` (`RecurrentTransactionConvertSchema`: solo EXPENSE → DEBT), que reescribe `domain`/`categoryId`/`accountId` en el item y en todas sus filas por lotes de 450 — el `domain` es inmutable en el PATCH y cada check de FK compara contra él, por eso el modal convierte **antes** de patchear el resto y el PATCH ya no manda categoría ni cuenta. Los ids determinísticos no cambian, así que el materializador no duplica nada, y lo pagado hasta hoy cuenta como repagado de inmediato. Nada se resta dos veces del neto: Expenses baja y Debts sube en la misma cifra.
+Hay **un solo formulario** para todo lo que entra: `RecurrentTransactionModal`. "Log a one-off expense" del "+" lo abre con `initialFrequency="ONE_TIME"`; editar una fila del ledger lo abre con `transaction` (frecuencia fija en One time, PATCH con solo lo que cambió). Un `frequency: "ONE_TIME"` elegido ahí o en la sección One-time del wizard **no crea un item recurrente**: escribe una transacción PAID directa (`POST /api/transactions`). El plan (recurrentTransactions) es solo lo que se repite; el ledger (transactions) es lo que pasó. Los items ONE_TIME antiguos siguen funcionando, pero no se crean más. **"This pays off a debt"**: en el formulario de un gasto (alta o edición de un recurrente, nunca de una fila del ledger) un toggle lo archiva bajo DEBT — la categoría pasa a ser una de deudas (la del mismo nombre, si no "Loans"), aparece el `AccountField` de deudas y el item sale con `type: "LOAN_PAYMENT"`. Un item que ya existe se mueve con `POST /api/recurrent-transactions/[id]/convert` (`RecurrentTransactionConvertSchema`: solo EXPENSE → DEBT), que reescribe `domain`/`categoryId`/`accountId` en el item y en todas sus filas por lotes de 450 — el `domain` es inmutable en el PATCH y cada check de FK compara contra él, por eso el modal convierte **antes** de patchear el resto y el PATCH ya no manda categoría ni cuenta. Los ids determinísticos no cambian, así que el materializador no duplica nada, y lo pagado hasta hoy cuenta como repagado de inmediato. Nada se resta dos veces del neto: Expenses baja y Debts sube en la misma cifra.
 
 ### 3.5 Modo privacidad
 
 El ojo del header (`components/molecules/PrivacyToggle`) enmascara **el texto** de todos los montos: `$****`, `COP ****` — se queda el símbolo o el código, se va el número entero (nunca `$*,***.**`: la forma ya delata la magnitud, y el sufijo compacto "K"/"M" también, así que se cae). La bandera vive en `hooks/usePrivacy` (contexto + `localStorage`, `waletto:privacy`): es "alguien me está viendo la pantalla", una propiedad del dispositivo y no de la cuenta, así que **no** va al user doc.
 
 Nada más cambia. Alturas de barras, shares, progreso, orden y totales se siguen calculando con los números reales, así que la pantalla conserva su forma y sus proporciones — el gráfico sigue contando el mes, solo que sin cifras. Dos detalles: los ticks del eje quedan **en blanco** en vez de repetir cuatro `$****` iguales (`formatTick`), y los `input` de los formularios muestran el valor de verdad — no se puede editar lo que no se ve. Los porcentajes tampoco se ocultan: son proporción, no dinero.
+
+### 3.6 Vocabulario (importante)
+
+La app es un **planificador**, no un registro de gastos: responde "¿cuál es mi plan, va bien el mes y dónde estoy parado?". La UI usa tres sustantivos y siempre igual:
+
+- **Plan** — los recurrentes: lo que debería pasar cada mes. Hero del dashboard, vista Plan, "Coming up in your plan".
+- **Activity** — el ledger: lo que pasó, planeado o no. Vista Activity, charts de barras.
+- **Worth** — dónde está el owner hoy: cuentas y pockets menos deudas. NetWorthCard, vista Worth / Owed.
+
+"Recurring" es solo un adjetivo de cadencia, nunca el nombre de una pantalla o de una cifra. Los verbos siguen la misma regla: un item se **agrega al plan** ("Add … to your plan"), una puntual se **loguea** ("Log a one-off …"), una posición se **actualiza** ("Update current value / balance"). El "+" ofrece el plan primero. Los nombres internos (`transactions`, `recurrentTransactions`, `RecurringChecklist`) no cambian: son del modelo, no de la UI.
 
 ## 7. Deferido a propósito
 

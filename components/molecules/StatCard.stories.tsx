@@ -10,6 +10,7 @@ const meta = {
   args: {
     title: "Expenses",
     amount: 3184.72,
+    caption: "planned per month",
     currency: "USD",
     domain: "EXPENSE",
     href: "/expenses",

@@ -8,7 +8,8 @@ const meta = {
   tags: ["autodocs"],
   args: {
     id: "storybook",
-    children: "You can add a new transaction or recurring item from the + button.",
+    children:
+      "Build your plan from the + button: add what repeats (rent, a salary, a subscription), and log one-offs as they happen.",
   },
   decorators: [boxed(760)],
   // Dismissal persists in localStorage per id; start every story visible.

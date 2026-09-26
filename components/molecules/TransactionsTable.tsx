@@ -194,7 +194,7 @@ export function TransactionsTable({
         <p className="empty">Loading…</p>
       ) : shown.length === 0 ? (
         <p className="empty">
-          {rows.length === 0 ? "Nothing recorded in this period" : "Nothing matches these filters"}
+          {rows.length === 0 ? "No activity in this period" : "Nothing matches these filters"}
         </p>
       ) : (
         <ListItems>

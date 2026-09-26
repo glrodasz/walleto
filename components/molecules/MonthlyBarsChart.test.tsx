@@ -38,7 +38,7 @@ describe("MonthlyBarsChart", () => {
         loading={false}
       />
     );
-    expect(screen.getByText("No transactions in this period")).toBeInTheDocument();
+    expect(screen.getByText("No activity in this period")).toBeInTheDocument();
 
     rerender(
       <MonthlyBarsChart
@@ -48,7 +48,7 @@ describe("MonthlyBarsChart", () => {
         loading={false}
       />
     );
-    expect(screen.queryByText("No transactions in this period")).toBeNull();
+    expect(screen.queryByText("No activity in this period")).toBeNull();
   });
 
   it("supports two series side by side without a planned legend", () => {
@@ -79,7 +79,7 @@ describe("MonthlyBarsChart", () => {
         stacked
       />
     );
-    expect(screen.queryByText("No transactions in this period")).toBeNull();
+    expect(screen.queryByText("No activity in this period")).toBeNull();
     expect(screen.getByRole("listitem")).toHaveTextContent("Sep: Spent $0.00, Gain -$120.00");
   });
 });

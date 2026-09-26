@@ -9,8 +9,9 @@ what every number and label means.
 
 ## 1. What the app is
 
-Waletto is a personal-finance tracker built around **five domains** rather than
-the usual two:
+Waletto is a personal-finance **planner**: it answers "what is my plan, is this
+month on track, and where do I stand?" rather than "what did I spend?". It is
+built around **five domains** rather than the usual two:
 
 | Domain      | What it holds                                            | Accent  |
 | ----------- | -------------------------------------------------------- | ------- |
@@ -26,6 +27,20 @@ the headline number answers "what is left unallocated each month", so money
 that stays yours still leaves the pot. A repayment is money that stops being
 owed, and gets its own slice for the same reason.
 
+### The vocabulary
+
+The interface speaks in three nouns and uses them the same way everywhere:
+
+| Word         | What it means                                                  | Where it shows                                               |
+| ------------ | -------------------------------------------------------------- | ------------------------------------------------------------ |
+| **Plan**     | The recurring items: what is supposed to happen every month    | Dashboard hero, the Plan view (default on every domain page) |
+| **Activity** | The ledger: what actually happened, planned or not             | The Activity view, the cash-flow and domain charts           |
+| **Worth**    | Where the owner stands today: accounts and pockets minus debts | The Net worth card, the Worth / Owed view                    |
+
+"Recurring" is only a cadence adjective, never the name of a screen or a
+number. A one-off is _logged_; a plan item is _added to your plan_; a position
+is _updated_.
+
 ### The two ideas everything rests on
 
 **The plan versus the ledger.** A _recurring item_ is a rule — "Netflix, 15
@@ -37,9 +52,9 @@ ledger have a recurring item behind them, and some are pure one-offs (a coffee,
 a freelance invoice).
 
 This split shows up everywhere in the interface: the dashboard is a _plan_
-view (a monthly run-rate of the recurring items, and it says "Recurring" on
-every card), while the domain pages are _ledger-first_ (what landed this month)
-with the plan layered on as forecast.
+view (a monthly run-rate of the recurring items; every card says "planned per
+month"), and the domain pages open on the plan too, with what landed this month
+measured against it and the full ledger one tab away (Activity).
 
 **Multi-currency, natively.** Every amount is stored in the currency it was
 entered in, never converted at write time. Conversion happens only when
@@ -212,10 +227,15 @@ app-wide: the dashboard and the domain pages all speak about the same month,
 it survives navigation, and a link can carry it (`?month=2026-07`). A floating
 "+" button is the single entry point for creating anything.
 
-The sidebar lists **Dashboard**, then **Money** (Incomes, Expenses,
-Investments, Savings, Debts), **Planning** (Prospect) and **Account**
-(Settings). The phone tab bar shows Home, Incomes, Expenses and Invest, with
-the rest behind a "More" sheet.
+The sidebar lists **Dashboard**, then **Cash flow** (Income, Expenses), **Net
+worth** (Investments, Savings, Debts — the pages that also carry a balance),
+**What-if** (Prospect, disabled while it is reworked) and **Account**
+(Settings). The phone tab bar shows Home, Income, Expenses and Investments,
+with the rest behind a "More" sheet.
+
+The "+" sheet offers, in this order: **Add … to your plan** (a recurring
+item), **Log a one-off …** (a single paid amount), and on investments,
+savings and debts **Update current value / balance**.
 
 The interface is light by default — frosted "glass" cards over a soft mountain
 backdrop — with a dark variant and a "system" setting that follows the OS.
@@ -224,49 +244,58 @@ backdrop — with a dark variant and a "system" setting that follows the OS.
 
 ### 3.1 Dashboard
 
-**Purpose.** The monthly run-rate of the user's _plan_ (what the recurring
-items add up to) next to what actually moved. Title: "Good morning, Guillermo"
-(afternoon/evening after noon/six), subtitle "Here's your financial overview
-for September 2026."
+**Purpose.** Where the owner stands: the monthly run-rate of the _plan_ (what
+the recurring items add up to), the position today (net worth), and what
+actually moved. Title: "Good morning, Guillermo" (afternoon/evening after
+noon/six), subtitle "Here's where your money stands in September 2026."
 
 Down the page:
 
 1. **Error banners** (conditional): data errors verbatim, and the
    exchange-rates-unavailable notice.
-2. **Monthly plan hero**: the label "MONTHLY PLAN" with a "RECURRING" pill, the
-   net figure ("left to allocate this month"), five mini stats (Income,
-   Expenses, Investments, Savings, Debts) with an **allocation bar** splitting
-   the month's income into expenses / investments / savings / debts / left,
-   and the quote _"A clear plan today, a more free tomorrow."_
-3. **Five domain cards**, tinted in their colour, each with an icon, the name
-   (linking to the domain page), the monthly figure, two top categories (amounts
+2. **Monthly plan hero**: the label "MONTHLY PLAN" with a verdict pill — "ON
+   PLAN" when the plan fits inside the income, "OVER-COMMITTED" when it does
+   not — the net figure ("left to allocate each month"), five mini stats
+   (Income, Expenses, Investments, Savings, Debts) with an **allocation bar**
+   splitting the month's income into expenses / investments / savings / debts
+   / left.
+3. **Net worth** with a "TODAY" pill — the same kind of card as the plan
+   (title and pill, big figure and one line on the left, what it is made of
+   in an inset panel on the right, figures aligned between the two): investments + savings − what the debts
+   still owe, with the three parts beside it and "last checked …". A debt with
+   no recorded balance shows "—", is left out of the figure and says so; an
+   account valued only by its interest rate marks the figure "partly
+   estimated". With nothing to value it invites the owner to add accounts.
+4. **Five domain cards**, tinted in their colour, each with an icon, the name
+   (linking to the domain page), the monthly figure captioned "planned per
+   month", two top categories (amounts
    for income, shares for the rest), the per-currency mix when currencies are
    mixed, and "N categories" with a menu. Investments and savings add a quiet
    second line — "Worth SEK 312,400.00 · checked Sep 12" — what those accounts
    hold today, and debts "Owed …" once a balance has been recorded; the
    headline figure above it is still the recurring run-rate.
-4. **Monthly cash flow**: per month, five bars side by side (one per domain),
+5. **Monthly cash flow** ("What actually happened, split by category"): per month, five bars side by side (one per domain),
    each stacked by its top five categories plus "Other" — or by currency, or
    plain — over the last 3, 6 or 12 months. Built from real transactions. A
    legend chip per domain opens the list of slices. The selected month's group
    is drawn at full strength; like every chart, the bars only show — the month
    is picked in the header.
-5. **Top expense categories** (icon, name, amount, bar, share; "View all") and
-   **Upcoming payments** (calendar-leaf date, name, category, amount; "View
-   all").
-6. A dismissable **tip** at the foot of the page.
+6. **Top expense categories** (icon, name, amount, bar, share; "View all") and
+   **Coming up in your plan** (calendar-leaf date, name, category, amount;
+   "View all").
+7. A dismissable **tip** at the foot of the page.
 
 ---
 
-### 3.2 Domain page (Incomes · Expenses · Investments · Savings · Debts)
+### 3.2 Domain page (Income · Expenses · Investments · Savings · Debts)
 
-| Domain      | Title       | Subtitle                                                      | Accent  |
-| ----------- | ----------- | ------------------------------------------------------------- | ------- |
-| Income      | Incomes     | See what comes in, month by month, and where it comes from.   | Green   |
-| Expenses    | Expenses    | Track what you spend, see your patterns, and stay in control. | Red     |
-| Investments | Investments | Follow what you put aside to grow, and what it is worth.      | Cyan    |
-| Savings     | Savings     | Watch your pockets fill up, one deposit at a time.            | Amber   |
-| Debts       | Debts       | Keep track of what you owe, and watch it shrink.              | Fuchsia |
+| Domain      | Title       | Subtitle                                                           | Accent  |
+| ----------- | ----------- | ------------------------------------------------------------------ | ------- |
+| Income      | Income      | What you expect to earn each month, and what actually arrived.     | Green   |
+| Expenses    | Expenses    | Your spending plan, and how this month is tracking against it.     | Red     |
+| Investments | Investments | What you plan to invest, what went in, and what it is worth today. | Cyan    |
+| Savings     | Savings     | What you plan to set aside, and what your pockets hold today.      | Amber   |
+| Debts       | Debts       | What you owe today, and your plan to pay it down.                  | Fuchsia |
 
 An expense that is really an instalment — the car loan, the mortgage — has a
 toggle on its form, **"This pays off a debt"**, which files it under Debts
@@ -276,15 +305,16 @@ existed moves together with every payment it has written, so what has been
 paid so far counts as repaid at once. Expenses drops by the instalment,
 Debts rises by it, and the monthly net is unchanged.
 
-On debts the month figure is "Total repaid so far", and when a balance check
+On debts the month figure is "Repaid so far", and when a balance check
 lands the line under it says what it is made of — "$1,000.00 repaid · $100.00
 interest & charges" — so the month reads as repaid minus interest.
 
-**Month summary** (two panels): **Total spent so far** — the figure, a delta
-pill against the previous month ("↑ 12%", coloured by whether a rise is good
-for the domain) and "Compared to SEK 16,402.18 in August 2026"; **Planned** —
-the expected total, a progress bar, the percentage reached and "SEK 5,361.45
-left" (or "Month total" for a finished month). On investments and savings, a
+**Month summary** (two panels, plan first): **Expected this month** — what the
+month will total (landed plus what the plan still owes), a progress bar, "77%
+spent" and "SEK 5,361.45 still to come" (for a finished month the label is
+"Month total" and the line "Month closed"); then **Spent so far** — the actual
+figure, a delta pill against the previous month ("↑ 12%", coloured by whether
+a rise is good for the domain) and "Compared to SEK 16,402.18 in August 2026". On investments and savings, a
 month that carries a value check says what its figure is made of underneath:
 "SEK 5,000.00 contributed · SEK 3,100.00 gain" (or "loss").
 
@@ -307,30 +337,31 @@ share; "View all" opens the Categories view) — on investments and savings the
 amounts include each category's reported gain, plus a **Gain** row for what was
 never filed under one.
 
-**Views** (a segmented strip, remembered in the URL hash):
+**Views** (a segmented strip, remembered in the URL hash; a bare URL opens on
+Plan, and the old `#recurring` / `#transactions` hashes still land):
 
-- **Transactions** — a table: DATE (sortable), DESCRIPTION (name, tag pills,
+- **Plan** — the month's checklist in Overdue / Due / Paid groups, with
+  "Not this month" collapsed underneath and the monthly run-rate at the foot.
+- **Activity** — what actually happened, planned or not. A table: DATE (sortable), DESCRIPTION (name, tag pills,
   note, "recurring · Monthly · Netflix" or "one-off"), CATEGORY (icon + name),
   METHOD (expenses only), AMOUNT (own currency, "charged …" when a pair was
   recorded), and a menu (Edit, Delete). Above it: a search box, a category
   filter and a method filter. On phones each row folds into a card. Capped at
   60 rows with "and N more".
-- **Recurring** — the month's checklist in Overdue / Due / Paid groups, with
-  "Not this month" collapsed underneath (unchanged).
 - **Categories** — one row per root category (icon, name, count, share, planned,
   mini bar, total) with a drilldown into subcategory chips and that category's
   transactions table. On investments and savings a category's total is money in
   plus the gain its value checks reported ("1 transaction · 42% · SEK 2,040
   gain"); gains nobody filed get one **Gain** row of their own at the end.
 - **Tags** — the month grouped by tag (a payment with two tags counts under
-  both); picking one narrows the Transactions view.
+  both); picking one narrows the Activity view.
 - **Payment methods** (expenses) — the month grouped by method; picking one
-  narrows the Transactions view.
-- **Value** (investments, savings) — accounts and pockets with their current
-  value, gain and history (unchanged).
-- **Balance** (debts) — the same view for debts: what was repaid, what is still
+  narrows the Activity view.
+- **Worth** (investments, savings) — accounts and pockets with their current
+  value, gain and history; "Update value" records a new check.
+- **Owed** (debts) — the same view for debts: what was repaid, what is still
   owed (a dash until a balance is recorded), the interest accrued since the
-  first balance, and the balance history. "Record balance" is a single field
+  first balance, and the balance history. "Update balance" is a single field
   that opens on today's estimate.
 
 ---
@@ -388,7 +419,7 @@ DD/MM/YYYY or MM/DD/YYYY); month labels ("Sep", "September 2026") never change.
 
 ### Pills
 
-- **Solid** pills are states the app applied: "RECURRING", "Paid", "Due".
+- **Solid** pills are states the app applied: "ON PLAN", "TODAY", "Paid", "Due".
 - **Outline** pills are the user's own tags, and the amber "Hidden".
 
 ### Colour
@@ -406,5 +437,5 @@ discs) and a six-step ramp for category-stacked bars. Corner radii are 6, 10,
 ### States
 
 Every list has three: **loading** ("Loading…"), **empty** written for that
-list ("Nothing recorded in this period", "No tags yet", "Nothing matches these
+list ("No activity in this period", "No tags yet", "Nothing matches these
 filters"), and **error** showing the underlying message verbatim.

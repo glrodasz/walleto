@@ -13,7 +13,7 @@ import suggestionsByDomain from "../data/categorySuggestions.json";
 import type { Domain } from "../../../types";
 
 const SECTIONS: { domain: Domain; label: string; Icon: typeof TrendingUp }[] = [
-  { domain: "INCOME", label: "Incomes", Icon: TrendingUp },
+  { domain: "INCOME", label: "Income", Icon: TrendingUp },
   { domain: "EXPENSE", label: "Expenses", Icon: TrendingDown },
   { domain: "INVESTMENT", label: "Investments", Icon: Briefcase },
   { domain: "SAVING", label: "Savings", Icon: Lifebuoy },

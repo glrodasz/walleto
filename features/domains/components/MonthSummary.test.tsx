@@ -18,13 +18,14 @@ describe("MonthSummary", () => {
         currency="USD"
       />
     );
-    expect(screen.getByText("Total spent so far")).toBeInTheDocument();
+    expect(screen.getByText("Spent so far")).toBeInTheDocument();
     expect(screen.getByText("Compared to $16,402.18 in August 2026")).toBeInTheDocument();
     // spending 12% more is bad news for expenses
     expect(screen.getByLabelText("Up 12%")).toHaveClass("bad");
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "77");
     expect(screen.getByText("77%")).toBeInTheDocument();
-    expect(screen.getByText("$5,361.45 left")).toBeInTheDocument();
+    expect(screen.getByText("Expected this month")).toBeInTheDocument();
+    expect(screen.getByText("$5,361.45 still to come")).toBeInTheDocument();
     // A domain without accounts never carries the breakdown line.
     expect(screen.queryByText(/contributed/)).not.toBeInTheDocument();
   });
@@ -43,7 +44,7 @@ describe("MonthSummary", () => {
     );
     expect(screen.getByText("Total received")).toBeInTheDocument();
     expect(screen.getByText("No previous month to compare with")).toBeInTheDocument();
-    expect(screen.getByText("Month total")).toBeInTheDocument();
+    expect(screen.getByText("Month closed")).toBeInTheDocument();
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100");
   });
 
@@ -127,7 +128,7 @@ describe("MonthSummary", () => {
 
   it("says what a debt month is made of: repaid, and the interest the balance revealed", () => {
     render(debts(-100));
-    expect(screen.getByText("Total repaid so far")).toBeInTheDocument();
+    expect(screen.getByText("Repaid so far")).toBeInTheDocument();
     expect(screen.getByText("$1,000.00 repaid · $100.00 interest & charges")).toBeInTheDocument();
   });
 
