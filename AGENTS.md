@@ -67,7 +67,8 @@ Todo lo que solo sirve a una feature vive junta:
 features/
   onboarding/   el wizard de configuración inicial + el guard de acceso
   dashboard/    la home: hero del plan mensual (NetFlowCard + AllocationBar, con veredicto "On plan" /
-                "Over-committed"), patrimonio de hoy (NetWorthCard + hooks/useNetWorth + helpers/netWorth),
+                "Over-committed"), patrimonio de hoy (NetWorthCard + hooks/useNetWorth + helpers/netWorth) — las dos
+                son la misma pieza, `SummaryCard` (título + pill, cifra a la izquierda, desglose a la derecha),
                 stat cards por dominio ("planned per month"),
                 cash flow de 5 dominios apilado por categoría / moneda (CashFlowCard + helpers/cashFlowSeries),
                 top categorías, próximos pagos del plan, tip

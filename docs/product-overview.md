@@ -258,8 +258,10 @@ Down the page:
    not — the net figure ("left to allocate each month"), five mini stats
    (Income, Expenses, Investments, Savings, Debts) with an **allocation bar**
    splitting the month's income into expenses / investments / savings / debts
-   / left, and the quote _"A clear plan today, a freer tomorrow."_
-3. **Net worth** with a "TODAY" pill: investments + savings − what the debts
+   / left.
+3. **Net worth** with a "TODAY" pill — the same kind of card as the plan
+   (title and pill, big figure and one line on the left, what it is made of
+   in an inset panel on the right, figures aligned between the two): investments + savings − what the debts
    still owe, with the three parts beside it and "last checked …". A debt with
    no recorded balance shows "—", is left out of the figure and says so; an
    account valued only by its interest rate marks the figure "partly
