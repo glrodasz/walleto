@@ -13,7 +13,10 @@ jest.mock("../../../lib/auth0", () => ({
 jest.mock("../../../firebase/admin", () => ({
   __esModule: true,
   default: {
-    firestore: jest.fn(() => ({ collection: collectionMock })),
+    firestore: Object.assign(
+      jest.fn(() => ({ collection: collectionMock })),
+      { FieldValue: { delete: jest.fn(() => "DELETE_FIELD") } }
+    ),
   },
 }));
 
@@ -90,6 +93,32 @@ describe("PATCH /api/payment-methods/[id]", () => {
       last4: "1234",
       defaultCurrency: "EUR",
     });
+  });
+
+  it("deletes last4 when it is cleared with null", async () => {
+    const update = wireDoc({ userId: "user1" });
+    const res = mockRes();
+    await handler(req("PATCH", { name: "Amex", last4: null }), res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(update).toHaveBeenCalledWith({ name: "Amex", last4: "DELETE_FIELD" });
+  });
+
+  it("leaves last4 alone when it isn't sent", async () => {
+    const update = wireDoc({ userId: "user1" });
+    const res = mockRes();
+    await handler(req("PATCH", { name: "Amex" }), res);
+
+    expect(update).toHaveBeenCalledWith({ name: "Amex" });
+  });
+
+  it("rejects a partial last4", async () => {
+    const update = wireDoc({ userId: "user1" });
+    const res = mockRes();
+    await handler(req("PATCH", { last4: "12" }), res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(update).not.toHaveBeenCalled();
   });
 });
 

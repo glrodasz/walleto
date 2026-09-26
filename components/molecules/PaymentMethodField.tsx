@@ -4,14 +4,17 @@ import { TextField } from "../atoms/TextField";
 import { Combobox } from "../atoms/Combobox";
 import { Chip } from "../atoms/Chip";
 import { Button } from "../atoms/Button";
+import { Last4Field } from "./Last4Field";
 import { paymentMethodOptionLabel } from "../../helpers/paymentMethodLabel";
 import {
   CARD_TYPES,
   NETWORK_SUGGESTIONS,
+  last4Error,
   PAYMENT_METHOD_TYPE_OPTIONS,
   networkFieldLabel,
   sortByName,
 } from "../../helpers/paymentMethodOptions";
+import { errorMessage } from "../../utils/errorMessage";
 import type { PaymentMethodInput } from "../../schemas";
 import type { PaymentMethod, PaymentMethodType } from "../../types";
 
@@ -54,6 +57,7 @@ export function PaymentMethodField({
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [busy, setBusy] = useState(false);
+  const [attempted, setAttempted] = useState(false);
 
   const options = sortByName(methods).map((m) => ({
     value: m.id!,
@@ -66,11 +70,17 @@ export function PaymentMethodField({
   const cancel = () => {
     setCreating(false);
     setDraft(EMPTY);
+    setAttempted(false);
   };
 
   const save = async () => {
     if (!draft.type) return onError?.("Pick a method type");
     if (!draft.name.trim()) return onError?.("Give the method a name");
+    const last4Problem = showLast4 ? last4Error(draft.last4) : null;
+    if (last4Problem) {
+      setAttempted(true);
+      return onError?.(last4Problem);
+    }
     setBusy(true);
     try {
       const id = await createMethod({
@@ -83,15 +93,7 @@ export function PaymentMethodField({
       cancel();
     } catch (err) {
       console.error("Failed to create payment method:", err);
-      const text = err instanceof Error ? err.message : "";
-      const parsed = (() => {
-        try {
-          return (JSON.parse(text) as { error?: unknown }).error;
-        } catch {
-          return undefined;
-        }
-      })();
-      onError?.(typeof parsed === "string" ? parsed : "Couldn't create the payment method");
+      onError?.(errorMessage(err, "Couldn't create the payment method"));
     } finally {
       setBusy(false);
     }
@@ -122,16 +124,11 @@ export function PaymentMethodField({
           />
         )}
         {showLast4 && (
-          <TextField
-            label="Last 4 numbers"
-            placeholder="0000"
-            inputMode="numeric"
-            maxLength={4}
+          <Last4Field
             value={draft.last4}
             disabled={busy}
-            onValueChange={(v) =>
-              setDraft((d) => ({ ...d, last4: v.replace(/\D/g, "").slice(0, 4) }))
-            }
+            showError={attempted}
+            onChange={(last4) => setDraft((d) => ({ ...d, last4 }))}
           />
         )}
         <TextField

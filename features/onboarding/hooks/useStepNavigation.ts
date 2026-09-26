@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
+import { errorMessage } from "../../../utils/errorMessage";
 
 /**
  * Save-then-navigate for a wizard step. Every way out of a step — Next, Back,
@@ -20,7 +21,7 @@ export function useStepNavigation(save: () => Promise<void>, failureMessage: str
       return true;
     } catch (err) {
       console.error(failureMessage, err);
-      setError(failureMessage);
+      setError(errorMessage(err, failureMessage));
       return false;
     } finally {
       setBusy(false);

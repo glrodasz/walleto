@@ -35,7 +35,16 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       return res.status(400).json({ error: parsed.error.flatten() });
     }
 
-    await ref.update({ ...parsed.data });
+    const { last4, ...rest } = parsed.data;
+    await ref.update({
+      ...rest,
+      // PATCH convention: null deletes the field rather than storing it.
+      ...(last4 === null
+        ? { last4: admin.firestore.FieldValue.delete() }
+        : last4 !== undefined
+          ? { last4 }
+          : {}),
+    });
     return res.status(200).json({ id });
   }
 

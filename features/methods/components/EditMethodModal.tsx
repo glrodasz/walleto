@@ -4,13 +4,16 @@ import { TextField } from "../../../components/atoms/TextField";
 import { Combobox } from "../../../components/atoms/Combobox";
 import { Select } from "../../../components/atoms/Select";
 import { Button } from "../../../components/atoms/Button";
+import { Last4Field } from "../../../components/molecules/Last4Field";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import {
   CARD_TYPES,
   NETWORK_SUGGESTIONS,
+  last4Error,
   networkFieldLabel,
 } from "../../../helpers/paymentMethodOptions";
 import { useEnabledCurrencies } from "../../../hooks/useEnabledCurrencies";
+import { errorMessage } from "../../../utils/errorMessage";
 import type { Currency, PaymentMethod } from "../../../types";
 
 interface Props {
@@ -35,6 +38,7 @@ export function EditMethodModal({ method, onClose }: Props) {
   const [defaultCurrency, setDefaultCurrency] = useState<Currency | "">("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attempted, setAttempted] = useState(false);
 
   useEffect(() => {
     if (!method) return;
@@ -43,6 +47,7 @@ export function EditMethodModal({ method, onClose }: Props) {
     setLast4(method.last4 ?? "");
     setDefaultCurrency(method.defaultCurrency ?? "");
     setError(null);
+    setAttempted(false);
   }, [method]);
 
   if (!method) return null;
@@ -53,19 +58,29 @@ export function EditMethodModal({ method, onClose }: Props) {
 
   const submit = async () => {
     if (!name.trim()) return setError("Give it a name");
+    if (showLast4 && last4Error(last4)) {
+      setAttempted(true);
+      return setError(null);
+    }
+    // Only a changed last 4 is sent. An empty one used to go out as "", fail
+    // the 4-digit rule and block every edit of a card saved without it;
+    // clearing it is a null, which the route turns into a field delete.
+    const previousLast4 = method.last4 ?? "";
+    const last4Patch =
+      showLast4 && last4 !== previousLast4 ? { last4: last4 === "" ? null : last4 } : {};
     setBusy(true);
     setError(null);
     try {
       await update(method.id!, {
         name: name.trim(),
         ...(showNetwork ? { network: network.trim() } : {}),
-        ...(showLast4 ? { last4 } : {}),
+        ...last4Patch,
         ...(defaultCurrency ? { defaultCurrency } : {}),
       });
       onClose();
     } catch (err) {
       console.error("Failed to update payment method:", err);
-      setError("Couldn't save — try again");
+      setError(errorMessage(err, "Couldn't save — try again"));
     } finally {
       setBusy(false);
     }
@@ -92,16 +107,7 @@ export function EditMethodModal({ method, onClose }: Props) {
           />
         )}
 
-        {showLast4 && (
-          <TextField
-            label="Last 4 numbers"
-            placeholder="0000"
-            inputMode="numeric"
-            maxLength={4}
-            value={last4}
-            onValueChange={(v) => setLast4(v.replace(/\D/g, "").slice(0, 4))}
-          />
-        )}
+        {showLast4 && <Last4Field value={last4} showError={attempted} onChange={setLast4} />}
 
         <Select
           label="Default currency"
