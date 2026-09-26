@@ -6,7 +6,7 @@ import { Card } from "../components/atoms/Card";
 const LAST_UPDATED = "September 26, 2026";
 
 export default function Privacy() {
-  const support = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "support@waletto.example";
+  const support = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "walleto@guillermorodas.com";
 
   return (
     <>
