@@ -7,9 +7,11 @@ import { MethodsStep } from "./MethodsStep";
 import { RecurrentStep } from "./RecurrentStep";
 import { CurrencyPicker } from "./CurrencyPicker";
 import { WizardActions } from "./WizardActions";
+import { ContinueLater } from "./ContinueLater";
 import { useMethodsStep } from "../hooks/useMethodsStep";
 import { useRecurrentStep } from "../hooks/useRecurrentStep";
 import { useStepNavigation } from "../hooks/useStepNavigation";
+import { useLeaveOnboarding } from "../hooks/useLeaveOnboarding";
 import { useUserDoc } from "../../../hooks/useUserDoc";
 import { at, MOBILE, screen } from "../../../stories/templates";
 import type { Currency } from "../../../types";
@@ -23,52 +25,21 @@ import type { Currency } from "../../../types";
 
 function Categories() {
   const router = useRouter();
-  const { update } = useUserDoc();
-  const [busy, setBusy] = useState(false);
-  const skip = async () => {
-    setBusy(true);
-    try {
-      await update({ onboardingCompleted: true });
-      router.push("/");
-    } finally {
-      setBusy(false);
-    }
-  };
+  const { leave, leaving, error } = useLeaveOnboarding();
   const go = (href: string) => router.push(href);
   return (
     <OnboardingLayout
       step={1}
       description="Your plan is sorted by category. Keep the defaults or add your own."
       onNavigate={go}
-      busy={busy}
+      busy={leaving}
       footer={
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 16,
-            width: "100%",
-          }}
-        >
-          <button
-            type="button"
-            onClick={skip}
-            disabled={busy}
-            style={{
-              border: "none",
-              background: "none",
-              color: "var(--fg-2)",
-              textDecoration: "underline",
-              cursor: "pointer",
-              font: "inherit",
-              fontSize: "0.875rem",
-            }}
-          >
-            Skip for now
-          </button>
-          <WizardActions onNext={() => go("/onboarding/methods")} busy={busy} />
-        </div>
+        <WizardActions
+          leading={<ContinueLater step={1} onClick={leave} busy={leaving} />}
+          onNext={() => go("/onboarding/methods")}
+          busy={leaving}
+          error={error}
+        />
       }
     >
       <CategoriesStep />
@@ -78,22 +49,24 @@ function Categories() {
 
 function Methods() {
   const state = useMethodsStep();
-  const { busy, error, go } = useStepNavigation(async () => {
+  const { busy, error, flush, go } = useStepNavigation(async () => {
     await state.save();
   }, "Could not save your payment methods. Please try again.");
+  const later = useLeaveOnboarding(flush);
   return (
     <OnboardingLayout
       step={2}
       description="How you pay: your cards and accounts, so each plan item knows where it is charged."
       onBack={() => go("/onboarding/categories")}
       onNavigate={go}
-      busy={busy}
+      busy={busy || later.leaving}
       footer={
         <WizardActions
+          leading={<ContinueLater step={2} onClick={later.leave} busy={busy || later.leaving} />}
           onBack={() => go("/onboarding/categories")}
           onNext={() => go("/onboarding/incomes")}
-          busy={busy}
-          error={error}
+          busy={busy || later.leaving}
+          error={error ?? later.error}
         />
       }
     >
@@ -110,22 +83,24 @@ function Incomes() {
   useEffect(() => {
     if (!touched && userDoc?.mainCurrency) setCurrency(userDoc.mainCurrency);
   }, [userDoc?.mainCurrency, touched]);
-  const { busy, error, go } = useStepNavigation(async () => {
+  const { busy, error, flush, go } = useStepNavigation(async () => {
     if (currency !== userDoc?.mainCurrency) await update({ mainCurrency: currency });
     await state.save();
   }, "Could not save your income. Please try again.");
+  const later = useLeaveOnboarding(flush);
   return (
     <OnboardingLayout
       step={3}
       onBack={() => go("/onboarding/methods")}
       onNavigate={go}
-      busy={busy}
+      busy={busy || later.leaving}
       footer={
         <WizardActions
+          leading={<ContinueLater step={3} onClick={later.leave} busy={busy || later.leaving} />}
           onBack={() => go("/onboarding/methods")}
           onNext={() => go("/onboarding/expenses")}
-          busy={busy}
-          error={error}
+          busy={busy || later.leaving}
+          error={error ?? later.error}
         />
       }
     >
@@ -149,23 +124,25 @@ function Incomes() {
 function Expenses() {
   const { userDoc } = useUserDoc();
   const state = useRecurrentStep("EXPENSE", userDoc?.mainCurrency ?? "USD");
-  const { busy, error, go } = useStepNavigation(async () => {
+  const { busy, error, flush, go } = useStepNavigation(async () => {
     await state.save();
   }, "Could not save your expenses. Please try again.");
+  const later = useLeaveOnboarding(flush);
   return (
     <OnboardingLayout
       step={4}
       description="What do you pay every month?"
       onBack={() => go("/onboarding/incomes")}
       onNavigate={go}
-      busy={busy}
+      busy={busy || later.leaving}
       footer={
         <WizardActions
+          leading={<ContinueLater step={4} onClick={later.leave} busy={busy || later.leaving} />}
           onBack={() => go("/onboarding/incomes")}
           onNext={() => go("/")}
           nextLabel="Finish setup"
-          busy={busy}
-          error={error}
+          busy={busy || later.leaving}
+          error={error ?? later.error}
         />
       }
     >
@@ -201,5 +178,8 @@ export const Step4Expenses: Story = {
 export const Mobile: Story = {
   render: () => <Methods />,
   parameters: at("/onboarding/methods"),
+  globals: MOBILE,
+};
+export const MobileFirstStep: Story = {
   globals: MOBILE,
 };

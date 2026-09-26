@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Button } from "../../../components/atoms/Button";
 import { ArrowLeft, ArrowRight } from "../../../components/atoms/Icons";
 
@@ -7,9 +8,11 @@ interface Props {
   nextLabel?: string;
   busy?: boolean;
   error?: string | null;
+  /** Left-hand slot, e.g. ContinueLater. */
+  leading?: ReactNode;
 }
 
-export function WizardActions({ onBack, onNext, nextLabel = "Next", busy, error }: Props) {
+export function WizardActions({ onBack, onNext, nextLabel = "Next", busy, error, leading }: Props) {
   return (
     <div className="actions">
       {error && (
@@ -17,17 +20,20 @@ export function WizardActions({ onBack, onNext, nextLabel = "Next", busy, error 
           {error}
         </p>
       )}
-      <div className="buttons">
-        {onBack && (
-          <Button variant="ghost" onClick={onBack} disabled={busy}>
-            <ArrowLeft size={16} />
-            Back
+      <div className="row">
+        {leading && <div className="leading">{leading}</div>}
+        <div className="buttons">
+          {onBack && (
+            <Button variant="ghost" onClick={onBack} disabled={busy}>
+              <ArrowLeft size={16} />
+              Back
+            </Button>
+          )}
+          <Button variant="primary" onClick={onNext} disabled={busy}>
+            {busy ? "Saving…" : nextLabel}
+            {!busy && <ArrowRight size={16} />}
           </Button>
-        )}
-        <Button variant="primary" onClick={onNext} disabled={busy}>
-          {busy ? "Saving…" : nextLabel}
-          {!busy && <ArrowRight size={16} />}
-        </Button>
+        </div>
       </div>
 
       <style jsx>{`
@@ -37,6 +43,19 @@ export function WizardActions({ onBack, onNext, nextLabel = "Next", busy, error 
           align-items: flex-end;
           gap: 10px;
           width: 100%;
+        }
+
+        .row {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 16px;
+          width: 100%;
+        }
+
+        .leading {
+          margin-right: auto;
+          min-width: 0;
         }
 
         .buttons {

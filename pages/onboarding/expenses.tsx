@@ -6,6 +6,8 @@ import { RecurrentStep } from "../../features/onboarding/components/RecurrentSte
 import { useRecurrentStep } from "../../features/onboarding/hooks/useRecurrentStep";
 import { useStepNavigation } from "../../features/onboarding/hooks/useStepNavigation";
 import { WizardActions } from "../../features/onboarding/components/WizardActions";
+import { ContinueLater } from "../../features/onboarding/components/ContinueLater";
+import { useLeaveOnboarding } from "../../features/onboarding/hooks/useLeaveOnboarding";
 import { useUserDoc } from "../../hooks/useUserDoc";
 import { materializeNow } from "../../hooks/useMaterialize";
 
@@ -21,6 +23,8 @@ export default function OnboardingExpenses() {
   const { busy, error, flush, go } = useStepNavigation(async () => {
     await state.save();
   }, "Could not save your expenses. Please try again.");
+  const later = useLeaveOnboarding(flush);
+  const pending = busy || finishing || later.leaving;
 
   const complete = async () => {
     if (!(await flush())) return;
@@ -44,14 +48,15 @@ export default function OnboardingExpenses() {
       step={4}
       onBack={() => go("/onboarding/incomes")}
       onNavigate={go}
-      busy={busy || finishing}
+      busy={pending}
       footer={
         <WizardActions
+          leading={<ContinueLater step={4} onClick={later.leave} busy={pending} />}
           onBack={() => go("/onboarding/incomes")}
           onNext={complete}
           nextLabel="Finish"
-          busy={busy || finishing}
-          error={error ?? finishError}
+          busy={pending}
+          error={error ?? finishError ?? later.error}
         />
       }
     >
