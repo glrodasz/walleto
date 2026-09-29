@@ -12,6 +12,7 @@ import {
 } from "../../../helpers/scheduleAnchor";
 import { sectionFor } from "../helpers/cadenceSections";
 import { useDecimalInput } from "../../../hooks/useDecimalInput";
+import { saveAll } from "../../../utils/saveAll";
 import type { Currency, Domain, Frequency, RecurrentTransactionType } from "../../../types";
 
 export interface RecurrentRow extends DraftRow {
@@ -98,28 +99,35 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
     return DEFAULT_TYPE[domain] ?? "OTHER";
   };
 
-  /** Persists rows that don't have an id yet; returns the number created. */
-  const save = async () => {
-    let created = 0;
-    for (const row of draft.rows) {
+  /**
+   * Persists rows that don't have an id yet; returns the number created.
+   * The POSTs go out in parallel; rows that saved keep their id even if
+   * another fails, so a retry doesn't duplicate them.
+   */
+  const save = () => {
+    const rows = draft.rows.filter((row) => {
       const amount = parse(row.amount) ?? NaN;
       // Skip rows the user left blank or only partially filled.
-      if (row.id || !row.categoryId || !row.name.trim() || !(amount > 0)) continue;
+      return !row.id && row.categoryId && row.name.trim() && amount > 0;
+    });
 
-      const startDate = anchorStartDate({
-        frequency: row.frequency,
-        dayOfMonth: row.dayOfMonth,
-        secondDayOfMonth: row.secondDayOfMonth,
-        month: row.month,
-        date: row.date,
-        backfill: backfill && sectionFor(row.frequency).recurring,
-      });
+    return saveAll(
+      rows,
+      (row) => {
+        const amount = parse(row.amount) as number;
+        const startDate = anchorStartDate({
+          frequency: row.frequency,
+          dayOfMonth: row.dayOfMonth,
+          secondDayOfMonth: row.secondDayOfMonth,
+          month: row.month,
+          date: row.date,
+          backfill: backfill && sectionFor(row.frequency).recurring,
+        });
 
-      // A one-time row is a ledger entry, not a plan: it becomes a dated
-      // transaction and is not re-hydrated as a row on the way back.
-      const id =
-        row.frequency === "ONE_TIME"
-          ? await createTransaction({
+        // A one-time row is a ledger entry, not a plan: it becomes a dated
+        // transaction and is not re-hydrated as a row on the way back.
+        return row.frequency === "ONE_TIME"
+          ? createTransaction({
               domain,
               categoryId: row.categoryId,
               name: row.name.trim(),
@@ -129,7 +137,7 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
               status: "PAID",
               ...(row.paymentMethodId ? { paymentMethodId: row.paymentMethodId } : {}),
             })
-          : await create({
+          : create({
               domain,
               categoryId: row.categoryId,
               name: row.name.trim(),
@@ -141,10 +149,9 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
               startDate: startDate.toISOString(),
               ...(row.paymentMethodId ? { paymentMethodId: row.paymentMethodId } : {}),
             });
-      draft.update(row.key, { id });
-      created++;
-    }
-    return created;
+      },
+      (row, id) => draft.update(row.key, { id })
+    );
   };
 
   /**

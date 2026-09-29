@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import auth0 from "../../lib/auth0";
+import { withPageAuthRequired } from "@auth0/nextjs-auth0/client";
 import { OnboardingLayout } from "../../features/onboarding/components/OnboardingLayout";
 import { RecurrentStep } from "../../features/onboarding/components/RecurrentStep";
 import { useRecurrentStep } from "../../features/onboarding/hooks/useRecurrentStep";
@@ -11,9 +11,11 @@ import { useLeaveOnboarding } from "../../features/onboarding/hooks/useLeaveOnbo
 import { useUserDoc } from "../../hooks/useUserDoc";
 import type { Currency } from "../../types";
 
-export const getServerSideProps = auth0.withPageAuthRequired();
-
-export default function OnboardingIncomes() {
+// Auth is checked on the client, not in getServerSideProps: with a server
+// guard every Next/Back became a serverless round trip (often a cold start)
+// before the next step could render. Static pages switch instantly, and the
+// data is still guarded by Firestore rules and the API routes.
+function OnboardingIncomes() {
   const { userDoc, update } = useUserDoc();
   const [currency, setCurrency] = useState<Currency>("USD");
   const [currencyTouched, setCurrencyTouched] = useState(false);
@@ -82,3 +84,5 @@ export default function OnboardingIncomes() {
     </OnboardingLayout>
   );
 }
+
+export default withPageAuthRequired(OnboardingIncomes);

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { ReactNode } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
@@ -35,6 +36,16 @@ export function OnboardingLayout({
 }: Props) {
   const router = useRouter();
   const progress = (step / ONBOARDING_STEPS.length) * 100;
+
+  // Steps navigate with router.push, which (unlike <Link>) doesn't prefetch:
+  // load the other steps' code up front so Next/Back don't wait on a chunk.
+  useEffect(() => {
+    for (const s of ONBOARDING_STEPS) {
+      // Best effort; Storybook's router mock returns undefined, hence the wrap.
+      Promise.resolve(router.prefetch?.(s.href)).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per mount
+  }, []);
 
   const handleBack = () => {
     if (onBack) return onBack();

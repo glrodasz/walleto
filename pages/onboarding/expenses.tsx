@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
-import auth0 from "../../lib/auth0";
+import { withPageAuthRequired } from "@auth0/nextjs-auth0/client";
 import { OnboardingLayout } from "../../features/onboarding/components/OnboardingLayout";
 import { RecurrentStep } from "../../features/onboarding/components/RecurrentStep";
 import { useRecurrentStep } from "../../features/onboarding/hooks/useRecurrentStep";
@@ -11,9 +11,11 @@ import { useLeaveOnboarding } from "../../features/onboarding/hooks/useLeaveOnbo
 import { useUserDoc } from "../../hooks/useUserDoc";
 import { materializeNow } from "../../hooks/useMaterialize";
 
-export const getServerSideProps = auth0.withPageAuthRequired();
-
-export default function OnboardingExpenses() {
+// Auth is checked on the client, not in getServerSideProps: with a server
+// guard every Next/Back became a serverless round trip (often a cold start)
+// before the next step could render. Static pages switch instantly, and the
+// data is still guarded by Firestore rules and the API routes.
+function OnboardingExpenses() {
   const router = useRouter();
   const { userDoc, update } = useUserDoc();
   const state = useRecurrentStep("EXPENSE", userDoc?.mainCurrency ?? "USD");
@@ -82,3 +84,5 @@ export default function OnboardingExpenses() {
     </OnboardingLayout>
   );
 }
+
+export default withPageAuthRequired(OnboardingExpenses);

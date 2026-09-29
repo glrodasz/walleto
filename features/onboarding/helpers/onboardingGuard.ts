@@ -12,9 +12,10 @@ export const ONBOARDED_SESSION_KEY = "onboarded";
  * created lazily by /api/firebase, so a missing doc means "brand new user" and
  * is treated as not-onboarded.
  *
- * The wizard routes deliberately do NOT use this — they stay on plain
- * withPageAuthRequired, which keeps the redirect target reachable (no loop) and
- * lets a finished user re-run setup.
+ * The wizard routes deliberately do NOT use this — they use Auth0's client-side
+ * withPageAuthRequired (static pages, so steps switch without a server round
+ * trip), which keeps the redirect target reachable (no loop) and lets a
+ * finished user re-run setup.
  *
  * Getting through costs a Firestore read, and in the Pages Router this runs on
  * every client-side navigation too. So once the doc says "onboarded", the flag

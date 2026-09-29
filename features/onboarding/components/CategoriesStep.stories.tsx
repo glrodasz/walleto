@@ -25,3 +25,14 @@ export const Empty: Story = {
     }));
   },
 };
+
+/** First snapshot still pending: placeholder chips, not five empty sections. */
+export const Loading: Story = {
+  beforeEach: () => {
+    mocked(useCategories).mockImplementation((domain) => ({
+      ...hookDefaults.useCategories(domain),
+      categories: [],
+      loading: true,
+    }));
+  },
+};

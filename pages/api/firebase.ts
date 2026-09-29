@@ -25,22 +25,28 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
 
     const userId = session.user.sub;
 
-    // Bootstrap new users: create user doc + seed default categories on first login
+    // Bootstrap new users: create user doc + seed default categories on first
+    // login. Everything that doesn't depend on something else runs at once —
+    // this sits in front of the very first paint of the wizard.
     const userRef = admin.firestore().collection("users").doc(userId);
-    const userSnap = await userRef.get();
+    const [userSnap, customToken] = await Promise.all([
+      userRef.get(),
+      // Auth0 owns identity, but Firestore rules authorize by Firebase UID. We mint a
+      // Firebase custom token keyed to the Auth0 user id so the client can sign in to
+      // Firebase and have its requests scoped to that same user.
+      getAuth().createCustomToken(userId),
+    ]);
     if (!userSnap.exists) {
-      await userRef.set({
-        mainCurrency: "USD",
-        onboardingCompleted: false,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-      await seedDefaultCategories(userId);
+      await Promise.all([
+        userRef.set({
+          mainCurrency: "USD",
+          onboardingCompleted: false,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        }),
+        seedDefaultCategories(userId),
+      ]);
     }
 
-    // Auth0 owns identity, but Firestore rules authorize by Firebase UID. We mint a
-    // Firebase custom token keyed to the Auth0 user id so the client can sign in to
-    // Firebase and have its requests scoped to that same user.
-    const customToken = await getAuth().createCustomToken(userId);
     return res.status(200).json({ firebaseToken: customToken });
   } catch (err) {
     console.error("firebase token api error:", err);
