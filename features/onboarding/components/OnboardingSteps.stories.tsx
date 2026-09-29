@@ -18,8 +18,8 @@ import type { Currency } from "../../../types";
 
 /*
  * The four wizard pages composed exactly as pages/onboarding/*.tsx do.
- * The page files themselves stay out of Storybook: they export
- * getServerSideProps with server-only imports. Navigation goes to the
+ * The page files themselves stay out of Storybook: they're wrapped in the
+ * Auth0 client guard. Navigation goes to the
  * Storybook router mock, so "Next" logs an action instead of leaving.
  */
 

@@ -1,4 +1,4 @@
-import auth0 from "../../lib/auth0";
+import { withPageAuthRequired } from "@auth0/nextjs-auth0/client";
 import { OnboardingLayout } from "../../features/onboarding/components/OnboardingLayout";
 import { MethodsStep } from "../../features/onboarding/components/MethodsStep";
 import { useMethodsStep } from "../../features/onboarding/hooks/useMethodsStep";
@@ -7,9 +7,11 @@ import { WizardActions } from "../../features/onboarding/components/WizardAction
 import { ContinueLater } from "../../features/onboarding/components/ContinueLater";
 import { useLeaveOnboarding } from "../../features/onboarding/hooks/useLeaveOnboarding";
 
-export const getServerSideProps = auth0.withPageAuthRequired();
-
-export default function OnboardingMethods() {
+// Auth is checked on the client, not in getServerSideProps: with a server
+// guard every Next/Back became a serverless round trip (often a cold start)
+// before the next step could render. Static pages switch instantly, and the
+// data is still guarded by Firestore rules and the API routes.
+function OnboardingMethods() {
   const state = useMethodsStep();
   const { busy, error, flush, go } = useStepNavigation(async () => {
     await state.save();
@@ -37,3 +39,5 @@ export default function OnboardingMethods() {
     </OnboardingLayout>
   );
 }
+
+export default withPageAuthRequired(OnboardingMethods);

@@ -4,6 +4,7 @@ import { useDraftRows } from "../../../hooks/useDraftRows";
 import type { DraftRow } from "../../../hooks/useDraftRows";
 import { CARD_TYPES, LAST4_ERROR, last4Error } from "../../../helpers/paymentMethodOptions";
 import { UserFacingError } from "../../../utils/errorMessage";
+import { saveAll } from "../../../utils/saveAll";
 import type { PaymentMethodType } from "../../../types";
 
 export interface MethodRow extends DraftRow {
@@ -58,6 +59,8 @@ export function useMethodsStep({ hydrate = true }: Options = {}) {
    * Persists rows that don't have an id yet; returns the number created.
    * Every row is checked before the first POST: rows save one by one, so a
    * bad one in the middle used to leave the ones before it saved and locked.
+   * Rows that did save keep their id even if another fails, so a retry
+   * doesn't duplicate them.
    */
   const save = async () => {
     const rows = pending();
@@ -67,18 +70,18 @@ export function useMethodsStep({ hydrate = true }: Options = {}) {
     }
     setAttempted(false);
 
-    let created = 0;
-    for (const row of rows) {
-      const id = await create({
-        name: row.name.trim(),
-        type: row.type,
-        ...(row.network.trim() ? { network: row.network.trim() } : {}),
-        ...(row.last4 && CARD_TYPES.includes(row.type) ? { last4: row.last4 } : {}),
-      });
-      draft.update(row.key, { id });
-      created++;
-    }
-    return created;
+    // In parallel: one at a time, each POST (and a cold function) added up.
+    return saveAll(
+      rows,
+      (row) =>
+        create({
+          name: row.name.trim(),
+          type: row.type,
+          ...(row.network.trim() ? { network: row.network.trim() } : {}),
+          ...(row.last4 && CARD_TYPES.includes(row.type) ? { last4: row.last4 } : {}),
+        }),
+      (row, id) => draft.update(row.key, { id })
+    );
   };
 
   /**

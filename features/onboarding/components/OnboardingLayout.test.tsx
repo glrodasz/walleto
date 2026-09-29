@@ -2,16 +2,25 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { OnboardingLayout, ONBOARDING_STEPS } from "./OnboardingLayout";
 
 const pushMock = jest.fn();
+const prefetchMock = jest.fn((_href: string) => Promise.resolve());
 
 jest.mock("next/router", () => ({
-  useRouter: () => ({ push: pushMock }),
+  useRouter: () => ({ push: pushMock, prefetch: prefetchMock }),
 }));
 
 beforeEach(() => {
   pushMock.mockReset();
+  prefetchMock.mockClear();
 });
 
 describe("OnboardingLayout", () => {
+  it("prefetches every step so Next/Back don't wait on a chunk", () => {
+    render(<OnboardingLayout step={1}>body</OnboardingLayout>);
+    expect(prefetchMock.mock.calls.map(([href]) => href)).toEqual(
+      ONBOARDING_STEPS.map((s) => s.href)
+    );
+  });
+
   it("renders the title and all four step labels", () => {
     render(
       <OnboardingLayout step={1}>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useCategories } from "../../../hooks/useCategories";
 import { Chip } from "../../../components/atoms/Chip";
 import { Combobox } from "../../../components/atoms/Combobox";
+import { ErrorState } from "../../../components/atoms/ErrorState";
 import {
   TrendingUp,
   TrendingDown,
@@ -10,7 +11,7 @@ import {
   CreditCard,
 } from "../../../components/atoms/Icons";
 import suggestionsByDomain from "../data/categorySuggestions.json";
-import type { Domain } from "../../../types";
+import type { Category, Domain } from "../../../types";
 
 const SECTIONS: { domain: Domain; label: string; Icon: typeof TrendingUp }[] = [
   { domain: "INCOME", label: "Income", Icon: TrendingUp },
@@ -20,12 +21,19 @@ const SECTIONS: { domain: Domain; label: string; Icon: typeof TrendingUp }[] = [
   { domain: "DEBT", label: "Debts", Icon: CreditCard },
 ];
 
-function CategorySection({ domain, label, Icon }: (typeof SECTIONS)[number]) {
-  const { categories, create, remove } = useCategories(domain);
-  const [adding, setAdding] = useState(false);
+type Section = (typeof SECTIONS)[number];
 
-  // Only top-level categories belong in this step; subcategories come later.
-  const roots = categories.filter((c) => !c.parentId);
+interface SectionProps extends Section {
+  /** This domain's top-level categories. */
+  roots: Category[];
+  /** First snapshot still pending: show placeholders, not an empty section. */
+  loading: boolean;
+  create: ReturnType<typeof useCategories>["create"];
+  remove: ReturnType<typeof useCategories>["remove"];
+}
+
+function CategorySection({ domain, label, Icon, roots, loading, create, remove }: SectionProps) {
+  const [adding, setAdding] = useState(false);
 
   // Don't suggest what the user already has.
   const taken = new Set(roots.map((c) => c.name.toLowerCase()));
@@ -49,7 +57,12 @@ function CategorySection({ domain, label, Icon }: (typeof SECTIONS)[number]) {
         {label}
       </h2>
 
-      <div className="chips">
+      <div className="chips" aria-busy={loading || undefined}>
+        {loading &&
+          [72, 96, 64].map((width) => (
+            <span key={width} className="placeholder" style={{ width }} aria-hidden="true" />
+          ))}
+
         {roots.map((cat) => (
           <Chip
             key={cat.id}
@@ -69,7 +82,7 @@ function CategorySection({ domain, label, Icon }: (typeof SECTIONS)[number]) {
             onSelect={commit}
             onCancel={() => setAdding(false)}
           />
-        ) : (
+        ) : loading ? null : (
           <Chip variant="add" onClick={() => setAdding(true)}>
             Add category
           </Chip>
@@ -99,16 +112,51 @@ function CategorySection({ domain, label, Icon }: (typeof SECTIONS)[number]) {
           gap: 8px;
           align-items: center;
         }
+
+        .placeholder {
+          height: 34px;
+          border-radius: 999px;
+          background: var(--glass-inset);
+          animation: pulse 1.2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+          50% {
+            opacity: 0.45;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .placeholder {
+            animation: none;
+          }
+        }
       `}</style>
     </section>
   );
 }
 
 export function CategoriesStep() {
+  // One listener for all five sections: a brand-new user used to wait on five
+  // separate queries, each painting its section whenever it happened to land.
+  const { categories, loading, error, create, remove } = useCategories();
+
+  if (error) return <ErrorState title="Couldn't load your categories" error={error} />;
+
+  // Only top-level categories belong in this step; subcategories come later.
+  const rootsFor = (domain: Domain) => categories.filter((c) => c.domain === domain && !c.parentId);
+
   return (
     <div className="sections">
       {SECTIONS.map((s) => (
-        <CategorySection key={s.domain} {...s} />
+        <CategorySection
+          key={s.domain}
+          {...s}
+          roots={rootsFor(s.domain)}
+          loading={loading}
+          create={create}
+          remove={remove}
+        />
       ))}
 
       <style jsx>{`
