@@ -98,7 +98,9 @@ export function MethodsStep({ state }: Props) {
       })}
 
       <div>
-        <Chip variant="add" onClick={add}>
+        {/* Never `onClick={add}`: add() takes overrides, so the click event got
+            spread into the new row and its `type` became "click". */}
+        <Chip variant="add" onClick={() => add()}>
           Add more
         </Chip>
       </div>
