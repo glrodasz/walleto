@@ -2,7 +2,9 @@ import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
 import { EmptyState } from "../../../components/atoms/EmptyState";
+import { MethodFaceButton } from "../../../components/molecules/MethodFace";
 import { groupMethodsByType } from "../../../helpers/paymentMethodOptions";
+import { paymentMethodDescription } from "../../../helpers/paymentMethodLabel";
 import type { PaymentMethod } from "../../../types";
 
 interface Props {
@@ -26,49 +28,48 @@ export function MethodsList({ methods, loading, archivingId, onEdit, onArchive }
           description="Add one above to link it to your incomes and expenses."
         />
       ) : (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Network</th>
-              <th>Last 4</th>
-              <th>Default currency</th>
-              <th />
-            </tr>
-          </thead>
+        <div className="groups">
           {groupMethodsByType(methods).map((group) => (
-            <tbody key={group.type}>
-              <tr className="group">
-                <th colSpan={5} scope="rowgroup">
-                  {group.label}
-                  <span className="count">{group.methods.length}</span>
-                </th>
-              </tr>
-              {group.methods.map((m) => (
-                <tr key={m.id}>
-                  <td>{m.name}</td>
-                  <td className="muted">{m.network || "—"}</td>
-                  <td className="muted mono">{m.last4 ? `••${m.last4}` : "—"}</td>
-                  <td className="muted">{m.defaultCurrency ?? "—"}</td>
-                  <td className="actions">
-                    <KebabMenu
-                      aria-label={`Actions for ${m.name}`}
-                      actions={[
-                        { label: "Edit", onSelect: () => onEdit(m) },
-                        {
-                          label: archivingId === m.id ? "Archiving…" : "Archive",
-                          onSelect: () => m.id && onArchive(m.id),
-                          danger: true,
-                          disabled: archivingId === m.id,
-                        },
-                      ]}
+            <section key={group.type} className="group" aria-label={group.label}>
+              <h3 className="group-title">
+                {group.label}
+                <span className="count">{group.methods.length}</span>
+              </h3>
+              <ul className="wallet">
+                {group.methods.map((m) => (
+                  <li key={m.id} className="method">
+                    <MethodFaceButton
+                      label={`Edit ${paymentMethodDescription(m)}`}
+                      onClick={() => onEdit(m)}
+                      type={m.type}
+                      name={m.name}
+                      network={m.network}
+                      last4={m.last4}
+                      currency={m.defaultCurrency}
                     />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+                    <div className="caption">
+                      <span className="muted">
+                        {m.defaultCurrency ? `Default ${m.defaultCurrency}` : "No default currency"}
+                      </span>
+                      <KebabMenu
+                        aria-label={`Actions for ${m.name}`}
+                        actions={[
+                          { label: "Edit", onSelect: () => onEdit(m) },
+                          {
+                            label: archivingId === m.id ? "Archiving…" : "Archive",
+                            onSelect: () => m.id && onArchive(m.id),
+                            danger: true,
+                            disabled: archivingId === m.id,
+                          },
+                        ]}
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
           ))}
-        </table>
+        </div>
       )}
 
       <style jsx>{`
@@ -78,81 +79,61 @@ export function MethodsList({ methods, loading, archivingId, onEdit, onArchive }
           color: var(--fg-2);
         }
 
-        .table {
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 0.85rem;
+        .groups {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
         }
 
-        .table th {
-          text-align: left;
-          font-size: 0.75rem;
-          font-weight: 600;
-          color: var(--fg-2);
-          padding: 0 12px 10px 0;
-          border-bottom: 1px solid var(--line);
-          white-space: nowrap;
+        .group {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
         }
 
-        .table th:last-child {
-          padding-right: 0;
-        }
-
-        .group th {
-          padding: 20px 0 8px;
+        .group-title {
+          margin: 0;
           font-size: 0.9rem;
           font-weight: 700;
           color: var(--fg-0);
-          border-bottom: none;
         }
 
-        .group .count {
+        .count {
           margin-left: 8px;
           font-size: 0.72rem;
           font-weight: 600;
           color: var(--fg-2);
         }
 
-        tbody:first-of-type .group th {
-          padding-top: 10px;
+        /* Cards side by side where they fit, one per row on a phone. */
+        .wallet {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+          gap: 14px;
+          margin: 0;
+          padding: 0;
+          list-style: none;
         }
 
-        .table td {
-          padding: 12px 12px 12px 0;
-          color: var(--fg-1);
-          border-bottom: 1px solid var(--line);
-          vertical-align: middle;
+        .method {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          min-width: 0;
         }
 
-        .table td:last-child {
-          padding-right: 0;
-        }
-
-        .table tr:last-child td {
-          border-bottom: none;
+        /* Outside the face's button: a kebab can't live inside another button. */
+        .caption {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          padding-left: 4px;
         }
 
         .muted {
+          font-size: 0.75rem;
           color: var(--fg-2);
-        }
-
-        .mono {
-          font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
-          font-variant-numeric: tabular-nums;
-        }
-
-        .actions {
-          text-align: right;
-          width: 32px;
-        }
-
-        @media (max-width: 700px) {
-          .table thead th:nth-child(2),
-          .table td:nth-child(2),
-          .table thead th:nth-child(4),
-          .table td:nth-child(4) {
-            display: none;
-          }
         }
       `}</style>
     </Card>

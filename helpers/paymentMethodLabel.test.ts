@@ -1,4 +1,8 @@
-import { paymentMethodLabel, paymentMethodOptionLabel } from "./paymentMethodLabel";
+import {
+  paymentMethodDescription,
+  paymentMethodLabel,
+  paymentMethodOptionLabel,
+} from "./paymentMethodLabel";
 
 describe("paymentMethodLabel", () => {
   it("renders name and last4 for cards", () => {
@@ -36,5 +40,24 @@ describe("paymentMethodOptionLabel", () => {
 
   it("keeps it short when only a name exists", () => {
     expect(paymentMethodOptionLabel({ name: "Efectivo", type: "CASH" })).toBe("Efectivo (Cash)");
+  });
+});
+
+describe("paymentMethodDescription", () => {
+  it("reads a card out in full", () => {
+    expect(
+      paymentMethodDescription({
+        name: "Bancolombia Débito",
+        type: "DEBIT_CARD",
+        network: "Mastercard",
+        last4: "8817",
+      })
+    ).toBe("Bancolombia Débito, Debit card, Mastercard, ending in 8817");
+  });
+
+  it("doesn't repeat a provider that is also the name", () => {
+    expect(
+      paymentMethodDescription({ name: "Wise", type: "DIGITAL_WALLET", network: "Wise" })
+    ).toBe("Wise, Digital wallet");
   });
 });

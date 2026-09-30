@@ -24,3 +24,15 @@ export function paymentMethodOptionLabel(method: LabelFields): string {
   parts.push(`(${PAYMENT_METHOD_TYPE_LABELS[method.type]})`);
   return parts.join(" ");
 }
+
+/**
+ * The spoken form, for a method drawn as a card or a check (MethodFace):
+ * the picture is decoration, so the button around it says what it is —
+ * "Bancolombia Débito, Debit card, Mastercard, ending in 8817".
+ */
+export function paymentMethodDescription(method: LabelFields): string {
+  const parts = [method.name, PAYMENT_METHOD_TYPE_LABELS[method.type]];
+  if (method.network && method.network !== method.name) parts.push(method.network);
+  if (method.last4) parts.push(`ending in ${method.last4}`);
+  return parts.join(", ");
+}

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
-import { mocked } from "storybook/test";
+import { mocked, userEvent, within } from "storybook/test";
 import { MethodsStep } from "./MethodsStep";
 import { useMethodsStep } from "../hooks/useMethodsStep";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
@@ -23,8 +23,15 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Saved methods hydrate as locked rows; new rows are typed below. */
+/** Saved methods hydrate as a closed wallet: each one drawn as what it is. */
 export const WithSavedMethods: Story = {};
+/** Tapping a face lifts it out with its fields; only the type is locked. */
+export const EditingSaved: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(await canvas.findByRole("button", { name: /Bancolombia/ }));
+  },
+};
 /** A brand-new user: one blank row. */
 export const FreshStart: Story = {
   beforeEach: () => {

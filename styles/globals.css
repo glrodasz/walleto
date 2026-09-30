@@ -41,6 +41,52 @@
   --bar-gain: #7c3aed;
 
   /*
+   * Payment-method faces (components/molecules/MethodFace): the one material
+   * that is not glass. A card, a check or a banknote is an object lying on
+   * the glass, not a surface floating over the page, so it keeps its own
+   * stock. Ink tokens are paired with the stock they sit on.
+   */
+  --face-ink: #f8fafc;
+  --face-ink-soft: rgba(248, 250, 252, 0.72);
+  --face-credit: linear-gradient(135deg, #1e293b 0%, #334155 52%, #1e3a8a 100%);
+  --face-debit: linear-gradient(135deg, #0f766e 0%, #0e7490 55%, #1d4ed8 100%);
+  --face-sheen: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0.24) 0%,
+    rgba(255, 255, 255, 0.06) 36%,
+    rgba(255, 255, 255, 0) 58%
+  );
+  --face-chip: linear-gradient(135deg, #f7e7a1 0%, #d4a93c 45%, #f3d77a 72%, #b8892b 100%);
+  --face-chip-line: rgba(120, 83, 20, 0.5);
+  --face-emboss: 0 1px 0 rgba(0, 0, 0, 0.35), 0 -1px 0 rgba(255, 255, 255, 0.14);
+  --face-paper: #fbf7ec;
+  --face-paper-ink: #3f3a2e;
+  --face-paper-ink-soft: #7a7160;
+  --face-paper-line: rgba(63, 58, 46, 0.07);
+  --face-paper-rule: rgba(63, 58, 46, 0.38);
+  --face-bezel: #0f172a;
+  --face-screen: linear-gradient(150deg, #1e40af 0%, #6d28d9 100%);
+  --face-tile: rgba(255, 255, 255, 0.92);
+  --face-tile-ink: #1e1b4b;
+  --face-metal: linear-gradient(145deg, #27272a 0%, #3f3f46 50%, #18181b 100%);
+  --face-metal-dot: rgba(255, 255, 255, 0.09);
+  --face-lcd: #0b1410;
+  --face-lcd-ink: #86efac;
+  --face-coin: #f59e0b;
+  --face-coin-ink: #1c1917;
+  --face-note: #e3efdf;
+  --face-note-ink: #1f4d2c;
+  --face-note-ink-soft: #52775d;
+  --face-note-rule: rgba(31, 77, 44, 0.32);
+  --face-ticket: #f3e8ff;
+  --face-ticket-stub: #e9d5ff;
+  --face-ticket-ink: #3b0764;
+  --face-ticket-ink-soft: #7e5a9b;
+  --face-ticket-rule: rgba(59, 7, 100, 0.3);
+  --face-shadow: 0 1px 2px rgba(15, 23, 42, 0.12), 0 8px 18px -10px rgba(15, 23, 42, 0.45);
+  --face-shadow-lift: 0 2px 6px rgba(15, 23, 42, 0.14), 0 22px 40px -18px rgba(15, 23, 42, 0.55);
+
+  /*
    * Liquid glass. A glass surface is five things at once: a translucent
    * fill, a blurred and saturated view of what is behind it, a bright
    * specular rim along the lit (top) edge, a sheen falling off from that
@@ -158,6 +204,48 @@
   --glow: rgba(124, 255, 178, 0.12);
 
   --bar-gain: #c58cff;
+
+  /* Faces keep their stock in the dark; paper is dimmed so it doesn't glare. */
+  --face-ink: #f8fafc;
+  --face-ink-soft: rgba(248, 250, 252, 0.7);
+  --face-credit: linear-gradient(135deg, #1a1a26 0%, #2b2b3d 52%, #312e81 100%);
+  --face-debit: linear-gradient(135deg, #115e59 0%, #155e75 55%, #1e3a8a 100%);
+  --face-sheen: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.04) 36%,
+    rgba(255, 255, 255, 0) 58%
+  );
+  --face-chip: linear-gradient(135deg, #e9d68a 0%, #b8902f 45%, #dcc066 72%, #9a7424 100%);
+  --face-chip-line: rgba(90, 62, 14, 0.55);
+  --face-emboss: 0 1px 0 rgba(0, 0, 0, 0.5), 0 -1px 0 rgba(255, 255, 255, 0.1);
+  --face-paper: #d8d1bf;
+  --face-paper-ink: #2b2720;
+  --face-paper-ink-soft: #5f574a;
+  --face-paper-line: rgba(43, 39, 32, 0.08);
+  --face-paper-rule: rgba(43, 39, 32, 0.4);
+  /* Lighter than the page, or the phone's outline would sink into it. */
+  --face-bezel: #2a2a36;
+  --face-screen: linear-gradient(150deg, #1e3a8a 0%, #581c87 100%);
+  --face-tile: rgba(255, 255, 255, 0.9);
+  --face-tile-ink: #1e1b4b;
+  --face-metal: linear-gradient(145deg, #1f1f24 0%, #34343c 50%, #121216 100%);
+  --face-metal-dot: rgba(255, 255, 255, 0.07);
+  --face-lcd: #07100b;
+  --face-lcd-ink: #7cffb2;
+  --face-coin: #ffb84d;
+  --face-coin-ink: #1c1917;
+  --face-note: #b9cdb3;
+  --face-note-ink: #173b22;
+  --face-note-ink-soft: #3d5f46;
+  --face-note-rule: rgba(23, 59, 34, 0.35);
+  --face-ticket: #cdb8e6;
+  --face-ticket-stub: #bba2dc;
+  --face-ticket-ink: #2e0a4f;
+  --face-ticket-ink-soft: #553a70;
+  --face-ticket-rule: rgba(46, 10, 79, 0.35);
+  --face-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 8px 18px -10px rgba(0, 0, 0, 0.8);
+  --face-shadow-lift: 0 2px 6px rgba(0, 0, 0, 0.5), 0 22px 40px -18px rgba(0, 0, 0, 0.9);
 
   /* Dark glass is smoked, not frosted: a darker fill, a rim that reads as a
      thin catch of light rather than a white line. */

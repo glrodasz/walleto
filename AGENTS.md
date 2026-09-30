@@ -34,7 +34,8 @@ helpers/currencies.ts             qué monedas ofrece un picker (elección del u
 helpers/chartData.ts              buckets por día/semana/mes + serie income/expense para FlowChart y MonthlyBarsChart
 helpers/materializeOccurrences.ts ocurrencias de un item recurrente en un rango, ids determinísticos
 helpers/scheduleAnchor.ts         elección de fecha del usuario → startDate (incl. "backfill" = 6 meses atrás)
-helpers/paymentMethodLabel.ts     "name - last4" para tablas, "SEB - Autogiro (Bank transfer)" para dropdowns
+helpers/paymentMethodLabel.ts     "name - last4" para tablas, "SEB - Autogiro (Bank transfer)" para dropdowns, y la forma hablada
+                                  ("Bancolombia, Debit card, ending in 8817") que nombra a una MethodFace
 helpers/paymentMethodOptions.ts   tipos de método, sugerencias de red/proveedor, CARD_TYPES, sortByName/groupMethodsByType (wizard, Methods y PaymentMethodField)
 helpers/accounts.ts               isAccountDomain (INVESTMENT | SAVING | DEBT), ACCOUNT_NOUN (account / pocket / debt), accountLabel, formatInterestRate
 helpers/tags.ts                   normaliseTagName / tagKey (sin espacios; key en minúsculas), tagNames (ids → nombres)
@@ -66,7 +67,11 @@ Todo lo que solo sirve a una feature vive junta:
 
 ```
 features/
-  onboarding/   el wizard de configuración inicial + el guard de acceso; cada paso tiene salida
+  onboarding/   el wizard de configuración inicial + el guard de acceso. El paso 2 (MethodsStep, también en
+                Settings) es una billetera: cada método es una MethodFace colapsada; tocarla la abre (WalletItem +
+                MethodEditor, una a la vez, hooks/useOpenRow) y el "Remove" va en el pie del editor, nunca en una
+                columna al lado de los campos. Los métodos guardados se editan ahí mismo (solo el tipo queda fijo) y
+                `save()` los manda como PATCH con solo lo que cambió. Cada paso tiene salida
                 (ContinueLater: "Skip for now" en el 1, "Continue later" después — useLeaveOnboarding guarda
                 el paso, marca onboardingCompleted y vuelve al dashboard; Settings › Setup lo reabre)
   dashboard/    la home: hero del plan mensual (NetFlowCard + AllocationBar, con veredicto "On plan" /
@@ -84,7 +89,9 @@ features/
                 Plan (RecurringChecklist, la vista por defecto) / Activity (TransactionsTable con búsqueda/filtros) /
                 Categories / Tags / Payment methods (/ Worth, que en debts se llama Owed). Las keys del hash son
                 `plan` / `activity` / …; `#recurring` y `#transactions` siguen funcionando (parseDomainView)
-  methods/      MethodsList + EditMethodModal — los usa Settings › Payment methods (la página /methods redirige)
+  methods/      MethodsList (los métodos guardados como billetera: una MethodFace por método, agrupadas por tipo) +
+                EditMethodModal (con la cara en tamaño completo como preview) — los usa Settings › Payment methods
+                (la página /methods redirige)
   insights/     SubscriptionInsights — costo mensual/anualizado de suscripciones
   investments/  valor por cuenta / pocket / deuda (y por categoría para lo que no tiene cuenta): invertido vs valor,
                 % de ganancia, historial; helpers/interest.ts estima con la tasa de la cuenta; una deuda es la
@@ -123,7 +130,7 @@ constants.ts                            constantes y mapas de presentación; MON
                                         parseMonthPeriod los comparten el chart de dominio y el cash flow
 ```
 
-`components/atoms/EmptyState.tsx` y `components/atoms/ErrorState.tsx` son **distintos a propósito**: una regla de Firestore rota o un índice building deben leerse como error, nunca como "sin datos" — esa ambigüedad ya vació la lista de categorías del wizard una vez (ver §3). `components/atoms/InfoTip.tsx` es el "i" con tooltip (hover, foco de teclado o tap; Escape / tap afuera lo cierran, y se corre solo para no salirse del viewport) — no uses `title=` para explicar algo que en mobile nadie puede ver. `components/molecules/Modal.tsx` y `KebabMenu.tsx` son los building blocks de cualquier CRUD nuevo (crear/editar en un modal, acciones por fila en un kebab) — no reinventes overlay ni dropdown. `Modal` es un diálogo centrado en desktop y un **bottom sheet** bajo 768px (ancho completo, `dvh`, safe-area, scroll del body bloqueado); los formularios largos fijan su fila de acciones con `position: sticky; bottom: 0` para que Cancelar/Guardar no queden fuera de vista. `components/molecules/Last4Field.tsx` es el "últimos 4" de una tarjeta en los tres formularios de métodos (wizard, creador inline, edición): `name="last4"` + `autoComplete="off"` y una nota que aclara que no es el código de seguridad — suelto, se leía (y el autofill lo llenaba) como CVV; valida con `last4Error` antes de enviar. `components/molecules/CategoryField.tsx` y `PaymentMethodField.tsx` son los selects de categoría y de método de pago con creación inline que comparten los dos formularios de alta.
+`components/atoms/EmptyState.tsx` y `components/atoms/ErrorState.tsx` son **distintos a propósito**: una regla de Firestore rota o un índice building deben leerse como error, nunca como "sin datos" — esa ambigüedad ya vació la lista de categorías del wizard una vez (ver §3). `components/atoms/InfoTip.tsx` es el "i" con tooltip (hover, foco de teclado o tap; Escape / tap afuera lo cierran, y se corre solo para no salirse del viewport) — no uses `title=` para explicar algo que en mobile nadie puede ver. `components/molecules/Modal.tsx` y `KebabMenu.tsx` son los building blocks de cualquier CRUD nuevo (crear/editar en un modal, acciones por fila en un kebab) — no reinventes overlay ni dropdown. `Modal` es un diálogo centrado en desktop y un **bottom sheet** bajo 768px (ancho completo, `dvh`, safe-area, scroll del body bloqueado); los formularios largos fijan su fila de acciones con `position: sticky; bottom: 0` para que Cancelar/Guardar no queden fuera de vista. `components/molecules/Last4Field.tsx` es el "últimos 4" de una tarjeta en los tres formularios de métodos (wizard, creador inline, edición): `name="last4"` + `autoComplete="off"` y una nota que aclara que no es el código de seguridad — suelto, se leía (y el autofill lo llenaba) como CVV; valida con `last4Error` antes de enviar. `components/molecules/MethodFace.tsx` dibuja un método de pago como lo que es — tarjeta, cheque, teléfono, hardware wallet, billete, ticket — en tira (`compact`) o entero (`full`); es decorativa (`aria-hidden`), así que quien la envuelve la nombra (`MethodFaceButton` + `paymentMethodDescription`). `components/molecules/CategoryField.tsx` y `PaymentMethodField.tsx` son los selects de categoría y de método de pago con creación inline que comparten los dos formularios de alta.
 
 **La única excepción a "los organisms no importan features"** es `PageLayout`, que monta `features/create/CreateLauncher` (el "+" flotante de mobile): tiene que existir en todas las páginas y todas las páginas se construyen sobre ese layout. Los dos formularios que abre se montan solo mientras están abiertos, así ninguna página paga sus listeners.
 
@@ -165,6 +172,8 @@ Toda superficie que flota —Card, Sidebar, la barra inferior, menús, sheets, p
 **Es una clase global a propósito.** La alternativa era copiar seis declaraciones en veinte componentes y verlas divergir. styled-jsx sigue siendo el sitio de la geometría (radio, padding, grid) y de cualquier cosa específica del componente.
 
 El resto del vocabulario, por si algo no puede llevar la clase (un `<dialog>` nativo, un `::before`): `--glass-field` (campos: un pozo excavado en el vidrio, no una baldosa), `--glass-inset` (un panel dentro de otro panel: el bloque de stats de una card, la pista de una barra de progreso — sin blur propio, lo que tiene detrás ya está borroso), `--glass-raised` (la pastilla levantada de un TabStrip / SegmentedControl), `--glass-hover`, `--scrim` + `--scrim-blur` (overlays), `--shadow-sm/lg`.
+
+**La única excepción al vidrio son las caras de método de pago** (`MethodFace`): una tarjeta o un billete es un objeto apoyado sobre el vidrio, no una superficie que flota, así que lleva su propio papel / plástico / metal con los tokens `--face-*` (definidos en las dos paletas, cada tinta junto al fondo que la lleva). No los uses para nada más.
 
 **Nunca pongas `background: var(--bg-1|2|3)` en una superficie visible.** Ese es el modo en que el material se rompe: una baldosa opaca sobre el vidrio. Los `--bg-*` quedan para el fondo de la página y para lo que el navegador dibuja por su cuenta (`select option`).
 
