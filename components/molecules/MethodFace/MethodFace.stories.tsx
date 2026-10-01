@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
 import { fn } from "storybook/test";
-import { MethodFace, MethodFaceButton } from "./MethodFace";
-import { boxed } from "../../stories/decorators";
+import { MethodFace, MethodFaceButton } from ".";
+import { boxed } from "../../../stories/decorators";
 
 const meta = {
   title: "Molecules/MethodFace",
@@ -48,7 +48,7 @@ export const Check: Story = {
   args: { type: "BANK_TRANSFER", name: "SEB", network: "Autogiro", last4: undefined },
 };
 export const CheckFull: Story = { args: { ...Check.args, size: "full" } };
-export const Phone: Story = {
+export const Wallet: Story = {
   args: { type: "DIGITAL_WALLET", name: "Wise", network: "Wise", last4: undefined },
 };
 export const Banknote: Story = {
@@ -61,6 +61,23 @@ export const Invalid: Story = { args: { last4: "88", invalid: true } };
 /** A long alias ellipsizes instead of pushing the digits off the card. */
 export const LongAlias: Story = {
   args: { name: "Bancolombia Débito Cuenta de Ahorros Principal" },
+};
+/** Marks drawn for the networks we know; any other keeps its name as text. */
+export const Networks: Story = {
+  render: () => (
+    <div style={{ display: "grid", gap: 16 }}>
+      {["Visa", "Mastercard", "American Express", "Diners Club"].map((network, i) => (
+        <MethodFace
+          key={network}
+          type={i % 2 ? "DEBIT_CARD" : "CREDIT_CARD"}
+          name={network === "American Express" ? "Amex Gold" : "My card"}
+          network={network}
+          last4="4242"
+          size="full"
+        />
+      ))}
+    </div>
+  ),
 };
 export const AllCompact: Story = { render: () => <Gallery size="compact" /> };
 export const AllFull: Story = { render: () => <Gallery size="full" /> };

@@ -50,28 +50,50 @@
   --face-ink-soft: rgba(248, 250, 252, 0.72);
   --face-credit: linear-gradient(135deg, #1e293b 0%, #334155 52%, #1e3a8a 100%);
   --face-debit: linear-gradient(135deg, #0f766e 0%, #0e7490 55%, #1d4ed8 100%);
-  --face-sheen: linear-gradient(
+  /* Light falling across glossy plastic: a broad highlight and a faint second one. */
+  --face-gloss: linear-gradient(
     115deg,
-    rgba(255, 255, 255, 0.24) 0%,
-    rgba(255, 255, 255, 0.06) 36%,
-    rgba(255, 255, 255, 0) 58%
+    rgba(255, 255, 255, 0.26) 0%,
+    rgba(255, 255, 255, 0.08) 34%,
+    rgba(255, 255, 255, 0) 52%,
+    rgba(255, 255, 255, 0.06) 78%,
+    rgba(255, 255, 255, 0) 100%
   );
+  /* Fine engraved arcs from one corner, as printed on card stock. */
+  --face-guilloche: repeating-radial-gradient(
+    circle at 112% 118%,
+    rgba(255, 255, 255, 0) 0 5px,
+    rgba(255, 255, 255, 0.07) 5px 6px
+  );
+  /* Print grain, so no stock reads as a flat fill. */
+  --face-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 0.1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  /* Thickness: a lit top edge, a shaded bottom one. */
+  --face-edge: inset 0 1px 0 rgba(255, 255, 255, 0.32), inset 0 -1px 0 rgba(0, 0, 0, 0.22);
+  /* Embossed digits: silver foil, raised off the plastic. */
+  --face-foil: linear-gradient(180deg, #ffffff 0%, #e2e8f0 46%, #a3aebf 56%, #f1f5f9 100%);
+  --face-emboss-drop: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.55))
+    drop-shadow(0 -0.5px 0 rgba(255, 255, 255, 0.3));
   --face-chip: linear-gradient(135deg, #f7e7a1 0%, #d4a93c 45%, #f3d77a 72%, #b8892b 100%);
-  --face-chip-line: rgba(120, 83, 20, 0.5);
-  --face-emboss: 0 1px 0 rgba(0, 0, 0, 0.35), 0 -1px 0 rgba(255, 255, 255, 0.14);
+  --face-chip-line: rgba(120, 83, 20, 0.55);
+  --face-chip-bevel:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -1px 0 rgba(120, 83, 20, 0.45),
+    0 1px 1px rgba(0, 0, 0, 0.25);
+  /* Network marks, in the networks' own colours. */
+  --face-mc-red: #eb001b;
+  --face-mc-yellow: #f79e1b;
+  --face-mc-overlap: #ff5f00;
+  --face-amex: #2e77bb;
+  --face-amex-ink: #ffffff;
   --face-paper: #fbf7ec;
   --face-paper-ink: #3f3a2e;
   --face-paper-ink-soft: #7a7160;
   --face-paper-line: rgba(63, 58, 46, 0.07);
   --face-paper-rule: rgba(63, 58, 46, 0.38);
-  --face-bezel: #0f172a;
   --face-screen: linear-gradient(150deg, #1e40af 0%, #6d28d9 100%);
   --face-tile: rgba(255, 255, 255, 0.92);
   --face-tile-ink: #1e1b4b;
   --face-metal: linear-gradient(145deg, #27272a 0%, #3f3f46 50%, #18181b 100%);
   --face-metal-dot: rgba(255, 255, 255, 0.09);
-  --face-lcd: #0b1410;
-  --face-lcd-ink: #86efac;
   --face-coin: #f59e0b;
   --face-coin-ink: #1c1917;
   --face-note: #e3efdf;
@@ -210,29 +232,44 @@
   --face-ink-soft: rgba(248, 250, 252, 0.7);
   --face-credit: linear-gradient(135deg, #1a1a26 0%, #2b2b3d 52%, #312e81 100%);
   --face-debit: linear-gradient(135deg, #115e59 0%, #155e75 55%, #1e3a8a 100%);
-  --face-sheen: linear-gradient(
+  --face-gloss: linear-gradient(
     115deg,
     rgba(255, 255, 255, 0.16) 0%,
-    rgba(255, 255, 255, 0.04) 36%,
-    rgba(255, 255, 255, 0) 58%
+    rgba(255, 255, 255, 0.05) 34%,
+    rgba(255, 255, 255, 0) 52%,
+    rgba(255, 255, 255, 0.04) 78%,
+    rgba(255, 255, 255, 0) 100%
   );
+  --face-guilloche: repeating-radial-gradient(
+    circle at 112% 118%,
+    rgba(255, 255, 255, 0) 0 5px,
+    rgba(255, 255, 255, 0.05) 5px 6px
+  );
+  --face-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 0.12 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  --face-edge: inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+  --face-foil: linear-gradient(180deg, #ffffff 0%, #d9dee7 46%, #8f99a8 56%, #e5e9f0 100%);
+  --face-emboss-drop: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.7))
+    drop-shadow(0 -0.5px 0 rgba(255, 255, 255, 0.2));
   --face-chip: linear-gradient(135deg, #e9d68a 0%, #b8902f 45%, #dcc066 72%, #9a7424 100%);
-  --face-chip-line: rgba(90, 62, 14, 0.55);
-  --face-emboss: 0 1px 0 rgba(0, 0, 0, 0.5), 0 -1px 0 rgba(255, 255, 255, 0.1);
+  --face-chip-line: rgba(90, 62, 14, 0.6);
+  --face-chip-bevel:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -1px 0 rgba(90, 62, 14, 0.5),
+    0 1px 1px rgba(0, 0, 0, 0.4);
+  --face-mc-red: #eb001b;
+  --face-mc-yellow: #f79e1b;
+  --face-mc-overlap: #ff5f00;
+  --face-amex: #2e77bb;
+  --face-amex-ink: #ffffff;
   --face-paper: #d8d1bf;
   --face-paper-ink: #2b2720;
   --face-paper-ink-soft: #5f574a;
   --face-paper-line: rgba(43, 39, 32, 0.08);
   --face-paper-rule: rgba(43, 39, 32, 0.4);
-  /* Lighter than the page, or the phone's outline would sink into it. */
-  --face-bezel: #2a2a36;
   --face-screen: linear-gradient(150deg, #1e3a8a 0%, #581c87 100%);
   --face-tile: rgba(255, 255, 255, 0.9);
   --face-tile-ink: #1e1b4b;
   --face-metal: linear-gradient(145deg, #1f1f24 0%, #34343c 50%, #121216 100%);
   --face-metal-dot: rgba(255, 255, 255, 0.07);
-  --face-lcd: #07100b;
-  --face-lcd-ink: #7cffb2;
   --face-coin: #ffb84d;
   --face-coin-ink: #1c1917;
   --face-note: #b9cdb3;

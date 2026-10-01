@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { MethodFace, MethodFaceButton } from "./MethodFace";
-import type { PaymentMethodType } from "../../types";
+import { MethodFace, MethodFaceButton } from ".";
+import type { PaymentMethodType } from "../../../types";
 
 const kindOf = (container: HTMLElement) =>
   container.querySelector("[data-kind]")?.getAttribute("data-kind");
@@ -10,7 +10,7 @@ describe("MethodFace", () => {
     ["CREDIT_CARD", "card"],
     ["DEBIT_CARD", "card"],
     ["BANK_TRANSFER", "check"],
-    ["DIGITAL_WALLET", "phone"],
+    ["DIGITAL_WALLET", "wallet"],
     ["CRYPTO_WALLET", "crypto"],
     ["CASH", "cash"],
     ["OTHER", "ticket"],
@@ -25,10 +25,39 @@ describe("MethodFace", () => {
       <MethodFace type="DEBIT_CARD" name="Bancolombia" network="Mastercard" last4="8817" />
     );
     expect(screen.getByText("•••• 8817")).toBeInTheDocument();
-    expect(screen.getByText("Mastercard")).toBeInTheDocument();
+    // Mastercard is drawn (its circles), not written.
+    expect(document.querySelector("[data-brand='mastercard']")).toBeInTheDocument();
 
     rerender(<MethodFace type="DEBIT_CARD" name="Bancolombia" last4="8817" size="full" />);
     expect(screen.getByText("8817")).toBeInTheDocument();
+  });
+
+  it.each<[PaymentMethodType, string]>([
+    ["CREDIT_CARD", "Credit"],
+    ["DEBIT_CARD", "Debit"],
+    ["BANK_TRANSFER", "Bank transfer"],
+    ["DIGITAL_WALLET", "Digital wallet"],
+    ["CRYPTO_WALLET", "Crypto wallet"],
+    ["CASH", "Cash"],
+    ["OTHER", "Other"],
+  ])("opens %s to the same layout: alias top left, %s top right", (type, corner) => {
+    const { container } = render(<MethodFace type={type} name="My method" size="full" />);
+    expect(container.querySelector(".title")).toHaveTextContent("My method");
+    expect(container.querySelector(".corner")).toHaveTextContent(corner);
+  });
+
+  it("prints the full number on an open card", () => {
+    const { container } = render(
+      <MethodFace type="CREDIT_CARD" name="Chase" network="Visa" last4="4242" size="full" />
+    );
+    expect(container.querySelector(".detail")).toHaveTextContent("•••• •••• •••• 4242");
+    expect(screen.getByText("VISA")).toBeInTheDocument();
+  });
+
+  it("draws a wallet app with the provider's initial, not as a phone", () => {
+    render(<MethodFace type="DIGITAL_WALLET" name="Main" network="Revolut" />);
+    expect(screen.getByText("R")).toBeInTheDocument();
+    expect(screen.getByText("Revolut")).toBeInTheDocument();
   });
 
   it("puts a transfer's method in the memo", () => {
