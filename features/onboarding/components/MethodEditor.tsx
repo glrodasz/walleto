@@ -63,23 +63,26 @@ export function MethodEditor({
           }
         />
 
-        {networkSuggestions && (
-          <Combobox
-            label={networkLabel}
-            fieldLabel={networkLabel}
-            placeholder="Search or type your own"
-            suggestions={networkSuggestions}
-            value={row.network}
-            onSelect={(value) => onChange({ network: value })}
-          />
-        )}
-
-        {showLast4 && (
-          <Last4Field
-            value={row.last4}
-            showError={attempted}
-            onChange={(last4) => onChange({ last4 })}
-          />
+        {(networkSuggestions || showLast4) && (
+          <div className={`pair${showLast4 && networkSuggestions ? " pair--two" : ""}`}>
+            {networkSuggestions && (
+              <Combobox
+                label={networkLabel}
+                fieldLabel={networkLabel}
+                placeholder="Search or type your own"
+                suggestions={networkSuggestions}
+                value={row.network}
+                onSelect={(value) => onChange({ network: value })}
+              />
+            )}
+            {showLast4 && (
+              <Last4Field
+                value={row.last4}
+                showError={attempted}
+                onChange={(last4) => onChange({ last4 })}
+              />
+            )}
+          </div>
         )}
 
         <div className="alias">
@@ -118,6 +121,20 @@ export function MethodEditor({
           display: flex;
           flex-direction: column;
           gap: 14px;
+        }
+
+        .pair {
+          display: grid;
+          gap: 14px;
+          min-width: 0;
+        }
+
+        /* Network and last 4 share a row; the last 4 only needs a short column. */
+        @media (min-width: 480px) {
+          .pair--two {
+            grid-template-columns: minmax(0, 1fr) 140px;
+            align-items: start;
+          }
         }
 
         .alias {
