@@ -2,6 +2,7 @@ import { renderHook, act, waitFor } from "@testing-library/react";
 
 const createMock = jest.fn();
 const removeMock = jest.fn();
+const updateMock = jest.fn();
 let methodsValue: {
   id?: string;
   name: string;
@@ -16,16 +17,19 @@ jest.mock("../../../hooks/usePaymentMethods", () => ({
     methods: methodsValue,
     loading: loadingValue,
     create: createMock,
+    update: updateMock,
     remove: removeMock,
   }),
 }));
 
 import { useMethodsStep } from "./useMethodsStep";
 import { LAST4_ERROR } from "../../../helpers/paymentMethodOptions";
+import { ALIAS_ERROR } from "./useMethodsStep";
 
 beforeEach(() => {
   createMock.mockReset().mockResolvedValue("new-id");
   removeMock.mockReset().mockResolvedValue(undefined);
+  updateMock.mockReset().mockResolvedValue(undefined);
   methodsValue = [];
   loadingValue = false;
 });
@@ -271,5 +275,118 @@ describe("useMethodsStep", () => {
     expect(result.current.rows[0].id).toBe("pm1");
     expect(result.current.rows[0].type).toBe("DIGITAL_WALLET");
     expect(result.current.rows[0].network).toBe("Wise");
+  });
+
+  describe("editing saved methods", () => {
+    const saved = [
+      {
+        id: "pm-bc",
+        name: "Bancolombia Débito",
+        type: "DEBIT_CARD",
+        network: "Mastercard",
+        last4: "8817",
+      },
+      { id: "pm-wise", name: "Wise", type: "DIGITAL_WALLET", network: "Wise" },
+      { id: "pm-cash", name: "Efectivo", type: "CASH" },
+    ];
+
+    async function hydrated() {
+      methodsValue = saved;
+      const hook = renderHook(() => useMethodsStep());
+      await waitFor(() => expect(hook.result.current.rows).toHaveLength(3));
+      return hook;
+    }
+
+    it("patches only the saved rows that changed, with only what changed", async () => {
+      const { result } = await hydrated();
+      const [card] = result.current.rows;
+
+      act(() => result.current.update(card.key, { name: "Bancolombia " }));
+      act(() => result.current.update(card.key, { last4: "1234" }));
+      await act(async () => {
+        await result.current.save();
+      });
+
+      expect(updateMock).toHaveBeenCalledTimes(1);
+      // Trimmed, and the untouched network stays out of the body.
+      expect(updateMock).toHaveBeenCalledWith("pm-bc", { name: "Bancolombia", last4: "1234" });
+      expect(createMock).not.toHaveBeenCalled();
+    });
+
+    it("sends nothing when nothing changed", async () => {
+      const { result } = await hydrated();
+
+      await act(async () => {
+        expect(await result.current.save()).toBe(0);
+      });
+
+      expect(updateMock).not.toHaveBeenCalled();
+    });
+
+    it("clears the last 4 with a null, which the route turns into a delete", async () => {
+      const { result } = await hydrated();
+
+      act(() => result.current.update(result.current.rows[0].key, { last4: "" }));
+      await act(async () => {
+        await result.current.save();
+      });
+
+      expect(updateMock).toHaveBeenCalledWith("pm-bc", { last4: null });
+    });
+
+    it("sends a provider change, but never a network for a type that has none", async () => {
+      const { result } = await hydrated();
+      const [, wise, cash] = result.current.rows;
+
+      act(() => result.current.update(wise.key, { network: "Revolut" }));
+      act(() => result.current.update(cash.key, { network: "Ignored", last4: "1111" }));
+      await act(async () => {
+        await result.current.save();
+      });
+
+      expect(updateMock).toHaveBeenCalledTimes(1);
+      expect(updateMock).toHaveBeenCalledWith("pm-wise", { network: "Revolut" });
+    });
+
+    it("refuses a saved row whose alias was cleared, before sending anything", async () => {
+      const { result } = await hydrated();
+
+      act(() => result.current.update(result.current.rows[1].key, { name: "  " }));
+      act(() => result.current.add({ type: "CASH", name: "Wallet" }));
+      await act(async () => {
+        await expect(result.current.save()).rejects.toThrow(ALIAS_ERROR);
+      });
+
+      expect(updateMock).not.toHaveBeenCalled();
+      expect(createMock).not.toHaveBeenCalled();
+      expect(result.current.attempt).toBe(1);
+    });
+
+    it("counts only created rows, not patched ones", async () => {
+      const { result } = await hydrated();
+
+      act(() => result.current.update(result.current.rows[2].key, { name: "Cash" }));
+      act(() => result.current.add({ type: "CASH", name: "Coins" }));
+      let created = -1;
+      await act(async () => {
+        created = await result.current.save();
+      });
+
+      expect(created).toBe(1);
+      expect(updateMock).toHaveBeenCalledWith("pm-cash", { name: "Cash" });
+    });
+
+    it("keeps created rows' ids when a patch fails", async () => {
+      const { result } = await hydrated();
+      updateMock.mockRejectedValueOnce(new Error("boom"));
+
+      act(() => result.current.update(result.current.rows[2].key, { name: "Cash" }));
+      act(() => result.current.add({ type: "CASH", name: "Coins" }));
+      await act(async () => {
+        await expect(result.current.save()).rejects.toThrow("boom");
+      });
+
+      expect(result.current.rows[3].id).toBe("new-id");
+    });
   });
 });

@@ -5,6 +5,7 @@ import { Combobox } from "../../../components/atoms/Combobox";
 import { Select } from "../../../components/atoms/Select";
 import { Button } from "../../../components/atoms/Button";
 import { Last4Field } from "../../../components/molecules/Last4Field";
+import { MethodFace } from "../../../components/molecules/MethodFace";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import {
   CARD_TYPES,
@@ -89,6 +90,18 @@ export function EditMethodModal({ method, onClose }: Props) {
   return (
     <Modal open title={`Edit ${method.name}`} onClose={onClose}>
       <div className="form">
+        {/* The object itself, updating as the fields change. */}
+        <div className="preview">
+          <MethodFace
+            size="full"
+            type={method.type}
+            name={name}
+            network={showNetwork ? network : undefined}
+            last4={showLast4 ? last4 : undefined}
+            currency={defaultCurrency || undefined}
+          />
+        </div>
+
         <TextField
           label="Alias"
           placeholder="Ex: Chase Sapphire"
@@ -134,6 +147,12 @@ export function EditMethodModal({ method, onClose }: Props) {
           display: flex;
           flex-direction: column;
           gap: 14px;
+        }
+
+        .preview {
+          display: flex;
+          justify-content: center;
+          margin-bottom: 4px;
         }
 
         .form-error {

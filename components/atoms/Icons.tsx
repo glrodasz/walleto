@@ -575,6 +575,18 @@ export function Wallet({ size = 20, ...rest }: IconProps) {
   );
 }
 
+/** The tap-to-pay waves printed beside a card's chip. */
+export function Contactless({ size = 20, ...rest }: IconProps) {
+  return (
+    <svg {...base(size)} {...rest}>
+      <path d="M5.83 8.79a5 5 0 0 1 0 6.42" />
+      <path d="M8.89 6.21a9 9 0 0 1 0 11.58" />
+      <path d="M11.96 3.64a13 13 0 0 1 0 16.72" />
+      <path d="M15.02 1.07a17 17 0 0 1 0 21.86" />
+    </svg>
+  );
+}
+
 export function Repeat({ size = 20, ...rest }: IconProps) {
   return (
     <svg {...base(size)} {...rest}>
