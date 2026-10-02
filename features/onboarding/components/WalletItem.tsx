@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { MethodFaceButton } from "../../../components/molecules/MethodFace";
+import { MethodFace, MethodFaceButton } from "../../../components/molecules/MethodFace";
 import { paymentMethodDescription } from "../../../helpers/paymentMethodLabel";
 import { MethodEditor } from "./MethodEditor";
 import type { MethodRow } from "../hooks/useMethodsStep";
@@ -47,18 +47,38 @@ export function WalletItem({
   return (
     <div className={`item${open ? " item--open" : ""}`}>
       <div className="face-slot">
-        <MethodFaceButton
-          label={label}
-          expanded={open}
-          controls={open ? editorId : undefined}
-          onClick={onToggle}
-          type={row.type}
-          name={row.name}
-          network={row.network}
-          last4={row.last4}
-          size={open ? "full" : "compact"}
-          invalid={Boolean(problem)}
-        />
+        {open ? (
+          // Open: the face is just a preview. Closing is "Done"'s job — a
+          // tappable preview closed the form by accident.
+          row.type ? (
+            <div className="preview">
+              <MethodFace
+                type={row.type}
+                name={row.name}
+                network={row.network}
+                last4={row.last4}
+                size="full"
+                invalid={Boolean(problem)}
+              />
+            </div>
+          ) : (
+            <div className="placeholder" aria-hidden="true">
+              Select a type first
+            </div>
+          )
+        ) : (
+          <MethodFaceButton
+            label={label}
+            expanded={false}
+            onClick={onToggle}
+            type={row.type}
+            name={row.name}
+            network={row.network}
+            last4={row.last4}
+            size="compact"
+            invalid={Boolean(problem)}
+          />
+        )}
         {problem && !open && <p className="hint">{problem}</p>}
       </div>
 
@@ -97,6 +117,32 @@ export function WalletItem({
           min-width: 0;
         }
 
+        .preview {
+          max-width: 360px;
+        }
+
+        /* No type yet: an empty, dimmed slot — nothing to do here. */
+        .placeholder {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.8rem;
+          color: var(--fg-2);
+          width: 100%;
+          max-width: 360px;
+          aspect-ratio: 1.586;
+          border-radius: var(--r-md);
+          border: 1px dashed var(--glass-rim);
+          background: var(--glass-inset);
+          opacity: 0.45;
+          pointer-events: none;
+        }
+
+        /* On a phone the fields come first and the card preview after them. */
+        .item--open .face-slot {
+          order: 1;
+        }
+
         .hint {
           margin: 0;
           font-size: 0.72rem;
@@ -111,6 +157,10 @@ export function WalletItem({
             align-items: start;
             gap: 24px;
             padding: 20px;
+          }
+
+          .item--open .face-slot {
+            order: 0;
           }
         }
       `}</style>

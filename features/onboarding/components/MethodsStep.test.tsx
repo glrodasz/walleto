@@ -93,14 +93,22 @@ describe("MethodsStep", () => {
 
     fireEvent.click(face);
 
-    expect(face).toHaveAttribute("aria-expanded", "true");
+    // The open face is a plain preview: only "Done" closes the form.
+    expect(
+      screen.queryByRole("button", { name: /Bancolombia, Debit card/ })
+    ).not.toBeInTheDocument();
     expect(within(openItem()).getByLabelText("Type")).toBeDisabled();
     expect(within(openItem()).getByLabelText("Alias")).toBeEnabled();
     expect(within(openItem()).getByLabelText(/last 4 digits/i)).toBeEnabled();
 
     // Opening the other closes this one.
     fireEvent.click(screen.getByRole("button", { name: /Wise, Digital wallet/ }));
-    await waitFor(() => expect(face).toHaveAttribute("aria-expanded", "false"));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /Bancolombia, Debit card/ })).toHaveAttribute(
+        "aria-expanded",
+        "false"
+      )
+    );
     expect(screen.getAllByLabelText("Type")).toHaveLength(1);
   });
 

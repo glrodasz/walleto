@@ -14,7 +14,7 @@ interface Props {
  * The optional "last 4" of a card, shared by the wizard, the inline method
  * creator and the edit modal. A bare four-digit box next to "Card network"
  * read as the security code — to people and to autofill alike — so it says
- * what it is, opts out of card autofill and explains itself underneath.
+ * what it is, opts out of card autofill and explains itself behind an "i".
  */
 export function Last4Field({ value, onChange, disabled, showError }: Props) {
   const noteId = useId();
@@ -33,13 +33,16 @@ export function Last4Field({ value, onChange, disabled, showError }: Props) {
         value={value}
         disabled={disabled}
         aria-invalid={error ? true : undefined}
-        aria-describedby={noteId}
+        aria-describedby={error ? noteId : undefined}
+        hint="From the card number, not the security code."
         onBlur={() => setBlurred(true)}
         onValueChange={(v) => onChange(v.replace(/\D/g, "").slice(0, 4))}
       />
-      <p id={noteId} className={`note${error ? " note--error" : ""}`}>
-        {error ?? "From the card number, not the security code."}
-      </p>
+      {error && (
+        <p id={noteId} className="note note--error">
+          {error}
+        </p>
+      )}
 
       <style jsx>{`
         .last4 {
