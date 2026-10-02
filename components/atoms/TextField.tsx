@@ -1,8 +1,11 @@
 import { useId } from "react";
 import type { InputHTMLAttributes, ReactNode } from "react";
+import { InfoTip } from "./InfoTip";
 
 interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, "onChange"> {
   label?: string;
+  /** Help text behind an "i" beside the label, instead of a note under the field. */
+  hint?: string;
   /**
    * A glyph pinned to the left edge — a magnifier on a search box. The room for
    * it has to be made here: a caller's own `:global(input) { padding-left }` is
@@ -19,6 +22,7 @@ interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, "onChange"> 
 
 export function TextField({
   label,
+  hint,
   icon,
   prefix,
   align = "left",
@@ -33,9 +37,12 @@ export function TextField({
   return (
     <div className={`field${className ? ` ${className}` : ""}`}>
       {label && (
-        <label className="label" htmlFor={inputId}>
-          {label}
-        </label>
+        <div className="label-row">
+          <label className="label" htmlFor={inputId}>
+            {label}
+          </label>
+          {hint && <InfoTip label="More information">{hint}</InfoTip>}
+        </div>
       )}
       <div className="control">
         {icon && (
@@ -64,6 +71,12 @@ export function TextField({
           flex-direction: column;
           gap: 6px;
           min-width: 0;
+        }
+
+        .label-row {
+          display: flex;
+          align-items: center;
+          gap: 6px;
         }
 
         .label {

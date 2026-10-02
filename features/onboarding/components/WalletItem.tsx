@@ -140,7 +140,7 @@ export function WalletItem({
 
         /* On a phone the fields come first and the card preview after them. */
         .item--open .face-slot {
-          order: 2;
+          order: 1;
         }
 
         .hint {
