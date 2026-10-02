@@ -25,8 +25,6 @@ interface Props {
   sub?: string;
   /** What the figure is made of; no inset panel when empty. */
   stats?: SummaryStat[];
-  /** Under the stats, inside the same panel (the allocation bar). */
-  footer?: ReactNode;
   /** A caveat under the stats, in small print. */
   note?: string;
 }
@@ -37,7 +35,7 @@ interface Props {
  * made of on the right. The left column has the same width in both, so the
  * two figures line up.
  */
-export function SummaryCard({ title, badge, figure, sub, stats = [], footer, note }: Props) {
+export function SummaryCard({ title, badge, figure, sub, stats = [], note }: Props) {
   return (
     <Card>
       <div className="summary">
@@ -71,7 +69,6 @@ export function SummaryCard({ title, badge, figure, sub, stats = [], footer, not
                 </li>
               ))}
             </ul>
-            {footer}
             {note && <span className="note">{note}</span>}
           </div>
         )}

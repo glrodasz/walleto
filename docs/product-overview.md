@@ -252,13 +252,11 @@ noon/six), subtitle "Here's where your money stands in September 2026."
 Down the page:
 
 1. **Error banners** (conditional): data errors verbatim, and the
-   exchange-rates-unavailable notice.
+   exchange-rates-unavailable notice — then a dismissable **tip**.
 2. **Monthly plan hero**: the label "MONTHLY PLAN" with a verdict pill — "ON
    PLAN" when the plan fits inside the income, "OVER-COMMITTED" when it does
    not — the net figure ("left to allocate each month"), five mini stats
-   (Income, Expenses, Investments, Savings, Debts) with an **allocation bar**
-   splitting the month's income into expenses / investments / savings / debts
-   / left.
+   (Income, Expenses, Investments, Savings, Debts).
 3. **Net worth** with a "TODAY" pill — the same kind of card as the plan
    (title and pill, big figure and one line on the left, what it is made of
    in an inset panel on the right, figures aligned between the two): investments + savings − what the debts
@@ -270,20 +268,22 @@ Down the page:
    (linking to the domain page), the monthly figure captioned "planned per
    month", two top categories (amounts
    for income, shares for the rest), the per-currency mix when currencies are
-   mixed, and "N categories" with a menu. Investments and savings add a quiet
+   mixed. Investments and savings add a quiet
    second line — "Worth SEK 312,400.00 · checked Sep 12" — what those accounts
    hold today, and debts "Owed …" once a balance has been recorded; the
    headline figure above it is still the recurring run-rate.
 5. **Monthly cash flow** ("What actually happened, split by category"): per month, five bars side by side (one per domain),
    each stacked by its top five categories plus "Other" — or by currency, or
-   plain — over the last 3, 6 or 12 months. Built from real transactions. A
-   legend chip per domain opens the list of slices. The selected month's group
+   plain — over the last 3 (default), 6 or 12 months. Built from real
+   transactions. Grouped by domain, the tooltip compares the five domains of
+   the hovered month; grouped by category or currency, it shows only the
+   hovered bar's slices and their total. A legend chip per domain opens the
+   list of slices. The selected month's group
    is drawn at full strength; like every chart, the bars only show — the month
    is picked in the header.
 6. **Top expense categories** (icon, name, amount, bar, share; "View all") and
    **Coming up in your plan** (calendar-leaf date, name, category, amount;
    "View all").
-7. A dismissable **tip** at the foot of the page.
 
 ---
 

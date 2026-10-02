@@ -44,7 +44,6 @@ helpers/dates.ts                  formatDate(date, style, format) — toda fecha
 helpers/stacks.ts                 monthTotalsBy / monthTotalsByCategory — totales mensuales apilados (top N + "Other"), tintes por dominio
 helpers/categoryTree.ts           categoryIdSet / rootIdMap — plegar hijos en su categoría raíz
 helpers/categoryIcons.ts          defaultIconFor(name, domain) / iconFor(category) — icono por defecto cuando no hay pick
-helpers/allocation.ts             allocationSegments(flow) — cómo se reparte el ingreso del mes (barra del hero)
 helpers/money.ts                  formatAmount / formatCompact / formatNative — cómo se escribe un monto (y cómo se enmascara)
 helpers/i18n.ts                   t(key, language) — catálogo (solo "en") para las cadenas de Settings
 helpers/recurrence.ts             próxima ocurrencia según Frequency
@@ -74,12 +73,13 @@ features/
                 `save()` los manda como PATCH con solo lo que cambió. Cada paso tiene salida
                 (ContinueLater: "Skip for now" en el 1, "Continue later" después — useLeaveOnboarding guarda
                 el paso, marca onboardingCompleted y vuelve al dashboard; Settings › Setup lo reabre)
-  dashboard/    la home: hero del plan mensual (NetFlowCard + AllocationBar, con veredicto "On plan" /
+  dashboard/    la home: hero del plan mensual (NetFlowCard, con veredicto "On plan" /
                 "Over-committed"), patrimonio de hoy (NetWorthCard + hooks/useNetWorth + helpers/netWorth) — las dos
                 son la misma pieza, `SummaryCard` (título + pill, cifra a la izquierda, desglose a la derecha),
                 stat cards por dominio ("planned per month"),
-                cash flow de 5 dominios apilado por categoría / moneda (CashFlowCard + helpers/cashFlowSeries),
-                top categorías, próximos pagos del plan, tip
+                cash flow de 5 dominios apilado por categoría / moneda (CashFlowCard + helpers/cashFlowSeries; por
+                categoría / moneda el tooltip es por barra — `StackTooltip` —, por dominio compara los cinco),
+                top categorías, próximos pagos del plan; el tip va arriba de todo
   domains/      DomainPage — la pantalla month-first que comparten incomes/expenses/investments/savings/debts:
                 el mes viene del header (hooks/useSelectedMonth), MonthSummary (primero lo esperado del mes y
                 cuánto llegó; después lo real vs el mes anterior),

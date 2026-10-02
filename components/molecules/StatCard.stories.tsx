@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
-import { fn } from "storybook/test";
 import { StatCard } from "./StatCard";
 import { boxed } from "../../stories/decorators";
 
@@ -18,13 +17,11 @@ const meta = {
       { name: "Home & Family", value: "52%" },
       { name: "Variable", value: "20%" },
     ],
-    categoryCount: 6,
     byCurrency: [
       { currency: "USD", pct: 71 },
       { currency: "COP", pct: 22 },
       { currency: "EUR", pct: 7 },
     ],
-    actions: [{ label: "Open Expenses", onSelect: fn() }],
   },
   decorators: [boxed(300)],
 } satisfies Meta<typeof StatCard>;
@@ -43,7 +40,6 @@ export const Income: Story = {
       { name: "Salary", value: "$4,800.00" },
       { name: "Side projects", value: "$978.26" },
     ],
-    categoryCount: 3,
     byCurrency: [
       { currency: "USD", pct: 76 },
       { currency: "EUR", pct: 15 },
@@ -65,7 +61,6 @@ export const Debts: Story = {
       { name: "Mortgage", value: "79%" },
       { name: "Credit cards", value: "21%" },
     ],
-    categoryCount: 2,
   },
 };
 export const SingleCurrency: Story = {
@@ -76,7 +71,6 @@ export const SingleCurrency: Story = {
     amount: 617.39,
     byCurrency: [{ currency: "USD", pct: 100 }],
     rows: [{ name: "Emergency fund", value: "65%" }],
-    categoryCount: 2,
   },
 };
 export const Minimal: Story = {
@@ -86,9 +80,7 @@ export const Minimal: Story = {
     href: "/investments",
     amount: 621.7,
     rows: undefined,
-    categoryCount: undefined,
     byCurrency: undefined,
-    actions: undefined,
   },
 };
 

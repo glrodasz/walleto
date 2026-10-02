@@ -20,7 +20,8 @@ type Story = StoryObj<typeof meta>;
 
 /** Four domains side by side per month, one series each. */
 export const ByDomain: Story = {};
-export const ByCategory: Story = { args: { ...byCategory } };
-export const ByCurrency: Story = { args: { ...byCurrency } };
+/** Each bar is a stack: hovering one shows only its own series. */
+export const ByCategory: Story = { args: { ...byCategory, tooltip: "bar" } };
+export const ByCurrency: Story = { args: { ...byCurrency, tooltip: "bar" } };
 export const SelectedMonth: Story = { args: { selectedKey: CURRENT_WINDOW.key } };
 export const Loading: Story = { args: { loading: true, data: [] } };

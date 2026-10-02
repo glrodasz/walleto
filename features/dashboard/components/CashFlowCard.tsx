@@ -67,6 +67,7 @@ export function CashFlowCard({
         currency={currency}
         loading={loading}
         selectedKey={selectedKey}
+        tooltip={groupBy === "domain" ? "shared" : "bar"}
       />
 
       <ul className="legend" aria-label="Legend">

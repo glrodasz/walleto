@@ -1,5 +1,4 @@
 import { useUser } from "@auth0/nextjs-auth0/client";
-import { useRouter } from "next/router";
 import { PageLayout } from "../../../components/organisms/PageLayout";
 import { StatCard } from "../../../components/molecules/StatCard";
 import type { StatRow } from "../../../components/molecules/StatCard";
@@ -52,7 +51,6 @@ function cardRows(
 
 export function DashboardPage() {
   const { user } = useUser();
-  const router = useRouter();
   const { userDoc } = useUserDoc();
   const { formatAmount } = useMoneyFormat();
   useMaterialize();
@@ -154,6 +152,11 @@ export function DashboardPage() {
         />
       )}
 
+      <TipBanner id="create">
+        Build your plan from the + button: add what repeats (rent, a salary, a subscription), and
+        log one-offs as they happen.
+      </TipBanner>
+
       <section className="block">
         {userDoc ? (
           <NetFlowCard flow={flow} currency={currency} approximate={approximate} />
@@ -183,7 +186,6 @@ export function DashboardPage() {
                 currency={currency}
                 domain={c.domain}
                 rows={cardRows(c.list, c.domain, currency, formatAmount)}
-                categoryCount={c.list.length}
                 byCurrency={c.mix}
                 secondary={
                   isAccountDomain(c.domain) ? (
@@ -194,7 +196,6 @@ export function DashboardPage() {
                     />
                   ) : undefined
                 }
-                actions={[{ label: `Open ${c.title}`, onSelect: () => router.push(c.href) }]}
               />
             ))
           : cards.map((c) => <Skeleton.Box key={c.domain} width="100%" height={180} />)}
@@ -231,11 +232,6 @@ export function DashboardPage() {
           loading={loading.upcoming}
         />
       </section>
-
-      <TipBanner id="create">
-        Build your plan from the + button: add what repeats (rent, a salary, a subscription), and
-        log one-offs as they happen.
-      </TipBanner>
 
       <style jsx>{`
         .block {
