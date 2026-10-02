@@ -62,7 +62,9 @@ export function WalletItem({
               />
             </div>
           ) : (
-            <div className="placeholder" aria-hidden="true" />
+            <div className="placeholder" aria-hidden="true">
+              Select a type first
+            </div>
           )
         ) : (
           <MethodFaceButton
@@ -121,6 +123,11 @@ export function WalletItem({
 
         /* No type yet: an empty, dimmed slot — nothing to do here. */
         .placeholder {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.8rem;
+          color: var(--fg-2);
           width: 100%;
           max-width: 360px;
           aspect-ratio: 1.586;
@@ -129,6 +136,11 @@ export function WalletItem({
           background: var(--glass-inset);
           opacity: 0.45;
           pointer-events: none;
+        }
+
+        /* On a phone the fields come first and the card preview after them. */
+        .item--open .face-slot {
+          order: 2;
         }
 
         .hint {
@@ -145,6 +157,10 @@ export function WalletItem({
             align-items: start;
             gap: 24px;
             padding: 20px;
+          }
+
+          .item--open .face-slot {
+            order: 0;
           }
         }
       `}</style>
