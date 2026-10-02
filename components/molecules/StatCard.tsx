@@ -13,8 +13,6 @@ import {
 } from "../atoms/Icons";
 import type { IconProps } from "../atoms/Icons";
 import { IconDisc } from "./IconDisc";
-import { KebabMenu } from "./KebabMenu";
-import type { KebabAction } from "./KebabMenu";
 
 export interface StatRow {
   name: string;
@@ -35,10 +33,8 @@ interface Props {
   secondary?: ReactNode;
   /** Up to two lines under the figure ("Salary · $57,000"). */
   rows?: StatRow[];
-  categoryCount?: number;
   /** Share per currency in use; shown only when more than one is in play. */
   byCurrency?: { currency: Currency; pct: number }[];
-  actions?: KebabAction[];
 }
 
 const ICON: Record<Domain, ComponentType<IconProps>> = {
@@ -59,9 +55,7 @@ export function StatCard({
   caption,
   secondary,
   rows = [],
-  categoryCount,
   byCurrency,
-  actions,
 }: Props) {
   const Icon = ICON[domain];
   return (
@@ -103,17 +97,6 @@ export function StatCard({
           ))}
         </span>
       )}
-
-      <div className="foot">
-        <span className="count">
-          {categoryCount === undefined
-            ? ""
-            : `${categoryCount} categor${categoryCount === 1 ? "y" : "ies"}`}
-        </span>
-        {actions && actions.length > 0 && (
-          <KebabMenu aria-label={`Actions for ${title}`} actions={actions} />
-        )}
-      </div>
 
       <style jsx>{`
         .caption {
@@ -185,18 +168,6 @@ export function StatCard({
 
         .sep {
           color: var(--line-strong);
-        }
-
-        .foot {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-top: auto;
-          padding-top: 10px;
-          border-top: 1px solid var(--line);
-          font-size: 0.75rem;
-          color: var(--fg-2);
-          min-height: 28px;
         }
       `}</style>
     </Card>

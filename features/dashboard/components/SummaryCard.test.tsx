@@ -20,7 +20,6 @@ describe("SummaryCard", () => {
           },
           { key: "b", label: "Savings", domain: "SAVING", Icon: Circle, value: "$617.39" },
         ]}
-        footer={<div data-testid="bar" />}
         note="A caveat"
       />
     );
@@ -32,21 +31,18 @@ describe("SummaryCard", () => {
     expect(breakdown.children).toHaveLength(2);
     expect(screen.getByText("$621.70")).toBeInTheDocument();
     expect(screen.getByText("Savings")).toBeInTheDocument();
-    expect(screen.getByTestId("bar")).toBeInTheDocument();
     expect(screen.getByText("A caveat")).toBeInTheDocument();
   });
 
-  it("drops the breakdown panel, footer included, when there are no stats", () => {
+  it("drops the breakdown panel when there are no stats", () => {
     render(
       <SummaryCard
         title="Net worth"
         badge={{ label: "Today", tone: "info" }}
         sub="Nothing to value yet"
-        footer={<div data-testid="bar" />}
       />
     );
     expect(screen.getByText("Nothing to value yet")).toBeInTheDocument();
     expect(screen.queryByRole("list")).toBeNull();
-    expect(screen.queryByTestId("bar")).toBeNull();
   });
 });

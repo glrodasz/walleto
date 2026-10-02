@@ -114,7 +114,7 @@ export const GITHUB_REPO_URL = "https://github.com/glrodasz/walleto";
  */
 export const MONTH_PERIODS = [3, 6, 12] as const;
 export type MonthPeriod = (typeof MONTH_PERIODS)[number];
-export const DEFAULT_MONTH_PERIOD: MonthPeriod = 6;
+export const DEFAULT_MONTH_PERIOD: MonthPeriod = 3;
 
 /**
  * A stored period, for `useLocalPreference`. A browser that saved a period

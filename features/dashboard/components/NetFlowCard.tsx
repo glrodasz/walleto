@@ -6,7 +6,6 @@ import {
   CreditCard,
   TrendingUp,
 } from "../../../components/atoms/Icons";
-import { AllocationBar } from "./AllocationBar";
 import { SummaryCard } from "./SummaryCard";
 import type { SummaryStat } from "./SummaryCard";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
@@ -32,8 +31,8 @@ const STATS: (Omit<SummaryStat, "value"> & { key: keyof MoneyFlow })[] = [
  * The hero figure: monthly net = income − expenses − savings − investments −
  * debt repayments (the owner's definition — cash left unallocated). Savings
  * and investments are money that stays yours, and a repayment is money that
- * stops being owed, so each gets its own slice of the allocation bar instead
- * of being lumped in with spending. Every number here is the plan's monthly
+ * stops being owed, so each gets its own stat instead of being lumped in with
+ * spending. Every number here is the plan's monthly
  * run-rate, and the pill says whether the plan fits inside the income.
  */
 export function NetFlowCard({ flow, currency, approximate = false }: Props) {
@@ -58,7 +57,6 @@ export function NetFlowCard({ flow, currency, approximate = false }: Props) {
           : "left to allocate each month"
       }
       stats={STATS.map((s) => ({ ...s, value: formatAmount(flow[s.key], currency) }))}
-      footer={<AllocationBar flow={flow} />}
     />
   );
 }

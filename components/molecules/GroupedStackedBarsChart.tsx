@@ -1,5 +1,6 @@
 import dynamic from "next/dynamic";
 import { Cell } from "./chartCell";
+import { StackTooltip } from "./StackTooltip";
 import { useMoneyFormat } from "../../hooks/useMoneyFormat";
 import { flatKey } from "../../features/dashboard/helpers/cashFlowSeries";
 import type { CashFlowGroup, GroupedBar } from "../../features/dashboard/helpers/cashFlowSeries";
@@ -25,6 +26,11 @@ interface Props {
   loading: boolean;
   selectedKey?: string;
   height?: number;
+  /**
+   * "shared" lists every group of the hovered month; "bar" only the hovered
+   * bar's stack, for when each bar holds many series.
+   */
+  tooltip?: "shared" | "bar";
 }
 
 /**
@@ -39,6 +45,7 @@ export function GroupedStackedBarsChart({
   loading,
   selectedKey,
   height = 260,
+  tooltip = "shared",
 }: Props) {
   const { formatAmount, formatTick } = useMoneyFormat();
   const keys = groups.flatMap((g) => g.series.map((s) => flatKey(g.key, s.key)));
@@ -101,21 +108,36 @@ export function GroupedStackedBarsChart({
                 tickFormatter={(v: number) => formatTick(v, currency)}
                 width={64}
               />
-              <Tooltip
-                cursor={{ fill: "var(--bg-2)", opacity: 0.5 }}
-                contentStyle={{
-                  background: "var(--bg-1)",
-                  border: "1px solid var(--line-strong)",
-                  borderRadius: 10,
-                  fontSize: 13,
-                  padding: "10px 14px",
-                }}
-                labelStyle={{ color: "var(--fg-2)", marginBottom: 4 }}
-                formatter={(v, name) => [
-                  typeof v === "number" ? formatAmount(v, currency) : String(v),
-                  labelOf(String(name)),
-                ]}
-              />
+              {tooltip === "bar" ? (
+                <Tooltip
+                  shared={false}
+                  cursor={false}
+                  content={({ active, payload }) => (
+                    <StackTooltip
+                      active={active}
+                      payload={payload}
+                      groups={groups}
+                      currency={currency}
+                    />
+                  )}
+                />
+              ) : (
+                <Tooltip
+                  cursor={{ fill: "var(--bg-2)", opacity: 0.5 }}
+                  contentStyle={{
+                    background: "var(--bg-1)",
+                    border: "1px solid var(--line-strong)",
+                    borderRadius: 10,
+                    fontSize: 13,
+                    padding: "10px 14px",
+                  }}
+                  labelStyle={{ color: "var(--fg-2)", marginBottom: 4 }}
+                  formatter={(v, name) => [
+                    typeof v === "number" ? formatAmount(v, currency) : String(v),
+                    labelOf(String(name)),
+                  ]}
+                />
+              )}
               {groups.map((g) =>
                 g.series.map((s, i) => {
                   const top = i === g.series.length - 1;

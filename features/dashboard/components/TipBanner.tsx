@@ -8,7 +8,7 @@ interface Props {
   children: ReactNode;
 }
 
-/** A one-line hint at the foot of the page, dismissable for good. */
+/** A one-line hint at the top of the page, dismissable for good. */
 export function TipBanner({ id, children }: Props) {
   const [dismissed, setDismissed] = useLocalPreference(`waletto:tip:${id}`, false);
   if (dismissed) return null;
