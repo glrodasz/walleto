@@ -41,7 +41,6 @@ function OnboardingIncomes() {
   return (
     <OnboardingLayout
       step={3}
-      onBack={() => go("/onboarding/methods")}
       onNavigate={go}
       busy={busy || later.leaving}
       footer={

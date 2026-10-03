@@ -14,7 +14,6 @@ const meta = {
     step: 2,
     description:
       "How you pay: your cards and accounts, so each plan item knows where it is charged.",
-    onBack: fn(),
     onNavigate: fn(),
     footer: <WizardActions onBack={fn()} onNext={fn()} />,
     children: (
@@ -41,3 +40,12 @@ export const Busy: Story = {
 /** Without onNavigate the stepper is display-only. */
 export const DisplayOnlyStepper: Story = { args: { onNavigate: undefined } };
 export const Mobile: Story = { globals: { viewport: { value: "mobile1", isRotated: false } } };
+/** No step: the intro uses the same shell (title, body, footer) without the stepper. */
+export const NoStepper: Story = {
+  args: {
+    step: undefined,
+    title: "Welcome",
+    description: undefined,
+    footer: <WizardActions onNext={fn()} />,
+  },
+};

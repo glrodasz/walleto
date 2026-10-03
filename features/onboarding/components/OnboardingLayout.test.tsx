@@ -63,26 +63,14 @@ describe("OnboardingLayout", () => {
     expect(container.querySelector(".fill")).toHaveStyle({ width: "100%" });
   });
 
-  it("navigates to the previous step when back is pressed", () => {
+  it("has no header back arrow: Back lives in the footer", () => {
     render(
       <OnboardingLayout step={3}>
         <p>body</p>
       </OnboardingLayout>
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Go back" }));
-    expect(pushMock).toHaveBeenCalledWith("/onboarding/methods");
-  });
-
-  it("leaves the wizard from step 1 rather than going out of bounds", () => {
-    render(
-      <OnboardingLayout step={1}>
-        <p>body</p>
-      </OnboardingLayout>
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Go back" }));
-    expect(pushMock).toHaveBeenCalledWith("/");
+    expect(screen.queryByRole("button", { name: "Go back" })).not.toBeInTheDocument();
   });
 
   it("lets the user jump to another step through onNavigate", () => {
@@ -117,17 +105,17 @@ describe("OnboardingLayout", () => {
     expect(screen.getByRole("button", { name: "1. Categories" })).toBeDisabled();
   });
 
-  it("routes the header arrow through onBack when a page provides one", () => {
-    const onBack = jest.fn();
-    render(
-      <OnboardingLayout step={3} onBack={onBack}>
+  it("takes a custom title and leaves the stepper out when there is no step", () => {
+    const { container } = render(
+      <OnboardingLayout title="Welcome">
         <p>body</p>
       </OnboardingLayout>
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Go back" }));
-    expect(onBack).toHaveBeenCalled();
-    expect(pushMock).not.toHaveBeenCalled();
+    expect(screen.getByRole("heading", { name: "Welcome" })).toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: "Setup progress" })).not.toBeInTheDocument();
+    expect(container.querySelector(".fill")).toBeNull();
+    expect(screen.getByText("body")).toBeInTheDocument();
   });
 
   it("renders the description and footer when provided", () => {

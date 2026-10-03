@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import type { ReactNode } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { ArrowLeft } from "../../../components/atoms/Icons";
 
 export const ONBOARDING_STEPS = [
   { label: "Categories", href: "/onboarding/categories" },
@@ -12,13 +11,13 @@ export const ONBOARDING_STEPS = [
 ] as const;
 
 interface Props {
-  /** 1-based index into ONBOARDING_STEPS. */
-  step: number;
+  /** 1-based index into ONBOARDING_STEPS. Without it (the intro) there is no stepper. */
+  step?: number;
+  /** The heading, and the tab title before " — Waletto". */
+  title?: string;
   description?: string;
   children: ReactNode;
   footer?: ReactNode;
-  /** Header arrow. Pages pass a save-first handler; defaults to plain navigation. */
-  onBack?: () => void;
   /** Stepper click. When absent the stepper is display-only. */
   onNavigate?: (href: string) => void;
   /** Disables the stepper while the current step is saving. */
@@ -27,15 +26,14 @@ interface Props {
 
 export function OnboardingLayout({
   step,
+  title = "Build your plan",
   description,
   children,
   footer,
-  onBack,
   onNavigate,
   busy = false,
 }: Props) {
   const router = useRouter();
-  const progress = (step / ONBOARDING_STEPS.length) * 100;
 
   // Steps navigate with router.push, which (unlike <Link>) doesn't prefetch:
   // load the other steps' code up front so Next/Back don't wait on a chunk.
@@ -47,53 +45,51 @@ export function OnboardingLayout({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once per mount
   }, []);
 
-  const handleBack = () => {
-    if (onBack) return onBack();
-    const previous = ONBOARDING_STEPS[step - 2];
-    router.push(previous ? previous.href : "/");
-  };
-
   return (
     <>
       <Head>
-        <title>Build your plan — Waletto</title>
+        <title>{`${title} — Waletto`}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
       <div className="layout">
         <div className="shell">
+          {/* No back arrow up here: Back, Next and the way out all live in the
+              footer, so a second Back would only be a duplicate. */}
           <header className="header">
-            <button type="button" className="back" onClick={handleBack} aria-label="Go back">
-              <ArrowLeft size={22} />
-            </button>
-            <h1 className="title">Build your plan</h1>
+            <h1 className="title">{title}</h1>
           </header>
 
-          <nav className="stepper" aria-label="Setup progress">
-            <ol className="tabs">
-              {ONBOARDING_STEPS.map((s, i) => {
-                const n = i + 1;
-                const state = n === step ? "current" : n < step ? "done" : "todo";
-                const isCurrent = n === step;
-                return (
-                  <li key={s.href} className={`tab tab--${state}`}>
-                    <button
-                      type="button"
-                      className="tab-btn"
-                      aria-current={isCurrent ? "step" : undefined}
-                      disabled={isCurrent || busy || !onNavigate}
-                      onClick={() => onNavigate?.(s.href)}
-                    >
-                      {n}. {s.label}
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
-            <div className="track">
-              <div className="fill" style={{ width: `${progress}%` }} />
-            </div>
-          </nav>
+          {step !== undefined && (
+            <nav className="stepper" aria-label="Setup progress">
+              <ol className="tabs">
+                {ONBOARDING_STEPS.map((s, i) => {
+                  const n = i + 1;
+                  const state = n === step ? "current" : n < step ? "done" : "todo";
+                  const isCurrent = n === step;
+                  return (
+                    <li key={s.href} className={`tab tab--${state}`}>
+                      <button
+                        type="button"
+                        className="tab-btn"
+                        aria-current={isCurrent ? "step" : undefined}
+                        disabled={isCurrent || busy || !onNavigate}
+                        onClick={() => onNavigate?.(s.href)}
+                      >
+                        {n}. {s.label}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+              <div className="track">
+                <div
+                  className="fill"
+                  style={{ width: `${(step / ONBOARDING_STEPS.length) * 100}%` }}
+                />
+              </div>
+            </nav>
+          )}
 
           {description && <p className="description">{description}</p>}
 
@@ -125,31 +121,10 @@ export function OnboardingLayout({
         }
 
         .header {
-          position: relative;
           display: flex;
           align-items: center;
           justify-content: center;
           margin-bottom: 40px;
-        }
-
-        .back {
-          position: absolute;
-          left: 0;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 40px;
-          height: 40px;
-          padding: 0;
-          border: none;
-          border-radius: var(--r-md);
-          background: transparent;
-          color: var(--fg-0);
-          cursor: pointer;
-        }
-
-        .back:hover {
-          background: var(--glass-hover);
         }
 
         .title {
