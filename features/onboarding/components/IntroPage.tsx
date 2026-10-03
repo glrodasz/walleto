@@ -34,6 +34,7 @@ export function IntroPage() {
   return (
     <OnboardingLayout
       title="Welcome"
+      fill
       footer={
         <WizardActions
           leading={

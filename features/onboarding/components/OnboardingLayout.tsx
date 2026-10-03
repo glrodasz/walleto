@@ -22,6 +22,11 @@ interface Props {
   onNavigate?: (href: string) => void;
   /** Disables the stepper while the current step is saving. */
   busy?: boolean;
+  /**
+   * On phones, stretch the body down to the footer bar so a single child
+   * (with `flex: 1`) can take the whole screen. The intro uses it.
+   */
+  fill?: boolean;
 }
 
 export function OnboardingLayout({
@@ -32,6 +37,7 @@ export function OnboardingLayout({
   footer,
   onNavigate,
   busy = false,
+  fill = false,
 }: Props) {
   const router = useRouter();
 
@@ -52,7 +58,7 @@ export function OnboardingLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <div className="layout">
+      <div className={`layout${fill ? " layout--fill" : ""}`}>
         <div className="shell">
           {/* No back arrow up here: Back, Next and the way out all live in the
               footer, so a second Back would only be a duplicate. */}
@@ -250,6 +256,17 @@ export function OnboardingLayout({
           .tab-btn {
             font-size: 0.75rem;
             padding: 6px 4px;
+          }
+
+          /* The layout is a single-line flex row, so its min-height already
+             stretches the shell; the body then takes what the header leaves. */
+          .layout--fill {
+            min-height: 100dvh;
+          }
+
+          .layout--fill .body {
+            flex: 1;
+            margin-top: 20px;
           }
 
           .footer {

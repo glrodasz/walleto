@@ -118,6 +118,22 @@ describe("OnboardingLayout", () => {
     expect(screen.getByText("body")).toBeInTheDocument();
   });
 
+  it("only stretches to the screen's height when asked to fill", () => {
+    const { container, rerender } = render(
+      <OnboardingLayout step={1}>
+        <p>body</p>
+      </OnboardingLayout>
+    );
+    expect(container.querySelector(".layout")).not.toHaveClass("layout--fill");
+
+    rerender(
+      <OnboardingLayout title="Welcome" fill>
+        <p>body</p>
+      </OnboardingLayout>
+    );
+    expect(container.querySelector(".layout")).toHaveClass("layout--fill");
+  });
+
   it("renders the description and footer when provided", () => {
     render(
       <OnboardingLayout
