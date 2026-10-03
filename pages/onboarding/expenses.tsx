@@ -48,7 +48,6 @@ function OnboardingExpenses() {
   return (
     <OnboardingLayout
       step={4}
-      onBack={() => go("/onboarding/incomes")}
       onNavigate={go}
       busy={pending}
       footer={

@@ -57,7 +57,6 @@ function Methods() {
     <OnboardingLayout
       step={2}
       description="How you pay: your cards and accounts, so each plan item knows where it is charged."
-      onBack={() => go("/onboarding/categories")}
       onNavigate={go}
       busy={busy || later.leaving}
       footer={
@@ -91,7 +90,6 @@ function Incomes() {
   return (
     <OnboardingLayout
       step={3}
-      onBack={() => go("/onboarding/methods")}
       onNavigate={go}
       busy={busy || later.leaving}
       footer={
@@ -132,7 +130,6 @@ function Expenses() {
     <OnboardingLayout
       step={4}
       description="What do you pay every month?"
-      onBack={() => go("/onboarding/incomes")}
       onNavigate={go}
       busy={busy || later.leaving}
       footer={
