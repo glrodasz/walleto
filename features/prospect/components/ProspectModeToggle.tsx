@@ -47,8 +47,10 @@ export function ProspectModeToggle({ mode, onChange }: Props) {
           width: 34px;
           height: 20px;
           border-radius: var(--r-pill);
-          background: var(--glass-field);
-          border: 1px solid var(--glass-rim);
+          /* Solid, not --glass-field: a translucent well vanishes on the
+             pill's own glass, leaving a lone dot that doesn't read as a switch. */
+          background: var(--line-strong);
+          border: 1px solid var(--line-strong);
           transition: background 160ms ease;
         }
 
@@ -64,7 +66,8 @@ export function ProspectModeToggle({ mode, onChange }: Props) {
           width: 14px;
           height: 14px;
           border-radius: 50%;
-          background: var(--fg-0);
+          background: var(--fg-1);
+          box-shadow: var(--shadow-sm);
           transition: transform 160ms ease;
         }
 
