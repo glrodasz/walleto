@@ -7,7 +7,7 @@ import type { ThemePreference } from "../types";
 export type { ThemePreference };
 export type ResolvedTheme = "light" | "dark";
 
-export const THEME_STORAGE_KEY = "waletto:theme";
+export const THEME_STORAGE_KEY = "walleto:theme";
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 
 /** Colour painted behind the browser chrome on phones, per resolved theme. */

@@ -55,12 +55,12 @@ export function DashboardPage() {
   const { formatAmount } = useMoneyFormat();
   useMaterialize();
   const [period, setPeriod] = useLocalPreference<MonthPeriod>(
-    "waletto:dashboard:period",
+    "walleto:dashboard:period",
     DEFAULT_MONTH_PERIOD,
     parseMonthPeriod
   );
   const [groupBy, setGroupBy] = useLocalPreference<CashFlowGroupBy>(
-    "waletto:dashboard:groupBy",
+    "walleto:dashboard:groupBy",
     "domain"
   );
   const {

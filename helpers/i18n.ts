@@ -15,7 +15,7 @@ const CATALOG = {
     "settings.preferences.title": "Preferences",
     "settings.preferences.subtitle": "Personalise your experience.",
     "settings.setup.title": "Setup",
-    "settings.setup.subtitle": "Tools to get the most out of Waletto.",
+    "settings.setup.subtitle": "Tools to get the most out of Walleto.",
     "settings.privacy.title": "Data & privacy",
     "settings.privacy.subtitle": "Your data stays private and belongs to you.",
     "settings.about.title": "About",

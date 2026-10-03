@@ -20,7 +20,7 @@ export function PrivacyCard() {
       <SettingsRow
         label="Account deletion"
         value={support ? "Write to us and we will delete everything." : "Contact support."}
-        href={support ? `mailto:${support}?subject=Delete%20my%20Waletto%20account` : undefined}
+        href={support ? `mailto:${support}?subject=Delete%20my%20Walleto%20account` : undefined}
       />
     </SettingsCard>
   );

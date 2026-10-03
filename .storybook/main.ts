@@ -16,7 +16,7 @@ const STORY_ENV: Record<string, string> = {
   NEXT_PUBLIC_STORAGE_BUCKET: "storybook.appspot.com",
   NEXT_PUBLIC_MESSAGING_SENDER_ID: "000000000000",
   NEXT_PUBLIC_APP_ID: "1:000000000000:web:0000000000000000000000",
-  NEXT_PUBLIC_SUPPORT_EMAIL: "support@waletto.example",
+  NEXT_PUBLIC_SUPPORT_EMAIL: "support@walleto.example",
   NEXT_PUBLIC_FEEDBACK_URL: "https://github.com/glrodasz/walleto/issues",
 };
 

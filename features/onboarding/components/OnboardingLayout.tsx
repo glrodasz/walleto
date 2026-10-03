@@ -13,7 +13,7 @@ export const ONBOARDING_STEPS = [
 interface Props {
   /** 1-based index into ONBOARDING_STEPS. Without it (the intro) there is no stepper. */
   step?: number;
-  /** The heading, and the tab title before " — Waletto". */
+  /** The heading, and the tab title before " — Walleto". */
   title?: string;
   description?: string;
   children: ReactNode;
@@ -54,7 +54,7 @@ export function OnboardingLayout({
   return (
     <>
       <Head>
-        <title>{`${title} — Waletto`}</title>
+        <title>{`${title} — Walleto`}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 

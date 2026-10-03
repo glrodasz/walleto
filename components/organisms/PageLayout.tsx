@@ -36,7 +36,7 @@ export function PageLayout({ title, subtitle, domain, hideCurrency, hideMonth, c
   return (
     <>
       <Head>
-        <title>{title} — Waletto</title>
+        <title>{title} — Walleto</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
