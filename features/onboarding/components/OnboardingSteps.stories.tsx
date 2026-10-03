@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import type { Meta, StoryObj } from "@storybook/nextjs";
+import { mocked } from "storybook/test";
 import { useRouter } from "next/router";
 import { OnboardingLayout } from "./OnboardingLayout";
+import { IntroPage } from "./IntroPage";
 import { CategoriesStep } from "./CategoriesStep";
 import { MethodsStep } from "./MethodsStep";
 import { RecurrentStep } from "./RecurrentStep";
@@ -14,10 +16,12 @@ import { useStepNavigation } from "../hooks/useStepNavigation";
 import { useLeaveOnboarding } from "../hooks/useLeaveOnboarding";
 import { useUserDoc } from "../../../hooks/useUserDoc";
 import { at, MOBILE, screen } from "../../../stories/templates";
+import { hookDefaults } from "../../../stories/fixtures/hookDefaults";
+import { STORY_USER_DOC } from "../../../stories/fixtures/user";
 import type { Currency } from "../../../types";
 
 /*
- * The four wizard pages composed exactly as pages/onboarding/*.tsx do.
+ * The intro and the four wizard pages composed exactly as pages/onboarding/*.tsx do.
  * The page files themselves stay out of Storybook: they're wrapped in the
  * Auth0 client guard. Navigation goes to the
  * Storybook router mock, so "Next" logs an action instead of leaving.
@@ -159,6 +163,30 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+/** A new user, before the wizard (the demo profile is onboarded, which would make it a replay). */
+const firstRun = () => {
+  mocked(useUserDoc).mockReturnValue({
+    ...hookDefaults.useUserDoc(),
+    userDoc: { ...STORY_USER_DOC, onboardingCompleted: false },
+  });
+};
+
+export const Step0Intro: Story = {
+  render: () => <IntroPage />,
+  parameters: at("/onboarding"),
+  beforeEach: firstRun,
+};
+/** Opened from Settings › Setup by someone already onboarded: Close / Done lead back. */
+export const IntroReplay: Story = {
+  render: () => <IntroPage />,
+  parameters: at("/onboarding"),
+};
+export const MobileIntro: Story = {
+  render: () => <IntroPage />,
+  parameters: at("/onboarding"),
+  globals: MOBILE,
+  beforeEach: firstRun,
+};
 export const Step1Categories: Story = {};
 export const Step2Methods: Story = {
   render: () => <Methods />,

@@ -35,6 +35,14 @@ export function ArrowRight({ size = 20, ...rest }: IconProps) {
   );
 }
 
+export function Check({ size = 20, ...rest }: IconProps) {
+  return (
+    <svg {...base(size)} {...rest}>
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
 export function Plus({ size = 20, ...rest }: IconProps) {
   return (
     <svg {...base(size)} {...rest}>

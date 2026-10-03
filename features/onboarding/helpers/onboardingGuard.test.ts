@@ -25,7 +25,7 @@ jest.mock("../../../firebase/admin", () => ({
   },
 }));
 
-import { withOnboardingGuard, ONBOARDING_ENTRY } from "./onboardingGuard";
+import { withOnboardingGuard, ONBOARDING_ENTRY, ONBOARDING_INTRO } from "./onboardingGuard";
 
 const ctx = {} as GetServerSidePropsContext;
 const run = () => withOnboardingGuard()(ctx);
@@ -70,17 +70,27 @@ describe("withOnboardingGuard", () => {
     expect(updateSessionMock).not.toHaveBeenCalled();
   });
 
-  it("redirects when onboarding is not complete", async () => {
+  it("redirects to the intro when onboarding is not complete and the intro is unseen", async () => {
     getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
     getMock.mockResolvedValue({ data: () => ({ onboardingCompleted: false }) });
     await expect(run()).resolves.toEqual({
-      redirect: { destination: ONBOARDING_ENTRY, permanent: false },
+      redirect: { destination: ONBOARDING_INTRO, permanent: false },
     });
   });
 
-  it("redirects a brand new user whose doc does not exist yet", async () => {
+  it("redirects a brand new user whose doc does not exist yet to the intro", async () => {
     getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
     getMock.mockResolvedValue({ data: () => undefined });
+    await expect(run()).resolves.toEqual({
+      redirect: { destination: ONBOARDING_INTRO, permanent: false },
+    });
+  });
+
+  it("skips the intro once it has been seen and resumes at the first step", async () => {
+    getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
+    getMock.mockResolvedValue({
+      data: () => ({ onboardingCompleted: false, onboardingIntroSeen: true }),
+    });
     await expect(run()).resolves.toEqual({
       redirect: { destination: ONBOARDING_ENTRY, permanent: false },
     });
@@ -100,7 +110,8 @@ describe("withOnboardingGuard", () => {
     expect(collectionMock).not.toHaveBeenCalled();
   });
 
-  it("targets a route that is not itself guarded, so no redirect loop is possible", () => {
+  it("targets routes that are not themselves guarded, so no redirect loop is possible", () => {
     expect(ONBOARDING_ENTRY).toBe("/onboarding/categories");
+    expect(ONBOARDING_INTRO).toBe("/onboarding");
   });
 });

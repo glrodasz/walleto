@@ -56,6 +56,8 @@ export interface User {
   enabledCurrencies?: Currency[];
   onboardingCompleted: boolean;
   onboardingMode?: "MAGIC" | "ASSISTED";
+  /** The "what is Walleto" intro was shown; the guard then starts setup at step 1. */
+  onboardingIntroSeen?: boolean;
   theme?: ThemePreference;
   dateFormat?: DateFormat;
   weekStart?: WeekStart;

@@ -21,6 +21,7 @@ export interface UserDoc {
   enabledCurrencies?: Currency[];
   onboardingCompleted: boolean;
   onboardingMode?: "MAGIC" | "ASSISTED";
+  onboardingIntroSeen?: boolean;
   theme?: ThemePreference;
   dateFormat?: DateFormat;
   weekStart?: WeekStart;

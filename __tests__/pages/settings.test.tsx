@@ -117,6 +117,15 @@ describe("SettingsPage", () => {
     });
   });
 
+  it("replays the intro without touching onboarding state", () => {
+    render(<SettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Watch the intro" }));
+
+    expect(pushMock).toHaveBeenCalledWith("/onboarding");
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
   it("backfills missing default categories before reopening the wizard", async () => {
     updateMock.mockResolvedValue(undefined);
     render(<SettingsPage />);

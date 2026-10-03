@@ -715,11 +715,14 @@ form[method="dialog"] button:first-of-type:hover {
   filter: brightness(1.05);
 }
 
+/* Delays go to zero too: a staggered piece that waits on its delay with
+   animation-fill-mode: both would otherwise sit invisible until it ends. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }

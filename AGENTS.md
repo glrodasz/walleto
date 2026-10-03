@@ -66,7 +66,14 @@ Todo lo que solo sirve a una feature vive junta:
 
 ```
 features/
-  onboarding/   el wizard de configuración inicial + el guard de acceso. El paso 2 (MethodsStep, también en
+  onboarding/   el wizard de configuración inicial + el guard de acceso. Antes del paso 1 va la intro animada
+                (`/onboarding`, IntroPage: seis slides de "qué es Walleto" — planificador, no registro; entender
+                a dónde va la plata; nada urgente; lo esencial primero; patrimonio; multi-moneda —, el copy en
+                data/introSlides). Se ve **una sola vez**: el guard manda a la intro mientras
+                `onboardingIntroSeen` no esté, y después directo al paso 1; Settings › Setup la repite ("Watch the
+                intro", que vuelve a Settings). Cada escena es iconos en IconDisc sobre un lienzo fijo de 320×200
+                (`intro/SceneCanvas`), y todo el movimiento vive en `intro/SceneBit` (keyframes una sola vez).
+                El wizard no tiene flecha arriba: Back, Next y la salida viven solo en el pie. El paso 2 (MethodsStep, también en
                 Settings) es una billetera: cada método es una MethodFace colapsada; tocarla la abre (WalletItem +
                 MethodEditor, una a la vez, hooks/useOpenRow) y el "Remove" va en el pie del editor, nunca en una
                 columna al lado de los campos. Los métodos guardados se editan ahí mismo (solo el tipo queda fijo) y
@@ -178,6 +185,8 @@ El resto del vocabulario, por si algo no puede llevar la clase (un `<dialog>` na
 **Nunca pongas `background: var(--bg-1|2|3)` en una superficie visible.** Ese es el modo en que el material se rompe: una baldosa opaca sobre el vidrio. Los `--bg-*` quedan para el fondo de la página y para lo que el navegador dibuja por su cuenta (`select option`).
 
 El fondo importa tanto como el vidrio: el paisaje de `--bg-image` nunca llega a taparse del todo y `body::before` deja una luz ambiental fija al viewport (`--ambient-1..3`), para que una card por debajo del fold también tenga color que refractar. Sin eso el material se lee como un panel gris.
+
+Movimiento: `prefers-reduced-motion` (regla global en `globals.css`) lleva duración **y delay** a cero — una pieza escalonada con `animation-fill-mode: both` quedaría invisible durante su delay. Una animación nueva solo puede retrasar el frame final, nunca esconder contenido.
 
 Dos degradaciones, ambas en `globals.css` y ambas solo quitan translucidez (la geometría no cambia): `@supports not (backdrop-filter)` y `prefers-reduced-transparency: reduce` vuelven `--glass*` opacos, y la segunda además apaga `sheen`, cantos, blur y `--scrim-blur`.
 
