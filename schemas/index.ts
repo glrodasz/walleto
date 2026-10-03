@@ -323,6 +323,7 @@ export const UserUpdateSchema = z
     enabledCurrencies: z.array(CurrencySchema).min(1).optional(),
     onboardingCompleted: z.boolean().optional(),
     onboardingMode: z.enum(["MAGIC", "ASSISTED"]).optional(),
+    onboardingIntroSeen: z.boolean().optional(),
     theme: ThemePreferenceSchema.optional(),
     dateFormat: DateFormatSchema.optional(),
     weekStart: WeekStartSchema.optional(),

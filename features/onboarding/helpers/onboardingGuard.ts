@@ -1,8 +1,9 @@
 import type { GetServerSideProps } from "next";
 import auth0 from "../../../lib/auth0";
 import admin from "../../../firebase/admin";
+import { ONBOARDING_ENTRY, ONBOARDING_INTRO } from "./routes";
 
-export const ONBOARDING_ENTRY = "/onboarding/categories";
+export { ONBOARDING_ENTRY, ONBOARDING_INTRO };
 export const ONBOARDED_SESSION_KEY = "onboarded";
 
 /**
@@ -21,6 +22,9 @@ export const ONBOARDED_SESSION_KEY = "onboarded";
  * every client-side navigation too. So once the doc says "onboarded", the flag
  * is cached in the Auth0 session (`ONBOARDED_SESSION_KEY`) and later requests
  * skip the read. PATCH /api/user keeps the flag in sync when setup is re-run.
+ *
+ * The same read decides where an unfinished user lands: the intro until it has
+ * been seen once (`onboardingIntroSeen`), the first wizard step after that.
  */
 export function withOnboardingGuard(): GetServerSideProps {
   return auth0.withPageAuthRequired({
@@ -36,15 +40,18 @@ export function withOnboardingGuard(): GetServerSideProps {
         return { props: {} };
       }
 
+      let introSeen = false;
       try {
         const snap = await admin.firestore().collection("users").doc(userId).get();
-        if (snap.data()?.onboardingCompleted === true) {
+        const data = snap.data();
+        if (data?.onboardingCompleted === true) {
           await auth0.updateSession(ctx.req, ctx.res, {
             ...session,
             [ONBOARDED_SESSION_KEY]: true,
           });
           return { props: {} };
         }
+        introSeen = data?.onboardingIntroSeen === true;
       } catch (err) {
         // Firestore being unreachable shouldn't lock the user out of the app.
         console.error("[withOnboardingGuard] failed to read user doc:", err);
@@ -52,7 +59,10 @@ export function withOnboardingGuard(): GetServerSideProps {
       }
 
       return {
-        redirect: { destination: ONBOARDING_ENTRY, permanent: false },
+        redirect: {
+          destination: introSeen ? ONBOARDING_ENTRY : ONBOARDING_INTRO,
+          permanent: false,
+        },
       };
     },
   }) as GetServerSideProps;
