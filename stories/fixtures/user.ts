@@ -21,4 +21,11 @@ export const STORY_USER_DOC: UserDoc = {
   dateFormat: "MDY",
   weekStart: 1,
   language: "en",
+  emergencyPlan: {
+    currency: "USD",
+    benefitMonthly: 1800,
+    benefitMonths: 6,
+    severance: 4000,
+    includeInvestments: false,
+  },
 };

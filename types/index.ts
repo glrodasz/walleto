@@ -66,7 +66,23 @@ export interface User {
   decimalSeparator?: DecimalSeparator;
   /** Fraction digits to print, 0–4; the stored value keeps its precision. */
   decimals?: Decimals;
+  /** Prospect's emergency mode: what still comes in if the regular income stops. */
+  emergencyPlan?: EmergencyPlan;
   createdAt: Timestamp;
+}
+
+/**
+ * The owner's fallback income for Prospect's runway: an unemployment benefit
+ * paid monthly for a while, and/or a one-off severance. 0 means none. Always
+ * written whole, so a merge never leaves a stale field behind.
+ */
+export interface EmergencyPlan {
+  currency: Currency;
+  benefitMonthly: number;
+  benefitMonths: number;
+  severance: number;
+  /** Count investments as cash you could sell, on top of savings. */
+  includeInvestments: boolean;
 }
 
 export interface Category {
@@ -178,6 +194,11 @@ export interface RecurrentTransaction {
   active: boolean;
   /** Kept out of every dashboard number and list; domain pages still show it. */
   hiddenFromDashboard?: boolean;
+  /**
+   * EXPENSE: whether it survives emergency mode in Prospect. Unset means
+   * guessed (`helpers/essential.ts`); DEBT payments are always essential.
+   */
+  essential?: boolean;
   createdAt?: Timestamp;
 }
 

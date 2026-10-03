@@ -34,8 +34,8 @@ const DASHBOARD: NavItem = { label: "Dashboard", href: "/", icon: Home };
 /**
  * Grouped by the question each page answers: what moves every month (cash
  * flow) and where the owner stands (net worth — the pages that also carry a
- * balance). Prospect keeps its own group so a disabled item never reads as
- * "planning is unavailable": the plan lives on every page.
+ * balance). Prospect keeps its own group: it simulates the plan rather than
+ * reporting it.
  */
 const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
   {
@@ -55,7 +55,7 @@ const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
   },
   {
     title: "What-if",
-    items: [{ label: "Prospect", href: "/prospect", icon: Compass, disabled: true }],
+    items: [{ label: "Prospect", href: "/prospect", icon: Compass }],
   },
   {
     title: "Account",
@@ -74,7 +74,7 @@ const BOTTOM_NAV: NavItem[] = [
 const MORE_NAV: NavItem[] = [
   { label: "Savings", href: "/savings", icon: Circle },
   { label: "Debts", href: "/debts", icon: CreditCard },
-  { label: "Prospect", href: "/prospect", icon: Compass, disabled: true },
+  { label: "Prospect", href: "/prospect", icon: Compass },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 

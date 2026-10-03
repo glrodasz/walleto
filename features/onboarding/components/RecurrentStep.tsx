@@ -1,6 +1,7 @@
 import { Select } from "../../../components/atoms/Select";
 import { TextField } from "../../../components/atoms/TextField";
 import { Chip } from "../../../components/atoms/Chip";
+import { CheckboxField } from "../../../components/atoms/CheckboxField";
 import { Close } from "../../../components/atoms/Icons";
 import { useRecurrentStep } from "../hooks/useRecurrentStep";
 import type { RecurrentRow } from "../hooks/useRecurrentStep";
@@ -62,20 +63,14 @@ export function RecurrentStep({ state, showPaymentMethod = false }: Props) {
 
   return (
     <div className="step">
-      <label className="backfill">
-        <input
-          type="checkbox"
+      <div className="backfill">
+        <CheckboxField
+          label={`Backfill recurring items for the last ${BACKFILL_MONTHS} months`}
+          hint="So your charts and totals have history from day one."
           checked={backfill}
-          onChange={(e) => setBackfill(e.currentTarget.checked)}
+          onChange={setBackfill}
         />
-        <span>
-          Backfill recurring items for the last {BACKFILL_MONTHS} months
-          <span className="backfill-hint">
-            {" "}
-            — so your charts and totals have history from day one
-          </span>
-        </span>
-      </label>
+      </div>
 
       {CADENCE_SECTIONS.map((section) => {
         const sectionRows = rowsIn(section);
@@ -175,29 +170,10 @@ export function RecurrentStep({ state, showPaymentMethod = false }: Props) {
         }
 
         .backfill {
-          display: flex;
-          align-items: flex-start;
-          gap: 10px;
           padding: 12px 14px;
           border: 1px solid var(--glass-rim);
           border-radius: var(--r-md);
           background: var(--glass-inset);
-          font-size: 0.875rem;
-          color: var(--fg-0);
-          cursor: pointer;
-        }
-
-        .backfill input {
-          margin-top: 2px;
-          width: 16px;
-          height: 16px;
-          accent-color: var(--accent);
-          cursor: pointer;
-          flex-shrink: 0;
-        }
-
-        .backfill-hint {
-          color: var(--fg-2);
         }
 
         .section {

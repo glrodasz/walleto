@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { SummaryCard } from "./SummaryCard";
-import { Circle, TrendingUp } from "../../../components/atoms/Icons";
+import { Circle, TrendingUp } from "../atoms/Icons";
 
 describe("SummaryCard", () => {
   it("shows the title, the verdict, the figure and what it is made of", () => {

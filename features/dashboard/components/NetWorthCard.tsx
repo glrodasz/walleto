@@ -1,8 +1,8 @@
 import { Amount } from "../../../components/atoms/Amount";
 import Skeleton from "../../../components/Skeleton";
 import { Circle, CreditCard, TrendingUp } from "../../../components/atoms/Icons";
-import { SummaryCard } from "./SummaryCard";
-import type { SummaryStat } from "./SummaryCard";
+import { SummaryCard } from "../../../components/molecules/SummaryCard";
+import type { SummaryStat } from "../../../components/molecules/SummaryCard";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { useDateFormat } from "../../../hooks/usePreferences";
 import type { NetWorth } from "../helpers/netWorth";

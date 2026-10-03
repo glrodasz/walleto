@@ -35,7 +35,11 @@ export function useDomainValue(
   error: Error | null;
 } {
   const { accounts, loading: accLoading, error: accError } = useAccounts(domain);
-  const { transactions, loading: txLoading } = useDomainTransactions(domain, INCEPTION);
+  const {
+    transactions,
+    loading: txLoading,
+    error: txError,
+  } = useDomainTransactions(domain, INCEPTION);
   const { valuations: raw, loading: valLoading, error: valError } = useAllInvestmentValuations();
 
   const valuations = useMemo(() => withDomain(raw, categories), [raw, categories]);
@@ -61,6 +65,8 @@ export function useDomainValue(
     transactions,
     valuations,
     loading: accLoading || txLoading || valLoading,
-    error: valError ?? accError,
+    // Any failed read is an error, never a zero: an empty ledger and a
+    // broken listener would otherwise both read as "worth nothing".
+    error: valError ?? accError ?? txError,
   };
 }

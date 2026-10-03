@@ -3,43 +3,75 @@ import { PageLayout } from "../../../components/organisms/PageLayout";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { ErrorState } from "../../../components/atoms/ErrorState";
+import { TabStrip } from "../../../components/atoms/TabStrip";
 import { FlowChart } from "../../../components/molecules/FlowChart";
 import { CancelableItemsList } from "./CancelableItemsList";
+import { EmergencyView } from "./EmergencyView";
+import { ProspectModeToggle } from "./ProspectModeToggle";
+import type { ProspectMode } from "./ProspectModeToggle";
 import { WhatIfSummary } from "./WhatIfSummary";
 import { useWhatIf } from "../hooks/useWhatIf";
 import { computeWhatIfImpact } from "../helpers/whatIfImpact";
 import { buildWhatIfProjection } from "../helpers/whatIfProjection";
+import { rankCancelable } from "../helpers/rankCancelable";
 import { useRecurrentTransactions } from "../../../hooks/useRecurrentTransactions";
+import { useCategories } from "../../../hooks/useCategories";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
 import { computeFlow } from "../../../helpers";
-import type { Currency } from "../../../types";
+import { errorMessage } from "../../../utils/errorMessage";
+import type { Currency, RecurrentTransaction } from "../../../types";
 
 const HORIZONS = [
-  { label: "6 months", months: 6 },
-  { label: "12 months", months: 12 },
+  { key: "6", label: "6 months", months: 6 },
+  { key: "12", label: "12 months", months: 12 },
 ];
 
-export function ProspectPage() {
-  const { ctx, target } = useMoneyContext();
+/** The dashboard's rule: an item hidden from it is out of every plan number. */
+const visible = (items: RecurrentTransaction[]) => items.filter((i) => !i.hiddenFromDashboard);
+
+interface Props {
+  /** Stories open straight into emergency mode; the route always starts in what-if. */
+  initialMode?: ProspectMode;
+}
+
+/**
+ * The plan simulator. What-if mode ranks what could go — non-essential
+ * spending first — and shows how cancelling it moves the monthly net.
+ * Emergency mode answers the harder question: if the income stopped, how many
+ * months would savings carry the essentials?
+ */
+export function ProspectPage({ initialMode = "whatif" }: Props) {
+  const { ctx, target, fxMissing } = useMoneyContext();
   const currency: Currency = target;
 
-  const { items: incomes, loading: l1, error: e1 } = useRecurrentTransactions("INCOME");
-  const { items: expenses, loading: l2, error: e2 } = useRecurrentTransactions("EXPENSE");
-  const { items: investments, loading: l3, error: e3 } = useRecurrentTransactions("INVESTMENT");
-  const { items: savings, loading: l4, error: e4 } = useRecurrentTransactions("SAVING");
-  const { items: debts, loading: l5, error: e5 } = useRecurrentTransactions("DEBT");
-  const loading = l1 || l2 || l3 || l4 || l5;
-  const error = e1 ?? e2 ?? e3 ?? e4 ?? e5;
+  const incomeQ = useRecurrentTransactions("INCOME");
+  const expenseQ = useRecurrentTransactions("EXPENSE");
+  const investmentQ = useRecurrentTransactions("INVESTMENT");
+  const savingQ = useRecurrentTransactions("SAVING");
+  const debtQ = useRecurrentTransactions("DEBT");
+  const { categories } = useCategories();
+  const queries = [incomeQ, expenseQ, investmentQ, savingQ, debtQ];
+  const loading = queries.some((q) => q.loading);
+  const error = queries.find((q) => q.error)?.error ?? null;
 
-  const { excludedIds, toggle } = useWhatIf();
-  const [horizonIdx, setHorizonIdx] = useState(0);
+  const incomes = useMemo(() => visible(incomeQ.items), [incomeQ.items]);
+  const expenses = useMemo(() => visible(expenseQ.items), [expenseQ.items]);
+  const investments = useMemo(() => visible(investmentQ.items), [investmentQ.items]);
+  const savings = useMemo(() => visible(savingQ.items), [savingQ.items]);
+  const debts = useMemo(() => visible(debtQ.items), [debtQ.items]);
 
-  // Income can't be "cancelled" here — only spending, savings transfers,
-  // investment contributions and debt repayments are candidates, matching
-  // the net formula's terms.
+  const [mode, setMode] = useState<ProspectMode>(initialMode);
+  const { excludedIds, toggle, setMany } = useWhatIf();
+  const [horizon, setHorizon] = useState(HORIZONS[0].key);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   const cancelable = useMemo(
     () => [...expenses, ...investments, ...savings, ...debts],
     [expenses, investments, savings, debts]
+  );
+  const groups = useMemo(
+    () => rankCancelable(cancelable, categories, ctx),
+    [cancelable, categories, ctx]
   );
 
   const currentFlow = useMemo(
@@ -62,73 +94,111 @@ export function ProspectPage() {
     [cancelable, excludedIds, ctx]
   );
 
+  const months = HORIZONS.find((h) => h.key === horizon)?.months ?? HORIZONS[0].months;
   const projection = useMemo(
-    () => buildWhatIfProjection(currentFlow.net, impact.freedMonthly, HORIZONS[horizonIdx].months),
-    [currentFlow.net, impact.freedMonthly, horizonIdx]
+    () => buildWhatIfProjection(currentFlow.net, impact.freedMonthly, months),
+    [currentFlow.net, impact.freedMonthly, months]
+  );
+
+  // "≈" only means something when a conversion actually happened.
+  const hasForeign = [incomes, cancelable].some((list) => list.some((i) => i.currency !== target));
+  const approximate = hasForeign && !fxMissing;
+
+  const markEssential = async (item: RecurrentTransaction, essential: boolean) => {
+    if (!item.id) return;
+    setSaveError(null);
+    try {
+      await expenseQ.update(item.id, { essential });
+    } catch (err) {
+      setSaveError(errorMessage(err, `Couldn't update ${item.name}.`));
+    }
+  };
+
+  const list = (
+    <CancelableItemsList
+      groups={groups}
+      mode={mode}
+      excludedIds={excludedIds}
+      onToggle={toggle}
+      onSelect={setMany}
+      onMarkEssential={markEssential}
+      categories={categories}
+      currency={currency}
+      loading={loading}
+    />
   );
 
   return (
-    <PageLayout title="Prospect" hideMonth>
-      {error && <ErrorState error={error} />}
+    <PageLayout
+      title="Prospect"
+      subtitle={
+        mode === "emergency"
+          ? "If your income stopped today, how long would you last?"
+          : "What could you cut, and what would it change?"
+      }
+      hideMonth
+    >
+      <div className="modebar">
+        <ProspectModeToggle mode={mode} onChange={setMode} />
+      </div>
 
-      <section className="row">
-        <CancelableItemsList
-          items={cancelable}
-          excludedIds={excludedIds}
-          onToggle={toggle}
+      {error && <ErrorState error={error} />}
+      {hasForeign && fxMissing && (
+        <ErrorState
+          title="Exchange rates unavailable"
+          description="Totals mix currencies without conversion right now. They'll correct themselves when rates load again."
+        />
+      )}
+      {saveError && <ErrorState title="Couldn't save" description={saveError} />}
+
+      {mode === "emergency" ? (
+        <EmergencyView
+          groups={groups}
+          categories={categories}
           ctx={ctx}
           currency={currency}
           loading={loading}
+          approximate={approximate}
+          list={list}
         />
-
-        <div className="right-col">
-          <WhatIfSummary impact={impact} currentNet={currentFlow.net} currency={currency} />
+      ) : (
+        <>
+          <WhatIfSummary
+            impact={impact}
+            currentNet={currentFlow.net}
+            currency={currency}
+            approximate={approximate}
+          />
 
           <Card>
             <div className="chart-head">
               <SectionTitle title="Projected net" />
-              <div className="horizon-tabs">
-                {HORIZONS.map((h, i) => (
-                  <button
-                    key={h.label}
-                    type="button"
-                    className={`horizon-btn${i === horizonIdx ? " active" : ""}`}
-                    onClick={() => setHorizonIdx(i)}
-                  >
-                    {h.label}
-                  </button>
-                ))}
-              </div>
+              <TabStrip
+                tabs={HORIZONS}
+                value={horizon}
+                onChange={setHorizon}
+                label="Projection horizon"
+              />
             </div>
             <FlowChart
               data={projection}
               currency={currency}
               loading={loading}
-              labelA="Current"
+              labelA="As planned"
               labelB="If cancelled"
               colorA="var(--fg-2)"
               colorB="var(--accent)"
             />
           </Card>
-        </div>
-      </section>
+
+          {list}
+        </>
+      )}
 
       <style jsx>{`
-        .row {
+        .modebar {
           display: flex;
-          align-items: flex-start;
-          gap: 16px;
-        }
-
-        .row > :global(*) {
-          flex: 1;
-          min-width: 0;
-        }
-
-        .right-col {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
+          justify-content: flex-end;
         }
 
         .chart-head {
@@ -139,39 +209,14 @@ export function ProspectPage() {
           flex-wrap: wrap;
         }
 
-        .horizon-tabs {
-          display: flex;
-          gap: 2px;
-          background: var(--glass-inset);
-          border: 1px solid var(--glass-rim);
-          border-radius: var(--r-pill);
-          padding: 3px;
-        }
+        @media (max-width: 767px) {
+          .modebar {
+            justify-content: stretch;
+          }
 
-        .horizon-btn {
-          padding: 5px 12px;
-          border-radius: var(--r-pill);
-          border: none;
-          background: transparent;
-          color: var(--fg-2);
-          font-size: 0.8rem;
-          font-weight: 600;
-          font-family: inherit;
-          cursor: pointer;
-        }
-
-        .horizon-btn.active {
-          background-color: var(--glass-raised);
-          background-image: var(--glass-sheen);
-          color: var(--fg-0);
-          box-shadow:
-            inset 0 1px 0 var(--glass-edge),
-            var(--glass-shadow);
-        }
-
-        @media (max-width: 900px) {
-          .row {
-            flex-direction: column;
+          .modebar > :global(*) {
+            flex: 1;
+            justify-content: space-between;
           }
         }
       `}</style>

@@ -6,8 +6,8 @@ import {
   CreditCard,
   TrendingUp,
 } from "../../../components/atoms/Icons";
-import { SummaryCard } from "./SummaryCard";
-import type { SummaryStat } from "./SummaryCard";
+import { SummaryCard } from "../../../components/molecules/SummaryCard";
+import type { SummaryStat } from "../../../components/molecules/SummaryCard";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import type { Currency } from "../../../types";
 import type { MoneyFlow } from "../../../helpers";

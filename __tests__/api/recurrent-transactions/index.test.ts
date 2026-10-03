@@ -211,6 +211,20 @@ describe("POST /api/recurrent-transactions", () => {
       })
     );
   });
+
+  it("stores an explicit essential flag, and omits it when absent", async () => {
+    getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
+    const add = wireCollections({});
+    await handler(
+      { method: "POST", query: {}, body: { ...validBody, essential: false } } as NextApiRequest,
+      mockRes()
+    );
+    expect(add).toHaveBeenCalledWith(expect.objectContaining({ essential: false }));
+
+    add.mockClear();
+    await handler({ method: "POST", query: {}, body: validBody } as NextApiRequest, mockRes());
+    expect(add.mock.calls[0][0]).not.toHaveProperty("essential");
+  });
 });
 
 describe("unsupported methods", () => {

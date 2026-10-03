@@ -69,6 +69,7 @@ export const STORY_RECURRENT: RecurrentTransaction[] = [
   // ── Expenses ────────────────────────────────────────────
   item({
     id: "rt-rent",
+    essential: true,
     domain: "EXPENSE",
     categoryId: "cat-expense-home",
     name: "Rent",
@@ -83,6 +84,7 @@ export const STORY_RECURRENT: RecurrentTransaction[] = [
   }),
   item({
     id: "rt-netflix",
+    essential: false,
     domain: "EXPENSE",
     categoryId: "cat-expense-streaming",
     name: "Netflix",
@@ -135,6 +137,7 @@ export const STORY_RECURRENT: RecurrentTransaction[] = [
   }),
   item({
     id: "rt-groceries",
+    essential: true,
     domain: "EXPENSE",
     categoryId: "cat-expense-groceries",
     name: "Groceries",

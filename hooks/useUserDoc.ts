@@ -9,6 +9,7 @@ import type {
   DateFormat,
   DecimalSeparator,
   Decimals,
+  EmergencyPlan,
   Language,
   ThemePreference,
   WeekStart,
@@ -28,6 +29,7 @@ export interface UserDoc {
   language?: Language;
   decimalSeparator?: DecimalSeparator;
   decimals?: Decimals;
+  emergencyPlan?: EmergencyPlan;
 }
 
 interface UserDocState {

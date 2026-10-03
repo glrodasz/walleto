@@ -10,6 +10,10 @@ import { TextArea } from "../../../components/atoms/TextArea";
 import { Select } from "../../../components/atoms/Select";
 import { TextField } from "../../../components/atoms/TextField";
 import { Button } from "../../../components/atoms/Button";
+import { Badge } from "../../../components/atoms/Badge";
+import { CheckboxField } from "../../../components/atoms/CheckboxField";
+import { InfoTip } from "../../../components/atoms/InfoTip";
+import { Info } from "../../../components/atoms/Icons";
 import { SegmentedControl } from "../../../components/molecules/SegmentedControl";
 import { useCategories } from "../../../hooks/useCategories";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
@@ -24,6 +28,7 @@ import { valueFromGain } from "../../investments/helpers/valuation";
 import { FREQ_TO_MONTHS } from "../../../helpers/aggregations";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { directionLabel, isAccountDomain } from "../../../helpers/accounts";
+import { isEssential } from "../../../helpers/essential";
 import {
   BACKFILL_MONTHS,
   anchorStartDate,
@@ -93,6 +98,8 @@ interface FormState extends ScheduleValue {
   direction: TransactionDirection;
   /** EXPENSE only: file this under Debts instead — the instalment repays a debt. */
   paysDebt: boolean;
+  /** Recurring EXPENSE only: kept in Prospect's emergency mode. null = guessed. */
+  essential: boolean | null;
 }
 
 export function RecurrentTransactionModal({
@@ -137,6 +144,7 @@ export function RecurrentTransactionModal({
       chargedCurrency: "",
       direction: "IN",
       paysDebt: false,
+      essential: null,
     }),
     [initialFrequency]
   );
@@ -186,6 +194,7 @@ export function RecurrentTransactionModal({
         chargedCurrency: transaction.chargedCurrency ?? "",
         direction: transaction.direction ?? "IN",
         paysDebt: false,
+        essential: null,
       });
       return;
     }
@@ -223,6 +232,7 @@ export function RecurrentTransactionModal({
       chargedCurrency: "",
       direction: "IN",
       paysDebt: false,
+      essential: item.essential ?? null,
     });
   }, [open, item, transaction, empty, decimal]);
 
@@ -302,6 +312,14 @@ export function RecurrentTransactionModal({
     !editing && domain === "INVESTMENT" && !isRecurring && form.direction !== "OUT";
   // Yearly, quarterly, weekly…: the plan can show it as a monthly amount.
   const offersSpread = isRecurring && form.frequency !== "MONTHLY";
+  const offersEssential = isRecurring && effectiveDomain === "EXPENSE";
+  // Unset shows the guess Prospect would make, so the box never lies.
+  const essentialChecked =
+    form.essential ??
+    isEssential(
+      { domain: effectiveDomain, type: item?.type, categoryId: form.categoryId },
+      categories
+    );
   const monthlySlice = (decimal.parse(form.amount) ?? 0) * FREQ_TO_MONTHS[form.frequency];
   const gainPct =
     offersGain && form.gainPct.trim() !== "" ? (decimal.parse(form.gainPct) ?? NaN) : null;
@@ -413,6 +431,9 @@ export function RecurrentTransactionModal({
           inheritTags: form.inheritTags,
           inheritNote: form.inheritNote,
           spreadMonthly: offersSpread && form.spreadMonthly,
+          ...(offersEssential && form.essential !== null && form.essential !== item.essential
+            ? { essential: form.essential }
+            : {}),
           ...(offersBackfill && form.applyToExisting ? { applyToExisting: true } : {}),
           // An old item may still carry a pair; only clear it when the new
           // currency collides with it, which the API would otherwise refuse.
@@ -461,6 +482,7 @@ export function RecurrentTransactionModal({
           ...(form.inheritTags ? { inheritTags: true } : {}),
           ...(form.inheritNote ? { inheritNote: true } : {}),
           ...(offersSpread && form.spreadMonthly ? { spreadMonthly: true } : {}),
+          ...(offersEssential && form.essential !== null ? { essential: form.essential } : {}),
         });
         // Anything anchored in the past has occurrences to write.
         if (startDate < new Date()) {
@@ -506,21 +528,12 @@ export function RecurrentTransactionModal({
     >
       <div className="form">
         {offersDebtToggle && (
-          <label className="toggle">
-            <input
-              type="checkbox"
-              checked={form.paysDebt}
-              onChange={(e) => togglePaysDebt(e.currentTarget.checked)}
-            />
-            <span>
-              This pays off a debt
-              <span className="hint">
-                {" "}
-                — files it under Debts, where the debt, its rate and its balance live. Expenses
-                drops by the instalment; your monthly net does not change.
-              </span>
-            </span>
-          </label>
+          <CheckboxField
+            label="This pays off a debt"
+            hint="Files it under Debts, where the debt, its rate and its balance live. Expenses drops by the instalment; your monthly net does not change."
+            checked={form.paysDebt}
+            onChange={togglePaysDebt}
+          />
         )}
 
         <CategoryField
@@ -621,21 +634,39 @@ export function RecurrentTransactionModal({
         </div>
 
         {offersSpread && (
-          <label className="toggle">
-            <input
-              type="checkbox"
-              checked={form.spreadMonthly}
-              onChange={(e) => patch({ spreadMonthly: e.currentTarget.checked })}
-            />
-            <span>
-              Reflect it as a monthly amount
-              <span className="hint">
-                {" "}
-                — the graph and the plan count {formatAmount(monthlySlice, effectiveCurrency)} a
-                month; the real payment stays in the list
-              </span>
-            </span>
-          </label>
+          <CheckboxField
+            label="Reflect it as a monthly amount"
+            hint={`The graph and the plan count ${formatAmount(monthlySlice, effectiveCurrency)} a month; the real payment stays in the list.`}
+            checked={form.spreadMonthly}
+            onChange={(spreadMonthly) => patch({ spreadMonthly })}
+          />
+        )}
+
+        {offersEssential && (
+          <CheckboxField
+            label="Essential"
+            hint="Keep paying it in Prospect’s emergency mode."
+            tag={
+              form.essential === null ? (
+                <InfoTip
+                  label="Guessed from category: why?"
+                  trigger={
+                    <Badge variant="outline" caps size="sm" icon={<Info size={10} />}>
+                      Guessed from category
+                    </Badge>
+                  }
+                >
+                  {essentialChecked
+                    ? "Ticked automatically: items in this category usually keep being paid in an emergency."
+                    : "Left unticked automatically: subscriptions and Variable spending usually stop in an emergency."}{" "}
+                  It comes from the category this item belongs to — tick or untick the box to decide
+                  yourself, and your choice overrides the guess.
+                </InfoTip>
+              ) : undefined
+            }
+            checked={essentialChecked}
+            onChange={(essential) => patch({ essential })}
+          />
         )}
 
         <TagsField
@@ -646,14 +677,11 @@ export function RecurrentTransactionModal({
           onError={setFormError}
         />
         {isRecurring && (
-          <label className="toggle">
-            <input
-              type="checkbox"
-              checked={form.inheritTags}
-              onChange={(e) => patch({ inheritTags: e.currentTarget.checked })}
-            />
-            <span>Apply the tags to each payment</span>
-          </label>
+          <CheckboxField
+            label="Apply the tags to each payment"
+            checked={form.inheritTags}
+            onChange={(inheritTags) => patch({ inheritTags })}
+          />
         )}
 
         <TextArea
@@ -664,42 +692,29 @@ export function RecurrentTransactionModal({
           onValueChange={(v) => patch({ note: v })}
         />
         {isRecurring && (
-          <label className="toggle">
-            <input
-              type="checkbox"
-              checked={form.inheritNote}
-              onChange={(e) => patch({ inheritNote: e.currentTarget.checked })}
-            />
-            <span>Apply the note to each payment</span>
-          </label>
+          <CheckboxField
+            label="Apply the note to each payment"
+            checked={form.inheritNote}
+            onChange={(inheritNote) => patch({ inheritNote })}
+          />
         )}
 
         {offersBackfill && (
-          <label className="toggle">
-            <input
-              type="checkbox"
-              checked={form.applyToExisting}
-              onChange={(e) => patch({ applyToExisting: e.currentTarget.checked })}
-            />
-            <span>
-              Also update the existing payments of this item
-              <span className="hint"> — payments you edited by hand get overwritten</span>
-            </span>
-          </label>
+          <CheckboxField
+            label="Also update the existing payments of this item"
+            hint="Payments you edited by hand get overwritten."
+            checked={form.applyToExisting}
+            onChange={(applyToExisting) => patch({ applyToExisting })}
+          />
         )}
 
         {!item && isRecurring && (
-          <label className="toggle">
-            <input
-              type="checkbox"
-              checked={form.backfill}
-              onChange={(e) => patch({ backfill: e.currentTarget.checked })}
-            />
-            <span>
-              Backfill the last {BACKFILL_MONTHS} months
-              <span className="hint"> — I&rsquo;ve been paying this for a while</span>
-            </span>
-          </label>
+          <CheckboxField
+            label={`Backfill the last ${BACKFILL_MONTHS} months`}
+            hint="I’ve been paying this for a while."
+            checked={form.backfill}
+            onChange={(backfill) => patch({ backfill })}
+          />
         )}
 
         {offersGain && (
@@ -721,21 +736,12 @@ export function RecurrentTransactionModal({
 
         {offersCharged && (
           <>
-            <label className="toggle">
-              <input
-                type="checkbox"
-                checked={form.chargedEnabled}
-                onChange={(e) => patch({ chargedEnabled: e.currentTarget.checked })}
-              />
-              <span>
-                My card was charged a different amount
-                <span className="hint">
-                  {" "}
-                  — e.g. a $15.49 subscription billed as 62,700 COP. Records the real cost and the
-                  exchange rate you actually paid.
-                </span>
-              </span>
-            </label>
+            <CheckboxField
+              label="My card was charged a different amount"
+              hint="E.g. a $15.49 subscription billed as 62,700 COP. Records the real cost and the exchange rate you actually paid."
+              checked={form.chargedEnabled}
+              onChange={(chargedEnabled) => patch({ chargedEnabled })}
+            />
 
             {form.chargedEnabled && (
               <div className="pair">
@@ -784,25 +790,6 @@ export function RecurrentTransactionModal({
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 12px;
-        }
-
-        .toggle {
-          display: flex;
-          align-items: flex-start;
-          gap: 8px;
-          font-size: 0.85rem;
-          color: var(--fg-1);
-          cursor: pointer;
-        }
-
-        .toggle input {
-          margin-top: 3px;
-          flex-shrink: 0;
-          accent-color: var(--accent);
-        }
-
-        .hint {
-          color: var(--fg-2);
         }
 
         .field-hint {

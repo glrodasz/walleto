@@ -44,4 +44,22 @@ describe("InfoTip", () => {
     fireEvent.pointerDown(screen.getByRole("button", { name: "Elsewhere" }));
     expect(trigger).toHaveAttribute("aria-expanded", "false");
   });
+
+  it("can use a tag as its trigger, and a tap on it never toggles a surrounding label", () => {
+    const onChange = jest.fn();
+    render(
+      <label>
+        <input type="checkbox" onChange={onChange} />
+        Essential
+        <InfoTip label="Guessed: why?" trigger={<span>Guessed</span>}>
+          Picked from the category.
+        </InfoTip>
+      </label>
+    );
+    const trigger = screen.getByRole("button", { name: "Guessed: why?" });
+    expect(trigger).toHaveTextContent("Guessed");
+    fireEvent.click(trigger);
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(onChange).not.toHaveBeenCalled();
+  });
 });

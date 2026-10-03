@@ -1,15 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
 import { SummaryCard } from "./SummaryCard";
 import type { SummaryStat } from "./SummaryCard";
-import { Amount } from "../../../components/atoms/Amount";
-import {
-  ArrowDown,
-  ArrowUpRight,
-  Circle,
-  CreditCard,
-  TrendingUp,
-} from "../../../components/atoms/Icons";
-import { boxed } from "../../../stories/decorators";
+import { Amount } from "../atoms/Amount";
+import { ArrowDown, ArrowUpRight, Circle, CreditCard, TrendingUp } from "../atoms/Icons";
+import { boxed } from "../../stories/decorators";
 
 const FIVE: SummaryStat[] = [
   { key: "income", label: "Income", domain: "INCOME", Icon: ArrowUpRight, value: "$6,363.63" },
@@ -20,7 +14,7 @@ const FIVE: SummaryStat[] = [
 ];
 
 const meta = {
-  title: "Organisms/Dashboard/SummaryCard",
+  title: "Molecules/SummaryCard",
   component: SummaryCard,
   tags: ["autodocs"],
   args: {

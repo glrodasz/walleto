@@ -479,3 +479,75 @@ describe("RecurrentTransactionModal — reflect monthly", () => {
     );
   });
 });
+
+describe("RecurrentTransactionModal — essential", () => {
+  it("shows the guess, and sends the flag only once the owner sets it", async () => {
+    const onClose = jest.fn();
+    render(<RecurrentTransactionModal domain="EXPENSE" open onClose={onClose} />);
+    fill();
+    const box = screen.getByRole("checkbox", { name: /Essential/ });
+    // "Groceries" isn't a dispensable default, so the guess is essential.
+    expect(box).toBeChecked();
+    expect(box.closest("label")).toHaveTextContent("Guessed from category");
+
+    fireEvent.click(screen.getByRole("button", { name: "Add to plan" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(createItem.mock.calls[0][0]).not.toHaveProperty("essential");
+  });
+
+  it("explains the guess from the tag without flipping the box", () => {
+    render(<RecurrentTransactionModal domain="EXPENSE" open onClose={jest.fn()} />);
+    fill();
+    const tag = screen.getByRole("button", { name: "Guessed from category: why?" });
+    fireEvent.click(tag);
+    expect(tag).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("checkbox", { name: /Essential/ })).toBeChecked();
+    expect(screen.getByRole("tooltip")).toHaveTextContent("your choice overrides the guess");
+  });
+
+  it("sends an explicit choice on create", async () => {
+    const onClose = jest.fn();
+    render(<RecurrentTransactionModal domain="EXPENSE" open onClose={onClose} />);
+    fill();
+    fireEvent.click(screen.getByRole("checkbox", { name: /Essential/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to plan" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(createItem).toHaveBeenCalledWith(expect.objectContaining({ essential: false }));
+  });
+
+  it("patches it only when it changed", async () => {
+    const gym = {
+      id: "gym",
+      userId: "u",
+      domain: "EXPENSE",
+      categoryId: "c1",
+      name: "Gym",
+      amount: 45,
+      currency: "USD",
+      frequency: "MONTHLY",
+      active: true,
+      essential: false,
+      startDate: { toDate: () => new Date(2026, 0, 5, 12) },
+    } as never;
+    recurringItems = [gym];
+    const onClose = jest.fn();
+    render(<RecurrentTransactionModal domain="EXPENSE" open item={gym} onClose={onClose} />);
+    expect(screen.getByRole("checkbox", { name: /Essential/ })).not.toBeChecked();
+    fireEvent.click(screen.getByRole("checkbox", { name: /Essential/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(updateItem).toHaveBeenCalledWith("gym", expect.objectContaining({ essential: true }));
+  });
+
+  it("is not offered on a one-off or outside expenses", () => {
+    render(
+      <RecurrentTransactionModal
+        domain="EXPENSE"
+        open
+        initialFrequency="ONE_TIME"
+        onClose={jest.fn()}
+      />
+    );
+    expect(screen.queryByRole("checkbox", { name: /Essential/ })).toBeNull();
+  });
+});

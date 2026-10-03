@@ -287,3 +287,19 @@ describe("PATCH /api/recurrent-transactions/[id] — spread monthly", () => {
     expect(update).toHaveBeenCalledWith({ spreadMonthly: false });
   });
 });
+
+describe("PATCH /api/recurrent-transactions/[id] — essential", () => {
+  it("stores the flag either way", async () => {
+    const update = wireDoc({});
+    const res = mockRes();
+    await handler(
+      {
+        method: "PATCH",
+        query: { id: "rt1" },
+        body: { essential: false },
+      } as unknown as NextApiRequest,
+      res
+    );
+    expect(update).toHaveBeenCalledWith({ essential: false });
+  });
+});

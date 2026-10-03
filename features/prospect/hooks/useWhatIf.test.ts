@@ -34,4 +34,12 @@ describe("useWhatIf", () => {
     act(() => result.current.reset());
     expect(result.current.excludedIds.size).toBe(0);
   });
+
+  it("setMany replaces the selection", () => {
+    const { result } = renderHook(() => useWhatIf());
+
+    act(() => result.current.toggle("a"));
+    act(() => result.current.setMany(["b", "c"]));
+    expect([...result.current.excludedIds]).toEqual(["b", "c"]);
+  });
 });
