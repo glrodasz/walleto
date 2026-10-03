@@ -31,6 +31,16 @@ describe("IntroPage", () => {
     expect(screen.queryByRole("button", { name: "Go back" })).not.toBeInTheDocument();
   });
 
+  it("bolds the marked key phrases and never shows the markers", () => {
+    render(<IntroPage />);
+    for (let n = 0; n < INTRO_SLIDES.length; n++) {
+      const body = heading().nextElementSibling as HTMLElement;
+      expect(body.textContent).not.toContain("**");
+      expect(body.querySelector("strong")).not.toBeNull();
+      if (n < INTRO_SLIDES.length - 1) next();
+    }
+  });
+
   it("moves through the slides with Next and Back", () => {
     render(<IntroPage />);
     next();

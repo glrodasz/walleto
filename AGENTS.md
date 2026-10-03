@@ -18,6 +18,7 @@ utils/sortByCreatedAt.ts       ordenar por createdAt, nulls al final
 utils/startOfPreviousMonth.ts  medianoche del 1° del mes anterior
 utils/formatList.ts            "A", "A y B", "A, B y C"
 utils/decimal.ts               parseDecimal / sanitizeDecimal / toInputString / roundTo — números tal como los teclea la gente (coma o punto)
+utils/emphasis.ts              splitEmphasis — "a **b** c" en tramos normales / en negrita (el copy de la intro)
 utils/errorMessage.ts          UserFacingError + errorMessage(err, fallback) — qué mostrar cuando un save falla (el `{ error: "…" }` de la API, nunca un `flatten()`)
 ```
 
