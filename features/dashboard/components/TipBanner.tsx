@@ -10,7 +10,7 @@ interface Props {
 
 /** A one-line hint at the top of the page, dismissable for good. */
 export function TipBanner({ id, children }: Props) {
-  const [dismissed, setDismissed] = useLocalPreference(`waletto:tip:${id}`, false);
+  const [dismissed, setDismissed] = useLocalPreference(`walleto:tip:${id}`, false);
   if (dismissed) return null;
   return (
     <div className="glass tip" role="note">

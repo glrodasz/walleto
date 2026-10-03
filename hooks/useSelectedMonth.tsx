@@ -123,7 +123,7 @@ export function MonthProvider({ children }: { children: ReactNode }) {
     if (!events) return;
     const onDone = (url: string) => {
       if (selectedKey === currentKey) return;
-      const target = new URL(url, "http://waletto.local");
+      const target = new URL(url, "http://walleto.local");
       if (isMonthKey(target.searchParams.get(MONTH_QUERY))) return;
       target.searchParams.set(MONTH_QUERY, selectedKey);
       void router.replace(

@@ -168,7 +168,7 @@ Toda superficie que flota —Card, Sidebar, la barra inferior, menús, sheets, p
 
 ```jsx
 <div className="glass card">           {/* vidrio + lo propio del componente */}
-<nav className="glass glass--strong glass--raised waletto-bnav">
+<nav className="glass glass--strong glass--raised walleto-bnav">
 <button className="glass glass--tap btn btn--secondary">
 ```
 
@@ -374,7 +374,7 @@ Hay **un solo formulario** para todo lo que entra: `RecurrentTransactionModal`. 
 
 ### 3.5 Modo privacidad
 
-El ojo del header (`components/molecules/PrivacyToggle`) enmascara **el texto** de todos los montos: `$****`, `COP ****` — se queda el símbolo o el código, se va el número entero (nunca `$*,***.**`: la forma ya delata la magnitud, y el sufijo compacto "K"/"M" también, así que se cae). La bandera vive en `hooks/usePrivacy` (contexto + `localStorage`, `waletto:privacy`): es "alguien me está viendo la pantalla", una propiedad del dispositivo y no de la cuenta, así que **no** va al user doc.
+El ojo del header (`components/molecules/PrivacyToggle`) enmascara **el texto** de todos los montos: `$****`, `COP ****` — se queda el símbolo o el código, se va el número entero (nunca `$*,***.**`: la forma ya delata la magnitud, y el sufijo compacto "K"/"M" también, así que se cae). La bandera vive en `hooks/usePrivacy` (contexto + `localStorage`, `walleto:privacy`): es "alguien me está viendo la pantalla", una propiedad del dispositivo y no de la cuenta, así que **no** va al user doc.
 
 Nada más cambia. Alturas de barras, shares, progreso, orden y totales se siguen calculando con los números reales, así que la pantalla conserva su forma y sus proporciones — el gráfico sigue contando el mes, solo que sin cifras. Dos detalles: los ticks del eje quedan **en blanco** en vez de repetir cuatro `$****` iguales (`formatTick`), y los `input` de los formularios muestran el valor de verdad — no se puede editar lo que no se ve. Los porcentajes tampoco se ocultan: son proporción, no dinero.
 

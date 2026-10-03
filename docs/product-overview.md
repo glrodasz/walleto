@@ -1,4 +1,4 @@
-# Waletto — product overview
+# Walleto — product overview
 
 Written as context for design work. It describes what the app is, how its data
 is modelled, and exactly what each screen puts on the page. No code, no file
@@ -9,7 +9,7 @@ what every number and label means.
 
 ## 1. What the app is
 
-Waletto is a personal-finance **planner**: it answers "what is my plan, is this
+Walleto is a personal-finance **planner**: it answers "what is my plan, is this
 month on track, and where do I stand?" rather than "what did I spend?". It is
 built around **five domains** rather than the usual two:
 

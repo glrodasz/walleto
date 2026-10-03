@@ -113,12 +113,12 @@ export function Sidebar() {
   return (
     <>
       {/* ── Desktop sidebar ──────────────────────────── */}
-      <aside className="glass glass--strong waletto-sidebar">
+      <aside className="glass glass--strong walleto-sidebar">
         <div className="logo">
           <span className="logo-mark" aria-hidden="true">
             <Waves size={22} />
           </span>
-          Waletto
+          Walleto
           <BuildBadge />
         </div>
 
@@ -149,7 +149,7 @@ export function Sidebar() {
 
       {/* ── Mobile bottom nav ────────────────────────── */}
       <nav
-        className="glass glass--strong glass--raised waletto-bnav"
+        className="glass glass--strong glass--raised walleto-bnav"
         aria-label="Mobile navigation"
         data-overlay-bottom-bar
       >
@@ -230,7 +230,7 @@ export function Sidebar() {
       <style jsx>{`
         /* A single tall pane of glass. Only the inner edge is drawn: the other
            three sit against the viewport, where a rim would read as a seam. */
-        .waletto-sidebar {
+        .walleto-sidebar {
           width: 236px;
           flex-shrink: 0;
           border-width: 0 1px 0 0;
@@ -381,7 +381,7 @@ export function Sidebar() {
            content slides under it and is visibly refracted through it, which
            is the whole point of the material. PageLayout already reserves the
            room for it at the bottom of every page. */
-        .waletto-bnav {
+        .walleto-bnav {
           position: fixed;
           bottom: calc(10px + env(safe-area-inset-bottom, 0px));
           left: 12px;
@@ -394,7 +394,7 @@ export function Sidebar() {
           overflow: hidden;
         }
 
-        .waletto-bnav :global(.bnav-item) {
+        .walleto-bnav :global(.bnav-item) {
           position: relative;
           flex: 1;
           display: flex;
@@ -413,12 +413,12 @@ export function Sidebar() {
           -webkit-tap-highlight-color: transparent;
         }
 
-        .waletto-bnav :global(.bnav-item.is-active) {
+        .walleto-bnav :global(.bnav-item.is-active) {
           color: var(--accent);
         }
 
         /* The lit lozenge behind the current tab. */
-        .waletto-bnav :global(.bnav-item.is-active)::before {
+        .walleto-bnav :global(.bnav-item.is-active)::before {
           content: "";
           position: absolute;
           inset: 6px 6px;
@@ -428,7 +428,7 @@ export function Sidebar() {
           box-shadow: inset 0 1px 0 var(--glass-edge);
         }
 
-        .waletto-bnav :global(.bnav-item) > :global(*) {
+        .walleto-bnav :global(.bnav-item) > :global(*) {
           position: relative;
         }
 
@@ -498,11 +498,11 @@ export function Sidebar() {
         }
 
         @media (max-width: 767px) {
-          .waletto-sidebar {
+          .walleto-sidebar {
             display: none;
           }
 
-          .waletto-bnav {
+          .walleto-bnav {
             display: flex;
           }
         }
