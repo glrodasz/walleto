@@ -32,6 +32,9 @@
      per build (see "Build environment" below). */
   --accent: #2563eb;
   --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  /* Hover on an accent fill moves away from --on-accent (darker here,
+     lighter in the dark palette), so the label only gains contrast. */
+  --accent-hover: color-mix(in srgb, var(--accent) 84%, #000000);
   --on-accent: #ffffff;
   --accent-hot: #e11d48;
   --accent-amber: #d97706;
@@ -221,6 +224,7 @@
 
   --accent: #7cffb2;
   --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+  --accent-hover: color-mix(in srgb, var(--accent) 84%, #ffffff);
   --on-accent: #0a0a0f;
   --accent-hot: #ff3d68;
   --accent-amber: #ffb84d;
@@ -357,7 +361,7 @@
   --accent: #ff3d68;
 }
 :root[data-env="development"] {
-  --accent: #16a34a;
+  --accent: #15803d;
 }
 :root[data-env="development"][data-theme="dark"] {
   --accent: #4ade80;
