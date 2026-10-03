@@ -11,12 +11,20 @@ export interface BuildInfo {
   shortSha: string | null;
   /** Where that commit lives on GitHub, on previews only. */
   commitUrl: string | null;
+  /** The tab icon, tinted like the build's accent (styles/globals.css, data-env). */
+  favicon: string;
 }
 
 const LABEL: Record<BuildEnv, string> = {
   production: "Alpha",
   preview: "Staging",
   development: "Dev",
+};
+
+const FAVICON: Record<BuildEnv, string> = {
+  production: "/favicon.svg",
+  preview: "/favicon-red.svg",
+  development: "/favicon-green.svg",
 };
 
 /**
@@ -35,5 +43,6 @@ export function buildInfo(
     label: LABEL[resolved],
     shortSha: commit ? commit.slice(0, 7) : null,
     commitUrl: commit ? `${GITHUB_REPO_URL}/commit/${commit}` : null,
+    favicon: FAVICON[resolved],
   };
 }

@@ -27,14 +27,16 @@
   --fg-1: #3b465a;
   --fg-2: #6b7688;
 
-  /* Primary accent: navigation, focus rings, primary buttons. */
+  /* Primary accent: navigation, focus rings, primary buttons. The only
+     literal: soft, glow and ambient-1 derive from it, and data-env swaps it
+     per build (see "Build environment" below). */
   --accent: #2563eb;
-  --accent-soft: rgba(37, 99, 235, 0.12);
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
   --on-accent: #ffffff;
   --accent-hot: #e11d48;
   --accent-amber: #d97706;
   --accent-cyan: #0891b2;
-  --glow: rgba(37, 99, 235, 0.1);
+  --glow: color-mix(in srgb, var(--accent) 10%, transparent);
 
   /* The market-gain segment on the monthly bars. Deliberately clear of the
      five domain ramps: a gain belongs to no domain colour. */
@@ -156,7 +158,7 @@
   );
   /* Ambient light pooled behind everything, fixed to the viewport, so a card
      below the fold still has colour to refract. */
-  --ambient-1: rgba(37, 99, 235, 0.18);
+  --ambient-1: color-mix(in srgb, var(--accent) 18%, transparent);
   --ambient-2: rgba(14, 165, 233, 0.16);
   --ambient-3: rgba(244, 63, 94, 0.1);
 
@@ -218,12 +220,12 @@
   --fg-2: #6e6e85;
 
   --accent: #7cffb2;
-  --accent-soft: rgba(124, 255, 178, 0.14);
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
   --on-accent: #0a0a0f;
   --accent-hot: #ff3d68;
   --accent-amber: #ffb84d;
   --accent-cyan: #5ee8ff;
-  --glow: rgba(124, 255, 178, 0.12);
+  --glow: color-mix(in srgb, var(--accent) 12%, transparent);
 
   --bar-gain: #c58cff;
 
@@ -317,7 +319,7 @@
     rgba(10, 10, 15, 0.3) 0%,
     rgba(10, 10, 15, 0.82) 520px
   );
-  --ambient-1: rgba(124, 255, 178, 0.12);
+  --ambient-1: color-mix(in srgb, var(--accent) 12%, transparent);
   --ambient-2: rgba(94, 232, 255, 0.12);
   --ambient-3: rgba(197, 140, 255, 0.1);
 
@@ -340,6 +342,25 @@
   --palette-6: #8ad6ff;
   --palette-7: #d9f26b;
   --palette-8: #ffd166;
+}
+
+/*
+ * Build environment. pages/_document stamps data-env on <html> from
+ * helpers/buildInfo, so staging and a laptop never pass for production:
+ * production keeps each palette's own accent, staging (Vercel previews,
+ * sublr.vercel.app) is red, dev is green. The favicon follows the same map.
+ */
+:root[data-env="preview"] {
+  --accent: #e11d48;
+}
+:root[data-env="preview"][data-theme="dark"] {
+  --accent: #ff3d68;
+}
+:root[data-env="development"] {
+  --accent: #16a34a;
+}
+:root[data-env="development"][data-theme="dark"] {
+  --accent: #4ade80;
 }
 
 /* Six-step tint ramps per domain, for bars stacked by category. Defined as

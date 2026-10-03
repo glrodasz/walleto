@@ -161,6 +161,7 @@ constants.ts                            constantes y mapas de presentación; MON
 - **styled-jsx** dentro del componente (`<style jsx>{\`…\`}</style>`). No usamos CSS Modules.
 - Siempre **design tokens**, nunca hex a mano: `var(--bg-1)`, `var(--accent)`, `var(--r-md)`. Los tokens están en `styles/globals.css`.
 - **Dos paletas**: clara por defecto ("glass" sobre un fondo de paisaje) y oscura (la "Fintech-noir" original), elegidas por `data-theme` en `<html>`. Un script inline en `_document` la fija antes del primer paint y `hooks/useTheme` la sigue (preferencia en el user doc, `"system"` se resuelve en JS con `matchMedia`; los tokens viven solo en esos dos bloques). Texto sobre el acento: `--on-accent`.
+- **El color primario es un solo token por paleta**: `--accent`. `--accent-soft`, `--glow` y `--ambient-1` salen de él con `color-mix()`, así que cambiar el primario es cambiar ese valor en los dos bloques. Además cada build se pinta distinto para no confundirla con producción: `_document` pone `data-env` en `<html>` desde `helpers/buildInfo` y `globals.css` pisa `--accent` — producción conserva el de cada paleta, staging (los previews de Vercel, `sublr.vercel.app`) es rojo y dev verde. El favicon sigue el mismo mapa (`buildInfo().favicon`: `favicon.svg` / `favicon-red.svg` / `favicon-green.svg`); el `.ico` y el touch icon son azules, así que solo producción los enlaza.
 
 ### Liquid glass: el material (importante)
 
