@@ -76,7 +76,7 @@ export function Button({
         }
 
         .btn--primary:hover:not(:disabled) {
-          background-color: color-mix(in srgb, var(--accent) 88%, var(--on-accent));
+          background-color: var(--accent-hover);
           box-shadow:
             inset 0 1px 0 color-mix(in srgb, var(--on-accent) 45%, transparent),
             0 10px 26px -10px var(--accent);

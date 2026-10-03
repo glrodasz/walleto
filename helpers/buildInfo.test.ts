@@ -10,6 +10,7 @@ describe("buildInfo", () => {
       label: "Alpha",
       shortSha: null,
       commitUrl: null,
+      favicon: "/favicon.svg",
     });
   });
 
@@ -19,6 +20,7 @@ describe("buildInfo", () => {
     expect(info.label).toBe("Staging");
     expect(info.shortSha).toBe("1a2b3c4");
     expect(info.commitUrl).toBe(`https://github.com/glrodasz/walleto/commit/${SHA}`);
+    expect(info.favicon).toBe("/favicon-red.svg");
   });
 
   it("drops the link when a preview has no commit", () => {
@@ -34,6 +36,7 @@ describe("buildInfo", () => {
         label: "Dev",
         shortSha: null,
         commitUrl: null,
+        favicon: "/favicon-green.svg",
       });
     }
   });

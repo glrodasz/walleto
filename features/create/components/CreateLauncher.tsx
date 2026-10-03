@@ -149,6 +149,16 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
           -webkit-tap-highlight-color: transparent;
         }
 
+        /* Outranks .glass--tap:hover, whose --glass-hover would swap the
+           accent for plain glass and sink the --on-accent icon into it. */
+        .fab:hover:not(:disabled) {
+          background-color: var(--accent-hover);
+          box-shadow:
+            inset 0 1px 0 color-mix(in srgb, var(--on-accent) 50%, transparent),
+            0 12px 34px -8px var(--accent),
+            var(--glass-shadow-lg);
+        }
+
         .sheet {
           display: flex;
           flex-direction: column;
