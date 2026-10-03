@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import type { IntroSlide, IntroSlideId } from "../data/introSlides";
 import type { IntroDirection } from "../hooks/useIntroSlides";
+import { splitEmphasis } from "../../../utils/emphasis";
 import { PlanScene } from "./intro/PlanScene";
 import { FlowScene } from "./intro/FlowScene";
 import { LaterScene } from "./intro/LaterScene";
@@ -64,7 +65,18 @@ export function IntroStage({ slides, index, direction, onSelect }: Props) {
         <div key={slide.id} className="enter text" data-dir={direction}>
           <p className="label">{slide.label}</p>
           <h2 className="title">{slide.title}</h2>
-          <p className="body">{slide.body}</p>
+          {/* Key phrases are bold, so the slide reads at a glance. */}
+          <p className="body">
+            {splitEmphasis(slide.body).map((part, n) =>
+              part.strong ? (
+                <strong key={n} className="key">
+                  {part.text}
+                </strong>
+              ) : (
+                part.text
+              )
+            )}
+          </p>
         </div>
       </div>
 
@@ -122,14 +134,16 @@ export function IntroStage({ slides, index, direction, onSelect }: Props) {
 
         .copy {
           width: 100%;
-          max-width: 34rem;
           /* Room for the longest slide, so the footer doesn't shift between slides. */
-          min-height: 10rem;
+          min-height: 8.5rem;
         }
 
+        /* The title gets a wide measure (one line on desktop); the body keeps
+           a narrower one, which reads better over several lines. */
         .text {
           display: flex;
           flex-direction: column;
+          align-items: center;
           gap: 8px;
         }
 
@@ -147,6 +161,7 @@ export function IntroStage({ slides, index, direction, onSelect }: Props) {
           font-size: 1.375rem;
           font-weight: 700;
           line-height: 1.25;
+          max-width: 46rem;
           color: var(--fg-0);
           text-wrap: balance;
         }
@@ -155,8 +170,14 @@ export function IntroStage({ slides, index, direction, onSelect }: Props) {
           margin: 0;
           font-size: 0.9375rem;
           line-height: 1.55;
+          max-width: 34rem;
           color: var(--fg-1);
           text-wrap: pretty;
+        }
+
+        .key {
+          font-weight: 650;
+          color: var(--fg-0);
         }
 
         /* Closer to the scene than the stage gap: they belong to it. */
