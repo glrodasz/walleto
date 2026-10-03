@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import { PageLayout } from "../../../components/organisms/PageLayout";
 import { ErrorState } from "../../../components/atoms/ErrorState";
 import { Card } from "../../../components/atoms/Card";
+import { CheckboxField } from "../../../components/atoms/CheckboxField";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { CategoryIcon } from "../../../components/atoms/CategoryIcon";
 import { CreditCard, Tag as TagIcon } from "../../../components/atoms/Icons";
@@ -633,20 +634,12 @@ export function DomainPage({ domain }: Props) {
             height={220}
           />
           {anythingHidden && (
-            <label className="show-hidden">
-              <input
-                type="checkbox"
-                checked={showHidden}
-                onChange={(e) => setShowHidden(e.currentTarget.checked)}
-              />
-              <span>
-                Show hidden
-                <span className="hint">
-                  {" "}
-                  — items hidden from the dashboard and categories hidden from the chart
-                </span>
-              </span>
-            </label>
+            <CheckboxField
+              label="Show hidden"
+              hint="Items hidden from the dashboard and categories hidden from the chart."
+              checked={showHidden}
+              onChange={setShowHidden}
+            />
           )}
         </Card>
         <CategoryBreakdown
@@ -694,25 +687,6 @@ export function DomainPage({ domain }: Props) {
       )}
 
       <style jsx>{`
-        .show-hidden {
-          display: flex;
-          align-items: flex-start;
-          gap: 8px;
-          font-size: 0.8rem;
-          color: var(--fg-1);
-          cursor: pointer;
-        }
-
-        .show-hidden input {
-          margin-top: 2px;
-          flex-shrink: 0;
-          accent-color: var(--accent);
-        }
-
-        .show-hidden .hint {
-          color: var(--fg-2);
-        }
-
         .charts {
           display: grid;
           grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);

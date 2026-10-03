@@ -488,7 +488,7 @@ describe("RecurrentTransactionModal — essential", () => {
     const box = screen.getByRole("checkbox", { name: /Essential/ });
     // "Groceries" isn't a dispensable default, so the guess is essential.
     expect(box).toBeChecked();
-    expect(box.closest("label")).toHaveTextContent("guessed from the category");
+    expect(box.closest("label")).toHaveTextContent("Guessed from category");
 
     fireEvent.click(screen.getByRole("button", { name: "Add to plan" }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());

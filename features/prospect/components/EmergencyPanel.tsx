@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Card } from "../../../components/atoms/Card";
+import { CheckboxField } from "../../../components/atoms/CheckboxField";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { Select } from "../../../components/atoms/Select";
 import { TextField } from "../../../components/atoms/TextField";
@@ -101,17 +102,14 @@ export function EmergencyPanel({ plan, onSave, investments, currency, error }: P
         />
       </div>
 
-      <label className="toggle">
-        <input
-          type="checkbox"
+      <div className="toggle">
+        <CheckboxField
+          label="Also count my investments as cash"
+          hint={`${formatAmount(investments, currency)} today, if sold.`}
           checked={plan.includeInvestments}
-          onChange={(e) => onSave({ includeInvestments: e.currentTarget.checked })}
+          onChange={(includeInvestments) => onSave({ includeInvestments })}
         />
-        <span>
-          Also count my investments as cash
-          <span className="sub"> — {formatAmount(investments, currency)} today, if sold</span>
-        </span>
-      </label>
+      </div>
 
       {error && (
         <p className="error" role="alert">
@@ -134,25 +132,7 @@ export function EmergencyPanel({ plan, onSave, investments, currency, error }: P
         }
 
         .toggle {
-          display: flex;
-          align-items: flex-start;
-          gap: 10px;
           margin-top: 14px;
-          font-size: 0.85rem;
-          color: var(--fg-0);
-          cursor: pointer;
-        }
-
-        .toggle input {
-          flex-shrink: 0;
-          width: 18px;
-          height: 18px;
-          margin: 0;
-          accent-color: var(--accent);
-        }
-
-        .sub {
-          color: var(--fg-2);
         }
 
         .error {

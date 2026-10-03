@@ -10,6 +10,8 @@ import { TextArea } from "../../../components/atoms/TextArea";
 import { Select } from "../../../components/atoms/Select";
 import { TextField } from "../../../components/atoms/TextField";
 import { Button } from "../../../components/atoms/Button";
+import { Badge } from "../../../components/atoms/Badge";
+import { CheckboxField } from "../../../components/atoms/CheckboxField";
 import { SegmentedControl } from "../../../components/molecules/SegmentedControl";
 import { useCategories } from "../../../hooks/useCategories";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
@@ -524,21 +526,12 @@ export function RecurrentTransactionModal({
     >
       <div className="form">
         {offersDebtToggle && (
-          <label className="toggle">
-            <input
-              type="checkbox"
-              checked={form.paysDebt}
-              onChange={(e) => togglePaysDebt(e.currentTarget.checked)}
-            />
-            <span>
-              This pays off a debt
-              <span className="hint">
-                {" "}
-                — files it under Debts, where the debt, its rate and its balance live. Expenses
-                drops by the instalment; your monthly net does not change.
-              </span>
-            </span>
-          </label>
+          <CheckboxField
+            label="This pays off a debt"
+            hint="Files it under Debts, where the debt, its rate and its balance live. Expenses drops by the instalment; your monthly net does not change."
+            checked={form.paysDebt}
+            onChange={togglePaysDebt}
+          />
         )}
 
         <CategoryField
@@ -639,39 +632,28 @@ export function RecurrentTransactionModal({
         </div>
 
         {offersSpread && (
-          <label className="toggle">
-            <input
-              type="checkbox"
-              checked={form.spreadMonthly}
-              onChange={(e) => patch({ spreadMonthly: e.currentTarget.checked })}
-            />
-            <span>
-              Reflect it as a monthly amount
-              <span className="hint">
-                {" "}
-                — the graph and the plan count {formatAmount(monthlySlice, effectiveCurrency)} a
-                month; the real payment stays in the list
-              </span>
-            </span>
-          </label>
+          <CheckboxField
+            label="Reflect it as a monthly amount"
+            hint={`The graph and the plan count ${formatAmount(monthlySlice, effectiveCurrency)} a month; the real payment stays in the list.`}
+            checked={form.spreadMonthly}
+            onChange={(spreadMonthly) => patch({ spreadMonthly })}
+          />
         )}
 
         {offersEssential && (
-          <label className="toggle">
-            <input
-              type="checkbox"
-              checked={essentialChecked}
-              onChange={(e) => patch({ essential: e.currentTarget.checked })}
-            />
-            <span>
-              Essential
-              <span className="hint">
-                {" "}
-                — keep paying it in Prospect&rsquo;s emergency mode
-                {form.essential === null ? " (guessed from the category)" : ""}
-              </span>
-            </span>
-          </label>
+          <CheckboxField
+            label="Essential"
+            hint="Keep paying it in Prospect’s emergency mode."
+            tag={
+              form.essential === null ? (
+                <Badge variant="outline" caps>
+                  Guessed from category
+                </Badge>
+              ) : undefined
+            }
+            checked={essentialChecked}
+            onChange={(essential) => patch({ essential })}
+          />
         )}
 
         <TagsField
@@ -682,14 +664,11 @@ export function RecurrentTransactionModal({
           onError={setFormError}
         />
         {isRecurring && (
-          <label className="toggle">
-            <input
-              type="checkbox"
-              checked={form.inheritTags}
-              onChange={(e) => patch({ inheritTags: e.currentTarget.checked })}
-            />
-            <span>Apply the tags to each payment</span>
-          </label>
+          <CheckboxField
+            label="Apply the tags to each payment"
+            checked={form.inheritTags}
+            onChange={(inheritTags) => patch({ inheritTags })}
+          />
         )}
 
         <TextArea
@@ -700,42 +679,29 @@ export function RecurrentTransactionModal({
           onValueChange={(v) => patch({ note: v })}
         />
         {isRecurring && (
-          <label className="toggle">
-            <input
-              type="checkbox"
-              checked={form.inheritNote}
-              onChange={(e) => patch({ inheritNote: e.currentTarget.checked })}
-            />
-            <span>Apply the note to each payment</span>
-          </label>
+          <CheckboxField
+            label="Apply the note to each payment"
+            checked={form.inheritNote}
+            onChange={(inheritNote) => patch({ inheritNote })}
+          />
         )}
 
         {offersBackfill && (
-          <label className="toggle">
-            <input
-              type="checkbox"
-              checked={form.applyToExisting}
-              onChange={(e) => patch({ applyToExisting: e.currentTarget.checked })}
-            />
-            <span>
-              Also update the existing payments of this item
-              <span className="hint"> — payments you edited by hand get overwritten</span>
-            </span>
-          </label>
+          <CheckboxField
+            label="Also update the existing payments of this item"
+            hint="Payments you edited by hand get overwritten."
+            checked={form.applyToExisting}
+            onChange={(applyToExisting) => patch({ applyToExisting })}
+          />
         )}
 
         {!item && isRecurring && (
-          <label className="toggle">
-            <input
-              type="checkbox"
-              checked={form.backfill}
-              onChange={(e) => patch({ backfill: e.currentTarget.checked })}
-            />
-            <span>
-              Backfill the last {BACKFILL_MONTHS} months
-              <span className="hint"> — I&rsquo;ve been paying this for a while</span>
-            </span>
-          </label>
+          <CheckboxField
+            label={`Backfill the last ${BACKFILL_MONTHS} months`}
+            hint="I’ve been paying this for a while."
+            checked={form.backfill}
+            onChange={(backfill) => patch({ backfill })}
+          />
         )}
 
         {offersGain && (
@@ -757,21 +723,12 @@ export function RecurrentTransactionModal({
 
         {offersCharged && (
           <>
-            <label className="toggle">
-              <input
-                type="checkbox"
-                checked={form.chargedEnabled}
-                onChange={(e) => patch({ chargedEnabled: e.currentTarget.checked })}
-              />
-              <span>
-                My card was charged a different amount
-                <span className="hint">
-                  {" "}
-                  — e.g. a $15.49 subscription billed as 62,700 COP. Records the real cost and the
-                  exchange rate you actually paid.
-                </span>
-              </span>
-            </label>
+            <CheckboxField
+              label="My card was charged a different amount"
+              hint="E.g. a $15.49 subscription billed as 62,700 COP. Records the real cost and the exchange rate you actually paid."
+              checked={form.chargedEnabled}
+              onChange={(chargedEnabled) => patch({ chargedEnabled })}
+            />
 
             {form.chargedEnabled && (
               <div className="pair">
@@ -820,25 +777,6 @@ export function RecurrentTransactionModal({
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 12px;
-        }
-
-        .toggle {
-          display: flex;
-          align-items: flex-start;
-          gap: 8px;
-          font-size: 0.85rem;
-          color: var(--fg-1);
-          cursor: pointer;
-        }
-
-        .toggle input {
-          margin-top: 3px;
-          flex-shrink: 0;
-          accent-color: var(--accent);
-        }
-
-        .hint {
-          color: var(--fg-2);
         }
 
         .field-hint {
