@@ -85,10 +85,23 @@ export function EmergencyView({
         approximate={approximate}
       />
 
+      <Card>
+        <SectionTitle title="Cushion over time" />
+        <FlowChart
+          data={projection}
+          currency={currency}
+          loading={loading || valuesLoading}
+          labelA="Keeping everything"
+          labelB="Emergency mode"
+          colorA="var(--fg-2)"
+          colorB="var(--accent-hot)"
+        />
+      </Card>
+
       <section className="row">
         {list}
 
-        <div className="right-col">
+        <div className="panel">
           <EmergencyPanel
             plan={plan}
             onSave={save}
@@ -96,19 +109,6 @@ export function EmergencyView({
             currency={currency}
             error={error ? errorMessage(error, "Couldn't save your emergency income.") : null}
           />
-
-          <Card>
-            <SectionTitle title="Cushion over time" />
-            <FlowChart
-              data={projection}
-              currency={currency}
-              loading={loading || valuesLoading}
-              labelA="Keeping everything"
-              labelB="Emergency mode"
-              colorA="var(--fg-2)"
-              colorB="var(--accent-hot)"
-            />
-          </Card>
         </div>
       </section>
 
@@ -130,19 +130,13 @@ export function EmergencyView({
           min-width: 0;
         }
 
-        .right-col {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-
         @media (max-width: 900px) {
           .row {
             flex-direction: column;
           }
 
           /* The inputs drive the runway above; don't bury them under the list. */
-          .right-col {
+          .panel {
             order: -1;
           }
         }

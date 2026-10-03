@@ -170,30 +170,28 @@ export function ProspectPage({ initialMode = "whatif" }: Props) {
             approximate={approximate}
           />
 
-          <section className="row">
-            {list}
-
-            <Card>
-              <div className="chart-head">
-                <SectionTitle title="Projected net" />
-                <TabStrip
-                  tabs={HORIZONS}
-                  value={horizon}
-                  onChange={setHorizon}
-                  label="Projection horizon"
-                />
-              </div>
-              <FlowChart
-                data={projection}
-                currency={currency}
-                loading={loading}
-                labelA="As planned"
-                labelB="If cancelled"
-                colorA="var(--fg-2)"
-                colorB="var(--accent)"
+          <Card>
+            <div className="chart-head">
+              <SectionTitle title="Projected net" />
+              <TabStrip
+                tabs={HORIZONS}
+                value={horizon}
+                onChange={setHorizon}
+                label="Projection horizon"
               />
-            </Card>
-          </section>
+            </div>
+            <FlowChart
+              data={projection}
+              currency={currency}
+              loading={loading}
+              labelA="As planned"
+              labelB="If cancelled"
+              colorA="var(--fg-2)"
+              colorB="var(--accent)"
+            />
+          </Card>
+
+          {list}
         </>
       )}
 
@@ -203,29 +201,12 @@ export function ProspectPage({ initialMode = "whatif" }: Props) {
           justify-content: flex-end;
         }
 
-        .row {
-          display: flex;
-          align-items: flex-start;
-          gap: 16px;
-        }
-
-        .row > :global(*) {
-          flex: 1;
-          min-width: 0;
-        }
-
         .chart-head {
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: 12px;
           flex-wrap: wrap;
-        }
-
-        @media (max-width: 900px) {
-          .row {
-            flex-direction: column;
-          }
         }
 
         @media (max-width: 767px) {
