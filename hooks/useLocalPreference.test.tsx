@@ -32,10 +32,10 @@ describe("useLocalPreference — a stored value the app no longer offers", () =>
     // The chart periods were 7 and 12 before they became 3, 6 and 12. A stored
     // 7 parses fine, so without a guard the chart drew seven months while the
     // <select>, having no matching option, showed the first one.
-    localStorage.setItem("waletto:chart:EXPENSE:period", "7");
+    localStorage.setItem("walleto:chart:EXPENSE:period", "7");
     const { result } = renderHook(() =>
       useLocalPreference<MonthPeriod>(
-        "waletto:chart:EXPENSE:period",
+        "walleto:chart:EXPENSE:period",
         DEFAULT_MONTH_PERIOD,
         parseMonthPeriod
       )
@@ -44,10 +44,10 @@ describe("useLocalPreference — a stored value the app no longer offers", () =>
   });
 
   it("keeps a stored value that is still offered", () => {
-    localStorage.setItem("waletto:chart:EXPENSE:period", "12");
+    localStorage.setItem("walleto:chart:EXPENSE:period", "12");
     const { result } = renderHook(() =>
       useLocalPreference<MonthPeriod>(
-        "waletto:chart:EXPENSE:period",
+        "walleto:chart:EXPENSE:period",
         DEFAULT_MONTH_PERIOD,
         parseMonthPeriod
       )

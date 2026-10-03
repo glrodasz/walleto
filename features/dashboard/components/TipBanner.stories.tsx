@@ -15,7 +15,7 @@ const meta = {
   // Dismissal persists in localStorage per id; start every story visible.
   beforeEach: () => {
     try {
-      localStorage.removeItem("waletto:tip:storybook");
+      localStorage.removeItem("walleto:tip:storybook");
     } catch {
       // storage off
     }

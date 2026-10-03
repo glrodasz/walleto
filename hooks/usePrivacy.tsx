@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useMemo } from "react";
 import type { ReactNode } from "react";
 import { useLocalPreference } from "./useLocalPreference";
 
-export const PRIVACY_STORAGE_KEY = "waletto:privacy";
+export const PRIVACY_STORAGE_KEY = "walleto:privacy";
 
 interface PrivacyContextValue {
   /** True while every amount reads as `****`. */

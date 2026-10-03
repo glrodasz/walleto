@@ -94,12 +94,12 @@ export function DomainPage({ domain }: Props) {
   // checklist all agree on what "now" is.
   const { now, window } = useSelectedMonth();
   const [period, setPeriod] = useLocalPreference<MonthPeriod>(
-    `waletto:chart:${domain}:period`,
+    `walleto:chart:${domain}:period`,
     DEFAULT_MONTH_PERIOD,
     parseMonthPeriod
   );
-  const [mode, setMode] = useLocalPreference<StackMode>(`waletto:chart:${domain}:mode`, "category");
-  const [showHidden, setShowHidden] = useLocalPreference(`waletto:showHidden:${domain}`, false);
+  const [mode, setMode] = useLocalPreference<StackMode>(`walleto:chart:${domain}:mode`, "category");
+  const [showHidden, setShowHidden] = useLocalPreference(`walleto:showHidden:${domain}`, false);
 
   // The bars draw `period` months ending with the current one. The figures
   // reach back as far as the header picker does, because the page has to

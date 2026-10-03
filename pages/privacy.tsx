@@ -11,12 +11,12 @@ export default function Privacy() {
   return (
     <>
       <Head>
-        <title>Privacy Policy · Waletto</title>
+        <title>Privacy Policy · Walleto</title>
       </Head>
       <main className="wrap">
         <div className="page">
           <Link className="back" href="/">
-            <ChevronLeft size={16} /> Back to Waletto
+            <ChevronLeft size={16} /> Back to Walleto
           </Link>
           <Card>
             <header className="head">
@@ -30,8 +30,8 @@ export default function Privacy() {
             <section className="section">
               <h2>Overview</h2>
               <p>
-                Waletto is a personal finance planner. This policy explains what information we
-                collect, how we use it, and the choices you have. By using Waletto, you agree to the
+                Walleto is a personal finance planner. This policy explains what information we
+                collect, how we use it, and the choices you have. By using Walleto, you agree to the
                 collection and use of information as described here.
               </p>
             </section>
@@ -59,7 +59,7 @@ export default function Privacy() {
             <section className="section">
               <h2>How we use your information</h2>
               <p>
-                We use your information solely to operate Waletto: to show your plan, activity and
+                We use your information solely to operate Walleto: to show your plan, activity and
                 net worth, to convert amounts between currencies, and to keep your preferences
                 across sessions. We do not sell your data, and we do not use it for advertising.
               </p>
@@ -69,7 +69,7 @@ export default function Privacy() {
               <h2>Data storage &amp; security</h2>
               <p>
                 Your data is stored in Google Cloud Firestore and transmitted over encrypted
-                connections. Authentication is handled by Auth0; Waletto never sees or stores your
+                connections. Authentication is handled by Auth0; Walleto never sees or stores your
                 password. Signing out clears any financial data cached on that device.
               </p>
             </section>
@@ -89,7 +89,7 @@ export default function Privacy() {
               <p>
                 We keep your data for as long as your account is active. You can request an export
                 or full deletion of your account and its data at any time by writing to{" "}
-                <a href={`mailto:${support}?subject=Delete%20my%20Waletto%20account`}>{support}</a>.
+                <a href={`mailto:${support}?subject=Delete%20my%20Walleto%20account`}>{support}</a>.
                 Deletion removes your financial records permanently and cannot be undone.
               </p>
             </section>
@@ -106,7 +106,7 @@ export default function Privacy() {
             <section className="section">
               <h2>Children&apos;s privacy</h2>
               <p>
-                Waletto is not directed at children under 16, and we do not knowingly collect
+                Walleto is not directed at children under 16, and we do not knowingly collect
                 information from them.
               </p>
             </section>

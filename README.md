@@ -1,4 +1,4 @@
-# Waletto
+# Walleto
 
 A personal-finance planner: your monthly plan, whether this month is on track,
 and where you stand today. Built on five domains — **income, expenses,
