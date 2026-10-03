@@ -31,7 +31,7 @@ export const WithTag: Story = {
     label: "Essential",
     hint: "Keep paying it in Prospect’s emergency mode.",
     tag: (
-      <Badge variant="outline" caps>
+      <Badge variant="outline" caps size="sm">
         Guessed from category
       </Badge>
     ),

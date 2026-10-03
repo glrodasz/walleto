@@ -18,6 +18,8 @@ interface Props {
   caps?: boolean;
   /** Any colour instead of a tone (a domain accent). */
   color?: string;
+  /** "sm" sits inline with a 0.85rem line of text without growing it (a form option's tag). */
+  size?: "md" | "sm";
 }
 
 const TONE: Record<BadgeTone, string> = {
@@ -33,10 +35,18 @@ const TONE: Record<BadgeTone, string> = {
  * the app applied (status, kind of number); outline pills are the user's own
  * labels.
  */
-export function Badge({ children, icon, variant = "solid", tone = "neutral", caps, color }: Props) {
+export function Badge({
+  children,
+  icon,
+  variant = "solid",
+  tone = "neutral",
+  caps,
+  color,
+  size = "md",
+}: Props) {
   return (
     <span
-      className={`badge badge--${variant}${caps ? " badge--caps" : ""}`}
+      className={`badge badge--${variant}${caps ? " badge--caps" : ""}${size === "sm" ? " badge--sm" : ""}`}
       style={{ "--badge-color": color ?? TONE[tone] } as React.CSSProperties}
     >
       {icon && (
@@ -78,6 +88,15 @@ export function Badge({ children, icon, variant = "solid", tone = "neutral", cap
           font-weight: 700;
           letter-spacing: 0.06em;
           text-transform: uppercase;
+        }
+
+        .badge--sm {
+          padding: 2px 6px;
+          font-size: 0.64rem;
+        }
+
+        .badge--caps.badge--sm {
+          font-size: 0.56rem;
         }
       `}</style>
     </span>

@@ -5,7 +5,7 @@ interface Props {
   label: ReactNode;
   /** The consequence or the caveat, on its own line under the label. */
   hint?: ReactNode;
-  /** A status pill under the hint ("Guessed from category") — always a `Badge`. */
+  /** A status pill beside the label ("Guessed from category") — always a `Badge size="sm"`. */
   tag?: ReactNode;
   checked: boolean;
   onChange: (checked: boolean) => void;
@@ -14,9 +14,9 @@ interface Props {
 
 /**
  * A checkbox with its explanation. Every form option reads the same way: the
- * label on the first line, the helper message below it in small, quiet text,
- * and any status pill under that — never a "— …" tail glued to the label,
- * which wrapped mid-sentence and buried the option's own name.
+ * label on the first line with any status pill beside it, and the helper
+ * message below in small, quiet text — never a "— …" tail glued to the
+ * label, which wrapped mid-sentence and buried the option's own name.
  */
 export function CheckboxField({ label, hint, tag, checked, onChange, disabled = false }: Props) {
   return (
@@ -28,9 +28,11 @@ export function CheckboxField({ label, hint, tag, checked, onChange, disabled = 
         onChange={(e) => onChange(e.currentTarget.checked)}
       />
       <span className="text">
-        <span className="label">{label}</span>
+        <span className="head">
+          <span className="label">{label}</span>
+          {tag}
+        </span>
         {hint && <span className="hint">{hint}</span>}
-        {tag && <span className="tag">{tag}</span>}
       </span>
 
       <style jsx>{`
@@ -63,6 +65,13 @@ export function CheckboxField({ label, hint, tag, checked, onChange, disabled = 
           min-width: 0;
         }
 
+        .head {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 6px;
+        }
+
         .label {
           font-size: 0.85rem;
           line-height: 1.35;
@@ -73,10 +82,6 @@ export function CheckboxField({ label, hint, tag, checked, onChange, disabled = 
           font-size: 0.75rem;
           line-height: 1.4;
           color: var(--fg-2);
-        }
-
-        .tag {
-          margin-top: 4px;
         }
       `}</style>
     </label>
