@@ -1,4 +1,4 @@
-import { isSubscription, subscriptionCosts } from "./subscriptionCosts";
+import { subscriptionCosts } from "./subscriptionCosts";
 import { IDENTITY_RATES } from "../../../helpers/fx";
 import type { Currency, Timestamp } from "../../../types";
 
@@ -30,26 +30,6 @@ const item = (overrides: Record<string, unknown> = {}) => ({
   startDate: ts("2026-01-01T00:00:00.000Z"),
   active: true,
   ...overrides,
-});
-
-describe("isSubscription", () => {
-  it("matches an explicit SUBSCRIPTION type", () => {
-    expect(isSubscription({ type: "SUBSCRIPTION", categoryId: "cat-home" }, categories)).toBe(true);
-  });
-
-  it("matches the Subscriptions category when type is unset", () => {
-    expect(isSubscription({ categoryId: "cat-subs" }, categories)).toBe(true);
-  });
-
-  it("is case-insensitive on the category name", () => {
-    expect(isSubscription({ categoryId: "x" }, [{ id: "x", name: "  subscriptions  " }])).toBe(
-      true
-    );
-  });
-
-  it("rejects anything else", () => {
-    expect(isSubscription({ type: "OTHER", categoryId: "cat-home" }, categories)).toBe(false);
-  });
 });
 
 describe("subscriptionCosts", () => {

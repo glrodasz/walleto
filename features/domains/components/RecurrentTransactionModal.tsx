@@ -24,6 +24,7 @@ import { valueFromGain } from "../../investments/helpers/valuation";
 import { FREQ_TO_MONTHS } from "../../../helpers/aggregations";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { directionLabel, isAccountDomain } from "../../../helpers/accounts";
+import { isEssential } from "../../../helpers/essential";
 import {
   BACKFILL_MONTHS,
   anchorStartDate,
@@ -93,6 +94,8 @@ interface FormState extends ScheduleValue {
   direction: TransactionDirection;
   /** EXPENSE only: file this under Debts instead — the instalment repays a debt. */
   paysDebt: boolean;
+  /** Recurring EXPENSE only: kept in Prospect's emergency mode. null = guessed. */
+  essential: boolean | null;
 }
 
 export function RecurrentTransactionModal({
@@ -137,6 +140,7 @@ export function RecurrentTransactionModal({
       chargedCurrency: "",
       direction: "IN",
       paysDebt: false,
+      essential: null,
     }),
     [initialFrequency]
   );
@@ -186,6 +190,7 @@ export function RecurrentTransactionModal({
         chargedCurrency: transaction.chargedCurrency ?? "",
         direction: transaction.direction ?? "IN",
         paysDebt: false,
+        essential: null,
       });
       return;
     }
@@ -223,6 +228,7 @@ export function RecurrentTransactionModal({
       chargedCurrency: "",
       direction: "IN",
       paysDebt: false,
+      essential: item.essential ?? null,
     });
   }, [open, item, transaction, empty, decimal]);
 
@@ -302,6 +308,14 @@ export function RecurrentTransactionModal({
     !editing && domain === "INVESTMENT" && !isRecurring && form.direction !== "OUT";
   // Yearly, quarterly, weekly…: the plan can show it as a monthly amount.
   const offersSpread = isRecurring && form.frequency !== "MONTHLY";
+  const offersEssential = isRecurring && effectiveDomain === "EXPENSE";
+  // Unset shows the guess Prospect would make, so the box never lies.
+  const essentialChecked =
+    form.essential ??
+    isEssential(
+      { domain: effectiveDomain, type: item?.type, categoryId: form.categoryId },
+      categories
+    );
   const monthlySlice = (decimal.parse(form.amount) ?? 0) * FREQ_TO_MONTHS[form.frequency];
   const gainPct =
     offersGain && form.gainPct.trim() !== "" ? (decimal.parse(form.gainPct) ?? NaN) : null;
@@ -413,6 +427,9 @@ export function RecurrentTransactionModal({
           inheritTags: form.inheritTags,
           inheritNote: form.inheritNote,
           spreadMonthly: offersSpread && form.spreadMonthly,
+          ...(offersEssential && form.essential !== null && form.essential !== item.essential
+            ? { essential: form.essential }
+            : {}),
           ...(offersBackfill && form.applyToExisting ? { applyToExisting: true } : {}),
           // An old item may still carry a pair; only clear it when the new
           // currency collides with it, which the API would otherwise refuse.
@@ -461,6 +478,7 @@ export function RecurrentTransactionModal({
           ...(form.inheritTags ? { inheritTags: true } : {}),
           ...(form.inheritNote ? { inheritNote: true } : {}),
           ...(offersSpread && form.spreadMonthly ? { spreadMonthly: true } : {}),
+          ...(offersEssential && form.essential !== null ? { essential: form.essential } : {}),
         });
         // Anything anchored in the past has occurrences to write.
         if (startDate < new Date()) {
@@ -633,6 +651,24 @@ export function RecurrentTransactionModal({
                 {" "}
                 — the graph and the plan count {formatAmount(monthlySlice, effectiveCurrency)} a
                 month; the real payment stays in the list
+              </span>
+            </span>
+          </label>
+        )}
+
+        {offersEssential && (
+          <label className="toggle">
+            <input
+              type="checkbox"
+              checked={essentialChecked}
+              onChange={(e) => patch({ essential: e.currentTarget.checked })}
+            />
+            <span>
+              Essential
+              <span className="hint">
+                {" "}
+                — keep paying it in Prospect&rsquo;s emergency mode
+                {form.essential === null ? " (guessed from the category)" : ""}
               </span>
             </span>
           </label>

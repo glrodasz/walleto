@@ -1,5 +1,6 @@
-import { Card } from "../../../components/atoms/Card";
 import { Amount } from "../../../components/atoms/Amount";
+import { ArrowUpRight, Circle, Lightbulb } from "../../../components/atoms/Icons";
+import { SummaryCard } from "../../../components/molecules/SummaryCard";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { formatList } from "../../../utils/formatList";
 import type { Currency } from "../../../types";
@@ -9,71 +10,69 @@ interface Props {
   impact: WhatIfImpact;
   currentNet: number;
   currency: Currency;
+  /** Aggregates converted with real FX rates get the "≈" marker. */
+  approximate?: boolean;
 }
 
-/** "Cancelling Netflix, iCloud frees ≈ $36/mo · $432/yr; your net becomes $X" — the mockup's payoff line. */
-export function WhatIfSummary({ impact, currentNet, currency }: Props) {
+/**
+ * The payoff of the simulation, in the dashboard hero's shape: the monthly
+ * net after the cancellations on the left, what it's made of on the right,
+ * and the cancelled items named underneath.
+ */
+export function WhatIfSummary({ impact, currentNet, currency, approximate = false }: Props) {
   const { formatAmount } = useMoneyFormat();
   const adjustedNet = currentNet + impact.freedMonthly;
-  const hasSelection = impact.excludedNames.length > 0;
+  const count = impact.excludedNames.length;
+
+  const badge =
+    adjustedNet < 0
+      ? { label: "Over-committed", tone: "danger" as const }
+      : count > 0
+        ? { label: `${count} cancelled`, tone: "info" as const }
+        : { label: "As planned", tone: "neutral" as const };
 
   return (
-    <Card accentColor="var(--accent)">
-      {hasSelection ? (
-        <p className="sentence">
-          Cancelling <strong>{formatList(impact.excludedNames)}</strong> frees ≈{" "}
-          <strong>{formatAmount(impact.freedMonthly, currency)}/mo</strong> ·{" "}
-          {formatAmount(impact.freedAnnual, currency)}/yr.
-        </p>
-      ) : (
-        <p className="sentence">Check items on the left to simulate cancelling them.</p>
-      )}
-
-      <div className="nets">
-        <div>
-          <span className="label">Net today</span>
-          <Amount value={currentNet} currency={currency} size="md" colorize />
-        </div>
-        <span className="arrow">→</span>
-        <div>
-          <span className="label">Net if cancelled</span>
-          <Amount value={adjustedNet} currency={currency} size="md" colorize />
-        </div>
-      </div>
-
-      <style jsx>{`
-        .sentence {
-          margin: 0 0 16px;
-          font-size: 0.95rem;
-          color: var(--fg-1);
-          line-height: 1.5;
-        }
-
-        .sentence strong {
-          color: var(--fg-0);
-        }
-
-        .nets {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-        }
-
-        .label {
-          display: block;
-          font-size: 0.72rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-          color: var(--fg-2);
-          margin-bottom: 4px;
-        }
-
-        .arrow {
-          color: var(--fg-2);
-          font-size: 1.2rem;
-        }
-      `}</style>
-    </Card>
+    <SummaryCard
+      title={count > 0 ? "Net if cancelled" : "Monthly net"}
+      badge={badge}
+      figure={
+        <Amount
+          value={adjustedNet}
+          currency={currency}
+          size="lg"
+          colorize
+          approximate={approximate}
+        />
+      }
+      sub={
+        count > 0
+          ? `left each month, ${formatAmount(impact.freedMonthly, currency)} more than today`
+          : "left each month — check items to simulate cancelling them"
+      }
+      stats={[
+        {
+          key: "today",
+          label: "Net today",
+          domain: "INCOME",
+          Icon: ArrowUpRight,
+          value: formatAmount(currentNet, currency),
+        },
+        {
+          key: "month",
+          label: "Freed / month",
+          domain: "SAVING",
+          Icon: Circle,
+          value: formatAmount(impact.freedMonthly, currency),
+        },
+        {
+          key: "year",
+          label: "Freed / year",
+          domain: "INVESTMENT",
+          Icon: Lightbulb,
+          value: formatAmount(impact.freedAnnual, currency),
+        },
+      ]}
+      note={count > 0 ? `Cancelling ${formatList(impact.excludedNames)}.` : undefined}
+    />
   );
 }

@@ -1,21 +1,7 @@
 import { toMonthlyAmount } from "../../../helpers/aggregations";
 import type { MoneyContext } from "../../../helpers/aggregations";
+import { isSubscription } from "../../../helpers/essential";
 import type { Category, RecurrentTransaction, Timestamp } from "../../../types";
-
-/**
- * A recurrent item counts as a subscription if it's explicitly typed as one,
- * or its category is the "Subscriptions" default — the wizard's quick-add
- * flow leaves `type` unset (falls to OTHER), so category is the fallback
- * signal rather than a hard requirement.
- */
-export function isSubscription(
-  item: Pick<RecurrentTransaction, "type" | "categoryId">,
-  categories: Pick<Category, "id" | "name">[]
-): boolean {
-  if (item.type === "SUBSCRIPTION") return true;
-  const category = categories.find((c) => c.id === item.categoryId);
-  return category?.name.trim().toLowerCase() === "subscriptions";
-}
 
 export interface SubscriptionCost {
   id: string;

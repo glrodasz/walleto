@@ -99,6 +99,31 @@ describe("PATCH /api/user", () => {
     expect(bad.status).toHaveBeenCalledWith(400);
   });
 
+  it("saves the emergency plan whole and rejects a negative benefit", async () => {
+    getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
+    const emergencyPlan = {
+      currency: "EUR",
+      benefitMonthly: 1200,
+      benefitMonths: 6,
+      severance: 5000,
+      includeInvestments: true,
+    };
+    const res = mockRes();
+    await handler({ method: "PATCH", query: {}, body: { emergencyPlan } } as NextApiRequest, res);
+    expect(setMock).toHaveBeenCalledWith({ emergencyPlan }, { merge: true });
+
+    const bad = mockRes();
+    await handler(
+      {
+        method: "PATCH",
+        query: {},
+        body: { emergencyPlan: { ...emergencyPlan, benefitMonthly: -1 } },
+      } as NextApiRequest,
+      bad
+    );
+    expect(bad.status).toHaveBeenCalledWith(400);
+  });
+
   it("returns 400 for an unknown currency", async () => {
     getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
     const res = mockRes();

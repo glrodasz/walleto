@@ -1,10 +1,10 @@
 import type { ComponentType, ReactNode } from "react";
-import { Card } from "../../../components/atoms/Card";
-import { Badge } from "../../../components/atoms/Badge";
-import type { BadgeTone } from "../../../components/atoms/Badge";
-import type { IconProps } from "../../../components/atoms/Icons";
-import { IconDisc } from "../../../components/molecules/IconDisc";
-import type { Domain } from "../../../types";
+import { Card } from "../atoms/Card";
+import { Badge } from "../atoms/Badge";
+import type { BadgeTone } from "../atoms/Badge";
+import type { IconProps } from "../atoms/Icons";
+import { IconDisc } from "./IconDisc";
+import type { Domain } from "../../types";
 
 export interface SummaryStat {
   key: string;

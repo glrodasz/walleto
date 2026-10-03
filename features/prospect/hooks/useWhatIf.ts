@@ -17,7 +17,10 @@ export function useWhatIf() {
     });
   }, []);
 
+  /** Replace the whole selection — the "Cancel top 3" chips. */
+  const setMany = useCallback((ids: string[]) => setExcludedIds(new Set(ids)), []);
+
   const reset = useCallback(() => setExcludedIds(new Set()), []);
 
-  return { excludedIds, toggle, reset };
+  return { excludedIds, toggle, setMany, reset };
 }

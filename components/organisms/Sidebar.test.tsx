@@ -54,9 +54,10 @@ describe("Sidebar mobile navigation", () => {
     expect(within(sheet).getByText("ada@example.com")).toBeInTheDocument();
     // Payment methods moved into Settings; the sheet no longer links to /methods.
     expect(within(sheet).queryByRole("link", { name: "Methods" })).toBeNull();
-    // Prospect is hidden while it's reworked: present but inert, not a link.
-    expect(within(sheet).queryByRole("link", { name: "Prospect" })).toBeNull();
-    expect(within(sheet).getByText("Prospect").closest('[aria-disabled="true"]')).not.toBeNull();
+    expect(within(sheet).getByRole("link", { name: "Prospect" })).toHaveAttribute(
+      "href",
+      "/prospect"
+    );
   });
 
   it("groups the money pages into cash flow and net worth", () => {

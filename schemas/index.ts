@@ -172,6 +172,7 @@ export const RecurrentTransactionInputSchema = z
     inheritTags: z.boolean().optional(),
     inheritNote: z.boolean().optional(),
     spreadMonthly: z.boolean().optional(),
+    essential: z.boolean().optional(),
     frequency: FrequencySchema,
     secondDayOfMonth: z.number().int().min(1).max(31).optional(),
     type: RecurrentTransactionTypeSchema.optional(),
@@ -205,6 +206,7 @@ export const RecurrentTransactionUpdateSchema = z
     startDate: z.iso.datetime().optional(),
     active: z.boolean().optional(),
     hiddenFromDashboard: z.boolean().optional(),
+    essential: z.boolean().optional(),
   })
   .superRefine((v, ctx) => {
     if (Object.keys(v).length === 0) {
@@ -315,6 +317,14 @@ export const DecimalsSchema = z.union([
   z.literal(4),
 ]);
 
+export const EmergencyPlanSchema = z.object({
+  currency: CurrencySchema,
+  benefitMonthly: z.number().min(0),
+  benefitMonths: z.number().int().min(0).max(60),
+  severance: z.number().min(0),
+  includeInvestments: z.boolean(),
+});
+
 export const UserUpdateSchema = z
   .object({
     mainCurrency: CurrencySchema.optional(),
@@ -329,6 +339,7 @@ export const UserUpdateSchema = z
     language: LanguageSchema.optional(),
     decimalSeparator: DecimalSeparatorSchema.optional(),
     decimals: DecimalsSchema.optional(),
+    emergencyPlan: EmergencyPlanSchema.optional(),
   })
   .refine((v) => Object.keys(v).length > 0, {
     message: "At least one field is required",
