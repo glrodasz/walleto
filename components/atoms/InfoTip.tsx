@@ -14,6 +14,11 @@ interface Props {
   children: ReactNode;
   /** Where the bubble opens relative to the icon. Defaults to above it. */
   placement?: "top" | "bottom";
+  /**
+   * What to show instead of the bare "i" — a `Badge` with an Info icon, when
+   * the thing being explained is itself a tag ("Guessed from category").
+   */
+  trigger?: ReactNode;
 }
 
 /**
@@ -23,7 +28,7 @@ interface Props {
  * unmounted — so the trigger's `aria-describedby` always resolves, and so it
  * can be measured and nudged back inside the viewport before it shows.
  */
-export function InfoTip({ label, children, placement = "top" }: Props) {
+export function InfoTip({ label, children, placement = "top", trigger }: Props) {
   const id = useId();
   const rootRef = useRef<HTMLSpanElement>(null);
   const bubbleRef = useRef<HTMLSpanElement>(null);
@@ -81,11 +86,13 @@ export function InfoTip({ label, children, placement = "top" }: Props) {
     >
       <button
         type="button"
-        className="trigger"
+        className={`trigger${trigger ? " trigger--custom" : ""}`}
         aria-label={label}
         aria-expanded={open}
         aria-describedby={id}
-        onClick={() => {
+        onClick={(event) => {
+          // Inside a <label>, a click must not also toggle the labelled control.
+          event.preventDefault();
           nudge();
           setDismissed(false);
           setOpen((current) => !current);
@@ -93,7 +100,7 @@ export function InfoTip({ label, children, placement = "top" }: Props) {
         onFocus={nudge}
         onBlur={reset}
       >
-        <Info size={14} />
+        {trigger ?? <Info size={14} />}
       </button>
       <span
         ref={bubbleRef}
@@ -130,6 +137,20 @@ export function InfoTip({ label, children, placement = "top" }: Props) {
         .trigger:hover,
         .is-open .trigger {
           color: var(--fg-0);
+        }
+
+        /* A tag as the trigger: its own size, no halo, and its own colours. */
+        .trigger--custom {
+          width: auto;
+          height: auto;
+          margin: 0;
+          color: inherit;
+        }
+
+        .trigger--custom:hover,
+        .is-open .trigger--custom {
+          color: inherit;
+          filter: brightness(0.9);
         }
 
         .bubble {

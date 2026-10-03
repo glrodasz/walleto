@@ -495,6 +495,16 @@ describe("RecurrentTransactionModal — essential", () => {
     expect(createItem.mock.calls[0][0]).not.toHaveProperty("essential");
   });
 
+  it("explains the guess from the tag without flipping the box", () => {
+    render(<RecurrentTransactionModal domain="EXPENSE" open onClose={jest.fn()} />);
+    fill();
+    const tag = screen.getByRole("button", { name: "Guessed from category: why?" });
+    fireEvent.click(tag);
+    expect(tag).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("checkbox", { name: /Essential/ })).toBeChecked();
+    expect(screen.getByRole("tooltip")).toHaveTextContent("your choice overrides the guess");
+  });
+
   it("sends an explicit choice on create", async () => {
     const onClose = jest.fn();
     render(<RecurrentTransactionModal domain="EXPENSE" open onClose={onClose} />);

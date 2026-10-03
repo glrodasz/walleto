@@ -12,6 +12,8 @@ import { TextField } from "../../../components/atoms/TextField";
 import { Button } from "../../../components/atoms/Button";
 import { Badge } from "../../../components/atoms/Badge";
 import { CheckboxField } from "../../../components/atoms/CheckboxField";
+import { InfoTip } from "../../../components/atoms/InfoTip";
+import { Info } from "../../../components/atoms/Icons";
 import { SegmentedControl } from "../../../components/molecules/SegmentedControl";
 import { useCategories } from "../../../hooks/useCategories";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
@@ -646,9 +648,20 @@ export function RecurrentTransactionModal({
             hint="Keep paying it in Prospect’s emergency mode."
             tag={
               form.essential === null ? (
-                <Badge variant="outline" caps size="sm">
-                  Guessed from category
-                </Badge>
+                <InfoTip
+                  label="Guessed from category: why?"
+                  trigger={
+                    <Badge variant="outline" caps size="sm" icon={<Info size={10} />}>
+                      Guessed from category
+                    </Badge>
+                  }
+                >
+                  {essentialChecked
+                    ? "Ticked automatically: items in this category usually keep being paid in an emergency."
+                    : "Left unticked automatically: subscriptions and Variable spending usually stop in an emergency."}{" "}
+                  It comes from the category this item belongs to — tick or untick the box to decide
+                  yourself, and your choice overrides the guess.
+                </InfoTip>
               ) : undefined
             }
             checked={essentialChecked}
