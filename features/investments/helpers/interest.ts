@@ -21,13 +21,14 @@ function startOfDay(d: Date): number {
 }
 
 /**
- * The per-month rate behind a quoted one. A yearly quote is the effective
- * annual rate, so it is de-compounded rather than divided by twelve.
+ * The per-month rate behind a quoted one. A yearly quote is the nominal
+ * annual rate a bank prints, charged each month as a twelfth — 2.85% on
+ * 606,673 is the 1,441 of interest on the statement, not a de-compounded 1,422.
  */
 export function monthlyRate(rate?: InterestRate | null): number {
   if (!rate || !(rate.value > 0)) return 0;
   const r = rate.value / 100;
-  return rate.period === "YEARLY" ? Math.pow(1 + r, 1 / 12) - 1 : r;
+  return rate.period === "YEARLY" ? r / 12 : r;
 }
 
 /**

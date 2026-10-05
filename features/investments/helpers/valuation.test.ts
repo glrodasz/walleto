@@ -131,7 +131,7 @@ describe("currentValue", () => {
     const list = [tx(1000, start, { accountId: "seb", domain: "SAVING" })];
     const rate = { value: 5, period: "YEARLY" as const };
     const estimate = currentValue(list, [], { accountId: "seb" }, rate, new Date(2026, 0, 1), ctx);
-    expect(estimate).toBeCloseTo(1050, 0);
+    expect(estimate).toBeCloseTo(1051.1, 0);
 
     const checks = [valuation(1030, new Date(2025, 6, 1), { accountId: "seb" })];
     const later = [...list, tx(100, new Date(2025, 9, 1), { accountId: "seb", domain: "SAVING" })];
@@ -157,7 +157,7 @@ describe("currentValue", () => {
     expect(currentValue(repayments, balance, visa, undefined, apr, ctx, -1)).toBe(4000);
     // With a rate the balance compounds up while each repayment compounds down.
     const rate = { value: 12, period: "YEARLY" as const };
-    expect(currentValue(repayments, balance, visa, rate, apr, ctx, -1)).toBeCloseTo(4127.5, 0);
+    expect(currentValue(repayments, balance, visa, rate, apr, ctx, -1)).toBeCloseTo(4134.5, 0);
     // Repayments alone say nothing about a balance: unknown reads as 0, never as an estimate.
     expect(currentValue(repayments, [], visa, rate, apr, ctx, -1)).toBe(0);
     expect(currentValue(repayments, balance, visa, rate, new Date(2025, 11, 1), ctx, -1)).toBe(0);
