@@ -29,7 +29,7 @@ interface Props {
   loading?: boolean;
   onBack: () => void;
   onEdit?: (transaction: Transaction) => void;
-  hiddenReason?: (transaction: Transaction) => HiddenReason | null;
+  hiddenReasons?: (transaction: Transaction) => HiddenReason[];
   onDelete: (transactionId: string) => void;
   deletingId: string | null;
   /** Domain-specific panels for this category (subscription insights, valuations). */
@@ -53,7 +53,7 @@ export function CategoryDrilldown({
   loading,
   onBack,
   onEdit,
-  hiddenReason,
+  hiddenReasons,
   onDelete,
   deletingId,
   extras,
@@ -100,7 +100,7 @@ export function CategoryDrilldown({
         ctx={ctx}
         loading={loading}
         onEdit={onEdit}
-        hiddenReason={hiddenReason}
+        hiddenReasons={hiddenReasons}
         onDelete={onDelete}
         deletingId={deletingId}
         showMethod={DOMAIN_CONFIG[category.domain].showPaymentMethod}

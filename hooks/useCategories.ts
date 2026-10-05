@@ -3,6 +3,7 @@ import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { db } from "../firebase/client";
 import { useFirebaseAuth } from "./useFirebaseAuth";
+import { pickBooleans, useOptimisticPatches } from "./useOptimisticPatches";
 import { byCreatedAt } from "../utils/sortByCreatedAt";
 import type { Category, Domain, IconKey } from "../types";
 import type { CategoryUpdate } from "../schemas";
@@ -61,14 +62,19 @@ export function useCategories(domain?: Domain) {
     return id;
   };
 
-  const update = async (id: string, patch: CategoryUpdate) => {
-    const res = await fetch(`/api/categories/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch),
+  // A flipped flag (hidden from the chart…) shows at tap time, not when the
+  // listener catches up — see useOptimisticPatches.
+  const optimistic = useOptimisticPatches(categories);
+
+  const update = (id: string, patch: CategoryUpdate) =>
+    optimistic.apply(id, pickBooleans(patch), async () => {
+      const res = await fetch(`/api/categories/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      if (!res.ok) throw new Error(await res.text());
     });
-    if (!res.ok) throw new Error(await res.text());
-  };
 
   const rename = (id: string, name: string) => update(id, { name });
 
@@ -81,8 +87,8 @@ export function useCategories(domain?: Domain) {
   // handing them out under the new domain let a form pick a category the
   // API then rejects as a domain mismatch.
   const visible = useMemo(
-    () => (domain ? categories.filter((c) => c.domain === domain) : categories),
-    [categories, domain]
+    () => (domain ? optimistic.docs.filter((c) => c.domain === domain) : optimistic.docs),
+    [optimistic.docs, domain]
   );
 
   return { categories: visible, loading, error, create, update, rename, remove };

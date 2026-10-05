@@ -1,7 +1,7 @@
 import {
   hiddenCategoryIds,
   hiddenItemIds,
-  hiddenRowReason,
+  hiddenRowReasons,
   isHiddenRow,
   withoutHidden,
 } from "./hidden";
@@ -39,15 +39,22 @@ describe("isHiddenRow / withoutHidden", () => {
     );
   });
 
-  it("says which rule hid the row, the item winning when both do", () => {
-    expect(hiddenRowReason({ recurrentTransactionId: "netflix", categoryId: "fun" }, items)).toBe(
-      "dashboard"
-    );
-    expect(hiddenRowReason({ categoryId: "home" }, items, cats)).toBe("chart");
+  it("lists every rule that hid the row, chart first", () => {
+    const sets = {
+      dashboardItems: new Set(["netflix"]),
+      chartCategories: cats,
+    };
     expect(
-      hiddenRowReason({ recurrentTransactionId: "netflix", categoryId: "home" }, items, cats)
-    ).toBe("dashboard");
-    expect(hiddenRowReason({ categoryId: "fun" }, items, cats)).toBeNull();
+      hiddenRowReasons({ recurrentTransactionId: "netflix", categoryId: "fun" }, sets)
+    ).toEqual(["dashboard"]);
+    expect(hiddenRowReasons({ categoryId: "home" }, sets)).toEqual(["chart"]);
+    expect(hiddenRowReasons({ recurrentTransactionId: "rent", categoryId: "home" }, sets)).toEqual([
+      "chart",
+    ]);
+    expect(
+      hiddenRowReasons({ recurrentTransactionId: "netflix", categoryId: "home" }, sets)
+    ).toEqual(["chart", "dashboard"]);
+    expect(hiddenRowReasons({ categoryId: "fun" }, sets)).toEqual([]);
   });
 
   it("filters a list", () => {
