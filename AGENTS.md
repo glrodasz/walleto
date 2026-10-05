@@ -1,270 +1,270 @@
 # AGENTS.md
 
-Convenciones de **sublr**. La regla general: **archivos pequeños y con una sola responsabilidad**, para que cada pieza se pueda testear por separado y leer de un vistazo.
+Conventions for **sublr**. The general rule: **small files with a single responsibility**, so every piece can be tested on its own and read at a glance.
 
-Stack: Next.js 14 (Pages Router) · TypeScript estricto · Firestore + `firebase-admin` · Auth0 · Zod · styled-jsx · Jest · pnpm 9.
+Stack: Next.js 14 (Pages Router) · strict TypeScript · Firestore + `firebase-admin` · Auth0 · Zod · styled-jsx · Jest · pnpm 9.
 
 ---
 
-## 1. Dónde va cada cosa
+## 1. Where things go
 
-### `utils/` — genérico, sin negocio
+### `utils/` — generic, no business logic
 
-Utilidades que funcionarían igual en cualquier otro proyecto, al estilo de lodash. **No** importan de `types/`, `helpers/` ni `features/`.
-
-```
-utils/request.ts               wrapper de fetch
-utils/sortByCreatedAt.ts       ordenar por createdAt, nulls al final
-utils/startOfPreviousMonth.ts  medianoche del 1° del mes anterior
-utils/formatList.ts            "A", "A y B", "A, B y C"
-utils/decimal.ts               parseDecimal / sanitizeDecimal / toInputString / roundTo — números tal como los teclea la gente (coma o punto)
-utils/emphasis.ts              splitEmphasis — "a **b** c" en tramos normales / en negrita (el copy de la intro)
-utils/errorMessage.ts          UserFacingError + errorMessage(err, fallback) — qué mostrar cuando un save falla (el `{ error: "…" }` de la API, nunca un `flatten()`)
-```
-
-> Si una utilidad necesita importar un tipo del dominio (`Domain`, `Currency`, `Frequency`…), **no es un util: es un helper**. Esa es la prueba rápida.
-
-### `helpers/` — con contexto del proyecto
-
-Misma idea de "utilidad", pero conoce el negocio de sublr.
+Utilities that would work the same in any other project, lodash-style. They do **not** import from `types/`, `helpers/` or `features/`.
 
 ```
-helpers/aggregations.ts           montos mensuales por dominio, rate-aware (ver §3.1); rowSign / convertedAmount con signo (direction OUT); shareByCurrency para la mezcla de monedas
-helpers/fx.ts                     convert()/tryConvert() por cross-rates a USD, IDENTITY_RATES
-helpers/currencies.ts             qué monedas ofrece un picker (elección del usuario o USD/EUR/GBP) + opciones "$ USD"
-helpers/chartData.ts              buckets por día/semana/mes + serie income/expense para FlowChart y MonthlyBarsChart
-helpers/materializeOccurrences.ts ocurrencias de un item recurrente en un rango, ids determinísticos
-helpers/scheduleAnchor.ts         elección de fecha del usuario → startDate (incl. "backfill" = 6 meses atrás)
-helpers/paymentMethodLabel.ts     "name - last4" para tablas, "SEB - Autogiro (Bank transfer)" para dropdowns, y la forma hablada
-                                  ("Bancolombia, Debit card, ending in 8817") que nombra a una MethodFace
-helpers/paymentMethodOptions.ts   tipos de método, sugerencias de red/proveedor, CARD_TYPES, sortByName/groupMethodsByType (wizard, Methods y PaymentMethodField)
+utils/request.ts               fetch wrapper
+utils/sortByCreatedAt.ts       sort by createdAt, nulls last
+utils/startOfPreviousMonth.ts  midnight on the 1st of the previous month
+utils/formatList.ts            "A", "A and B", "A, B and C"
+utils/decimal.ts               parseDecimal / sanitizeDecimal / toInputString / roundTo — numbers the way people type them (comma or dot)
+utils/emphasis.ts              splitEmphasis — "a **b** c" into normal / bold runs (the intro copy)
+utils/errorMessage.ts          UserFacingError + errorMessage(err, fallback) — what to show when a save fails (the API's `{ error: "…" }`, never a `flatten()`)
+```
+
+> If a utility needs to import a domain type (`Domain`, `Currency`, `Frequency`…), **it is not a util: it is a helper**. That's the quick test.
+
+### `helpers/` — with project context
+
+Same idea of a "utility", but it knows sublr's business.
+
+```
+helpers/aggregations.ts           monthly amounts per domain, rate-aware (see §3.1); rowSign / signed convertedAmount (direction OUT); shareByCurrency for the currency mix
+helpers/fx.ts                     convert()/tryConvert() via cross-rates to USD, IDENTITY_RATES
+helpers/currencies.ts             which currencies a picker offers (user's choice or USD/EUR/GBP) + "$ USD" options
+helpers/chartData.ts              day/week/month buckets + income/expense series for FlowChart and MonthlyBarsChart
+helpers/materializeOccurrences.ts occurrences of a recurring item within a range, deterministic ids
+helpers/scheduleAnchor.ts         user's date choice → startDate (incl. "backfill" = 6 months back)
+helpers/paymentMethodLabel.ts     "name - last4" for tables, "SEB - Autogiro (Bank transfer)" for dropdowns, and the spoken form
+                                  ("Bancolombia, Debit card, ending in 8817") that names a MethodFace
+helpers/paymentMethodOptions.ts   method types, network/provider suggestions, CARD_TYPES, sortByName/groupMethodsByType (wizard, Methods and PaymentMethodField)
 helpers/accounts.ts               isAccountDomain (INVESTMENT | SAVING | DEBT), ACCOUNT_NOUN (account / pocket / debt), accountLabel, formatInterestRate
-helpers/tags.ts                   normaliseTagName / tagKey (sin espacios; key en minúsculas), tagNames (ids → nombres)
-helpers/hidden.ts                 qué filas del ledger están ocultas, y de dónde (dashboard / gráfico del dominio; por su item recurrente o su categoría)
-helpers/essential.ts              isSubscription / isEssential (el flag `essential` del item, o la suposición) / essentialIsGuessed
-helpers/dates.ts                  formatDate(date, style, format) — toda fecha visible pasa por aquí (preferencia del usuario); monthKey
-helpers/stacks.ts                 monthTotalsBy / monthTotalsByCategory — totales mensuales apilados (top N + "Other"), tintes por dominio
-helpers/categoryTree.ts           categoryIdSet / rootIdMap — plegar hijos en su categoría raíz
-helpers/categoryIcons.ts          defaultIconFor(name, domain) / iconFor(category) — icono por defecto cuando no hay pick
-helpers/money.ts                  formatAmount / formatCompact / formatNative — cómo se escribe un monto (y cómo se enmascara)
-helpers/i18n.ts                   t(key, language) — catálogo (solo "en") para las cadenas de Settings
-helpers/recurrence.ts             próxima ocurrencia según Frequency
-helpers/seedDefaultCategories.ts  categorías por defecto
+helpers/tags.ts                   normaliseTagName / tagKey (no spaces; lowercase key), tagNames (ids → names)
+helpers/hidden.ts                 which ledger rows are hidden, and from where (dashboard / domain chart; via their recurring item or their category)
+helpers/essential.ts              isSubscription / isEssential (the item's `essential` flag, or the guess) / essentialIsGuessed
+helpers/dates.ts                  formatDate(date, style, format) — every visible date goes through here (user preference); monthKey
+helpers/stacks.ts                 monthTotalsBy / monthTotalsByCategory — stacked monthly totals (top N + "Other"), per-domain tints
+helpers/categoryTree.ts           categoryIdSet / rootIdMap — fold children into their root category
+helpers/categoryIcons.ts          defaultIconFor(name, domain) / iconFor(category) — default icon when there's no pick
+helpers/money.ts                  formatAmount / formatCompact / formatNative — how an amount is written (and how it's masked)
+helpers/i18n.ts                   t(key, language) — catalog ("en" only) for the Settings strings
+helpers/recurrence.ts             next occurrence by Frequency
+helpers/seedDefaultCategories.ts  default categories
 ```
 
-### `lib/` y `firebase/` — configuración de terceros
+### `lib/` and `firebase/` — third-party configuration
 
-Solo singletons y configuración de SDKs. Nada de lógica propia.
+Only singletons and SDK configuration. No logic of our own.
 
 ```
 lib/auth0.ts         initAuth0
-firebase/admin.ts    firebase-admin (solo servidor)
-firebase/client.ts   SDK de cliente
+firebase/admin.ts    firebase-admin (server only)
+firebase/client.ts   client SDK
 ```
 
-### `features/<nombre>/` — agrupado por feature
+### `features/<name>/` — grouped by feature
 
-Todo lo que solo sirve a una feature vive junta:
+Everything that serves only one feature lives together:
 
 ```
 features/
-  onboarding/   el wizard de configuración inicial + el guard de acceso. Antes del paso 1 va la intro animada
-                (`/onboarding`, IntroPage: seis slides de "qué es Walleto" — planificador, no registro; entender
-                a dónde va la plata; nada urgente; lo esencial primero; patrimonio; multi-moneda —, el copy en
-                data/introSlides). Se ve **una sola vez**: el guard manda a la intro mientras
-                `onboardingIntroSeen` no esté, y después directo al paso 1; Settings › Setup la repite ("Watch the
-                intro", que vuelve a Settings). Cada escena es iconos en IconDisc sobre un lienzo fijo de 320×200
-                (`intro/SceneCanvas`), y todo el movimiento vive en `intro/SceneBit` (keyframes una sola vez).
-                El wizard no tiene flecha arriba: Back, Next y la salida viven solo en el pie. El paso 2 (MethodsStep, también en
-                Settings) es una billetera: cada método es una MethodFace colapsada; tocarla la abre (WalletItem +
-                MethodEditor, una a la vez, hooks/useOpenRow) y el "Remove" va en el pie del editor, nunca en una
-                columna al lado de los campos. Los métodos guardados se editan ahí mismo (solo el tipo queda fijo) y
-                `save()` los manda como PATCH con solo lo que cambió. Cada paso tiene salida
-                (ContinueLater: "Skip for now" en el 1, "Continue later" después — useLeaveOnboarding guarda
-                el paso, marca onboardingCompleted y vuelve al dashboard; Settings › Setup lo reabre)
-  dashboard/    la home: hero del plan mensual (NetFlowCard, con veredicto "On plan" /
-                "Over-committed"), patrimonio de hoy (NetWorthCard + hooks/useNetWorth + helpers/netWorth) — las dos
-                son la misma pieza, `components/molecules/SummaryCard` (título + pill, cifra a la izquierda,
-                desglose a la derecha; Prospect la usa también),
-                stat cards por dominio ("planned per month"),
-                cash flow de 5 dominios apilado por categoría / moneda (CashFlowCard + helpers/cashFlowSeries; por
-                categoría / moneda el tooltip es por barra — `StackTooltip` —, por dominio compara los cinco),
-                top categorías, próximos pagos del plan; el tip va arriba de todo
-  domains/      DomainPage — la pantalla month-first que comparten incomes/expenses/investments/savings/debts:
-                el mes viene del header (hooks/useSelectedMonth), MonthSummary (primero lo esperado del mes y
-                cuánto llegó; después lo real vs el mes anterior),
-                barras apiladas por categoría o moneda (ChartControls; los charts solo muestran — el mes
-                lo pone el picker del header, y por eso la lista de meses que la página calcula es más larga
-                que la que dibujan las barras), Top categories, y las vistas
-                Plan (RecurringChecklist, la vista por defecto) / Activity (TransactionsTable con búsqueda/filtros) /
-                Categories / Tags / Payment methods (/ Worth, que en debts se llama Owed). Las keys del hash son
-                `plan` / `activity` / …; `#recurring` y `#transactions` siguen funcionando (parseDomainView)
-  methods/      MethodsList (los métodos guardados como billetera: una MethodFace por método, agrupadas por tipo) +
-                EditMethodModal (con la cara en tamaño completo como preview) — los usa Settings › Payment methods
-                (la página /methods redirige)
-  insights/     SubscriptionInsights — costo mensual/anualizado de suscripciones
-  investments/  valor por cuenta / pocket / deuda (y por categoría para lo que no tiene cuenta): invertido vs valor,
-                % de ganancia, historial; helpers/interest.ts estima con la tasa de la cuenta; una deuda es la
-                misma pieza con el signo cambiado (positionSign): repagado vs adeudado, interés en vez de ganancia;
-                AccountValueList (vista Worth / Owed), AccountValuePanels (drilldown), RecordValueModal ("+"),
-                DomainValueLine (el "Worth …" de las cards del dashboard); hooks/useDomainValue
-                (listener desde el origen: móntalo solo donde se muestre la cifra) y hooks/useDomainGains
-  settings/     pestañas de sección (General / Categories / Tags / Payment methods / Accounts & debts, la activa
-                va en el hash de la URL). General son seis tarjetas (Account, Currency, Preferences, Setup, Data &
-                privacy, About) sobre SettingsCard + SettingsRow; Currency además cura la lista de monedas
-                disponibles (CurrencyToggles, ver §3.1); CategoriesSettings, TagsSettings y AccountsSettings
-                paginan de a 25 (`Pager`); MethodsSettings monta el MethodsStep del wizard más la lista
-  prospect/     el simulador del plan, con dos modos (el switch "Emergency mode", ProspectModeToggle).
-                What-if: CancelableItemsList agrupa lo que sale del plan (helpers/rankCancelable) en Non-essential
-                (primero, lo más caro arriba, con chips "Cancel top 1/2/3"), Essential, Investing & saving y Debt
-                payments; tildar simula cancelar y WhatIfSummary (SummaryCard) da el neto del mes antes y después.
-                Emergency (EmergencyView, monta los listeners de valor solo mientras está activo): el ingreso
-                regular se corta, se pausa lo no esencial y todo aporte, y helpers/emergency.ts simula mes a mes
-                cuánto dura el colchón (ahorros, + inversiones si el owner lo pide, + indemnización) pagando
-                esenciales y deudas, con el subsidio de desempleo mientras dure — RunwayCard + EmergencyPanel
-                (el plan de emergencia vive en el user doc, hooks/useEmergencyPlan). Como el dashboard, deja fuera
-                los items `hiddenFromDashboard`
-  create/       CreateLauncher — el botón flotante "+" y su sheet (¿pago puntual, recurrente, o valor de una cuenta?)
+  onboarding/   the initial setup wizard + the access guard. Before step 1 comes the animated intro
+                (`/onboarding`, IntroPage: six "what Walleto is" slides — a planner, not a tracker; understanding
+                where the money goes; nothing urgent; essentials first; net worth; multi-currency —, the copy in
+                data/introSlides). It's shown **only once**: the guard sends you to the intro while
+                `onboardingIntroSeen` is unset, and straight to step 1 after that; Settings › Setup replays it ("Watch the
+                intro", which returns to Settings). Each scene is icons in IconDisc on a fixed 320×200 canvas
+                (`intro/SceneCanvas`), and all the motion lives in `intro/SceneBit` (keyframes defined once).
+                The wizard has no top arrow: Back, Next and the exit live only in the footer. Step 2 (MethodsStep, also in
+                Settings) is a wallet: each method is a collapsed MethodFace; tapping it opens it (WalletItem +
+                MethodEditor, one at a time, hooks/useOpenRow) and "Remove" goes in the editor's footer, never in a
+                column next to the fields. Saved methods are edited right there (only the type is fixed) and
+                `save()` sends them as a PATCH with only what changed. Every step has an exit
+                (ContinueLater: "Skip for now" on step 1, "Continue later" afterwards — useLeaveOnboarding saves
+                the step, sets onboardingCompleted and returns to the dashboard; Settings › Setup reopens it)
+  dashboard/    the home: monthly plan hero (NetFlowCard, with an "On plan" /
+                "Over-committed" verdict), today's net worth (NetWorthCard + hooks/useNetWorth + helpers/netWorth) — both
+                are the same piece, `components/molecules/SummaryCard` (title + pill, figure on the left,
+                breakdown on the right; Prospect uses it too),
+                per-domain stat cards ("planned per month"),
+                5-domain cash flow stacked by category / currency (CashFlowCard + helpers/cashFlowSeries; by
+                category / currency the tooltip is per bar — `StackTooltip` —, by domain it compares all five),
+                top categories, upcoming plan payments; the tip goes at the very top
+  domains/      DomainPage — the month-first screen shared by incomes/expenses/investments/savings/debts:
+                the month comes from the header (hooks/useSelectedMonth), MonthSummary (first what's expected this
+                month and how much arrived; then actuals vs the previous month),
+                bars stacked by category or currency (ChartControls; the charts only display — the month
+                is set by the header picker, which is why the list of months the page computes is longer
+                than the one the bars draw), Top categories, and the views
+                Plan (RecurringChecklist, the default view) / Activity (TransactionsTable with search/filters) /
+                Categories / Tags / Payment methods (/ Worth, which is called Owed in debts). The hash keys are
+                `plan` / `activity` / …; `#recurring` and `#transactions` still work (parseDomainView)
+  methods/      MethodsList (saved methods as a wallet: one MethodFace per method, grouped by type) +
+                EditMethodModal (with the full-size face as a preview) — used by Settings › Payment methods
+                (the /methods page redirects)
+  insights/     SubscriptionInsights — monthly/annualized subscription cost
+  investments/  value per account / pocket / debt (and per category for what has no account): invested vs value,
+                gain %, history; helpers/interest.ts estimates with the account's rate; a debt is the
+                same piece with the sign flipped (positionSign): repaid vs owed, interest instead of gain;
+                AccountValueList (Worth / Owed view), AccountValuePanels (drilldown), RecordValueModal ("+"),
+                DomainValueLine (the "Worth …" on the dashboard cards); hooks/useDomainValue
+                (listener from inception: mount it only where the figure is shown) and hooks/useDomainGains
+  settings/     section tabs (General / Categories / Tags / Payment methods / Accounts & debts, the active one
+                goes in the URL hash). General is six cards (Account, Currency, Preferences, Setup, Data &
+                privacy, About) on SettingsCard + SettingsRow; Currency also curates the list of available
+                currencies (CurrencyToggles, see §3.1); CategoriesSettings, TagsSettings and AccountsSettings
+                paginate by 25 (`Pager`); MethodsSettings mounts the wizard's MethodsStep plus the list
+  prospect/     the plan simulator, with two modes (the "Emergency mode" switch, ProspectModeToggle).
+                What-if: CancelableItemsList groups what leaves the plan (helpers/rankCancelable) into Non-essential
+                (first, most expensive on top, with "Cancel top 1/2/3" chips), Essential, Investing & saving and Debt
+                payments; checking simulates cancelling and WhatIfSummary (SummaryCard) gives the month's net before and after.
+                Emergency (EmergencyView, mounts the value listeners only while active): regular income
+                is cut, non-essentials and all contributions are paused, and helpers/emergency.ts simulates month by month
+                how long the cushion lasts (savings, + investments if the owner asks, + severance) paying
+                essentials and debts, with unemployment benefit while it lasts — RunwayCard + EmergencyPanel
+                (the emergency plan lives in the user doc, hooks/useEmergencyPlan). Like the dashboard, it leaves out
+                `hiddenFromDashboard` items
+  create/       CreateLauncher — the floating "+" button and its sheet (one-off payment, recurring, or an account's value?)
 ```
 
-Cada una con la misma forma interna: `components/`, `hooks/`, `helpers/`, `data/`.
+Each one has the same internal shape: `components/`, `hooks/`, `helpers/`, `data/`.
 
-**La regla para decidir dónde va algo: cuenta los consumidores.**
+**The rule for deciding where something goes: count the consumers.**
 
-- **Un solo consumidor** → baja a la feature.
-- **Dos o más** → sube a la raíz, aunque hoy "parezca" de una feature.
+- **A single consumer** → it moves down into the feature.
+- **Two or more** → it moves up to the root, even if today it "looks like" it belongs to a feature.
 
-Ejemplos reales: `Combobox` nació en el wizard y vive en `components/atoms/` porque es genérico; `TabStrip` (pestañas segmentadas con acento) sirve a Settings, a sus tarjetas por dominio y a las vistas de DomainPage; `utils/paginate` + `components/molecules/Pager` son la paginación de cualquier lista; `helpers/aggregations` y `hooks/useMoneyContext` parecen de `domains` pero los usan también dashboard, insights y prospect, así que se quedan compartidos. `hooks/useDomainTransactions` nació en `expenses/` (dos consumidores después: dashboard y domains) y subió a `hooks/`.
+Real examples: `Combobox` was born in the wizard and lives in `components/atoms/` because it's generic; `TabStrip` (segmented tabs with an accent) serves Settings, its per-domain cards and the DomainPage views; `utils/paginate` + `components/molecules/Pager` are the pagination for any list; `helpers/aggregations` and `hooks/useMoneyContext` look like they belong to `domains` but dashboard, insights and prospect use them too, so they stay shared. `hooks/useDomainTransactions` was born in `expenses/` (two consumers later: dashboard and domains) and moved up to `hooks/`.
 
-> Cuidado con los barrels: `helpers/index.ts` reexporta, así que un `grep` por el nombre del archivo **no** encuentra a quien lo importa como `from "../helpers"`. Cuenta consumidores mirando también los barrels, o te llevarás a una feature algo que usan tres.
+> Watch out for barrels: `helpers/index.ts` re-exports, so a `grep` for the file name **won't** find whoever imports it as `from "../helpers"`. Count consumers by looking at the barrels too, or you'll move into a feature something three others use.
 
-### Compartido entre features
+### Shared across features
 
 ```
 components/atoms|molecules|organisms/   Atomic Design
-hooks/                                  hooks reutilizables
-schemas/                                esquemas Zod
-types/                                  tipos del dominio
-constants.ts                            constantes y mapas de presentación; MONTH_PERIODS (3/6/12) +
-                                        parseMonthPeriod los comparten el chart de dominio y el cash flow
+hooks/                                  reusable hooks
+schemas/                                Zod schemas
+types/                                  domain types
+constants.ts                            constants and presentation maps; MONTH_PERIODS (3/6/12) +
+                                        parseMonthPeriod are shared by the domain chart and the cash flow
 ```
 
-`components/atoms/EmptyState.tsx` y `components/atoms/ErrorState.tsx` son **distintos a propósito**: una regla de Firestore rota o un índice building deben leerse como error, nunca como "sin datos" — esa ambigüedad ya vació la lista de categorías del wizard una vez (ver §3). `components/atoms/CheckboxField.tsx` es toda opción con casilla de un formulario: el `label` arriba, el `hint` (la consecuencia o la advertencia, una frase que empieza en mayúscula y termina en punto) en su propia línea debajo en texto chico y apagado, y un `tag` opcional al lado del label (siempre un `Badge size="sm"`, p. ej. "Guessed from category", que no agranda la línea; si el tag necesita explicarse, va como `trigger` de un `InfoTip` con un icono `Info` dentro de la pastilla — el click abre el tooltip y nunca tilda la casilla) — nunca el viejo "— …" pegado al label, que partía la frase y enterraba el nombre de la opción. `components/atoms/InfoTip.tsx` es el "i" con tooltip (o, con `trigger`, cualquier pastilla que se explica sola) (hover, foco de teclado o tap; Escape / tap afuera lo cierran, y se corre solo para no salirse del viewport) — no uses `title=` para explicar algo que en mobile nadie puede ver. `components/molecules/Modal.tsx` y `KebabMenu.tsx` son los building blocks de cualquier CRUD nuevo (crear/editar en un modal, acciones por fila en un kebab) — no reinventes overlay ni dropdown. `Modal` es un diálogo centrado en desktop y un **bottom sheet** bajo 768px (ancho completo, `dvh`, safe-area, scroll del body bloqueado); los formularios largos fijan su fila de acciones con `position: sticky; bottom: 0` para que Cancelar/Guardar no queden fuera de vista. `components/molecules/Last4Field.tsx` es el "últimos 4" de una tarjeta en los tres formularios de métodos (wizard, creador inline, edición): `name="last4"` + `autoComplete="off"` y una nota que aclara que no es el código de seguridad — suelto, se leía (y el autofill lo llenaba) como CVV; valida con `last4Error` antes de enviar. `components/molecules/MethodFace/` dibuja un método de pago como lo que es — tarjeta (chip EMV, contactless, número en relieve y la marca de la red: círculos de Mastercard, VISA, Amex; las demás redes en texto), cheque, app de billetera, hardware wallet, billete, ticket — en tira (`compact`) o entera (`full`, siempre con la proporción de una tarjeta real, 1.586). **Una sola geometría**: `FaceLayout` decide dónde va cada slot (emblema, título, esquina, detalle, pie, marca) para todos los tipos; un tipo nuevo solo elige material en el marco (`MethodFace.tsx`) y llena slots en `slots.tsx` — nunca posiciones ni tamaños propios, que es como las caras se desalinearon la primera vez. Es decorativa (`aria-hidden`), así que quien la envuelve la nombra (`MethodFaceButton` + `paymentMethodDescription`). `components/molecules/CategoryField.tsx` y `PaymentMethodField.tsx` son los selects de categoría y de método de pago con creación inline que comparten los dos formularios de alta.
+`components/atoms/EmptyState.tsx` and `components/atoms/ErrorState.tsx` are **different on purpose**: a broken Firestore rule or a building index must read as an error, never as "no data" — that ambiguity already emptied the wizard's category list once (see §3). `components/atoms/CheckboxField.tsx` is every checkbox option in a form: the `label` on top, the `hint` (the consequence or the warning, a sentence that starts with a capital letter and ends with a period) on its own line below in small, muted text, and an optional `tag` next to the label (always a `Badge size="sm"`, e.g. "Guessed from category", which doesn't make the line taller; if the tag needs explaining, it goes as the `trigger` of an `InfoTip` with an `Info` icon inside the pill — the click opens the tooltip and never ticks the box) — never the old "— …" glued to the label, which split the sentence and buried the option's name. `components/atoms/InfoTip.tsx` is the "i" with a tooltip (or, with `trigger`, any pill that explains itself) (hover, keyboard focus or tap; Escape / tapping outside closes it, and it shifts itself so it doesn't leave the viewport) — don't use `title=` to explain something nobody on mobile can see. `components/molecules/Modal.tsx` and `KebabMenu.tsx` are the building blocks of any new CRUD (create/edit in a modal, per-row actions in a kebab) — don't reinvent overlay or dropdown. `Modal` is a centered dialog on desktop and a **bottom sheet** below 768px (full width, `dvh`, safe-area, body scroll locked); long forms pin their action row with `position: sticky; bottom: 0` so Cancel/Save don't fall out of view. `components/molecules/Last4Field.tsx` is a card's "last 4" in the three method forms (wizard, inline creator, edit): `name="last4"` + `autoComplete="off"` and a note clarifying it's not the security code — on its own it read (and autofill filled it) as a CVV; it validates with `last4Error` before submitting. `components/molecules/MethodFace/` draws a payment method as what it is — card (EMV chip, contactless, embossed number and the network's mark: Mastercard circles, VISA, Amex; other networks as text), cheque, wallet app, hardware wallet, banknote, voucher — as a strip (`compact`) or whole (`full`, always with a real card's aspect ratio, 1.586). **A single geometry**: `FaceLayout` decides where each slot goes (emblem, title, corner, detail, footer, mark) for every type; a new type only chooses the material in the frame (`MethodFace.tsx`) and fills slots in `slots.tsx` — never its own positions or sizes, which is how the faces got misaligned the first time. It's decorative (`aria-hidden`), so whoever wraps it names it (`MethodFaceButton` + `paymentMethodDescription`). `components/molecules/CategoryField.tsx` and `PaymentMethodField.tsx` are the category and payment method selects with inline creation shared by both create forms.
 
-**La única excepción a "los organisms no importan features"** es `PageLayout`, que monta `features/create/CreateLauncher` (el "+" flotante de mobile): tiene que existir en todas las páginas y todas las páginas se construyen sobre ese layout. Los dos formularios que abre se montan solo mientras están abiertos, así ninguna página paga sus listeners.
+**The only exception to "organisms don't import features"** is `PageLayout`, which mounts `features/create/CreateLauncher` (the mobile floating "+"): it has to exist on every page and every page is built on that layout. The two forms it opens are mounted only while open, so no page pays for their listeners.
 
 ### Storybook
 
-`pnpm storybook` monta cada pieza sola y en contexto, ordenada por Atomic Design: **Atoms** y **Molecules** (`components/`), **Organisms** (`components/organisms/` y `features/*/components/`) y **Templates** (las pantallas enteras: `DashboardPage`, `DomainPage`, `ProspectPage`, `SettingsPage`, el wizard y `login-error`). Reglas:
+`pnpm storybook` mounts each piece alone and in context, ordered by Atomic Design: **Atoms** and **Molecules** (`components/`), **Organisms** (`components/organisms/` and `features/*/components/`) and **Templates** (whole screens: `DashboardPage`, `DomainPage`, `ProspectPage`, `SettingsPage`, the wizard and `login-error`). Rules:
 
-- La story va **colocada** junto al componente, como el test: `Button.stories.tsx`. El `title` decide el nivel (`Atoms/Button`, `Organisms/Dashboard/NetFlowCard`, `Templates/Settings`). **Nunca** una story dentro de `pages/` (Next la compila como ruta; `__tests__/pagesDirectory.test.ts` lo vigila).
-- Storybook no toca Firestore ni Auth0. `.storybook/preview.tsx` envuelve todo en `UserProvider` (usuario fijo) y `PreferencesProvider`, y sustituye cada hook de datos de `hooks/` (y `firebase/client`) por su hermano en `__mocks__/` vía `sb.mock()`. Los mocks devuelven un solo perfil demo desde `stories/fixtures/` (categorías, tags, métodos, cuentas, un plan multi-moneda y el ledger derivado con `helpers/materializeOccurrences`).
-- Otro estado = otro hook: `mocked(useCategories).mockImplementation(...)` en el `beforeEach` de la story; `resetStoryMocks()` restaura los defaults antes de cada una. Los componentes por props reciben los fixtures directamente (`STORY_CATEGORIES`, `STORY_CTX`…).
-- Un hook nuevo que lea Firestore necesita tres cosas: su default en `stories/fixtures/hookDefaults.ts`, `hooks/__mocks__/<hook>.ts` con **todos** los nombres que exporta el módulo real envueltos en `fn()`, y su alta en `.storybook/preview.tsx` y en `stories/fixtures/mocks.ts`.
-- Los cuerpos de página viven en `features/*/components/*Page.tsx`; `pages/*.tsx` solo exporta `getServerSideProps` y monta ese componente. Así una pantalla se puede montar fuera de `pages/`.
-- CI corre `pnpm build-storybook`: una story rota rompe el pipeline.
-- Vercel lo sirve en `/storybook` en cada deploy: el script `vercel-build` corre `storybook build`, mueve `storybook-static/` a `public/storybook/` y recién ahí corre `next build`, así el build estático queda dentro de `public/` antes de que Next arranque el suyo. (Un `-o public/storybook` directo rompe: `.storybook/main.ts` tiene `staticDirs: ["../public"]`, y copiar `public/` sobre su propia subcarpeta no es válido — de ahí el paso intermedio.) `next.config.js` **redirige** (no reescribe) `/storybook` → `/storybook/index.html`: el `index.html` de Storybook apunta a sus assets en relativo (`./sb-manager/runtime.js`), así que el navegador tiene que estar dentro de `/storybook/` para resolverlos — con un rewrite la URL se queda en `/storybook`, los assets se piden contra la raíz, dan 404 y la página carga en blanco. Esa ruta además lleva `noindex` y `X-Frame-Options: SAMEORIGIN`: el `DENY` global de la app bloquea el iframe de preview (mismo origen) y deja cada story vacía. `.vercelignore` no excluye `.storybook/` ni `stories/`: hacen falta para que ese build corra en Vercel.
+- The story is **colocated** next to the component, like the test: `Button.stories.tsx`. The `title` decides the level (`Atoms/Button`, `Organisms/Dashboard/NetFlowCard`, `Templates/Settings`). **Never** a story inside `pages/` (Next compiles it as a route; `__tests__/pagesDirectory.test.ts` guards this).
+- Storybook doesn't touch Firestore or Auth0. `.storybook/preview.tsx` wraps everything in `UserProvider` (fixed user) and `PreferencesProvider`, and replaces every data hook in `hooks/` (and `firebase/client`) with its sibling in `__mocks__/` via `sb.mock()`. The mocks return a single demo profile from `stories/fixtures/` (categories, tags, methods, accounts, a multi-currency plan and the ledger derived with `helpers/materializeOccurrences`).
+- A different state = a different hook: `mocked(useCategories).mockImplementation(...)` in the story's `beforeEach`; `resetStoryMocks()` restores the defaults before each one. Prop-driven components receive the fixtures directly (`STORY_CATEGORIES`, `STORY_CTX`…).
+- A new hook that reads Firestore needs three things: its default in `stories/fixtures/hookDefaults.ts`, `hooks/__mocks__/<hook>.ts` with **every** name the real module exports wrapped in `fn()`, and its registration in `.storybook/preview.tsx` and in `stories/fixtures/mocks.ts`.
+- Page bodies live in `features/*/components/*Page.tsx`; `pages/*.tsx` only exports `getServerSideProps` and mounts that component. That way a screen can be mounted outside `pages/`.
+- CI runs `pnpm build-storybook`: a broken story breaks the pipeline.
+- Vercel serves it at `/storybook` on every deploy: the `vercel-build` script runs `storybook build`, moves `storybook-static/` to `public/storybook/` and only then runs `next build`, so the static build is already inside `public/` before Next starts its own. (A direct `-o public/storybook` breaks: `.storybook/main.ts` has `staticDirs: ["../public"]`, and copying `public/` onto its own subfolder isn't valid — hence the intermediate step.) `next.config.js` **redirects** (doesn't rewrite) `/storybook` → `/storybook/index.html`: Storybook's `index.html` points to its assets relatively (`./sb-manager/runtime.js`), so the browser has to be inside `/storybook/` to resolve them — with a rewrite the URL stays at `/storybook`, the assets are requested against the root, they 404 and the page loads blank. That route also carries `noindex` and `X-Frame-Options: SAMEORIGIN`: the app's global `DENY` blocks the preview iframe (same origin) and leaves every story empty. `.vercelignore` doesn't exclude `.storybook/` or `stories/`: they're needed for that build to run on Vercel.
 
 ---
 
-## 2. Estilos
+## 2. Styles
 
-- **styled-jsx** dentro del componente (`<style jsx>{\`…\`}</style>`). No usamos CSS Modules.
-- Siempre **design tokens**, nunca hex a mano: `var(--bg-1)`, `var(--accent)`, `var(--r-md)`. Los tokens están en `styles/globals.css`.
-- **Dos paletas**: clara por defecto ("glass" sobre un fondo de paisaje) y oscura (la "Fintech-noir" original), elegidas por `data-theme` en `<html>`. Un script inline en `_document` la fija antes del primer paint y `hooks/useTheme` la sigue (preferencia en el user doc, `"system"` se resuelve en JS con `matchMedia`; los tokens viven solo en esos dos bloques). Texto sobre el acento: `--on-accent`.
-- **El color primario es un solo token por paleta**: `--accent`. `--accent-soft`, `--glow`, `--ambient-1` y `--accent-hover` salen de él con `color-mix()` (`--accent-hover` se aleja de `--on-accent`: más oscuro en la clara, más claro en la oscura — un relleno de acento al hover solo gana contraste; el FAB y `Button` primary lo usan, y como llevan `glass--tap` su `:hover` tiene que ganarle al de `.glass--tap`, que si no lo vuelve vidrio y hunde el icono), así que cambiar el primario es cambiar ese valor en los dos bloques. Además cada build se pinta distinto para no confundirla con producción: `_document` pone `data-env` en `<html>` desde `helpers/buildInfo` y `globals.css` pisa `--accent` — producción conserva el de cada paleta, staging (los previews de Vercel, `sublr.vercel.app`) es rojo y dev verde. El favicon sigue el mismo mapa (`buildInfo().favicon`: `favicon.svg` / `favicon-red.svg` / `favicon-green.svg`); el `.ico` y el touch icon son azules, así que solo producción los enlaza.
+- **styled-jsx** inside the component (`<style jsx>{\`…\`}</style>`). We don't use CSS Modules.
+- Always **design tokens**, never hand-written hex: `var(--bg-1)`, `var(--accent)`, `var(--r-md)`. The tokens are in `styles/globals.css`.
+- **Two palettes**: light by default ("glass" over a landscape background) and dark (the original "Fintech-noir"), chosen by `data-theme` on `<html>`. An inline script in `_document` sets it before the first paint and `hooks/useTheme` follows it (preference in the user doc, `"system"` is resolved in JS with `matchMedia`; the tokens live only in those two blocks). Text on the accent: `--on-accent`.
+- **The primary color is a single token per palette**: `--accent`. `--accent-soft`, `--glow`, `--ambient-1` and `--accent-hover` derive from it with `color-mix()` (`--accent-hover` moves away from `--on-accent`: darker in light, lighter in dark — an accent fill on hover only gains contrast; the FAB and `Button` primary use it, and since they carry `glass--tap` their `:hover` has to beat `.glass--tap`'s, which otherwise turns it into glass and sinks the icon), so changing the primary means changing that value in both blocks. On top of that, each build is painted differently so it's not confused with production: `_document` sets `data-env` on `<html>` from `helpers/buildInfo` and `globals.css` overrides `--accent` — production keeps each palette's own, staging (Vercel previews, `sublr.vercel.app`) is red and dev is green. The favicon follows the same map (`buildInfo().favicon`: `favicon.svg` / `favicon-red.svg` / `favicon-green.svg`); the `.ico` and the touch icon are blue, so only production links them.
 
-### Liquid glass: el material (importante)
+### Liquid glass: the material (important)
 
-Toda superficie que flota —Card, Sidebar, la barra inferior, menús, sheets, pills, chips, campos— es **la misma pieza de vidrio**, y esa pieza se implementa **una sola vez**: la clase global `.glass` en `styles/globals.css`.
+Every floating surface — Card, Sidebar, the bottom bar, menus, sheets, pills, chips, fields — is **the same piece of glass**, and that piece is implemented **only once**: the global `.glass` class in `styles/globals.css`.
 
 ```jsx
-<div className="glass card">           {/* vidrio + lo propio del componente */}
+<div className="glass card">           {/* glass + the component's own styles */}
 <nav className="glass glass--strong glass--raised walleto-bnav">
 <button className="glass glass--tap btn btn--secondary">
 ```
 
-- `.glass` — relleno translúcido (`--glass`), `backdrop-filter: blur() saturate()`, borde `--glass-rim`, brillo especular en el canto superior (`--glass-edge`, `--glass-edge-low`) y el barrido de luz `--glass-sheen`, más `--glass-shadow`.
-- `.glass--strong` — cromo que tiene que seguir legible con contenido pasando por debajo (sidebar, barra inferior, sheets, la fila sticky de acciones de un formulario).
-- `.glass--raised` — sombra grande, para lo que flota sobre la página (menús, el sheet del modal, el FAB).
-- `.glass--tap` — reacciona al puntero: aclara al hover, se hunde al `:active`. Va en todo lo que se pueda tocar.
+- `.glass` — translucent fill (`--glass`), `backdrop-filter: blur() saturate()`, `--glass-rim` border, specular highlight on the top edge (`--glass-edge`, `--glass-edge-low`) and the `--glass-sheen` light sweep, plus `--glass-shadow`.
+- `.glass--strong` — chrome that has to stay legible with content scrolling underneath (sidebar, bottom bar, sheets, a form's sticky action row).
+- `.glass--raised` — large shadow, for what floats over the page (menus, the modal's sheet, the FAB).
+- `.glass--tap` — reacts to the pointer: brightens on hover, sinks on `:active`. Goes on everything tappable.
 
-**Es una clase global a propósito.** La alternativa era copiar seis declaraciones en veinte componentes y verlas divergir. styled-jsx sigue siendo el sitio de la geometría (radio, padding, grid) y de cualquier cosa específica del componente.
+**It's a global class on purpose.** The alternative was copying six declarations into twenty components and watching them diverge. styled-jsx is still the place for geometry (radius, padding, grid) and anything component-specific.
 
-El resto del vocabulario, por si algo no puede llevar la clase (un `<dialog>` nativo, un `::before`): `--glass-field` (campos: un pozo excavado en el vidrio, no una baldosa), `--glass-inset` (un panel dentro de otro panel: el bloque de stats de una card, la pista de una barra de progreso — sin blur propio, lo que tiene detrás ya está borroso), `--glass-raised` (la pastilla levantada de un TabStrip / SegmentedControl), `--glass-hover`, `--scrim` + `--scrim-blur` (overlays), `--shadow-sm/lg`.
+The rest of the vocabulary, for when something can't carry the class (a native `<dialog>`, a `::before`): `--glass-field` (fields: a well carved into the glass, not a tile), `--glass-inset` (a panel inside another panel: a card's stats block, a progress bar's track — no blur of its own, what's behind it is already blurred), `--glass-raised` (the raised pill of a TabStrip / SegmentedControl), `--glass-hover`, `--scrim` + `--scrim-blur` (overlays), `--shadow-sm/lg`.
 
-**La única excepción al vidrio son las caras de método de pago** (`MethodFace`): una tarjeta o un billete es un objeto apoyado sobre el vidrio, no una superficie que flota, así que lleva su propio papel / plástico / metal con los tokens `--face-*` (definidos en las dos paletas, cada tinta junto al fondo que la lleva). No los uses para nada más.
+**The only exception to glass is payment method faces** (`MethodFace`): a card or a banknote is an object resting on the glass, not a floating surface, so it carries its own paper / plastic / metal with the `--face-*` tokens (defined in both palettes, each ink next to the background it sits on). Don't use them for anything else.
 
-**Nunca pongas `background: var(--bg-1|2|3)` en una superficie visible.** Ese es el modo en que el material se rompe: una baldosa opaca sobre el vidrio. Los `--bg-*` quedan para el fondo de la página y para lo que el navegador dibuja por su cuenta (`select option`).
+**Never put `background: var(--bg-1|2|3)` on a visible surface.** That's how the material breaks: an opaque tile on the glass. The `--bg-*` tokens are for the page background and for what the browser draws on its own (`select option`).
 
-El fondo importa tanto como el vidrio: el paisaje de `--bg-image` nunca llega a taparse del todo y `body::before` deja una luz ambiental fija al viewport (`--ambient-1..3`), para que una card por debajo del fold también tenga color que refractar. Sin eso el material se lee como un panel gris.
+The background matters as much as the glass: the `--bg-image` landscape is never fully covered and `body::before` leaves ambient light fixed to the viewport (`--ambient-1..3`), so a card below the fold also has color to refract. Without it the material reads as a gray panel.
 
-Movimiento: `prefers-reduced-motion` (regla global en `globals.css`) lleva duración **y delay** a cero — una pieza escalonada con `animation-fill-mode: both` quedaría invisible durante su delay. Una animación nueva solo puede retrasar el frame final, nunca esconder contenido.
+Motion: `prefers-reduced-motion` (global rule in `globals.css`) sets duration **and delay** to zero — a staggered piece with `animation-fill-mode: both` would be invisible during its delay. A new animation may only delay the final frame, never hide content.
 
-Dos degradaciones, ambas en `globals.css` y ambas solo quitan translucidez (la geometría no cambia): `@supports not (backdrop-filter)` y `prefers-reduced-transparency: reduce` vuelven `--glass*` opacos, y la segunda además apaga `sheen`, cantos, blur y `--scrim-blur`.
+Two degradations, both in `globals.css` and both only remove translucency (the geometry doesn't change): `@supports not (backdrop-filter)` and `prefers-reduced-transparency: reduce` make `--glass*` opaque, and the latter also turns off sheen, edges, blur and `--scrim-blur`.
 
-### Filas de lista: `ListItem` (importante)
+### List rows: `ListItem` (important)
 
-Cualquier fila de "nombre · datos · monto" es `components/molecules/ListItem.tsx`, con su `ListItems` alrededor. No escribas otra: llegaron a existir trece implementaciones distintas de la misma fila, con el nombre a 0.85/0.88/0.9rem, el monto a cuatro tamaños y la mitad de las veces sin `font-weight` — o sea, el número principal de la fila pesaba menos que su etiqueta.
+Any "name · data · amount" row is `components/molecules/ListItem.tsx`, wrapped in its `ListItems`. Don't write another one: thirteen different implementations of the same row came to exist, with the name at 0.85/0.88/0.9rem, the amount at four sizes and half the time without `font-weight` — meaning the row's main number weighed less than its label.
 
-La escala vive ahí, una sola vez: nombre y monto a `0.95rem` (600 / 700 mono tabular, `--fg-0`), meta y note a `0.75rem` (`--fg-2`), el pie del monto a `0.72rem`. Dos saltos de tamaño y uno de peso, nada más.
+The scale lives there, once: name and amount at `0.95rem` (600 / 700 tabular mono, `--fg-0`), meta and note at `0.75rem` (`--fg-2`), the amount's footer at `0.72rem`. Two size steps and one weight step, nothing more.
 
-Los slots: `leading` (IconDisc, DateBadge), `name`, `badges`, `meta`, `note`, `progress`, `amount`, `amountMeta`, `trailing`, más `onClick` / `href` / `muted`.
+The slots: `leading` (IconDisc, DateBadge), `name`, `badges`, `meta`, `note`, `progress`, `amount`, `amountMeta`, `trailing`, plus `onClick` / `href` / `muted`.
 
-- **`badges` va siempre con `Badge`** (`components/atoms/Badge.tsx`), nunca un span propio: el átomo trae `white-space: nowrap`, y sin eso "HIDDEN ON CHART" se parte en dos líneas. Van en su **propia línea, abajo a la izquierda** del bloque de texto (después de meta / note / progress): ahí no le compiten el ancho ni al nombre ni al monto, y tres tags se leen como un grupo en vez de empujar el nombre a una elipsis.
-- **Las dos marcas "Hidden" se distinguen por icono**, porque la palabra sola ya no alcanza: `Chart` = oculto del gráfico del dominio (categorías), `Home` = oculto del dashboard (recurrentes) — el mismo icono que el sidebar usa para esa pantalla. En el ledger las razones las da `hiddenRowReasons` (`helpers/hidden.ts`), que devuelve una lista (`"chart"` primero, después `"dashboard"`): una fila que cumple las dos lleva dos pastillas. Solo `"chart"` atenúa la fila (`muted`): lo oculto del dashboard sigue contando en su página de dominio. El icono va en el prop `icon` de `Badge` a `size={12}` (la pastilla `caps` es de 0.64rem) y es decorativo: `aria-hidden` viene de fábrica en `Icons.tsx`, así que el nombre accesible sigue siendo el texto.
-- **`meta` es un solo string ya unido** ("Sep 25 · Monthly · Housing · Visa - 4242"). Hay tests que lo buscan como un único nodo de texto, y así la elipsis cae al final y no dentro de una columna.
-- **`trailing` queda fuera del área clicable** (el kebab no puede vivir dentro del botón de la fila); `amount` queda dentro.
+- **`badges` always use `Badge`** (`components/atoms/Badge.tsx`), never a custom span: the atom brings `white-space: nowrap`, and without it "HIDDEN ON CHART" wraps onto two lines. They go on **their own line, bottom left** of the text block (after meta / note / progress): there they don't compete for width with the name or the amount, and three tags read as a group instead of pushing the name into an ellipsis.
+- **The two "Hidden" marks are told apart by icon**, because the word alone isn't enough anymore: `Chart` = hidden from the domain chart (categories), `Home` = hidden from the dashboard (recurring items) — the same icon the sidebar uses for that screen. In the ledger the reasons come from `hiddenRowReasons` (`helpers/hidden.ts`), which returns a list (`"chart"` first, then `"dashboard"`): a row matching both gets two pills. Only `"chart"` dims the row (`muted`): what's hidden from the dashboard still counts on its domain page. The icon goes in `Badge`'s `icon` prop at `size={12}` (the `caps` pill is 0.64rem) and is decorative: `aria-hidden` comes by default in `Icons.tsx`, so the accessible name is still the text.
+- **`meta` is a single, already-joined string** ("Sep 25 · Monthly · Housing · Visa - 4242"). There are tests that look for it as a single text node, and that way the ellipsis falls at the end and not inside a column.
+- **`trailing` stays outside the clickable area** (the kebab can't live inside the row's button); `amount` stays inside.
 
-- Los acentos por dominio: `--domain-income`, `--domain-expense`, `--domain-investment`, `--domain-saving`, `--domain-debt`, sus tintes suaves `--domain-*-soft` y las rampas `--tint-{domain}-1..6` para barras apiladas por categoría. **Nunca** metas `color-mix()` en un string de JS (recharts no lo entiende en atributos SVG): define el token en CSS y pasa `var(--x)`.
-- Iconos: `components/atoms/Icons.tsx` (trazo Feather). Los de categoría se eligen por key (`constants.ICON_KEYS`) en `CategoryIcon`; sin pick, `helpers/categoryIcons` decide por el nombre.
+- Per-domain accents: `--domain-income`, `--domain-expense`, `--domain-investment`, `--domain-saving`, `--domain-debt`, their soft tints `--domain-*-soft` and the `--tint-{domain}-1..6` ramps for category-stacked bars. **Never** put `color-mix()` in a JS string (recharts doesn't understand it in SVG attributes): define the token in CSS and pass `var(--x)`.
+- Icons: `components/atoms/Icons.tsx` (Feather stroke). Category icons are picked by key (`constants.ICON_KEYS`) in `CategoryIcon`; with no pick, `helpers/categoryIcons` decides by name.
 
-### Trampa de especificidad (importante)
+### Specificity trap (important)
 
-`styles/globals.css` estiliza **todos** los `input` y `select`:
+`styles/globals.css` styles **every** `input` and `select`:
 
 ```css
 input:not([type="checkbox"]):not([type="radio"]) { … }   /* (0,2,1) */
 ```
 
-styled-jsx compila `.input` a `.input.jsx-hash`, que es solo `(0,2,0)` — **el global gana**. Para sobrescribir hay que anidar:
+styled-jsx compiles `.input` to `.input.jsx-hash`, which is only `(0,2,0)` — **the global wins**. To override you have to nest:
 
 ```css
 .control .input { … }   /* (0,4,0) ✓ */
 ```
 
-Ese detalle causó un doble borde en el wizard. Ojo también con `select`, que trae su propio chevron por `background-image`: si el componente dibuja su icono, hay que poner `background-image: none`.
+That detail caused a double border in the wizard. Also watch out for `select`, which brings its own chevron via `background-image`: if the component draws its own icon, you need `background-image: none`.
 
-### Trampa del `className` en componentes hijos (importante)
+### The `className` on child components trap (important)
 
-styled-jsx **no** le pone su hash de scope al `className` que le pasas a un componente hijo (`<Link className="nav-item">`, cualquier componente propio). La regla compila a `.nav-item.jsx-hash`, el `<a>` renderizado solo tiene `nav-item`, y el CSS queda muerto **sin ningún error**. Así estuvo el Sidebar entero: iconos pegados al texto, sin padding ni hover. La salida es `:global()` desde un padre con scope, nunca estilos inline:
+styled-jsx does **not** add its scope hash to the `className` you pass to a child component (`<Link className="nav-item">`, any custom component). The rule compiles to `.nav-item.jsx-hash`, the rendered `<a>` only has `nav-item`, and the CSS is dead **without any error**. The whole Sidebar was like that: icons glued to the text, no padding or hover. The way out is `:global()` from a scoped parent, never inline styles:
 
 ```css
-.nav :global(.nav-item) { … }        /* ✓ aplica al <a> de Link */
+.nav :global(.nav-item) { … }        /* ✓ applies to Link's <a> */
 .nav :global(.nav-item.is-active) { … }
 ```
 
-Mismo patrón en `pages/index.tsx` (`.row > :global(*)`). Si estilas algo que no es un elemento DOM literal en ese JSX, asume que necesitas `:global()`.
+Same pattern in `pages/index.tsx` (`.row > :global(*)`). If you're styling something that isn't a literal DOM element in that JSX, assume you need `:global()`.
 
-### Trampa de los render helpers (importante)
+### The render helpers trap (important)
 
-El hash de scope solo se estampa en el JSX que devuelve **el propio componente**. Una función auxiliar dentro del componente (`const renderRow = (o) => <li className="row">…`) devuelve elementos **sin** el hash, y sus reglas quedan muertas igual de silenciosamente — así salió el checklist de Recurring con todo el texto pegado. La salida es un componente hijo con su propio `<style jsx>` (`ListItemBody` en `components/molecules/ListItem.tsx`, `SettingsRowBody` en Settings), nunca un helper que devuelve JSX.
+The scope hash is only stamped on the JSX returned by **the component itself**. A helper function inside the component (`const renderRow = (o) => <li className="row">…`) returns elements **without** the hash, and their rules are just as silently dead — that's how the Recurring checklist shipped with all the text glued together. The way out is a child component with its own `<style jsx>` (`ListItemBody` in `components/molecules/ListItem.tsx`, `SettingsRowBody` in Settings), never a helper that returns JSX.
 
-**Y cuidado: una `const` con JSX cae en la misma trampa**, aunque no sea una función:
+**And careful: a `const` holding JSX falls into the same trap**, even though it isn't a function:
 
 ```jsx
-const body = // ✗ sale sin hash
+const body = // ✗ comes out without the hash
   <span className="main">…</span>;
 return <li className="row">{onClick ? <button>{body}</button> : <div>{body}</div>}</li>;
 ```
 
-Es el patrón tentador cuando el wrapper cambia (button / link / div) y el contenido no. La lista de Tags estuvo así: el `<li>` compilaba con hash y todo lo de dentro sin él, con lo cual nombre, monto, barra y meta quedaban uno pegado al otro sin ninguna jerarquía, y ningún error en ninguna parte. Se comprueba en el bundle: si en `.next/static/chunks/*.js` ves `className:"main"` sin un `jsx-…` delante, ese CSS está muerto. La salida es la misma: el contenido es un componente hijo con su propio `<style jsx>`, y las reglas del padre que lo toquen van por `:global()`.
+It's the tempting pattern when the wrapper changes (button / link / div) and the content doesn't. The Tags list was like that: the `<li>` compiled with the hash and everything inside without it, so name, amount, bar and meta ended up glued together with no hierarchy at all, and no error anywhere. You can check it in the bundle: if in `.next/static/chunks/*.js` you see `className:"main"` without a `jsx-…` in front, that CSS is dead. The way out is the same: the content is a child component with its own `<style jsx>`, and the parent's rules that touch it go through `:global()`.
 
 ---
 
-## 3. Datos
+## 3. Data
 
-**Lectura** — hook con `onSnapshot`, siempre protegido:
+**Reads** — a hook with `onSnapshot`, always guarded:
 
 ```ts
 const { ready } = useFirebaseAuth();
@@ -274,51 +274,51 @@ useEffect(() => {
 }, [ready, user?.sub]);
 ```
 
-**Escritura** — siempre `fetch` a una API route. El cliente nunca escribe directo a Firestore, aunque las reglas lo permitan. Por eso no hay compensación de latencia: la pantalla solo cambia cuando el listener devuelve la copia del servidor, y en mobile eso puede tardar hasta un remount. Los flags booleanos que se tocan con un tap (`hiddenFromDashboard`, `hiddenFromChart`, `essential`…) pasan por `hooks/useOptimisticPatches` dentro de `useRecurrentTransactions` / `useCategories`: se pintan al instante y el override se cae cuando un snapshot coincide (o vuelve atrás si la escritura falla). El snapshot sigue siendo la fuente de verdad; fechas y `null` no se aplican de forma optimista.
+**Writes** — always a `fetch` to an API route. The client never writes directly to Firestore, even if the rules allow it. That's why there's no latency compensation: the screen only changes when the listener returns the server's copy, and on mobile that can take up to a remount. Boolean flags toggled with a tap (`hiddenFromDashboard`, `hiddenFromChart`, `essential`…) go through `hooks/useOptimisticPatches` inside `useRecurrentTransactions` / `useCategories`: they paint instantly and the override drops when a snapshot matches (or reverts if the write fails). The snapshot is still the source of truth; dates and `null` are not applied optimistically.
 
-**Carga rápida** (no lo deshagas sin medir):
+**Fast loading** (don't undo this without measuring):
 
-- `firebase/client.ts` usa `persistentLocalCache` en el navegador: un reload pinta desde IndexedDB (`fromCache`) y solo sincroniza la diferencia — incluso las queries desde `INCEPTION`. Por eso el "Log out" pasa por `hooks/useLogout` (signOut + `terminate` + `clearIndexedDbPersistence`): nada financiero queda en un equipo compartido.
-- `useFirebaseAuth` espera `auth.authStateReady()` y reusa la sesión restaurada si su uid es el `sub` de Auth0; `/api/firebase` solo se llama en el primer login del dispositivo (o si cambió el usuario).
-- `useUserDoc()` lee la copia de `UserDocProvider` (en `_app`): un solo listener sobre `users/{sub}` para toda la app. Fuera del provider se suscribe solo.
-- `withOnboardingGuard` corre en cada navegación (también las client-side, vía `/_next/data`), así que cachea `onboarded: true` en la sesión de Auth0 y deja de leer Firestore; `PATCH /api/user` lo mantiene sincronizado cuando cambia `onboardingCompleted`.
-- Un formulario (modal) se monta **solo mientras está abierto** y se importa con `next/dynamic`: cerrado no abre listeners ni pesa en el bundle de la página.
-- Un loading por sección, no uno por página: cada card aparece cuando llegan _sus_ datos (`useDashboard().loading.cashFlow | expenseCategories | upcoming`).
+- `firebase/client.ts` uses `persistentLocalCache` in the browser: a reload paints from IndexedDB (`fromCache`) and only syncs the difference — even for queries from `INCEPTION`. That's why "Log out" goes through `hooks/useLogout` (signOut + `terminate` + `clearIndexedDbPersistence`): nothing financial stays on a shared device.
+- `useFirebaseAuth` waits for `auth.authStateReady()` and reuses the restored session if its uid is the Auth0 `sub`; `/api/firebase` is only called on the device's first login (or if the user changed).
+- `useUserDoc()` reads the copy from `UserDocProvider` (in `_app`): a single listener on `users/{sub}` for the whole app. Outside the provider it subscribes on its own.
+- `withOnboardingGuard` runs on every navigation (client-side ones too, via `/_next/data`), so it caches `onboarded: true` in the Auth0 session and stops reading Firestore; `PATCH /api/user` keeps it in sync when `onboardingCompleted` changes.
+- A form (modal) is mounted **only while it's open** and imported with `next/dynamic`: closed, it opens no listeners and adds no weight to the page's bundle.
+- One loading state per section, not one per page: each card appears when _its_ data arrives (`useDashboard().loading.cashFlow | expenseCategories | upcoming`).
 
-**Índices** — una query que combine filtros de igualdad con un `orderBy` sobre otro campo, o con una desigualdad (`>=`), **necesita índice compuesto** en `firestore.indexes.json`. Varios filtros de igualdad solos **no** lo necesitan. Si falta, `onSnapshot` falla y la lista queda vacía. Este error ya vació las categorías del wizard una vez y, más tarde, los totales y las gráficas de todas las pantallas de dominio — porque declarar el índice no basta: **hay que desplegarlo** (`pnpm firebase:deploy`). Para colecciones chicas suele salir más barato filtrar y ordenar en cliente y no depender del deploy (ver `hooks/useCategories.ts` y `features/dashboard/hooks/useUpcomingItems.ts`); para historiales que crecen, el índice es la herramienta correcta.
+**Indexes** — a query that combines equality filters with an `orderBy` on another field, or with an inequality (`>=`), **needs a composite index** in `firestore.indexes.json`. Several equality filters alone **don't** need one. If it's missing, `onSnapshot` fails and the list stays empty. This error already emptied the wizard's categories once and, later, the totals and charts of every domain screen — because declaring the index isn't enough: **you have to deploy it** (`pnpm firebase:deploy`). For small collections it's usually cheaper to filter and sort on the client and not depend on the deploy (see `hooks/useCategories.ts` and `features/dashboard/hooks/useUpcomingItems.ts`); for growing histories, the index is the right tool.
 
-**Errores visibles** — `ErrorState` recibe el `Error` y muestra su mensaje tal cual; los de índice de Firestore traen la URL de consola que lo crea y se pintan como link. No lo escondas detrás de copy amable: eso es justo lo que convirtió un índice sin desplegar en un dashboard vacío y silencioso.
+**Visible errors** — `ErrorState` receives the `Error` and shows its message as is; Firestore index errors bring the console URL that creates the index and are rendered as a link. Don't hide it behind friendly copy: that's exactly what turned an undeployed index into an empty, silent dashboard.
 
-**Otras reglas**
+**Other rules**
 
-- **Cuentas / pockets / deudas** (`accounts`): solo para INVESTMENT, SAVING y DEBT (`helpers/accounts.ts`). Las categorías clasifican; la cuenta es _dónde_ está la plata (o a quién se le debe), así que las valoraciones y el interés cuelgan de ella. `accountId` es opcional en recurrentes y transacciones (las ocurrencias lo heredan del item vía `occurrenceToTransaction`); lo que no tiene cuenta cae en el bucket "No account" del dominio (`ValueSelector = { accountId } | { domain }`; el bucket solo casa filas **sin** cuenta para no contar doble). Toda valoración nueva lleva `domain`; las anteriores a las cuentas solo tienen `categoryId` y `valuationDomain()` las resuelve por la categoría (INVESTMENT si no hay). Las cuentas se editan/archivan en Settings (`features/settings/components/AccountsSettings`). `interestRate` se guarda como lo cotiza el banco (`{ value, period: MONTHLY | YEARLY }`); `features/investments/helpers/interest.ts` lo pasa a mensual (YEARLY es la tasa nominal que imprime el banco: se divide por 12, no se descompone — 2,85% sobre 606.673 son los 1.441 de interés del extracto) y compone por días enteros desde cada depósito (un check se lee tal cual el día que se registró); un value check registrado manda desde su fecha. Además, un value check **cuenta** en los totales de la página de dominio: `features/investments/helpers/valuationGains.ts` encadena los checks por selector y mide cada uno contra lo que la posición debía valer si nada se hubiera movido — el valor del check anterior más los depósitos desde entonces (`depositsFor`), o todo lo aportado hasta ese día para el primero — con cada término convertido a la moneda de lectura **con la tasa de hoy**. Así la cadena telescopea en una identidad que vale cualquier día y en cualquier moneda: `aportes + Σ ganancias = valor del último check + depósitos posteriores`, justo lo que muestra la vista Value para una cuenta sin tasa. El `costBasis` que el check guarda **no se usa para totales**: congeló la tasa de un día y, al moverse, la categoría leía 98 SEK menos que la cuenta que sumaba; queda para el historial y el % del propio check. Por eso `DomainPage` suscribe las transacciones desde `INCEPTION` para INVESTMENT y SAVING (la vista Value ya abría esa misma query; el SDK las pliega en un solo target) y `useDomainGains` no reporta nada hasta que el ledger cargó. Corolario: editar o retrodatar un aporte reatribuye la ganancia de un mes ya cerrado — el ledger manda. Cada check nombra además la **categoría** a la que pertenece su ganancia (`categoryId`, se elige, nunca se deriva: una cuenta puede tener varios holdings; `dominantCategoryId()` solo prerellena el formulario). Por eso una ganancia archivada se suma al segmento de su categoría en las barras (vía `gainRowsAsTransactions`, que la disfraza de fila de ledger para reusar el ranking y el tope "Other") y al total de su fila en `categoryMonthRows` / Top categories. Lo que nadie archivó —y todo en modo moneda, porque una ganancia no está denominada en nada— va a su propia serie (`__gain`, `var(--bar-gain)`, `features/domains/helpers/gainStack.ts`) y a una fila "Gain" al final de la lista. `MonthSummary` desglosa el mes. Una ganancia negativa se dibuja bajo el eje (`stackOffset="sign"` en `MonthlyBarsChart`), nunca se recorta. `useAllInvestmentValuations(enabled)` es cómo /incomes y /expenses comparten la página sin abrir el listener. `AccountField` es el patrón de `CategoryField` con creador inline. **Una deuda es una posición negativa** (`positionSign` en `features/investments/helpers/valuation.ts`): sus transacciones son repagos, su value check guarda el saldo adeudado en positivo y entra a la misma matemática como `−value`, así el saldo compone hacia arriba con la tasa, cada repago compone hacia abajo, y la cadena de ganancias reporta el interés como ganancia negativa ("Interest" en la UI; la cifra del mes es repagado − interés). El primer check de una deuda ancla la cadena con ganancia 0 — el préstamo nunca fue una transacción contra la que medirlo — y sin ningún check el saldo es desconocido: `currentValue` devuelve 0 y la UI muestra "—", nunca la estimación por interés que sirve a un activo. `interestAccrued` (`helpers/interest.ts`) es lo que los repagos no explican desde el primer saldo.
-- **Esencial** (`essential` en `recurrentTransactions`): solo significa algo en EXPENSE — si el gasto sigue en el modo emergencia de Prospect. Sin flag se supone (`helpers/essential.ts`: suscripciones y la categoría "Variable" no son esenciales, todo lo demás sí — suponer esencial acorta el runway, que es el error seguro); DEBT es siempre esencial e INVESTMENT / SAVING nunca. El modal de alta/edición muestra la suposición y solo manda el flag cuando el owner lo toca; Prospect lo cambia desde el kebab de cada fila. **Plan de emergencia** (`users.emergencyPlan`: `currency`, `benefitMonthly`, `benefitMonths`, `severance`, `includeInvestments`): se escribe siempre entero (0 = no hay), porque el `set` con merge dejaría campos viejos.
-- **Tags** (`tags`): entidad global por usuario. `name` conserva mayúsculas pero sin espacios ("Trip 2026" → `Trip2026`); `key` es el `name` en minúsculas y es único por usuario (POST 409 si hay uno vivo con la misma key; si solo hay uno archivado, lo revive). Las filas (`recurrentTransactions`, `transactions`) guardan **ids** en `tags: string[]` y las rutas comprueban con `db.getAll` que sean del usuario; los nombres se resuelven al pintar con `tagNames` (`DomainPage` hace un solo `useTags()` y lo baja como `paymentMethods`). `TagsField` (chips + Combobox) reutiliza por key antes de crear. `note` es texto libre en ambas colecciones. **Herencia**: `inheritTags` / `inheritNote` en el item hacen que `occurrenceToTransaction` copie tags / note a cada ocurrencia (materializador, mark-paid y seed). Al editar un item con la herencia activa, el modal ofrece "Also update the existing payments": el PATCH recibe `applyToExisting: true` (nunca se guarda), reescribe las filas con `recurrentTransactionId == id` en lotes de 450 y responde `{ id, updated }`. Una fila editada a mano diverge hasta el siguiente "also update".
-- Borrado suave: `archived: true` en categorías, métodos de pago, cuentas y tags, `active: false` en transacciones recurrentes, `status: "SKIPPED"` en transacciones. Nunca `.delete()` sobre algo que otro doc referencia. La única excepción es `investmentValuations`: un punto de datos que nadie apunta, se borra de verdad.
-- **Fechas de un item recurrente**: la UI nunca escribe `startDate` a mano; pasa la elección del usuario (día de pago, mes+día, fecha) por `helpers/scheduleAnchor.ts`. "Backfill los últimos 6 meses" no es un campo: es el mismo `startDate` movido 6 meses atrás, y el materializador hace el resto. Tras crear algo con fecha en el pasado, llama `materializeNow()` para que el historial aparezca sin esperar otra sesión.
-- `createdAt` con `serverTimestamp()`. Llega **`null`** en el eco local antes de que el servidor lo resuelva: cualquier orden o formato tiene que tolerarlo.
-- Los campos opcionales se **omiten**, no se mandan como `null` en `POST`. En `PATCH`, en cambio, `null` significa "borrar este campo" (`FieldValue.delete()`) — así es como `chargedAmount`/`chargedCurrency`/`paymentMethodId` se limpian sin un endpoint aparte.
-- Ocurrencias materializadas usan **id determinístico** `{itemId}_{YYYY-MM-DD}` (`helpers/materializeOccurrences.ts`): recrear el rango nunca duplica ni pisa una que el usuario ya editó o saltó.
+- **Accounts / pockets / debts** (`accounts`): only for INVESTMENT, SAVING and DEBT (`helpers/accounts.ts`). Categories classify; the account is _where_ the money is (or who it's owed to), so valuations and interest hang off it. `accountId` is optional on recurring items and transactions (occurrences inherit it from the item via `occurrenceToTransaction`); what has no account falls into the domain's "No account" bucket (`ValueSelector = { accountId } | { domain }`; the bucket only matches rows **without** an account so nothing is counted twice). Every new valuation carries `domain`; those from before accounts only have `categoryId` and `valuationDomain()` resolves them via the category (INVESTMENT if there's none). Accounts are edited/archived in Settings (`features/settings/components/AccountsSettings`). `interestRate` is stored the way the bank quotes it (`{ value, period: MONTHLY | YEARLY }`); `features/investments/helpers/interest.ts` turns it monthly (YEARLY is the nominal rate the bank prints: it's divided by 12, not decomposed — 2.85% on 606,673 is the statement's 1,441 of interest) and compounds by whole days from each deposit (a check is read as is on the day it was recorded); a recorded value check takes over from its date. Moreover, a value check **counts** in the domain page's totals: `features/investments/helpers/valuationGains.ts` chains the checks per selector and measures each one against what the position should have been worth if nothing had moved — the previous check's value plus deposits since then (`depositsFor`), or everything contributed up to that day for the first one — with every term converted to the reading currency **at today's rate**. That way the chain telescopes into an identity that holds on any day and in any currency: `contributions + Σ gains = last check's value + later deposits`, exactly what the Value view shows for an account with no rate. The `costBasis` the check stores **is not used for totals**: it froze one day's rate and, when that moved, the category read 98 SEK less than the account summing it; it stays for the history and the check's own %. That's why `DomainPage` subscribes to transactions from `INCEPTION` for INVESTMENT and SAVING (the Value view already opened that same query; the SDK folds them into a single target) and `useDomainGains` reports nothing until the ledger has loaded. Corollary: editing or backdating a contribution reattributes the gain of an already-closed month — the ledger rules. Each check also names the **category** its gain belongs to (`categoryId`, chosen, never derived: an account can have several holdings; `dominantCategoryId()` only prefills the form). That's why an archived gain is added to its category's segment in the bars (via `gainRowsAsTransactions`, which disguises it as a ledger row to reuse the ranking and the "Other" cap) and to its row's total in `categoryMonthRows` / Top categories. What nobody archived — and everything in currency mode, because a gain isn't denominated in anything — goes to its own series (`__gain`, `var(--bar-gain)`, `features/domains/helpers/gainStack.ts`) and to a "Gain" row at the end of the list. `MonthSummary` breaks down the month. A negative gain is drawn below the axis (`stackOffset="sign"` in `MonthlyBarsChart`), never clipped. `useAllInvestmentValuations(enabled)` is how /incomes and /expenses share the page without opening the listener. `AccountField` is the `CategoryField` pattern with an inline creator. **A debt is a negative position** (`positionSign` in `features/investments/helpers/valuation.ts`): its transactions are repayments, its value check stores the owed balance as a positive number and enters the same math as `−value`, so the balance compounds upward with the rate, each repayment compounds downward, and the gains chain reports interest as a negative gain ("Interest" in the UI; the month's figure is repaid − interest). A debt's first check anchors the chain with a gain of 0 — the loan was never a transaction to measure it against — and without any check the balance is unknown: `currentValue` returns 0 and the UI shows "—", never the interest-based estimate used for an asset. `interestAccrued` (`helpers/interest.ts`) is what the repayments don't explain since the first balance.
+- **Essential** (`essential` on `recurrentTransactions`): only means something in EXPENSE — whether the expense stays in Prospect's emergency mode. Without the flag it's guessed (`helpers/essential.ts`: subscriptions and the "Variable" category aren't essential, everything else is — guessing essential shortens the runway, which is the safe error); DEBT is always essential and INVESTMENT / SAVING never are. The create/edit modal shows the guess and only sends the flag when the owner touches it; Prospect changes it from each row's kebab. **Emergency plan** (`users.emergencyPlan`: `currency`, `benefitMonthly`, `benefitMonths`, `severance`, `includeInvestments`): always written whole (0 = none), because a `set` with merge would leave old fields behind.
+- **Tags** (`tags`): a global per-user entity. `name` keeps capitalization but has no spaces ("Trip 2026" → `Trip2026`); `key` is the lowercase `name` and is unique per user (POST 409 if there's a live one with the same key; if there's only an archived one, it revives it). Rows (`recurrentTransactions`, `transactions`) store **ids** in `tags: string[]` and the routes check with `db.getAll` that they belong to the user; names are resolved at render time with `tagNames` (`DomainPage` does a single `useTags()` and passes it down like `paymentMethods`). `TagsField` (chips + Combobox) reuses by key before creating. `note` is free text in both collections. **Inheritance**: `inheritTags` / `inheritNote` on the item make `occurrenceToTransaction` copy tags / note to each occurrence (materializer, mark-paid and seed). When editing an item with inheritance on, the modal offers "Also update the existing payments": the PATCH receives `applyToExisting: true` (never stored), rewrites the rows with `recurrentTransactionId == id` in batches of 450 and responds `{ id, updated }`. A hand-edited row diverges until the next "also update".
+- Soft delete: `archived: true` on categories, payment methods, accounts and tags, `active: false` on recurring transactions, `status: "SKIPPED"` on transactions. Never `.delete()` on something another doc references. The only exception is `investmentValuations`: a data point nobody points to, it's deleted for real.
+- **Dates of a recurring item**: the UI never writes `startDate` by hand; it passes the user's choice (pay day, month+day, date) through `helpers/scheduleAnchor.ts`. "Backfill the last 6 months" isn't a field: it's the same `startDate` moved 6 months back, and the materializer does the rest. After creating something dated in the past, call `materializeNow()` so the history shows up without waiting for another session.
+- `createdAt` with `serverTimestamp()`. It arrives as **`null`** in the local echo before the server resolves it: any sorting or formatting has to tolerate it.
+- Optional fields are **omitted**, not sent as `null` in `POST`. In `PATCH`, on the other hand, `null` means "delete this field" (`FieldValue.delete()`) — that's how `chargedAmount`/`chargedCurrency`/`paymentMethodId` are cleared without a separate endpoint.
+- Materialized occurrences use a **deterministic id** `{itemId}_{YYYY-MM-DD}` (`helpers/materializeOccurrences.ts`): recreating the range never duplicates or overwrites one the user already edited or skipped.
 
-### 3.1 Dinero y monedas
+### 3.1 Money and currencies
 
-Todo monto se **guarda en su moneda nativa** y se **convierte solo al leer**. El punto único de conversión es `helpers/aggregations.ts` (`convertedAmount`/`toMonthlyAmount`/`sumMonthly`/`groupByCategory`/`computeMoM`/`computeFlow`), todas reciben un `MoneyContext = { rates, target }`. Es también **el único sitio donde una fila lleva signo**: `amount` se guarda siempre positivo y una transacción puntual de un dominio con cuentas puede llevar `direction: "OUT"` (retiro; en una deuda, dinero prestado), que `convertedAmount` devuelve en negativo vía `rowSign`. Así los cost basis, los totales del mes, los stacks, la cadena de ganancias y el interés netean los retiros sin saber que existen. Los recurrentes nunca llevan dirección; incomes y expenses tampoco (la ruta lo rechaza con 400). Consecuencias: la cifra del mes en Investments/Savings/Debts es **neta** (`MonthSummary` desglosa "contributed · withdrawn"), las participaciones (shares) se calculan sobre lo que entró — `Σ max(0, total)` — para que un grupo negativo no infle a los demás por encima del 100%, `dominantCategoryId` solo mira filas que entraron, un `costBasis` puede ser negativo, y "Largest amount" ordena por magnitud.
+Every amount is **stored in its native currency** and **converted only on read**. The single conversion point is `helpers/aggregations.ts` (`convertedAmount`/`toMonthlyAmount`/`sumMonthly`/`groupByCategory`/`computeMoM`/`computeFlow`), all of which take a `MoneyContext = { rates, target }`. It's also **the only place where a row carries a sign**: `amount` is always stored positive and a one-off transaction in a domain with accounts can carry `direction: "OUT"` (a withdrawal; in a debt, money borrowed), which `convertedAmount` returns as negative via `rowSign`. That way cost bases, month totals, stacks, the gains chain and interest net out withdrawals without knowing they exist. Recurring items never carry a direction; incomes and expenses don't either (the route rejects it with 400). Consequences: the month's figure in Investments/Savings/Debts is **net** (`MonthSummary` breaks down "contributed · withdrawn"), shares are computed over what came in — `Σ max(0, total)` — so a negative group doesn't inflate the others above 100%, `dominantCategoryId` only looks at rows that came in, a `costBasis` can be negative, and "Largest amount" sorts by magnitude.
 
-- **`useSelectedMonth()`** (`hooks/useSelectedMonth.tsx`) es el mes que mira toda la app: estado en React, espejo en `?month=YYYY-MM` (replace shallow), nunca posterior al mes actual; el `MonthPicker` del header lo cambia y las páginas de dominio lo acotan a su ventana de barras. `usePreferences()` / `useDateFormat()` (`hooks/usePreferences.ts`) leen formato de fecha, inicio de semana e idioma desde un contexto que `PreferencesProvider` llena con el user doc — los componentes de presentación nunca tocan Firestore por esto.
-- **`useMoneyContext()`** (`hooks/useMoneyContext.ts`) es el único lugar que decide moneda objetivo y tasas: `target = displayCurrency ?? mainCurrency`, `rates = useExchangeRates() ?? IDENTITY_RATES`. Cualquier pantalla que muestre montos agregados lo usa — no leas `mainCurrency` directo de `useUserDoc`.
-- **`useEnabledCurrencies()`** (`hooks/useEnabledCurrencies.ts`) es el único lugar que decide **qué monedas ofrece un select**: `users.enabledCurrencies` (las chips de Settings › Currency) o `DEFAULT_ENABLED_CURRENCIES` (USD/EUR/GBP) mientras el usuario no elija, siempre con `mainCurrency` y `displayCurrency` dentro — esas dos no se pueden apagar. `CURRENCIES` sigue siendo lo que la app _soporta_ (tasas, tipos, Zod); esto es solo lo que se muestra. Usa `optionsFor(valor)` cuando el campo ya tiene un valor: una moneda apagada después de guardar un registro no desaparece de su propio select. La única excepción es el picker de moneda principal del onboarding, que ofrece el catálogo entero (`SELECTABLE_CURRENCIES`) porque todavía no hay elección que leer.
-- **Precedencia del par charged**: si un item tiene `chargedAmount`/`chargedCurrency` y `chargedCurrency === target`, se usa `chargedAmount` tal cual — lo que de verdad se cobró le gana a cualquier tasa de mercado.
-- **`IDENTITY_RATES`** (`helpers/fx.ts`) son tasas 1:1 — útiles en tests y como fallback cuando no hay tasas reales; con ellas la salida es la suma cruda (para verificar mecánicamente un refactor).
-- **Honestidad ante la falta de datos**: `fxMissing` (nunca hubo cache) y `fxStale` (sirviendo cache vencido o el fallback del servidor) se propagan hasta la UI. Nunca se inventa un número — cuando `fxMissing` y hay monedas mezcladas, se muestra un aviso en vez de una suma falsa (ver `pages/index.tsx`).
-- **`Amount`** (`components/atoms/Amount.tsx`): `colorize` para netos (verde ≥0, rojo <0), `showCode` cuando la moneda difiere del target, `approximate` antepone "≈" en agregados convertidos. Decimales por moneda vía `ZERO_DECIMAL_CURRENCIES` en `constants.ts` (JPY, COP sin centavos), no un `maximumFractionDigits` fijo.
-- **Todo monto se escribe con `useMoneyFormat()`** (`hooks/useMoneyFormat.ts`), no con las funciones de `helpers/money` directamente: el hook las ata al modo privacidad (§3.5) y a las preferencias de número del usuario (`decimalSeparator` "." o ",", `decimals` 0–4; Settings › Preferences). El separador se aplica sobre `formatToParts` en locale `en-US` — nunca cambiando de locale, que mueve el símbolo — y el valor se guarda con toda su precisión: solo se redondea al mostrar. Los porcentajes y tasas van por `formatPercent` / `formatNumber` del mismo hook. **Todo número tecleado pasa por `useDecimalInput()`** (`hooks/useDecimalInput.ts` sobre `utils/decimal.ts`): `sanitize` deja dígitos y ambos separadores (el teclado del móvil muestra el de su locale), `parse` decide qué quiso decir el usuario (el último separador es el decimal; uno repetido agrupa; uno solo es decimal salvo que no sea el suyo y le sigan exactamente tres dígitos: "1.000" para quien escribe "1,5" es mil) y `toInput` escribe un valor guardado en el campo. Nada de `Number(raw)` ni `replace(/[^\d.]/g, "")` en los formularios. Las puras quedan para tests y para lo que no es React; si una función auxiliar fuera del componente necesita formatear (`cardRows` en `pages/index.tsx`), recibe el formateador por parámetro.
-- **`/api/currencies`**: cache in-memory de 12h + mirror diario a Firestore (`rates/{YYYY-MM-DD}`) como fallback; el cliente cachea 24h en `localStorage` (`hooks/useExchangeRates.ts`). Nunca lo llames sin pasar por ese hook.
+- **`useSelectedMonth()`** (`hooks/useSelectedMonth.tsx`) is the month the whole app is looking at: state in React, mirrored in `?month=YYYY-MM` (shallow replace), never later than the current month; the header's `MonthPicker` changes it and domain pages clamp it to their bar window. `usePreferences()` / `useDateFormat()` (`hooks/usePreferences.ts`) read date format, week start and language from a context that `PreferencesProvider` fills from the user doc — presentation components never touch Firestore for this.
+- **`useMoneyContext()`** (`hooks/useMoneyContext.ts`) is the only place that decides target currency and rates: `target = displayCurrency ?? mainCurrency`, `rates = useExchangeRates() ?? IDENTITY_RATES`. Any screen showing aggregated amounts uses it — don't read `mainCurrency` directly from `useUserDoc`.
+- **`useEnabledCurrencies()`** (`hooks/useEnabledCurrencies.ts`) is the only place that decides **which currencies a select offers**: `users.enabledCurrencies` (the Settings › Currency chips) or `DEFAULT_ENABLED_CURRENCIES` (USD/EUR/GBP) until the user chooses, always with `mainCurrency` and `displayCurrency` included — those two can't be turned off. `CURRENCIES` is still what the app _supports_ (rates, types, Zod); this is only what's shown. Use `optionsFor(value)` when the field already has a value: a currency turned off after a record was saved doesn't disappear from its own select. The only exception is onboarding's main currency picker, which offers the whole catalog (`SELECTABLE_CURRENCIES`) because there's no choice to read yet.
+- **Charged pair precedence**: if an item has `chargedAmount`/`chargedCurrency` and `chargedCurrency === target`, `chargedAmount` is used as is — what was actually charged beats any market rate.
+- **`IDENTITY_RATES`** (`helpers/fx.ts`) are 1:1 rates — useful in tests and as a fallback when there are no real rates; with them the output is the raw sum (to mechanically verify a refactor).
+- **Honesty about missing data**: `fxMissing` (there was never a cache) and `fxStale` (serving an expired cache or the server fallback) propagate up to the UI. A number is never made up — when `fxMissing` and currencies are mixed, a warning is shown instead of a fake sum (see `pages/index.tsx`).
+- **`Amount`** (`components/atoms/Amount.tsx`): `colorize` for nets (green ≥0, red <0), `showCode` when the currency differs from the target, `approximate` prepends "≈" on converted aggregates. Decimals per currency via `ZERO_DECIMAL_CURRENCIES` in `constants.ts` (JPY, COP without cents), not a fixed `maximumFractionDigits`.
+- **Every amount is written with `useMoneyFormat()`** (`hooks/useMoneyFormat.ts`), not with the `helpers/money` functions directly: the hook binds them to privacy mode (§3.5) and to the user's number preferences (`decimalSeparator` "." or ",", `decimals` 0–4; Settings › Preferences). The separator is applied on top of `formatToParts` in the `en-US` locale — never by switching locale, which moves the symbol — and the value is stored at full precision: it's only rounded for display. Percentages and rates go through the same hook's `formatPercent` / `formatNumber`. **Every typed number goes through `useDecimalInput()`** (`hooks/useDecimalInput.ts` on top of `utils/decimal.ts`): `sanitize` keeps digits and both separators (the mobile keyboard shows its locale's), `parse` decides what the user meant (the last separator is the decimal one; a repeated one groups; a single one is decimal unless it isn't theirs and is followed by exactly three digits: "1.000" for someone who types "1,5" is a thousand) and `toInput` writes a stored value into the field. No `Number(raw)` or `replace(/[^\d.]/g, "")` in forms. The pure functions are for tests and for what isn't React; if a helper function outside the component needs to format (`cardRows` in `pages/index.tsx`), it receives the formatter as a parameter.
+- **`/api/currencies`**: 12h in-memory cache + daily mirror to Firestore (`rates/{YYYY-MM-DD}`) as a fallback; the client caches for 24h in `localStorage` (`hooks/useExchangeRates.ts`). Never call it without going through that hook.
 
 ---
 
 ## 4. API routes
 
-Mismo esqueleto en todas (`pages/api/**`):
+The same skeleton in all of them (`pages/api/**`):
 
 ```ts
 export default auth0.withApiAuthRequired(async (req, res) => {
@@ -329,7 +329,7 @@ export default auth0.withApiAuthRequired(async (req, res) => {
   if (req.method === "POST") {
     const parsed = SomeInputSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
-    // recurso ajeno → 403; duplicado → 409
+    // someone else's resource → 403; duplicate → 409
     return res.status(201).json({ id });
   }
 
@@ -338,23 +338,23 @@ export default auth0.withApiAuthRequired(async (req, res) => {
 });
 ```
 
-- Validación con **Zod** desde `schemas/` en toda frontera de entrada.
-- Toda FK que venga del cliente (`categoryId`, `paymentMethodId`) se verifica: existe y es del usuario → si no, **403**.
-- Rutas estáticas ganan a las dinámicas: `/api/categories/defaults` no choca con `[id].ts`.
+- Validation with **Zod** from `schemas/` at every input boundary.
+- Every FK coming from the client (`categoryId`, `paymentMethodId`) is verified: it exists and belongs to the user → otherwise, **403**.
+- Static routes beat dynamic ones: `/api/categories/defaults` doesn't clash with `[id].ts`.
 
 ---
 
 ## 5. Tests
 
-- **Módulos puros** (`utils/`, `helpers/`, `hooks/`, `components/`, `features/**`): test **colocado** junto al archivo.
-- **API routes y pages**: en `__tests__/`, con `jest.mock` de `lib/auth0` y `firebase/admin` (ver `__tests__/api/categories/index.test.ts`).
-- **Nunca** un `*.test.tsx` dentro de `pages/`: Next lo compila como ruta y rompe el build. Hay un test que lo vigila (`__tests__/pagesDirectory.test.ts`).
-- Separa el hook de datos del componente que lo pinta. Así la lógica se testea sin montar UI — ver `features/onboarding/hooks/useMethodsStep.test.ts`.
-- Si un test necesita `firebase/client`, mockéalo: el módulo pide credenciales reales al importarse.
+- **Pure modules** (`utils/`, `helpers/`, `hooks/`, `components/`, `features/**`): test **colocated** next to the file.
+- **API routes and pages**: in `__tests__/`, with `jest.mock` of `lib/auth0` and `firebase/admin` (see `__tests__/api/categories/index.test.ts`).
+- **Never** a `*.test.tsx` inside `pages/`: Next compiles it as a route and breaks the build. There's a test guarding this (`__tests__/pagesDirectory.test.ts`).
+- Separate the data hook from the component that renders it. That way the logic is tested without mounting UI — see `features/onboarding/hooks/useMethodsStep.test.ts`.
+- If a test needs `firebase/client`, mock it: the module asks for real credentials on import.
 
 ---
 
-## 6. Antes de subir
+## 6. Before pushing
 
 ```bash
 pnpm tsc --noEmit
@@ -364,51 +364,51 @@ pnpm build
 pnpm build-storybook
 ```
 
-Es exactamente lo que corre CI (`.github/workflows/ci.yml`). **`pnpm build` no es opcional**: es el único que detecta rutas rotas, y `tsc` + `jest` en verde no lo garantizan.
+That's exactly what CI runs (`.github/workflows/ci.yml`). **`pnpm build` is not optional**: it's the only one that catches broken routes, and green `tsc` + `jest` don't guarantee it.
 
-Otras notas:
+Other notes:
 
-- `pnpm seed:global` siembra el catálogo de `services`; `pnpm seed:user <userId>` siembra el perfil demo multi-moneda de un usuario (`--dry-run` lo valida e imprime el resumen sin escribir ni pedir credenciales; `--no-wipe` no borra lo que ya hay). El historial **no** está escrito a mano: se deriva de los recurrentes con `helpers/materializeOccurrences`, así que comparte los ids determinísticos del materializador de la app y montar el dashboard no duplica nada. Si tocas `data/testSeedData.json`, corre el `--dry-run` — valida categorías, métodos, servicios y pares charged.
-- Husky + lint-staged formatean con Prettier al commitear, así que no pelees con el formato.
+- `pnpm seed:global` seeds the `services` catalog; `pnpm seed:user <userId>` seeds a user's multi-currency demo profile (`--dry-run` validates it and prints the summary without writing or asking for credentials; `--no-wipe` doesn't delete what's already there). The history is **not** hand-written: it's derived from the recurring items with `helpers/materializeOccurrences`, so it shares the app materializer's deterministic ids and mounting the dashboard duplicates nothing. If you touch `data/testSeedData.json`, run the `--dry-run` — it validates categories, methods, services and charged pairs.
+- Husky + lint-staged format with Prettier on commit, so don't fight the formatting.
 
 ---
 
-### 3.2 Ocultar del dashboard
+### 3.2 Hiding from the dashboard
 
-El dashboard es el **run-rate de los recurrentes** (las cards lo dicen con "planned per month" y el hero con su veredicto "On plan" / "Over-committed"); por eso solo un item recurrente se oculta: `hiddenFromDashboard` en `recurrentTransactions` lo saca de todos los números y listas del dashboard, y sus filas del ledger lo siguen por `recurrentTransactionId` (`helpers/hidden.ts`: `hiddenItemIds`, `withoutHidden`). Las transacciones no tienen flag propio. Las páginas de dominio **no** miran `hiddenFromDashboard` (solo lo etiquetan, sin atenuar: el item sigue contando ahí); el kebab del Plan solo ofrece "Hide from dashboard". Lo único que se oculta de la gráfica de un dominio es una categoría raíz (`Category.hiddenFromChart`, kebab en Categories; los hijos la siguen): barras y cifra del mes la excluyen salvo que el owner active "Show hidden" (preferencia por dominio en `localStorage`), que solo aparece cuando hay alguna categoría oculta. Las listas siempre muestran todo, con la etiqueta "Hidden".
+The dashboard is the **run-rate of the recurring items** (the cards say so with "planned per month" and the hero with its "On plan" / "Over-committed" verdict); that's why only a recurring item can be hidden: `hiddenFromDashboard` on `recurrentTransactions` removes it from every number and list on the dashboard, and its ledger rows follow it via `recurrentTransactionId` (`helpers/hidden.ts`: `hiddenItemIds`, `withoutHidden`). Transactions have no flag of their own. Domain pages do **not** look at `hiddenFromDashboard` (they only label it, without dimming: the item still counts there); the Plan kebab only offers "Hide from dashboard". The only thing hidden from a domain's chart is a root category (`Category.hiddenFromChart`, kebab in Categories; children follow it): bars and the month's figure exclude it unless the owner turns on "Show hidden" (per-domain preference in `localStorage`), which only appears when some category is hidden. Lists always show everything, with the "Hidden" label.
 
-### 3.3 Reflejar mensualmente (spread)
+### 3.3 Spreading monthly
 
-Un item no mensual (anual, trimestral, semanal…) con `spreadMonthly` se pinta en la página de dominio como **una rebanada por mes** (`amount × FREQ_TO_MONTHS`, en su moneda) en lugar del pico real: `features/domains/helpers/spread.ts` (`spreadTransactions`) quita las filas reales del item y añade rebanadas sintéticas con `recurrentTransactionId` y `categoryId`, así que `helpers/hidden` las oculta igual que a cualquier fila. `DomainPage` las usa para barras, cifra del mes y Categories (`planItems` excluye esos items del plan para no sumarlos dos veces); el ledger y el checklist de Recurring siguen con las filas reales. El dashboard no cambia: sus cards ya normalizan con `toMonthlyAmount` y sus barras de cash flow muestran el pago real.
+A non-monthly item (yearly, quarterly, weekly…) with `spreadMonthly` is drawn on the domain page as **one slice per month** (`amount × FREQ_TO_MONTHS`, in its currency) instead of the real spike: `features/domains/helpers/spread.ts` (`spreadTransactions`) removes the item's real rows and adds synthetic slices with `recurrentTransactionId` and `categoryId`, so `helpers/hidden` hides them like any other row. `DomainPage` uses them for bars, the month's figure and Categories (`planItems` excludes those items from the plan so they aren't summed twice); the ledger and the Recurring checklist keep the real rows. The dashboard doesn't change: its cards already normalize with `toMonthlyAmount` and its cash flow bars show the real payment.
 
-### 3.4 Puntual vs recurrente
+### 3.4 One-off vs recurring
 
-Hay **un solo formulario** para todo lo que entra: `RecurrentTransactionModal`. "Log a one-off expense" del "+" lo abre con `initialFrequency="ONE_TIME"`; editar una fila del ledger lo abre con `transaction` (frecuencia fija en One time, PATCH con solo lo que cambió). Un `frequency: "ONE_TIME"` elegido ahí o en la sección One-time del wizard **no crea un item recurrente**: escribe una transacción PAID directa (`POST /api/transactions`). El plan (recurrentTransactions) es solo lo que se repite; el ledger (transactions) es lo que pasó. Los items ONE_TIME antiguos siguen funcionando, pero no se crean más. **"This pays off a debt"**: en el formulario de un gasto (alta o edición de un recurrente, nunca de una fila del ledger) un toggle lo archiva bajo DEBT — la categoría pasa a ser una de deudas (la del mismo nombre, si no "Loans"), aparece el `AccountField` de deudas y el item sale con `type: "LOAN_PAYMENT"`. Un item que ya existe se mueve con `POST /api/recurrent-transactions/[id]/convert` (`RecurrentTransactionConvertSchema`: solo EXPENSE → DEBT), que reescribe `domain`/`categoryId`/`accountId` en el item y en todas sus filas por lotes de 450 — el `domain` es inmutable en el PATCH y cada check de FK compara contra él, por eso el modal convierte **antes** de patchear el resto y el PATCH ya no manda categoría ni cuenta. Los ids determinísticos no cambian, así que el materializador no duplica nada, y lo pagado hasta hoy cuenta como repagado de inmediato. Nada se resta dos veces del neto: Expenses baja y Debts sube en la misma cifra.
+There's **a single form** for everything that comes in: `RecurrentTransactionModal`. "Log a one-off expense" from the "+" opens it with `initialFrequency="ONE_TIME"`; editing a ledger row opens it with `transaction` (frequency fixed at One time, PATCH with only what changed). A `frequency: "ONE_TIME"` chosen there or in the wizard's One-time section **doesn't create a recurring item**: it writes a direct PAID transaction (`POST /api/transactions`). The plan (recurrentTransactions) is only what repeats; the ledger (transactions) is what happened. Old ONE_TIME items still work, but no more are created. **"This pays off a debt"**: in an expense form (creating or editing a recurring item, never a ledger row) a toggle files it under DEBT — the category becomes a debt one (the one with the same name, otherwise "Loans"), the debts `AccountField` appears and the item goes out with `type: "LOAN_PAYMENT"`. An existing item is moved with `POST /api/recurrent-transactions/[id]/convert` (`RecurrentTransactionConvertSchema`: only EXPENSE → DEBT), which rewrites `domain`/`categoryId`/`accountId` on the item and on all its rows in batches of 450 — `domain` is immutable in the PATCH and every FK check compares against it, which is why the modal converts **before** patching the rest and the PATCH no longer sends category or account. Deterministic ids don't change, so the materializer duplicates nothing, and what's been paid so far counts as repaid immediately. Nothing is subtracted twice from the net: Expenses goes down and Debts goes up by the same amount.
 
-### 3.5 Modo privacidad
+### 3.5 Privacy mode
 
-El ojo del header (`components/molecules/PrivacyToggle`) enmascara **el texto** de todos los montos: `$****`, `COP ****` — se queda el símbolo o el código, se va el número entero (nunca `$*,***.**`: la forma ya delata la magnitud, y el sufijo compacto "K"/"M" también, así que se cae). La bandera vive en `hooks/usePrivacy` (contexto + `localStorage`, `walleto:privacy`): es "alguien me está viendo la pantalla", una propiedad del dispositivo y no de la cuenta, así que **no** va al user doc.
+The header's eye (`components/molecules/PrivacyToggle`) masks **the text** of every amount: `$****`, `COP ****` — the symbol or code stays, the whole number goes (never `$*,***.**`: the shape already gives away the magnitude, and so does the compact "K"/"M" suffix, so it's dropped). The flag lives in `hooks/usePrivacy` (context + `localStorage`, `walleto:privacy`): it means "someone is looking at my screen", a property of the device and not of the account, so it does **not** go to the user doc.
 
-Nada más cambia. Alturas de barras, shares, progreso, orden y totales se siguen calculando con los números reales, así que la pantalla conserva su forma y sus proporciones — el gráfico sigue contando el mes, solo que sin cifras. Dos detalles: los ticks del eje quedan **en blanco** en vez de repetir cuatro `$****` iguales (`formatTick`), y los `input` de los formularios muestran el valor de verdad — no se puede editar lo que no se ve. Los porcentajes tampoco se ocultan: son proporción, no dinero.
+Nothing else changes. Bar heights, shares, progress, order and totals are still computed with the real numbers, so the screen keeps its shape and proportions — the chart still tells the month's story, just without figures. Two details: axis ticks are left **blank** instead of repeating four identical `$****` (`formatTick`), and form `input`s show the real value — you can't edit what you can't see. Percentages aren't hidden either: they're proportion, not money.
 
-### 3.6 Vocabulario (importante)
+### 3.6 Vocabulary (important)
 
-La app es un **planificador**, no un registro de gastos: responde "¿cuál es mi plan, va bien el mes y dónde estoy parado?". La UI usa tres sustantivos y siempre igual:
+The app is a **planner**, not an expense tracker: it answers "what's my plan, is the month going well, and where do I stand?". The UI uses three nouns, always the same way:
 
-- **Plan** — los recurrentes: lo que debería pasar cada mes. Hero del dashboard, vista Plan, "Coming up in your plan".
-- **Activity** — el ledger: lo que pasó, planeado o no. Vista Activity, charts de barras.
-- **Worth** — dónde está el owner hoy: cuentas y pockets menos deudas. NetWorthCard, vista Worth / Owed.
+- **Plan** — the recurring items: what should happen every month. Dashboard hero, Plan view, "Coming up in your plan".
+- **Activity** — the ledger: what happened, planned or not. Activity view, bar charts.
+- **Worth** — where the owner stands today: accounts and pockets minus debts. NetWorthCard, Worth / Owed view.
 
-"Recurring" es solo un adjetivo de cadencia, nunca el nombre de una pantalla o de una cifra. Los verbos siguen la misma regla: un item se **agrega al plan** ("Add … to your plan"), una puntual se **loguea** ("Log a one-off …"), una posición se **actualiza** ("Update current value / balance"). El "+" ofrece el plan primero. Los nombres internos (`transactions`, `recurrentTransactions`, `RecurringChecklist`) no cambian: son del modelo, no de la UI.
+"Recurring" is only a cadence adjective, never the name of a screen or a figure. Verbs follow the same rule: an item is **added to the plan** ("Add … to your plan"), a one-off is **logged** ("Log a one-off …"), a position is **updated** ("Update current value / balance"). The "+" offers the plan first. Internal names (`transactions`, `recurrentTransactions`, `RecurringChecklist`) don't change: they belong to the model, not the UI.
 
-## 7. Deferido a propósito
+## 7. Deferred on purpose
 
-Decisiones explícitas de scope, no descuidos:
+Explicit scope decisions, not oversights:
 
-- **Migración de producción**: no hay suite de migración en el repo. Cuando toque promover, el owner baja los datos de prod y se escribe un script local en ese momento — el schema actual de la DB es con el que se trabaja.
-- **Persistencia de escenarios what-if** (`features/prospect`): lo tildado vive en memoria (`useWhatIf`), se pierde al salir de la página. Lo que sí persiste es el flag `essential` de cada item y el plan de emergencia del user doc.
-- **Entradas "Simulate cancel"** desde otras pantallas (tablas, insights) hacia un escenario de Prospect precargado — la página funciona standalone con su propio checklist.
-- **Presupuestos manuales** por dominio o categoría: la barra "gastado vs esperado" usa el plan (ocurrencias de los recurrentes hasta fin de mes, `features/domains/helpers/months.ts`), no un número tecleado.
-- **Saltar una ocurrencia futura** desde el checklist de Recurring ("no este mes"): necesitaría escribir un doc SKIPPED con el id determinístico; hoy solo Mark as paid y Stop.
-- `endDate` en los recurrentes está en el tipo pero nunca se escribe; el forecast trata los items como vigentes hasta que se paran.
-- Scheduler / Cloud Functions, integraciones bancarias, y una experiencia mobile nativa (hoy: bottom nav, sheet "More", "+" flotante y páginas month-first — sin gestos, toasts, offline ni PWA).
+- **Production migration**: there's no migration suite in the repo. When it's time to promote, the owner pulls the prod data and a local script is written at that point — the current DB schema is the one we work with.
+- **Persisting what-if scenarios** (`features/prospect`): what's checked lives in memory (`useWhatIf`) and is lost when leaving the page. What does persist is each item's `essential` flag and the user doc's emergency plan.
+- **"Simulate cancel" entry points** from other screens (tables, insights) into a preloaded Prospect scenario — the page works standalone with its own checklist.
+- **Manual budgets** per domain or category: the "spent vs expected" bar uses the plan (occurrences of the recurring items until the end of the month, `features/domains/helpers/months.ts`), not a typed number.
+- **Skipping a future occurrence** from the Recurring checklist ("not this month"): it would require writing a SKIPPED doc with the deterministic id; today there's only Mark as paid and Stop.
+- `endDate` on recurring items is in the type but never written; the forecast treats items as active until they're stopped.
+- Scheduler / Cloud Functions, bank integrations, and a native mobile experience (today: bottom nav, "More" sheet, floating "+" and month-first pages — no gestures, toasts, offline or PWA).
