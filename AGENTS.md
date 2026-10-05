@@ -40,7 +40,7 @@ helpers/paymentMethodLabel.ts     "name - last4" para tablas, "SEB - Autogiro (B
 helpers/paymentMethodOptions.ts   tipos de método, sugerencias de red/proveedor, CARD_TYPES, sortByName/groupMethodsByType (wizard, Methods y PaymentMethodField)
 helpers/accounts.ts               isAccountDomain (INVESTMENT | SAVING | DEBT), ACCOUNT_NOUN (account / pocket / debt), accountLabel, formatInterestRate
 helpers/tags.ts                   normaliseTagName / tagKey (sin espacios; key en minúsculas), tagNames (ids → nombres)
-helpers/hidden.ts                 qué filas del ledger están ocultas (por su item recurrente o su categoría)
+helpers/hidden.ts                 qué filas del ledger están ocultas, y de dónde (dashboard / gráfico del dominio; por su item recurrente o su categoría)
 helpers/essential.ts              isSubscription / isEssential (el flag `essential` del item, o la suposición) / essentialIsGuessed
 helpers/dates.ts                  formatDate(date, style, format) — toda fecha visible pasa por aquí (preferencia del usuario); monthKey
 helpers/stacks.ts                 monthTotalsBy / monthTotalsByCategory — totales mensuales apilados (top N + "Other"), tintes por dominio
@@ -212,7 +212,7 @@ La escala vive ahí, una sola vez: nombre y monto a `0.95rem` (600 / 700 mono ta
 Los slots: `leading` (IconDisc, DateBadge), `name`, `badges`, `meta`, `note`, `progress`, `amount`, `amountMeta`, `trailing`, más `onClick` / `href` / `muted`.
 
 - **`badges` va siempre con `Badge`** (`components/atoms/Badge.tsx`), nunca un span propio: el átomo trae `white-space: nowrap`, y sin eso "HIDDEN ON CHART" se parte en dos líneas. Van en su **propia línea, abajo a la izquierda** del bloque de texto (después de meta / note / progress): ahí no le compiten el ancho ni al nombre ni al monto, y tres tags se leen como un grupo en vez de empujar el nombre a una elipsis.
-- **Las dos marcas "Hidden" se distinguen por icono**, porque la palabra sola ya no alcanza: `Chart` = oculto del gráfico (categorías), `Home` = oculto del dashboard (recurrentes) — el mismo icono que el sidebar usa para esa pantalla. En el ledger la razón la da `hiddenRowReason` (`helpers/hidden.ts`), que devuelve `"dashboard" | "chart" | null`; si una fila cumple las dos, gana el item. El icono va en el prop `icon` de `Badge` a `size={12}` (la pastilla `caps` es de 0.64rem) y es decorativo: `aria-hidden` viene de fábrica en `Icons.tsx`, así que el nombre accesible sigue siendo el texto.
+- **Las dos marcas "Hidden" se distinguen por icono**, porque la palabra sola ya no alcanza: `Chart` = oculto del gráfico del dominio (categorías), `Home` = oculto del dashboard (recurrentes) — el mismo icono que el sidebar usa para esa pantalla. En el ledger las razones las da `hiddenRowReasons` (`helpers/hidden.ts`), que devuelve una lista (`"chart"` primero, después `"dashboard"`): una fila que cumple las dos lleva dos pastillas. Solo `"chart"` atenúa la fila (`muted`): lo oculto del dashboard sigue contando en su página de dominio. El icono va en el prop `icon` de `Badge` a `size={12}` (la pastilla `caps` es de 0.64rem) y es decorativo: `aria-hidden` viene de fábrica en `Icons.tsx`, así que el nombre accesible sigue siendo el texto.
 - **`meta` es un solo string ya unido** ("Sep 25 · Monthly · Housing · Visa - 4242"). Hay tests que lo buscan como un único nodo de texto, y así la elipsis cae al final y no dentro de una columna.
 - **`trailing` queda fuera del área clicable** (el kebab no puede vivir dentro del botón de la fila); `amount` queda dentro.
 
@@ -274,7 +274,7 @@ useEffect(() => {
 }, [ready, user?.sub]);
 ```
 
-**Escritura** — siempre `fetch` a una API route. El cliente nunca escribe directo a Firestore, aunque las reglas lo permitan.
+**Escritura** — siempre `fetch` a una API route. El cliente nunca escribe directo a Firestore, aunque las reglas lo permitan. Por eso no hay compensación de latencia: la pantalla solo cambia cuando el listener devuelve la copia del servidor, y en mobile eso puede tardar hasta un remount. Los flags booleanos que se tocan con un tap (`hiddenFromDashboard`, `hiddenFromChart`, `essential`…) pasan por `hooks/useOptimisticPatches` dentro de `useRecurrentTransactions` / `useCategories`: se pintan al instante y el override se cae cuando un snapshot coincide (o vuelve atrás si la escritura falla). El snapshot sigue siendo la fuente de verdad; fechas y `null` no se aplican de forma optimista.
 
 **Carga rápida** (no lo deshagas sin medir):
 
@@ -375,7 +375,7 @@ Otras notas:
 
 ### 3.2 Ocultar del dashboard
 
-El dashboard es el **run-rate de los recurrentes** (las cards lo dicen con "planned per month" y el hero con su veredicto "On plan" / "Over-committed"); por eso solo un item recurrente se oculta: `hiddenFromDashboard` en `recurrentTransactions` lo saca de todos los números y listas del dashboard, y sus filas del ledger lo siguen por `recurrentTransactionId` (`helpers/hidden.ts`: `hiddenItemIds`, `withoutHidden`). Las transacciones no tienen flag propio. En las páginas de dominio, además, una categoría raíz puede ocultarse de la gráfica (`Category.hiddenFromChart`, kebab en Categories; los hijos la siguen): barras y cifra del mes excluyen items ocultos y categorías ocultas salvo que el owner active "Show hidden" (preferencia por dominio en `localStorage`). Las listas siempre muestran todo, con la etiqueta "Hidden".
+El dashboard es el **run-rate de los recurrentes** (las cards lo dicen con "planned per month" y el hero con su veredicto "On plan" / "Over-committed"); por eso solo un item recurrente se oculta: `hiddenFromDashboard` en `recurrentTransactions` lo saca de todos los números y listas del dashboard, y sus filas del ledger lo siguen por `recurrentTransactionId` (`helpers/hidden.ts`: `hiddenItemIds`, `withoutHidden`). Las transacciones no tienen flag propio. Las páginas de dominio **no** miran `hiddenFromDashboard` (solo lo etiquetan, sin atenuar: el item sigue contando ahí); el kebab del Plan solo ofrece "Hide from dashboard". Lo único que se oculta de la gráfica de un dominio es una categoría raíz (`Category.hiddenFromChart`, kebab en Categories; los hijos la siguen): barras y cifra del mes la excluyen salvo que el owner active "Show hidden" (preferencia por dominio en `localStorage`), que solo aparece cuando hay alguna categoría oculta. Las listas siempre muestran todo, con la etiqueta "Hidden".
 
 ### 3.3 Reflejar mensualmente (spread)
 

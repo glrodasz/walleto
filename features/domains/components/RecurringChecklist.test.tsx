@@ -99,6 +99,18 @@ describe("RecurringChecklist", () => {
     expect(within(row).getByText("Hidden")).toBeInTheDocument();
     // No other row claims it.
     expect(screen.getAllByText("Hidden")).toHaveLength(1);
+    // Off the dashboard only: it still counts on this page, so it stays lit.
+    expect(row).not.toHaveClass("is-muted");
+  });
+
+  it("hides an item from the dashboard through the kebab — never from the chart", () => {
+    const onToggleHidden = jest.fn();
+    setup({ onToggleHidden });
+
+    fireEvent.click(screen.getByRole("button", { name: "Actions for Gym" }));
+    expect(screen.queryByRole("menuitem", { name: /chart/ })).toBeNull();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Hide from dashboard" }));
+    expect(onToggleHidden).toHaveBeenCalledWith(gym);
   });
 
   it("groups the month into overdue, due and paid, and folds the rest away", () => {
