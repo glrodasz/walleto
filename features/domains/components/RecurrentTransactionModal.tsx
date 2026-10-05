@@ -254,14 +254,14 @@ export function RecurrentTransactionModal({
   };
   useEffect(() => {
     if (!form.paysDebt || form.categoryId || categories.length === 0) return;
-    const roots = categories.filter((c) => !c.parentId && c.id);
+    const roots = categories.filter((c) => !c.parentId && c.id && c.domain === effectiveDomain);
     const wanted = expenseCategory?.name.trim().toLowerCase();
     const match =
       roots.find((c) => wanted && c.name.trim().toLowerCase() === wanted) ??
       roots.find((c) => c.name.trim().toLowerCase() === "loans") ??
       roots[0];
     if (match?.id) setForm((f) => ({ ...f, categoryId: match.id! }));
-  }, [form.paysDebt, form.categoryId, categories, expenseCategory]);
+  }, [form.paysDebt, form.categoryId, categories, expenseCategory, effectiveDomain]);
 
   // Per-item currency default: the account's currency, then the chosen
   // method's defaultCurrency, then the user's main currency.
