@@ -13,20 +13,33 @@ export interface ValuePoint {
 }
 
 /** Mean Gregorian month, so "months between" is a smooth fraction. */
-const MS_PER_MONTH = 30.436875 * 24 * 60 * 60 * 1000;
+const DAYS_PER_MONTH = 30.436875;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function startOfDay(d: Date): number {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
 
 /**
- * The per-month rate behind a quoted one. A yearly quote is the effective
- * annual rate, so it is de-compounded rather than divided by twelve.
+ * The per-month rate behind a quoted one. A yearly quote is the nominal
+ * annual rate a bank prints, charged each month as a twelfth — 2.85% on
+ * 606,673 is the 1,441 of interest on the statement, not a de-compounded 1,422.
  */
 export function monthlyRate(rate?: InterestRate | null): number {
   if (!rate || !(rate.value > 0)) return 0;
   const r = rate.value / 100;
-  return rate.period === "YEARLY" ? Math.pow(1 + r, 1 / 12) - 1 : r;
+  return rate.period === "YEARLY" ? r / 12 : r;
 }
 
+/**
+ * Elapsed months counted in whole calendar days: interest accrues per day, so
+ * a value check reads exactly as entered on its own day and a figure doesn't
+ * creep up second by second while the page is open. Rounding the day count
+ * absorbs a DST hour.
+ */
 export function monthsBetween(from: Date, to: Date): number {
-  return Math.max(0, (to.getTime() - from.getTime()) / MS_PER_MONTH);
+  const days = Math.round((startOfDay(to) - startOfDay(from)) / MS_PER_DAY);
+  return Math.max(0, days / DAYS_PER_MONTH);
 }
 
 /** `amount` left to compound monthly at `r` from `from` to `to`. */
