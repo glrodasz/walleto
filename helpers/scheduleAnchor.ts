@@ -107,3 +107,32 @@ export function scheduleChoiceFromStartDate(
     ...(secondDayOfMonth !== undefined ? { secondDayOfMonth } : {}),
   };
 }
+
+/**
+ * Whether an edit form's choice still describes the stored schedule, reading
+ * only the fields its frequency uses. Compare choices, never a freshly
+ * anchored date: anchoring an untouched choice against today lands in this
+ * month, and a startDate moved there drops the item's history.
+ */
+export function isSameSchedule(
+  choice: Omit<ScheduleChoice, "backfill">,
+  stored: { frequency: Frequency; startDate: Date; secondDayOfMonth?: number }
+): boolean {
+  if (choice.frequency !== stored.frequency) return false;
+  const was = scheduleChoiceFromStartDate(stored.startDate, stored.frequency);
+  const day = (choice.dayOfMonth ?? 1) === was.dayOfMonth;
+  switch (choice.frequency) {
+    case "ONE_TIME":
+    case "WEEKLY":
+      return choice.date === was.date;
+    case "MONTHLY":
+      return day;
+    case "BIWEEKLY":
+      return day && choice.secondDayOfMonth === stored.secondDayOfMonth;
+    case "QUARTERLY":
+      // Any month of the same three-month cycle is the same schedule.
+      return day && choice.month !== undefined && (choice.month - was.month! + 12) % 3 === 0;
+    case "YEARLY":
+      return day && choice.month === was.month;
+  }
+}

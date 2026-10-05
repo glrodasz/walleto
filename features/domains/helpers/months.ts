@@ -202,8 +202,12 @@ function sameDay(a: Date, b: Date): boolean {
  * The month's checklist: each active item's occurrences inside the window,
  * marked paid when a PAID transaction sits at the deterministic id (or on the
  * same day for the same item — mark-paid can land on a different clock), due
- * when still ahead, overdue otherwise. Items with nothing this month are
- * returned separately so the page can show them collapsed.
+ * when still ahead, overdue otherwise. A payment of the item that the schedule
+ * does not line up with — moved to another day, or written before an edit
+ * moved the item's start — still happened: it settles the month's next open
+ * occurrence, or stands as a paid one of its own, so the checklist never
+ * contradicts the ledger. Items with nothing this month are returned
+ * separately so the page can show them collapsed.
  */
 export function monthOccurrences(
   items: RecurrentTransaction[],
@@ -213,11 +217,12 @@ export function monthOccurrences(
   now: Date = new Date()
 ): { occurrences: MonthOccurrence[]; notThisMonth: RecurrentTransaction[] } {
   const paidIds = new Set(transactions.map((t) => t.id).filter(Boolean));
-  const paidByItem = new Map<string, Date[]>();
+  const paidByItem = new Map<string, { id?: string; at: Date }[]>();
   for (const t of transactions) {
-    if (!t.recurrentTransactionId) continue;
+    const at = toDate(t.occurredAt);
+    if (!t.recurrentTransactionId || at < window.start || at >= window.end) continue;
     const list = paidByItem.get(t.recurrentTransactionId) ?? [];
-    list.push(toDate(t.occurredAt));
+    list.push({ id: t.id, at });
     paidByItem.set(t.recurrentTransactionId, list);
   }
 
@@ -228,17 +233,31 @@ export function monthOccurrences(
   for (const item of items) {
     if (!item.active || !item.id) continue;
     const occs = materializeOccurrences(item, window.start, to);
-    if (occs.length === 0) {
+    const unclaimed = [...(paidByItem.get(item.id) ?? [])].sort(
+      (a, b) => a.at.getTime() - b.at.getTime()
+    );
+    if (occs.length === 0 && unclaimed.length === 0) {
       notThisMonth.push(item);
       continue;
     }
     const amount = convertedAmount(item, ctx);
+    const open: Date[] = [];
     for (const occ of occs) {
-      const paid =
-        paidIds.has(occurrenceId(item.id, occ.occurredAt)) ||
-        (paidByItem.get(item.id) ?? []).some((d) => sameDay(d, occ.occurredAt));
-      const status: OccurrenceStatus = paid ? "paid" : occ.occurredAt >= now ? "due" : "overdue";
-      occurrences.push({ item, occurredAt: occ.occurredAt, status, amount });
+      const id = occurrenceId(item.id, occ.occurredAt);
+      const match = unclaimed.findIndex((p) => p.id === id || sameDay(p.at, occ.occurredAt));
+      if (match !== -1) unclaimed.splice(match, 1);
+      if (match !== -1 || paidIds.has(id)) {
+        occurrences.push({ item, occurredAt: occ.occurredAt, status: "paid", amount });
+      } else {
+        open.push(occ.occurredAt);
+      }
+    }
+    for (const paid of unclaimed) {
+      const settled = open.shift();
+      occurrences.push({ item, occurredAt: settled ?? paid.at, status: "paid", amount });
+    }
+    for (const due of open) {
+      occurrences.push({ item, occurredAt: due, status: due >= now ? "due" : "overdue", amount });
     }
   }
 

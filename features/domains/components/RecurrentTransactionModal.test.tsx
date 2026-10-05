@@ -404,6 +404,26 @@ describe("RecurrentTransactionModal — inheritance", () => {
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(updateItem.mock.calls[0][1]).not.toHaveProperty("applyToExisting");
   });
+
+  it("keeps the start date when the schedule is untouched, so the history stays in the plan", async () => {
+    const onClose = jest.fn();
+    render(<RecurrentTransactionModal domain="EXPENSE" open item={existing} onClose={onClose} />);
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Netflix Premium" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(updateItem.mock.calls[0][1]).toMatchObject({ name: "Netflix Premium" });
+    expect(updateItem.mock.calls[0][1]).not.toHaveProperty("startDate");
+  });
+
+  it("sends a new start date when the payment day changes", async () => {
+    const onClose = jest.fn();
+    render(<RecurrentTransactionModal domain="EXPENSE" open item={existing} onClose={onClose} />);
+    fireEvent.change(screen.getByLabelText("Payment day"), { target: { value: "20" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    const sent = new Date(updateItem.mock.calls[0][1].startDate);
+    expect(sent.getDate()).toBe(20);
+  });
 });
 
 describe("RecurrentTransactionModal — a row's recurring item", () => {
