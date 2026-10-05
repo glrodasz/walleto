@@ -43,10 +43,10 @@ type Story = StoryObj<typeof meta>;
 export const Expenses: Story = {};
 export const Loading: Story = { args: { loading: true, rows: [] } };
 export const Empty: Story = { args: { rows: [] } };
-/** Rows whose recurring item is hidden from the dashboard carry a label. */
+/** Rows hidden from the dashboard carry a label; rows hidden from the chart also dim. */
 export const WithHiddenRows: Story = {
   args: {
-    hiddenReason: (t) => (t.recurrentTransactionId === "rt-gym" ? "dashboard" : null),
+    hiddenReasons: (t) => (t.recurrentTransactionId === "rt-gym" ? ["chart", "dashboard"] : []),
   },
 };
 export const Deleting: Story = { args: { deletingId: expenses[expenses.length - 1]?.id ?? null } };

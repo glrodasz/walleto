@@ -303,3 +303,28 @@ describe("PATCH /api/recurrent-transactions/[id] — essential", () => {
     expect(update).toHaveBeenCalledWith({ essential: false });
   });
 });
+
+describe("PATCH /api/recurrent-transactions/[id] — hidden flags", () => {
+  it("stores each flag on its own", async () => {
+    const update = wireDoc({});
+    await handler(
+      {
+        method: "PATCH",
+        query: { id: "rt1" },
+        body: { hiddenFromChart: true },
+      } as unknown as NextApiRequest,
+      mockRes()
+    );
+    expect(update).toHaveBeenCalledWith({ hiddenFromChart: true });
+
+    await handler(
+      {
+        method: "PATCH",
+        query: { id: "rt1" },
+        body: { hiddenFromDashboard: false },
+      } as unknown as NextApiRequest,
+      mockRes()
+    );
+    expect(update).toHaveBeenLastCalledWith({ hiddenFromDashboard: false });
+  });
+});

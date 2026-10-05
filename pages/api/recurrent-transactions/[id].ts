@@ -59,6 +59,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       startDate,
       active,
       hiddenFromDashboard,
+      hiddenFromChart,
       essential,
     } = parsed.data;
 
@@ -159,6 +160,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       ...(type !== undefined ? { type: type ?? del } : {}),
       ...(active !== undefined ? { active } : {}),
       ...(hiddenFromDashboard !== undefined ? { hiddenFromDashboard } : {}),
+      ...(hiddenFromChart !== undefined ? { hiddenFromChart } : {}),
       ...(essential !== undefined ? { essential } : {}),
       ...occurrencePatch,
     });

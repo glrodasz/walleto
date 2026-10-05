@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { TransactionsTable } from "./TransactionsTable";
 import { IDENTITY_RATES } from "../../helpers/fx";
 import type { Category, Currency, PaymentMethod, Timestamp, Transaction } from "../../types";
@@ -160,23 +160,26 @@ describe("TransactionsTable", () => {
         {...base}
         rows={rows}
         onDelete={jest.fn()}
-        hiddenReason={(t) => (t.id === "b" ? "dashboard" : null)}
+        hiddenReasons={(t) => (t.id === "b" ? ["dashboard"] : [])}
       />
     );
     // The pill is a short word either way; the glyph is what distinguishes
     // them, and it is aria-hidden — so assert the row that carries it.
     expect(bodyRows()[1]).toHaveTextContent("Hidden");
     expect(bodyRows()[0]).not.toHaveTextContent("Hidden");
+    // Off the dashboard only: it still counts on this page, so it stays lit.
+    expect(bodyRows()[1]).not.toHaveClass("is-muted");
 
     rerender(
       <TransactionsTable
         {...base}
         rows={rows}
         onDelete={jest.fn()}
-        hiddenReason={(t) => (t.id === "c" ? "chart" : null)}
+        hiddenReasons={(t) => (t.id === "c" ? ["chart", "dashboard"] : [])}
       />
     );
-    expect(bodyRows()[0]).toHaveTextContent("Hidden");
+    expect(within(bodyRows()[0]).getAllByText("Hidden")).toHaveLength(2);
+    expect(bodyRows()[0]).toHaveClass("is-muted");
   });
 
   it("reads a withdrawal as a negative amount with a badge saying so", () => {
