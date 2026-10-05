@@ -34,8 +34,30 @@ export const ByMethod: Story = {
   args: {
     icon: () => <CreditCard size={16} />,
     groups: [
-      { key: "pm-chase", label: "Chase Sapphire · 4242", total: 2038.48, count: 5, share: 0.7 },
-      { key: "pm-revolut", label: "Revolut", total: 19.5, count: 1, share: 0.01 },
+      {
+        key: "pm-seb-transfer",
+        label: "SEB",
+        detail: "Bank transfer",
+        total: 1638.48,
+        count: 4,
+        share: 0.56,
+      },
+      {
+        key: "pm-seb-debit",
+        label: "SEB",
+        detail: "Debit card",
+        total: 400,
+        count: 1,
+        share: 0.14,
+      },
+      {
+        key: "pm-revolut",
+        label: "Revolut",
+        detail: "Digital wallet",
+        total: 19.5,
+        count: 1,
+        share: 0.01,
+      },
       { key: "__none", label: "No method", total: 850, count: 2, share: 0.29 },
     ],
   },
