@@ -274,7 +274,7 @@ useEffect(() => {
 }, [ready, user?.sub]);
 ```
 
-**Escritura** — siempre `fetch` a una API route. El cliente nunca escribe directo a Firestore, aunque las reglas lo permitan.
+**Escritura** — siempre `fetch` a una API route. El cliente nunca escribe directo a Firestore, aunque las reglas lo permitan. Por eso no hay compensación de latencia: la pantalla solo cambia cuando el listener devuelve la copia del servidor, y en mobile eso puede tardar hasta un remount. Los flags booleanos que se tocan con un tap (`hiddenFromDashboard`, `hiddenFromChart`, `essential`…) pasan por `hooks/useOptimisticPatches` dentro de `useRecurrentTransactions` / `useCategories`: se pintan al instante y el override se cae cuando un snapshot coincide (o vuelve atrás si la escritura falla). El snapshot sigue siendo la fuente de verdad; fechas y `null` no se aplican de forma optimista.
 
 **Carga rápida** (no lo deshagas sin medir):
 
