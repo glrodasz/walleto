@@ -33,6 +33,12 @@ describe("monthsBetween / grow", () => {
     expect(monthsBetween(feb, jan)).toBe(0);
   });
 
+  it("counts whole calendar days, ignoring the time of day", () => {
+    const noon = new Date(2026, 9, 5, 12);
+    expect(monthsBetween(noon, new Date(2026, 9, 5, 19, 30))).toBe(0);
+    expect(monthsBetween(noon, new Date(2026, 9, 6, 0, 5))).toBeCloseTo(1 / 30.436875, 10);
+  });
+
   it("compounds monthly; a yearly quote lands on itself after a year", () => {
     const r = monthlyRate({ value: 5, period: "YEARLY" });
     expect(grow(1000, r, jan, nextJan)).toBeCloseTo(1050, 0);
@@ -115,6 +121,20 @@ describe("a debt as a negative position", () => {
     const owed = grow(5000, r, jan, apr) - grow(500, r, feb, apr) - grow(500, r, mar, apr);
     expect(interestAccrued(repayments, balance, rate, apr)).toBeCloseTo(owed - 5000 + 1000, 6);
     expect(interestAccrued(repayments, balance, undefined, apr)).toBe(0);
+  });
+
+  it("reads a balance exactly as entered on the day it was recorded", () => {
+    const monthly = { value: 2.85, period: "MONTHLY" as const };
+    const checks = [{ value: -606673, asOf: new Date(2026, 9, 5, 12) }];
+    const evening = new Date(2026, 9, 5, 19, 30);
+    expect(-valueAt([], checks, monthly, evening)).toBe(606673);
+    expect(interestAccrued([], checks, monthly, evening)).toBe(0);
+    // The next day, one day of interest.
+    const nextDay = new Date(2026, 9, 6, 9);
+    expect(-valueAt([], checks, monthly, nextDay)).toBeCloseTo(
+      606673 * Math.pow(1.0285, 1 / 30.436875),
+      6
+    );
   });
 
   it("interestAccrued measures from the first balance, through later checks", () => {
