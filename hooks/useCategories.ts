@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { db } from "../firebase/client";
@@ -83,5 +83,13 @@ export function useCategories(domain?: Domain) {
     if (!res.ok) throw new Error(await res.text());
   };
 
-  return { categories: optimistic.docs, loading, error, create, update, rename, remove };
+  // The previous domain's docs stay in state until the new snapshot lands;
+  // handing them out under the new domain let a form pick a category the
+  // API then rejects as a domain mismatch.
+  const visible = useMemo(
+    () => (domain ? optimistic.docs.filter((c) => c.domain === domain) : optimistic.docs),
+    [optimistic.docs, domain]
+  );
+
+  return { categories: visible, loading, error, create, update, rename, remove };
 }
