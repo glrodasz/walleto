@@ -89,7 +89,7 @@ interface RowProps {
 }
 
 const STATUS_COLOR = (status: OccurrenceStatus, accent: string) =>
-  status === "overdue" ? "var(--accent-hot)" : status === "paid" ? "var(--accent)" : accent;
+  status === "overdue" ? "var(--negative)" : status === "paid" ? "var(--positive)" : accent;
 
 /**
  * One checklist row: the shared ListItem, plus the two things only this list

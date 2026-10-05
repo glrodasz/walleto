@@ -37,6 +37,11 @@
   --accent-hover: color-mix(in srgb, var(--accent) 84%, #000000);
   --on-accent: #ffffff;
   --accent-hot: #e11d48;
+  /* The sign of a figure (a net, a gain, a paid row). Never var(--accent):
+     data-env repaints the accent per build, and a red staging accent read
+     as a loss on every positive amount. */
+  --positive: #16a34a;
+  --negative: #e11d48;
   --accent-amber: #d97706;
   --accent-cyan: #0891b2;
   --glow: color-mix(in srgb, var(--accent) 10%, transparent);
@@ -227,6 +232,8 @@
   --accent-hover: color-mix(in srgb, var(--accent) 84%, #ffffff);
   --on-accent: #0a0a0f;
   --accent-hot: #ff3d68;
+  --positive: #7cffb2;
+  --negative: #ff3d68;
   --accent-amber: #ffb84d;
   --accent-cyan: #5ee8ff;
   --glow: color-mix(in srgb, var(--accent) 12%, transparent);

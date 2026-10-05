@@ -133,7 +133,7 @@ export function RunwayCard({
         <RunwayFigure
           text={figure}
           approximate={approximate && runway !== null}
-          tone={runway !== null && runway < 3 ? "danger" : "accent"}
+          tone={runway !== null && runway < 3 ? "danger" : "positive"}
         />
       }
       sub={sub}
@@ -151,7 +151,7 @@ function RunwayFigure({
 }: {
   text: string;
   approximate: boolean;
-  tone: "accent" | "danger";
+  tone: "positive" | "danger";
 }) {
   return (
     <span className={`figure figure--${tone}`}>
@@ -164,11 +164,11 @@ function RunwayFigure({
           font-size: 1.9rem;
           font-weight: 700;
           letter-spacing: -0.03em;
-          color: var(--accent);
+          color: var(--positive);
         }
 
         .figure--danger {
-          color: var(--accent-hot);
+          color: var(--negative);
         }
 
         .approx {

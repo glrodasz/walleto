@@ -5,7 +5,7 @@ interface Props {
   value: number;
   currency: Currency;
   size?: "sm" | "md" | "lg";
-  /** Sign-based coloring: green for >= 0, red for negative. For net-flow figures. */
+  /** Sign-based coloring: --positive for >= 0, --negative below — never the build-tinted --accent. For net-flow figures. */
   colorize?: boolean;
   /** Append the ISO code — pass when the value's currency differs from the
    *  reporting currency; USD/MXN/COP all render "$" and are otherwise
@@ -35,7 +35,7 @@ export function Amount({
   approximate = false,
 }: Props) {
   const { formatAmount } = useMoneyFormat();
-  const color = colorize ? (value >= 0 ? "var(--accent)" : "var(--accent-hot)") : "var(--fg-0)";
+  const color = colorize ? (value >= 0 ? "var(--positive)" : "var(--negative)") : "var(--fg-0)";
 
   return (
     <span className="amount">
