@@ -3,12 +3,11 @@ import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { Badge } from "../../../components/atoms/Badge";
-import { Chart, Home } from "../../../components/atoms/Icons";
+import { Home } from "../../../components/atoms/Icons";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
 import { ListItem, ListItems } from "../../../components/molecules/ListItem";
 import type { KebabAction } from "../../../components/molecules/KebabMenu";
 import { sumMonthly } from "../../../helpers/aggregations";
-import type { HiddenReason } from "../../../helpers/hidden";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { paymentMethodOptionLabel } from "../../../helpers/paymentMethodLabel";
 import { tagNames } from "../../../helpers/tags";
@@ -44,33 +43,23 @@ interface Props {
   onMarkPaid: (itemId: string) => void;
   onEdit: (item: RecurrentTransaction) => void;
   onStop: (itemId: string) => void;
-  /** Flip the item's hiddenFromDashboard or hiddenFromChart flag. */
-  onToggleHidden?: (item: RecurrentTransaction, where: HiddenReason) => void;
+  /** Flip the item's hiddenFromDashboard flag. */
+  onToggleHidden?: (item: RecurrentTransaction) => void;
   busyId: string | null;
 }
 
-const hiddenActions = (
+const hiddenAction = (
   item: RecurrentTransaction,
-  onToggleHidden?: (item: RecurrentTransaction, where: HiddenReason) => void
+  onToggleHidden?: (item: RecurrentTransaction) => void
 ): KebabAction[] =>
   onToggleHidden
     ? [
         {
           label: item.hiddenFromDashboard ? "Show on dashboard" : "Hide from dashboard",
-          onSelect: () => onToggleHidden(item, "dashboard"),
-        },
-        {
-          label: item.hiddenFromChart ? "Show on chart" : "Hide from chart",
-          onSelect: () => onToggleHidden(item, "chart"),
+          onSelect: () => onToggleHidden(item),
         },
       ]
     : [];
-
-/** The item's own hide flags, chart first — the one this page acts on. */
-const hiddenReasons = (item: RecurrentTransaction): HiddenReason[] => [
-  ...(item.hiddenFromChart ? (["chart"] as const) : []),
-  ...(item.hiddenFromDashboard ? (["dashboard"] as const) : []),
-];
 
 const GROUPS: { status: OccurrenceStatus; title: string }[] = [
   { status: "overdue", title: "Overdue" },
@@ -90,13 +79,13 @@ interface RowProps {
   status?: OccurrenceStatus;
   accent: string;
   actions: KebabAction[];
-  /** Hidden from the chart (bars) and/or the dashboard (the house, the
-   *  sidebar's own glyph for that screen) — one pill each. */
-  hidden: HiddenReason[];
+  /** Hidden from the dashboard — flagged with the house, the sidebar's own
+   *  glyph for that screen, so it cannot be read as "hidden from the chart".
+   *  Not dimmed: the item still counts on its domain page. */
+  hidden?: boolean;
   /** The user's own tags. */
   labels?: string[];
   note?: string;
-  muted?: boolean;
 }
 
 const STATUS_COLOR = (status: OccurrenceStatus, accent: string) =>
@@ -116,20 +105,15 @@ function OccurrenceRow({
   hidden,
   labels,
   note,
-  muted,
 }: RowProps) {
   const flags = [
-    ...hidden.map((reason) => (
-      <Badge
-        key={`hidden-${reason}`}
-        variant="outline"
-        tone="warning"
-        caps
-        icon={reason === "chart" ? <Chart size={12} /> : <Home size={12} />}
-      >
-        Hidden
-      </Badge>
-    )),
+    ...(hidden
+      ? [
+          <Badge key="hidden" variant="outline" tone="warning" caps icon={<Home size={12} />}>
+            Hidden
+          </Badge>,
+        ]
+      : []),
     ...(labels ?? []).map((t) => (
       <Badge key={`label-${t}`} variant="outline">
         {t}
@@ -143,7 +127,6 @@ function OccurrenceRow({
       badges={flags.length > 0 ? flags : undefined}
       note={note}
       meta={meta}
-      muted={muted}
       amount={amount}
       amountMeta={
         status ? (
@@ -234,10 +217,9 @@ export function RecurringChecklist({
                         key={`${id}_${o.occurredAt.toISOString()}`}
                         name={o.item.name}
                         meta={`${formatDate(o.occurredAt, "day")} · ${FREQUENCY_LABELS[o.item.frequency]}${details(o.item)}`}
-                        hidden={hiddenReasons(o.item)}
+                        hidden={Boolean(o.item.hiddenFromDashboard)}
                         labels={tagNames(o.item.tags, tags)}
                         note={o.item.note}
-                        muted={Boolean(o.item.hiddenFromChart)}
                         amount={formatNative(o.item.amount, o.item.currency, currency)}
                         status={o.status}
                         accent={config.accent}
@@ -252,7 +234,7 @@ export function RecurringChecklist({
                               ]
                             : []),
                           { label: "Edit", onSelect: () => onEdit(o.item) },
-                          ...hiddenActions(o.item, onToggleHidden),
+                          ...hiddenAction(o.item, onToggleHidden),
                           {
                             label: "Stop",
                             onSelect: () => onStop(id),
@@ -283,13 +265,12 @@ export function RecurringChecklist({
                     }`}
                     amount={formatNative(item.amount, item.currency, currency)}
                     accent={config.accent}
-                    hidden={hiddenReasons(item)}
+                    hidden={Boolean(item.hiddenFromDashboard)}
                     labels={tagNames(item.tags, tags)}
                     note={item.note}
-                    muted={Boolean(item.hiddenFromChart)}
                     actions={[
                       { label: "Edit", onSelect: () => onEdit(item) },
-                      ...hiddenActions(item, onToggleHidden),
+                      ...hiddenAction(item, onToggleHidden),
                       {
                         label: "Stop",
                         onSelect: () => item.id && onStop(item.id),

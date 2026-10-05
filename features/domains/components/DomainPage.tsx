@@ -59,13 +59,7 @@ import { useSelectedMonth } from "../../../hooks/useSelectedMonth";
 import { useLocalPreference } from "../../../hooks/useLocalPreference";
 import { deleteTransaction } from "../../../hooks/useTransactions";
 import { toDate } from "../../../helpers/chartData";
-import {
-  hiddenCategoryIds,
-  hiddenItemIds,
-  hiddenRowReasons,
-  withoutHidden,
-} from "../../../helpers/hidden";
-import type { HiddenReason } from "../../../helpers/hidden";
+import { hiddenCategoryIds, hiddenItemIds, hiddenRowReasons } from "../../../helpers/hidden";
 import { spreadItemIds, spreadTransactions } from "../helpers/spread";
 import type { TransactionFilters } from "../helpers/transactionFilters";
 import type { Category, Currency, Domain, RecurrentTransaction, Transaction } from "../../../types";
@@ -161,17 +155,15 @@ export function DomainPage({ domain }: Props) {
   const { tags } = useTags();
   const error = txError ?? itemsError ?? catError;
 
-  // Items and categories hidden from the chart stay out of the bars and the
-  // month figure unless the owner flips "Show hidden"; the lists below always
-  // show everything, tagged. Hidden from the dashboard is only a tag here.
-  const hiddenItems = useMemo(() => hiddenItemIds(items, "chart"), [items]);
+  // Categories hidden from the chart stay out of the bars and the month
+  // figure unless the owner flips "Show hidden"; the lists below always show
+  // everything, tagged. Hidden from the dashboard is only a tag here.
   const dashboardHiddenItems = useMemo(() => hiddenItemIds(items), [items]);
   const hiddenCategories = useMemo(() => hiddenCategoryIds(categories), [categories]);
-  const anythingHidden = hiddenItems.size > 0 || hiddenCategories.size > 0;
+  const anythingHidden = hiddenCategories.size > 0;
   const hiddenReasons = (t: Transaction) =>
     hiddenRowReasons(t, {
       dashboardItems: dashboardHiddenItems,
-      chartItems: hiddenItems,
       chartCategories: hiddenCategories,
     });
   // Items asked to be "reflected monthly" chart as one slice per month in
@@ -183,8 +175,8 @@ export function DomainPage({ domain }: Props) {
     [items, transactions, windows]
   );
   const chartTransactions = useMemo(
-    () => (showHidden ? planRows : withoutHidden(planRows, hiddenItems, hiddenCategories)),
-    [showHidden, planRows, hiddenItems, hiddenCategories]
+    () => (showHidden ? planRows : planRows.filter((t) => !hiddenCategories.has(t.categoryId))),
+    [showHidden, planRows, hiddenCategories]
   );
   // The plan side: spread items are already inside the slices, so they must
   // not be forecast a second time on top.
@@ -193,10 +185,7 @@ export function DomainPage({ domain }: Props) {
     [items, spreadIds]
   );
   const chartItems = useMemo(
-    () =>
-      showHidden
-        ? planItems
-        : planItems.filter((i) => !i.hiddenFromChart && !hiddenCategories.has(i.categoryId)),
+    () => (showHidden ? planItems : planItems.filter((i) => !hiddenCategories.has(i.categoryId))),
     [showHidden, planItems, hiddenCategories]
   );
 
@@ -422,17 +411,11 @@ export function DomainPage({ domain }: Props) {
       setBusyItemId(null);
     }
   };
-  const toggleItemHidden = (item: RecurrentTransaction, where: HiddenReason) =>
+  const toggleItemHidden = (item: RecurrentTransaction) =>
     item.id &&
     withBusy(
       item.id,
-      () =>
-        update(
-          item.id!,
-          where === "chart"
-            ? { hiddenFromChart: !item.hiddenFromChart }
-            : { hiddenFromDashboard: !item.hiddenFromDashboard }
-        ),
+      () => update(item.id!, { hiddenFromDashboard: !item.hiddenFromDashboard }),
       "update the item"
     );
   const toggleCategoryHidden = (category: Category) =>
@@ -649,7 +632,7 @@ export function DomainPage({ domain }: Props) {
           {anythingHidden && (
             <CheckboxField
               label="Show hidden"
-              hint="Plans and categories hidden from the chart."
+              hint="Categories hidden from the chart."
               checked={showHidden}
               onChange={setShowHidden}
             />

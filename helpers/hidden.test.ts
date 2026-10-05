@@ -16,16 +16,6 @@ describe("hiddenItemIds / hiddenCategoryIds", () => {
       ])
     ).toEqual(new Set(["a"]));
     expect(
-      hiddenItemIds(
-        [
-          { id: "a", hiddenFromDashboard: true },
-          { id: "b", hiddenFromChart: true },
-          { id: "c", hiddenFromDashboard: true, hiddenFromChart: true },
-        ],
-        "chart"
-      )
-    ).toEqual(new Set(["b", "c"]));
-    expect(
       hiddenCategoryIds([
         { id: "home", hiddenFromChart: true },
         { id: "rent", parentId: "home" },
@@ -51,20 +41,15 @@ describe("isHiddenRow / withoutHidden", () => {
 
   it("lists every rule that hid the row, chart first", () => {
     const sets = {
-      dashboardItems: new Set(["netflix", "gym"]),
-      chartItems: new Set(["gym", "rent"]),
+      dashboardItems: new Set(["netflix"]),
       chartCategories: cats,
     };
     expect(
       hiddenRowReasons({ recurrentTransactionId: "netflix", categoryId: "fun" }, sets)
     ).toEqual(["dashboard"]);
-    expect(hiddenRowReasons({ recurrentTransactionId: "rent", categoryId: "fun" }, sets)).toEqual([
-      "chart",
-    ]);
     expect(hiddenRowReasons({ categoryId: "home" }, sets)).toEqual(["chart"]);
-    expect(hiddenRowReasons({ recurrentTransactionId: "gym", categoryId: "fun" }, sets)).toEqual([
+    expect(hiddenRowReasons({ recurrentTransactionId: "rent", categoryId: "home" }, sets)).toEqual([
       "chart",
-      "dashboard",
     ]);
     expect(
       hiddenRowReasons({ recurrentTransactionId: "netflix", categoryId: "home" }, sets)

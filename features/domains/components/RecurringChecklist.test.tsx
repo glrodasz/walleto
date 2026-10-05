@@ -103,29 +103,14 @@ describe("RecurringChecklist", () => {
     expect(row).not.toHaveClass("is-muted");
   });
 
-  it("flags and dims an item hidden from the chart, one pill per flag", () => {
-    const hiddenGym = item("Gym", 400, new Date(2026, 2, 2, 12), {
-      hiddenFromChart: true,
-      hiddenFromDashboard: true,
-    });
-    setup({ items: [rent, netflix, hiddenGym, insurance] });
-    const row = screen.getByText("Gym").closest("li")!;
-    expect(within(row).getAllByText("Hidden")).toHaveLength(2);
-    expect(row).toHaveClass("is-muted");
-  });
-
-  it("hides an item from the dashboard or the chart through the kebab", () => {
+  it("hides an item from the dashboard through the kebab — never from the chart", () => {
     const onToggleHidden = jest.fn();
-    const hiddenGym = item("Gym", 400, new Date(2026, 2, 2, 12), { hiddenFromChart: true });
-    setup({ items: [rent, netflix, hiddenGym, insurance], onToggleHidden });
+    setup({ onToggleHidden });
 
     fireEvent.click(screen.getByRole("button", { name: "Actions for Gym" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "Show on chart" }));
-    expect(onToggleHidden).toHaveBeenCalledWith(hiddenGym, "chart");
-
-    fireEvent.click(screen.getByRole("button", { name: "Actions for Gym" }));
+    expect(screen.queryByRole("menuitem", { name: /chart/ })).toBeNull();
     fireEvent.click(screen.getByRole("menuitem", { name: "Hide from dashboard" }));
-    expect(onToggleHidden).toHaveBeenCalledWith(hiddenGym, "dashboard");
+    expect(onToggleHidden).toHaveBeenCalledWith(gym);
   });
 
   it("groups the month into overdue, due and paid, and folds the rest away", () => {

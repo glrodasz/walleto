@@ -5,16 +5,9 @@ const NONE: ReadonlySet<string> = new Set();
 /** Which rule hid something — the two are flagged differently in the UI. */
 export type HiddenReason = "dashboard" | "chart";
 
-/**
- * Ids of the recurring items the owner hid from the dashboard, or — with
- * `"chart"` — from their domain page's graph. The two flags are independent.
- */
-export function hiddenItemIds(
-  items: Pick<RecurrentTransaction, "id" | "hiddenFromDashboard" | "hiddenFromChart">[],
-  reason: HiddenReason = "dashboard"
-) {
-  const flag = reason === "chart" ? "hiddenFromChart" : "hiddenFromDashboard";
-  return new Set(items.filter((i) => i.id && i[flag]).map((i) => i.id!));
+/** Ids of the recurring items the owner hid from the dashboard. */
+export function hiddenItemIds(items: Pick<RecurrentTransaction, "id" | "hiddenFromDashboard">[]) {
+  return new Set(items.filter((i) => i.id && i.hiddenFromDashboard).map((i) => i.id!));
 }
 
 /** Ids of the categories hidden from the domain graph — roots plus their children. */
@@ -37,26 +30,19 @@ interface HideableRow {
 interface HiddenSets {
   /** Items hidden from the dashboard. */
   dashboardItems: ReadonlySet<string>;
-  /** Items hidden from their domain graph. */
-  chartItems: ReadonlySet<string>;
   /** Categories hidden from their domain graph (roots plus children). */
   chartCategories: ReadonlySet<string>;
 }
 
 /**
  * Every rule that hides a ledger row, chart first (the one a domain page acts
- * on). A row hides through what it belongs to: the recurring item that wrote
- * it, or the category it is filed under. One-off rows never hide on their own.
+ * on): its category hidden from the domain graph, and/or the recurring item
+ * that wrote it hidden from the dashboard. One-off rows never hide on their own.
  */
 export function hiddenRowReasons(row: HideableRow, sets: HiddenSets): HiddenReason[] {
   const item = row.recurrentTransactionId;
   const reasons: HiddenReason[] = [];
-  if (
-    (item !== undefined && sets.chartItems.has(item)) ||
-    sets.chartCategories.has(row.categoryId)
-  ) {
-    reasons.push("chart");
-  }
+  if (sets.chartCategories.has(row.categoryId)) reasons.push("chart");
   if (item !== undefined && sets.dashboardItems.has(item)) reasons.push("dashboard");
   return reasons;
 }

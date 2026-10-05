@@ -163,7 +163,6 @@ export const STORY_RECURRENT: RecurrentTransaction[] = [
     paymentMethodId: "pm-chase",
     note: "Ends next spring",
     inheritNote: true,
-    hiddenFromChart: true,
     day: 15,
   }),
   item({

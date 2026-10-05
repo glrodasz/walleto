@@ -195,11 +195,6 @@ export interface RecurrentTransaction {
   /** Kept out of every dashboard number and list; domain pages still show it. */
   hiddenFromDashboard?: boolean;
   /**
-   * Out of its domain page's bars and month figure unless "Show hidden" is
-   * on; the dashboard ignores it. Lists still show the item, tagged.
-   */
-  hiddenFromChart?: boolean;
-  /**
    * EXPENSE: whether it survives emergency mode in Prospect. Unset means
    * guessed (`helpers/essential.ts`); DEBT payments are always essential.
    */

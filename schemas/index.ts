@@ -206,7 +206,6 @@ export const RecurrentTransactionUpdateSchema = z
     startDate: z.iso.datetime().optional(),
     active: z.boolean().optional(),
     hiddenFromDashboard: z.boolean().optional(),
-    hiddenFromChart: z.boolean().optional(),
     essential: z.boolean().optional(),
   })
   .superRefine((v, ctx) => {
