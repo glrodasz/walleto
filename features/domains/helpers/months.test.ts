@@ -201,6 +201,46 @@ describe("monthOccurrences", () => {
     const { occurrences } = monthOccurrences([salary], [], ctx, sep, now);
     expect(occurrences[0]).toMatchObject({ status: "overdue", amount: 57_650 });
   });
+
+  it("shows a payment written before the item's start moved as paid, not 'not this month'", () => {
+    // Backfilled from April, then an edit re-anchored the start to October.
+    const moved = item("fiber", 439, new Date(2026, 9, 28, 12));
+    const paidAt = new Date(2026, 8, 28, 12);
+    const paid = tx(occurrenceId("fiber", paidAt), 439, paidAt, {
+      recurrentTransactionId: "fiber",
+    });
+    const { occurrences, notThisMonth } = monthOccurrences([moved], [paid], ctx, sep, now);
+    expect(occurrences).toEqual([{ item: moved, occurredAt: paidAt, status: "paid", amount: 439 }]);
+    expect(notThisMonth).toEqual([]);
+  });
+
+  it("lets a payment on another day settle the month's occurrence instead of adding one", () => {
+    const paid = tx("moved-day", 15_000, new Date(2026, 8, 20, 12), {
+      recurrentTransactionId: "rent",
+    });
+    const { occurrences } = monthOccurrences([rent], [paid], ctx, sep, now);
+    expect(occurrences.map((o) => [o.occurredAt.getDate(), o.status])).toEqual([[25, "paid"]]);
+  });
+
+  it("counts a row matched by its id once, even after its date was edited", () => {
+    const due = new Date(2026, 8, 3, 12);
+    const paid = tx(occurrenceId("salary", due), 57_650, new Date(2026, 8, 4, 12), {
+      recurrentTransactionId: "salary",
+    });
+    const { occurrences } = monthOccurrences([salary], [paid], ctx, sep, now);
+    expect(occurrences.map((o) => o.status)).toEqual(["paid"]);
+  });
+
+  it("ignores the item's payments from other months", () => {
+    const august = new Date(2026, 7, 28, 12);
+    const paid = tx(occurrenceId("fiber", august), 439, august, {
+      recurrentTransactionId: "fiber",
+    });
+    const moved = item("fiber", 439, new Date(2026, 9, 28, 12));
+    const { occurrences, notThisMonth } = monthOccurrences([moved], [paid], ctx, sep, now);
+    expect(occurrences).toEqual([]);
+    expect(notThisMonth).toEqual([moved]);
+  });
 });
 
 describe("groupByDay", () => {

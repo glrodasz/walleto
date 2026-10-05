@@ -1,6 +1,7 @@
 import {
   BACKFILL_MONTHS,
   anchorStartDate,
+  isSameSchedule,
   scheduleChoiceFromStartDate,
   toDateInputValue,
 } from "./scheduleAnchor";
@@ -158,5 +159,58 @@ describe("scheduleChoiceFromStartDate", () => {
   it("carries the second payment day for twice-a-month items", () => {
     const choice = scheduleChoiceFromStartDate(new Date(2026, 8, 1, 12), "BIWEEKLY", 15);
     expect(choice).toMatchObject({ dayOfMonth: 1, secondDayOfMonth: 15 });
+  });
+});
+
+describe("isSameSchedule", () => {
+  // Backfilled in October: the 28th, six months back.
+  const april28 = new Date(2026, 3, 28, 12);
+  const monthly = { frequency: "MONTHLY" as const, startDate: april28 };
+
+  it("keeps an untouched choice the same schedule, though anchoring it today would not", () => {
+    const choice = scheduleChoiceFromStartDate(april28, "MONTHLY");
+    expect(isSameSchedule(choice, monthly)).toBe(true);
+    expect(anchorStartDate(choice, NOW).getTime()).not.toBe(april28.getTime());
+  });
+
+  it("sees a new payment day or frequency as a change", () => {
+    expect(isSameSchedule({ frequency: "MONTHLY", dayOfMonth: 15 }, monthly)).toBe(false);
+    expect(isSameSchedule({ frequency: "YEARLY", dayOfMonth: 28, month: 3 }, monthly)).toBe(false);
+  });
+
+  it("ignores fields the frequency does not read", () => {
+    expect(
+      isSameSchedule(
+        { frequency: "MONTHLY", dayOfMonth: 28, month: 9, date: "2030-01-01" },
+        monthly
+      )
+    ).toBe(true);
+  });
+
+  it("compares the second day for twice-a-month items", () => {
+    const stored = { frequency: "BIWEEKLY" as const, startDate: april28, secondDayOfMonth: 12 };
+    expect(
+      isSameSchedule({ frequency: "BIWEEKLY", dayOfMonth: 28, secondDayOfMonth: 12 }, stored)
+    ).toBe(true);
+    expect(
+      isSameSchedule({ frequency: "BIWEEKLY", dayOfMonth: 28, secondDayOfMonth: 14 }, stored)
+    ).toBe(false);
+  });
+
+  it("treats any month of the same quarterly cycle as unchanged", () => {
+    const stored = { frequency: "QUARTERLY" as const, startDate: april28 };
+    expect(isSameSchedule({ frequency: "QUARTERLY", dayOfMonth: 28, month: 0 }, stored)).toBe(true);
+    expect(isSameSchedule({ frequency: "QUARTERLY", dayOfMonth: 28, month: 4 }, stored)).toBe(
+      false
+    );
+  });
+
+  it("compares month and day for yearly items, the date for one-time ones", () => {
+    const yearly = { frequency: "YEARLY" as const, startDate: april28 };
+    expect(isSameSchedule({ frequency: "YEARLY", dayOfMonth: 28, month: 3 }, yearly)).toBe(true);
+    expect(isSameSchedule({ frequency: "YEARLY", dayOfMonth: 28, month: 4 }, yearly)).toBe(false);
+    const once = { frequency: "ONE_TIME" as const, startDate: april28 };
+    expect(isSameSchedule({ frequency: "ONE_TIME", date: "2026-04-28" }, once)).toBe(true);
+    expect(isSameSchedule({ frequency: "ONE_TIME", date: "2026-04-29" }, once)).toBe(false);
   });
 });

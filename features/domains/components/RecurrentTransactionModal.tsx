@@ -32,6 +32,7 @@ import { isEssential } from "../../../helpers/essential";
 import {
   BACKFILL_MONTHS,
   anchorStartDate,
+  isSameSchedule,
   scheduleChoiceFromStartDate,
   toDateInputValue,
 } from "../../../helpers/scheduleAnchor";
@@ -342,12 +343,15 @@ export function RecurrentTransactionModal({
       return setFormError("Gain % must be a number (0 means break-even)");
     }
 
-    const startDate = anchorStartDate({
+    const schedule = {
       frequency: form.frequency,
       dayOfMonth: form.dayOfMonth,
       secondDayOfMonth: form.secondDayOfMonth,
       month: form.month,
       date: form.date,
+    };
+    const startDate = anchorStartDate({
+      ...schedule,
       backfill: !item && isRecurring && form.backfill,
     });
 
@@ -397,10 +401,13 @@ export function RecurrentTransactionModal({
         if (Object.keys(patch).length > 0) await updateTransaction(transaction.id, patch);
       } else if (item?.id) {
         const twiceMonthly = form.frequency === "BIWEEKLY" ? form.secondDayOfMonth : null;
-        const scheduleChanged =
-          form.frequency !== item.frequency ||
-          startDate.getTime() !== item.startDate.toDate().getTime() ||
-          twiceMonthly !== (item.secondDayOfMonth ?? null);
+        // Compare the choice, not the anchored date: an untouched schedule
+        // re-anchors to this month and would drop the item's history.
+        const scheduleChanged = !isSameSchedule(schedule, {
+          frequency: item.frequency,
+          startDate: item.startDate.toDate(),
+          secondDayOfMonth: item.secondDayOfMonth,
+        });
         // Moving to Debts goes first and carries the category and the debt:
         // a PATCH checks both against the item's domain as it stands.
         const converting = offersDebtToggle && form.paysDebt;
