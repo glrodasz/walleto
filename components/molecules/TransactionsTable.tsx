@@ -47,11 +47,12 @@ interface Props {
   loading?: boolean;
   onEdit?: (transaction: Transaction) => void;
   /**
-   * Why a row is hidden — by its recurring item ("dashboard") or by its
-   * category ("chart"), or not at all. The row dims either way; the pill says
-   * which, since the two are undone in different places.
+   * Every rule hiding a row: off the domain chart ("chart", by its recurring
+   * item or its category) and/or off the dashboard ("dashboard", by its
+   * recurring item). One pill each, since they are undone in different
+   * places; the row dims only when it is off this page's chart.
    */
-  hiddenReason?: (transaction: Transaction) => HiddenReason | null;
+  hiddenReasons?: (transaction: Transaction) => HiddenReason[];
   onDelete: (transactionId: string) => void;
   deletingId: string | null;
   /** Whether the payment method belongs in this domain's rows and filters. */
@@ -86,7 +87,7 @@ export function TransactionsTable({
   ctx,
   loading,
   onEdit,
-  hiddenReason,
+  hiddenReasons,
   onDelete,
   deletingId,
   showMethod = true,
@@ -209,7 +210,7 @@ export function TransactionsTable({
               labels={tagNames(t.tags, tags)}
               displayCurrency={displayCurrency}
               showMethod={showMethod}
-              hidden={hiddenReason?.(t) ?? null}
+              hidden={hiddenReasons?.(t) ?? []}
               onEdit={onEdit}
               onDelete={onDelete}
               deleting={deletingId === t.id}
@@ -342,7 +343,7 @@ interface RowProps {
   labels: string[];
   displayCurrency: Currency;
   showMethod: boolean;
-  hidden: HiddenReason | null;
+  hidden: HiddenReason[];
   onEdit?: (transaction: Transaction) => void;
   onDelete: (transactionId: string) => void;
   deleting: boolean;
@@ -401,23 +402,24 @@ function TransactionListRow({
       }
       name={t.name}
       badges={
-        hidden || outLabel || labels.length > 0 ? (
+        hidden.length > 0 || outLabel || labels.length > 0 ? (
           <>
             {outLabel && (
               <Badge variant="outline" tone="info" caps>
                 {outLabel}
               </Badge>
             )}
-            {hidden && (
+            {hidden.map((reason) => (
               <Badge
+                key={reason}
                 variant="outline"
                 tone="warning"
                 caps
-                icon={hidden === "chart" ? <Chart size={12} /> : <Home size={12} />}
+                icon={reason === "chart" ? <Chart size={12} /> : <Home size={12} />}
               >
                 Hidden
               </Badge>
-            )}
+            ))}
             {labels.map((l) => (
               <Badge key={l} variant="outline">
                 {l}
@@ -428,7 +430,7 @@ function TransactionListRow({
       }
       meta={meta}
       note={t.note}
-      muted={Boolean(hidden)}
+      muted={hidden.includes("chart")}
       amount={formatNative(signed(t.amount), t.currency, displayCurrency)}
       amountMeta={
         t.chargedAmount !== undefined && t.chargedCurrency

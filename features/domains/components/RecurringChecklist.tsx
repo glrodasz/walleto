@@ -80,12 +80,12 @@ interface RowProps {
   accent: string;
   actions: KebabAction[];
   /** Hidden from the dashboard — flagged with the house, the sidebar's own
-   *  glyph for that screen, so it cannot be read as "hidden from the chart". */
+   *  glyph for that screen, so it cannot be read as "hidden from the chart".
+   *  Not dimmed: the item still counts on its domain page. */
   hidden?: boolean;
   /** The user's own tags. */
   labels?: string[];
   note?: string;
-  muted?: boolean;
 }
 
 const STATUS_COLOR = (status: OccurrenceStatus, accent: string) =>
@@ -105,7 +105,6 @@ function OccurrenceRow({
   hidden,
   labels,
   note,
-  muted,
 }: RowProps) {
   const flags = [
     ...(hidden
@@ -128,7 +127,6 @@ function OccurrenceRow({
       badges={flags.length > 0 ? flags : undefined}
       note={note}
       meta={meta}
-      muted={muted}
       amount={amount}
       amountMeta={
         status ? (
@@ -222,7 +220,6 @@ export function RecurringChecklist({
                         hidden={Boolean(o.item.hiddenFromDashboard)}
                         labels={tagNames(o.item.tags, tags)}
                         note={o.item.note}
-                        muted={Boolean(o.item.hiddenFromDashboard)}
                         amount={formatNative(o.item.amount, o.item.currency, currency)}
                         status={o.status}
                         accent={config.accent}
@@ -271,7 +268,6 @@ export function RecurringChecklist({
                     hidden={Boolean(item.hiddenFromDashboard)}
                     labels={tagNames(item.tags, tags)}
                     note={item.note}
-                    muted={Boolean(item.hiddenFromDashboard)}
                     actions={[
                       { label: "Edit", onSelect: () => onEdit(item) },
                       ...hiddenAction(item, onToggleHidden),

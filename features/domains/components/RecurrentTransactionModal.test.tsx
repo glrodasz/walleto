@@ -13,9 +13,23 @@ const materializeNow = jest.fn().mockResolvedValue(undefined);
 jest.mock("../../../hooks/useUserDoc", () => ({
   useUserDoc: () => ({ userDoc: { mainCurrency: "USD" } }),
 }));
+const CATEGORIES = {
+  EXPENSE: [
+    { id: "c1", userId: "u", domain: "EXPENSE", name: "Groceries" },
+    { id: "c2", userId: "u", domain: "EXPENSE", name: "Mortgage" },
+  ],
+  SAVING: [{ id: "c1", userId: "u", domain: "SAVING", name: "Emergency fund" }],
+  DEBT: [
+    { id: "d1", userId: "u", domain: "DEBT", name: "Loans" },
+    { id: "d2", userId: "u", domain: "DEBT", name: "Mortgage" },
+  ],
+} as Record<string, unknown[]>;
+// While true, asking for debts still hands back the expense list — the
+// moment between a domain switch and the new snapshot.
+let staleDebts = false;
 jest.mock("../../../hooks/useCategories", () => ({
-  useCategories: () => ({
-    categories: [{ id: "c1", userId: "u", domain: "EXPENSE", name: "Groceries" }],
+  useCategories: (domain: string) => ({
+    categories: CATEGORIES[domain === "DEBT" && staleDebts ? "EXPENSE" : domain] ?? [],
     loading: false,
     error: null,
     create: jest.fn(),
@@ -51,6 +65,7 @@ jest.mock("../../../hooks/useInvestmentValuations", () => ({
 
 beforeEach(() => {
   recurringItems = [];
+  staleDebts = false;
   createItem.mockClear();
   updateItem.mockClear();
   createTransaction.mockClear();
@@ -177,16 +192,44 @@ describe("RecurrentTransactionModal — this pays off a debt", () => {
     render(<RecurrentTransactionModal domain="EXPENSE" open onClose={onClose} />);
     fill();
     fireEvent.click(screen.getByRole("checkbox", { name: /This pays off a debt/ }));
-    // The category list is now the debts' one (the mock hands back the same
-    // list); the pick moved with it, and a debt can be named.
+    // The category list is now the debts' one; with no debt "Groceries" the
+    // pick falls back to Loans, and a debt can be named.
     expect(screen.getByLabelText("Debt")).toBeInTheDocument();
-    expect(screen.getByLabelText("Category")).toHaveValue("c1");
+    expect(screen.getByLabelText("Category")).toHaveValue("d1");
     fireEvent.click(screen.getByRole("button", { name: "Add to plan" }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(createItem).toHaveBeenCalledWith(
-      expect.objectContaining({ domain: "DEBT", type: "LOAN_PAYMENT", categoryId: "c1" })
+      expect.objectContaining({ domain: "DEBT", type: "LOAN_PAYMENT", categoryId: "d1" })
     );
     expect(convertItem).not.toHaveBeenCalled();
+  });
+
+  it("moves the pick to the debt category with the same name", () => {
+    render(<RecurrentTransactionModal domain="EXPENSE" open onClose={jest.fn()} />);
+    fireEvent.change(screen.getByLabelText("Category"), { target: { value: "c2" } });
+    fireEvent.click(screen.getByRole("checkbox", { name: /This pays off a debt/ }));
+    expect(screen.getByLabelText("Category")).toHaveValue("d2");
+  });
+
+  it("never picks an expense category while the debt list is still loading", async () => {
+    const onClose = jest.fn();
+    const { rerender } = render(
+      <RecurrentTransactionModal domain="EXPENSE" open onClose={onClose} />
+    );
+    fireEvent.change(screen.getByLabelText("Category"), { target: { value: "c2" } });
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Apto Mortgage" } });
+    fireEvent.change(screen.getByLabelText("Amount"), { target: { value: "2504" } });
+    staleDebts = true;
+    fireEvent.click(screen.getByRole("checkbox", { name: /This pays off a debt/ }));
+    // The snapshot for debts lands.
+    staleDebts = false;
+    rerender(<RecurrentTransactionModal domain="EXPENSE" open onClose={onClose} />);
+    expect(screen.getByLabelText("Category")).toHaveValue("d2");
+    fireEvent.click(screen.getByRole("button", { name: "Add to plan" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(createItem).toHaveBeenCalledWith(
+      expect.objectContaining({ domain: "DEBT", categoryId: "d2" })
+    );
   });
 
   it("converts an existing expense item first, then patches the rest without the category", async () => {
@@ -208,10 +251,10 @@ describe("RecurrentTransactionModal — this pays off a debt", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: /This pays off a debt/ }));
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
-    expect(convertItem).toHaveBeenCalledWith("car", { domain: "DEBT", categoryId: "c1" });
+    expect(convertItem).toHaveBeenCalledWith("car", { domain: "DEBT", categoryId: "d1" });
     expect(updateItem).toHaveBeenCalledWith(
       "car",
-      expect.not.objectContaining({ categoryId: "c1" })
+      expect.not.objectContaining({ categoryId: expect.anything() })
     );
     expect(convertItem.mock.invocationCallOrder[0]).toBeLessThan(
       updateItem.mock.invocationCallOrder[0]

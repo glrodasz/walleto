@@ -7,6 +7,11 @@ import type { Currency } from "../../types";
 export interface GroupedTotal {
   key: string;
   label: string;
+  /**
+   * What tells two same-named groups apart, drawn muted next to the label:
+   * a payment method's type ("SEB · Bank transfer" vs "SEB · Debit card").
+   */
+  detail?: string;
   /** Converted into the reporting currency. */
   total: number;
   count: number;
@@ -65,13 +70,34 @@ export function GroupedTotalsList({
               </IconDisc>
             ) : undefined
           }
-          name={g.label}
+          name={
+            g.detail ? (
+              <>
+                {g.label}
+                <span className="detail">{g.detail}</span>
+              </>
+            ) : (
+              g.label
+            )
+          }
           meta={`${g.count} transaction${g.count === 1 ? "" : "s"} · ${Math.round(g.share * 100)}%`}
-          progress={{ ratio: g.share, color, label: `${g.label} share` }}
+          progress={{
+            ratio: g.share,
+            color,
+            label: `${g.detail ? `${g.label} (${g.detail})` : g.label} share`,
+          }}
           amount={formatAmount(g.total, currency)}
           onClick={onSelect ? () => onSelect(g.key) : undefined}
         />
       ))}
+      <style jsx>{`
+        .detail {
+          margin-left: 8px;
+          font-size: 0.75rem;
+          font-weight: 500;
+          color: var(--fg-2);
+        }
+      `}</style>
     </ListItems>
   );
 }

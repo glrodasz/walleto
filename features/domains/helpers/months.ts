@@ -6,7 +6,7 @@ import { formatRelativeDay } from "../../../helpers/formatRelativeDay";
 import { formatDate, monthKey } from "../../../helpers/dates";
 import { paymentMethodLabel } from "../../../helpers/paymentMethodLabel";
 import type { GroupedTotal } from "../../../components/molecules/GroupedTotalsList";
-import { DEFAULT_MONTH_PERIOD } from "../../../constants";
+import { DEFAULT_MONTH_PERIOD, PAYMENT_METHOD_TYPE_LABELS } from "../../../constants";
 import type {
   Currency,
   PaymentMethod,
@@ -331,14 +331,19 @@ export const NO_METHOD_KEY = "__none";
  * a group that netted out below zero (withdrawals) takes no share, so the
  * others cannot read past 100%.
  */
-function toGroupedTotals(
-  buckets: Map<string, { label: string; total: number; count: number }>,
-  whole: number
-): GroupedTotal[] {
+interface Bucket {
+  label: string;
+  detail?: string;
+  total: number;
+  count: number;
+}
+
+function toGroupedTotals(buckets: Map<string, Bucket>, whole: number): GroupedTotal[] {
   return Array.from(buckets.entries())
     .map(([key, b]) => ({
       key,
       label: b.label,
+      ...(b.detail ? { detail: b.detail } : {}),
       total: b.total,
       count: b.count,
       share: whole > 0 ? Math.max(0, b.total) / whole : 0,
@@ -379,15 +384,16 @@ export function groupByMethod(
   ctx: MoneyContext
 ): GroupedTotal[] {
   const byId = new Map(methods.map((m) => [m.id ?? "", m]));
-  const buckets = new Map<string, { label: string; total: number; count: number }>();
+  const buckets = new Map<string, Bucket>();
   let whole = 0;
   for (const t of transactions) {
     const value = convertedAmount(t, ctx);
     whole += Math.max(0, value);
-    const key =
-      t.paymentMethodId && byId.has(t.paymentMethodId) ? t.paymentMethodId : NO_METHOD_KEY;
+    const method = t.paymentMethodId ? byId.get(t.paymentMethodId) : undefined;
+    const key = method && t.paymentMethodId ? t.paymentMethodId : NO_METHOD_KEY;
     const b = buckets.get(key) ?? {
-      label: key === NO_METHOD_KEY ? "No method" : paymentMethodLabel(byId.get(key)),
+      label: method ? paymentMethodLabel(method) : "No method",
+      detail: method ? PAYMENT_METHOD_TYPE_LABELS[method.type] : undefined,
       total: 0,
       count: 0,
     };
