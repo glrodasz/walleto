@@ -20,7 +20,7 @@ const meta = {
   args: {
     title: "Monthly plan",
     badge: { label: "On plan", tone: "success" },
-    figure: <Amount value={1382.95} currency="USD" size="lg" colorize />,
+    figure: <Amount value={1382.95} currency="USD" size="lg" markNegative />,
     sub: "left to allocate each month",
     stats: FIVE,
   },
@@ -37,7 +37,7 @@ export const ThreeStatsWithNote: Story = {
   args: {
     title: "Net worth",
     badge: { label: "Today", tone: "info" },
-    figure: <Amount value={27040} currency="USD" size="lg" colorize />,
+    figure: <Amount value={27040} currency="USD" size="lg" markNegative />,
     sub: "What you own minus what you owe · last checked Sep 12",
     stats: [
       FIVE[2],

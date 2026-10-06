@@ -285,11 +285,11 @@ export function InvestmentValuePanel({
           }
 
           .up {
-            color: var(--accent);
+            color: var(--positive);
           }
 
           .down {
-            color: var(--accent-hot);
+            color: var(--negative);
           }
 
           .history {
