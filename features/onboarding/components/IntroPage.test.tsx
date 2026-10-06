@@ -47,6 +47,9 @@ describe("IntroPage — the Welcome", () => {
     ONBOARDING_STEPS.forEach((step, n) => {
       expect(rows[n]).toHaveTextContent(step.label);
       expect(rows[n]).toHaveTextContent(step.summary);
+      // Each icon in its step's own hue, not the per-build accent.
+      const disc = rows[n].querySelector(".disc") as HTMLElement;
+      expect(disc.style.getPropertyValue("--disc-color")).toBe(step.tint);
     });
   });
 

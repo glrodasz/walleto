@@ -72,12 +72,13 @@ features/
                 (≥1200px) the left column is that screen's slide (`IntroPanel`: scene, label, h2 title and body;
                 sticky) and the right column is the step; below that, a single column with the slide's text on top,
                 no scene and no glass (`.card` becomes `display: contents`), so the form stays close. The pairing
-                lives in `data/steps.ts` (`ONBOARDING_STEPS`: label, href, icon, accent, `intro`, `summary`), the
+                lives in `data/steps.ts` (`ONBOARDING_STEPS`: label, href, icon, accent, `tint`, `intro`, `summary`), the
                 copy in `data/introSlides` (`INTRO_SLIDES`, a Record by id), and `stepNav(id)` gives the number,
                 Back and Next: no page writes them by hand. Before step 1 comes the welcome (`/onboarding`,
                 IntroPage): `planner` on the left (the only slide that keeps its scene when stacked: there's no form
                 under it) and "What we'll set up" on the right (`SetupOverview`, one `ListItem` per step with its
-                `summary`), no stepper, and "Start setup". The guard sends you there while `onboardingIntroSeen` is
+                `summary`; each icon in its step's `tint` — `--setup-*` or the domain color, never `--accent`, which
+                is red on staging; the stepper keeps the accent), no stepper, and "Start setup". The guard sends you there while `onboardingIntroSeen` is
                 unset, and straight to step 1 after that. There's no separate tour: Settings › Setup has a single
                 tool, "Run setup again" (re-seeds categories, sets `onboardingCompleted: false` and opens the
                 welcome). Each scene is icons in IconDisc on a fixed 320×200 canvas (`intro/SceneCanvas`; id →

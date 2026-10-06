@@ -2,9 +2,12 @@ import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { IconDisc } from "../../../components/molecules/IconDisc";
 import { ListItem, ListItems } from "../../../components/molecules/ListItem";
-import { ONBOARDING_STEPS, stepAccent } from "../data/steps";
+import { ONBOARDING_STEPS } from "../data/steps";
 
-/** The Welcome's right-hand side: every setup step ahead, one line each. */
+/**
+ * The Welcome's right-hand side: every setup step ahead, one line each, each
+ * icon in its step's own hue.
+ */
 export function SetupOverview() {
   return (
     <Card>
@@ -17,7 +20,7 @@ export function SetupOverview() {
           <ListItem
             key={step.href}
             leading={
-              <IconDisc color={stepAccent(step)} size={36}>
+              <IconDisc color={step.tint} size={36}>
                 <step.Icon size={16} />
               </IconDisc>
             }

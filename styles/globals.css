@@ -189,6 +189,14 @@
   --domain-saving-soft: color-mix(in srgb, var(--domain-saving) 16%, transparent);
   --domain-debt-soft: color-mix(in srgb, var(--domain-debt) 16%, transparent);
 
+  /* The onboarding's other steps, each with a hue of its own (its overview
+     icon). Not the accent: that changes per build. Income / Expenses use
+     their domain colors. */
+  --setup-categories: #7c3aed;
+  --setup-methods: #ca8a04;
+  --setup-currencies: #ea580c;
+  --setup-review: #2563eb;
+
   /* Categorical palette for "by currency" charts, in legend order. */
   --palette-1: #16a34a;
   --palette-2: #0ea5e9;
@@ -344,6 +352,11 @@
   --domain-investment-soft: color-mix(in srgb, var(--domain-investment) 18%, transparent);
   --domain-saving-soft: color-mix(in srgb, var(--domain-saving) 18%, transparent);
   --domain-debt-soft: color-mix(in srgb, var(--domain-debt) 18%, transparent);
+
+  --setup-categories: #b794ff;
+  --setup-methods: #ffd84d;
+  --setup-currencies: #ff9a4d;
+  --setup-review: #6ea8ff;
 
   --palette-1: #7cffb2;
   --palette-2: #5ee8ff;

@@ -13,6 +13,11 @@ export interface OnboardingStep {
   Icon: ComponentType<IconProps>;
   /** The domain colour for the Income / Expenses steps; the app accent otherwise. */
   accent?: string;
+  /**
+   * The step's own hue, for its icon in the Welcome's overview. Never the
+   * accent, which changes per build (red on staging read as an error).
+   */
+  tint: string;
   /** The intro slide beside this step. */
   intro: IntroSlideId;
   /** One line for the Welcome's "What we'll set up" (a ListItem meta: keep it short). */
@@ -29,6 +34,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStep[] = [
     label: "Categories",
     href: "/onboarding/categories",
     Icon: Tag,
+    tint: "var(--setup-categories)",
     intro: "clarity",
     summary: "How your plan is sorted. Keep the defaults or add your own.",
   },
@@ -37,6 +43,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStep[] = [
     label: "Payment methods",
     href: "/onboarding/methods",
     Icon: CreditCard,
+    tint: "var(--setup-methods)",
     intro: "later",
     summary: "The cards and accounts your bills are charged to.",
   },
@@ -45,6 +52,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStep[] = [
     label: "Currencies",
     href: "/onboarding/currencies",
     Icon: Coins,
+    tint: "var(--setup-currencies)",
     intro: "currencies",
     summary: "The currency you plan in, and any others you use.",
   },
@@ -54,6 +62,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStep[] = [
     href: "/onboarding/incomes",
     Icon: ArrowUp,
     accent: "var(--domain-income)",
+    tint: "var(--domain-income)",
     intro: "income",
     summary: "Your salary, or whatever lands each month.",
   },
@@ -63,6 +72,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStep[] = [
     href: "/onboarding/expenses",
     Icon: ArrowDown,
     accent: "var(--domain-expense)",
+    tint: "var(--domain-expense)",
     intro: "expenses",
     summary: "Rent, utilities, subscriptions: the bills you remember.",
   },
@@ -71,6 +81,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStep[] = [
     label: "Review",
     href: "/onboarding/review",
     Icon: Check,
+    tint: "var(--setup-review)",
     intro: "worth",
     summary: "Your plan as the dashboard will show it.",
   },

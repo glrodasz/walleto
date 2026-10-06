@@ -46,6 +46,21 @@ describe("ONBOARDING_STEPS", () => {
   });
 });
 
+describe("overview tints", () => {
+  it("gives every step its own hue, never the per-build accent", () => {
+    const tints = ONBOARDING_STEPS.map((s) => s.tint);
+    expect(tints).toEqual([
+      "var(--setup-categories)",
+      "var(--setup-methods)",
+      "var(--setup-currencies)",
+      "var(--domain-income)",
+      "var(--domain-expense)",
+      "var(--setup-review)",
+    ]);
+    expect(new Set(tints).size).toBe(tints.length);
+  });
+});
+
 describe("INTRO_SLIDES", () => {
   it("marks a key phrase on every slide", () => {
     for (const slide of Object.values(INTRO_SLIDES)) expect(slide.body).toMatch(/\*\*.+?\*\*/);
