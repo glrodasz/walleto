@@ -1,6 +1,7 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 
 const createMock = jest.fn();
+const updateMock = jest.fn();
 const removeMock = jest.fn();
 let itemsValue: {
   id?: string;
@@ -19,14 +20,17 @@ jest.mock("../../../hooks/useRecurrentTransactions", () => ({
     items: itemsValue,
     loading: loadingValue,
     create: createMock,
+    update: updateMock,
     remove: removeMock,
   }),
 }));
 
+const updateTransactionMock = jest.fn().mockResolvedValue(undefined);
 const createTransactionMock = jest.fn().mockResolvedValue("tx1");
 jest.mock("../../../hooks/useTransactions", () => ({
   createTransaction: (...args: unknown[]) => createTransactionMock(...args),
   deleteTransaction: jest.fn().mockResolvedValue(undefined),
+  updateTransaction: (...args: unknown[]) => updateTransactionMock(...args),
 }));
 
 jest.mock("../../../hooks/useCategories", () => ({
@@ -51,7 +55,7 @@ jest.mock("../../../hooks/usePaymentMethods", () => ({
   }),
 }));
 
-import { useRecurrentStep } from "./useRecurrentStep";
+import { SAVED_ROW_ERROR, useRecurrentStep } from "./useRecurrentStep";
 
 const fillValidRow = (
   result: { current: ReturnType<typeof useRecurrentStep> },
@@ -70,6 +74,9 @@ const ts = (date: Date) => ({ toDate: () => date });
 
 beforeEach(() => {
   createMock.mockReset().mockResolvedValue("new-rt");
+  updateMock.mockReset().mockResolvedValue(undefined);
+  updateTransactionMock.mockClear();
+  createTransactionMock.mockClear();
   removeMock.mockReset().mockResolvedValue(undefined);
   itemsValue = [];
   loadingValue = false;
@@ -248,5 +255,75 @@ describe("useRecurrentStep", () => {
     expect(result.current.rows[0].paymentMethodId).toBe("pm1");
     expect(result.current.rows[0].currency).toBe("EUR");
     expect(result.current.rows[0].dayOfMonth).toBe(17);
+  });
+
+  describe("editing what is already saved", () => {
+    const saved = () => [
+      {
+        id: "rt1",
+        categoryId: "cat1",
+        name: "Freelance",
+        amount: 1200,
+        currency: "EUR",
+        frequency: "MONTHLY",
+        type: "SALARY",
+        startDate: ts(new Date(2026, 2, 17, 12)),
+      },
+    ];
+
+    const hydrated = async () => {
+      itemsValue = saved();
+      const hook = renderHook(() => useRecurrentStep("INCOME", "USD"));
+      await waitFor(() => expect(hook.result.current.rows[0].id).toBe("rt1"));
+      return hook;
+    };
+
+    it("sends only the fields that changed", async () => {
+      const { result } = await hydrated();
+      act(() => result.current.update(result.current.rows[0].key, { amount: "1500" }));
+      await act(async () => {
+        await result.current.save();
+      });
+
+      expect(updateMock).toHaveBeenCalledWith("rt1", { amount: 1500 });
+      expect(createMock).not.toHaveBeenCalled();
+    });
+
+    it("leaves an untouched saved row alone, history included", async () => {
+      const { result } = await hydrated();
+      await act(async () => {
+        await result.current.save();
+      });
+      expect(updateMock).not.toHaveBeenCalled();
+    });
+
+    it("refuses to save a saved row that was emptied", async () => {
+      const { result } = await hydrated();
+      act(() => result.current.update(result.current.rows[0].key, { name: " " }));
+
+      await expect(result.current.save()).rejects.toThrow(SAVED_ROW_ERROR);
+      expect(updateMock).not.toHaveBeenCalled();
+    });
+
+    it("edits a one-time row saved earlier on the step as a transaction", async () => {
+      const { result } = renderHook(() => useRecurrentStep("EXPENSE", "USD"));
+      fillValidRow(result, { frequency: "ONE_TIME", date: "2026-03-10" });
+      await act(async () => {
+        await result.current.save();
+      });
+      expect(result.current.rows[0].id).toBe("tx1");
+
+      act(() => result.current.update(result.current.rows[0].key, { amount: "80" }));
+      await act(async () => {
+        await result.current.save();
+      });
+      expect(updateTransactionMock).toHaveBeenCalledWith("tx1", { amount: 80 });
+
+      // Saved again: a second save with no change sends nothing more.
+      await act(async () => {
+        await result.current.save();
+      });
+      expect(updateTransactionMock).toHaveBeenCalledTimes(1);
+    });
   });
 });

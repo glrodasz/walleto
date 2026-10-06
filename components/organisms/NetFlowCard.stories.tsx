@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
 import { NetFlowCard } from "./NetFlowCard";
-import { boxed } from "../../../stories/decorators";
-import { STORY_FLOW_SUMMARY } from "../../../stories/fixtures/flow";
+import { boxed } from "../../stories/decorators";
+import { STORY_FLOW_SUMMARY } from "../../stories/fixtures/flow";
 
 const meta = {
-  title: "Organisms/Dashboard/NetFlowCard",
+  title: "Organisms/NetFlowCard",
   component: NetFlowCard,
   tags: ["autodocs"],
   args: { flow: STORY_FLOW_SUMMARY, currency: "USD" },
@@ -18,6 +18,8 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 /** Mixed currencies converted with rates: the figure is marked approximate. */
 export const Approximate: Story = { args: { approximate: true } };
+/** Only some stats: the onboarding review, before there are investments or debts. */
+export const IncomeAndExpenses: Story = { args: { stats: ["income", "expenses"] } };
 export const Negative: Story = {
   args: {
     flow: { income: 3000, expenses: 2400, investments: 400, savings: 300, debts: 200, net: -300 },

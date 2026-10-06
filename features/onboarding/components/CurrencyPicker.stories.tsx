@@ -20,6 +20,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The main-currency chips on the incomes step. */
+/** The "Your currency" chips on the Currencies step. */
 export const Default: Story = {};
 export const Colombia: Story = { args: { value: "COP" } };

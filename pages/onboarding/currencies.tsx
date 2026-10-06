@@ -1,7 +1,7 @@
 import { withPageAuthRequired } from "@auth0/nextjs-auth0/client";
 import { OnboardingLayout } from "../../features/onboarding/components/OnboardingLayout";
-import { MethodsStep } from "../../features/onboarding/components/MethodsStep";
-import { useMethodsStep } from "../../features/onboarding/hooks/useMethodsStep";
+import { CurrenciesStep } from "../../features/onboarding/components/CurrenciesStep";
+import { useCurrenciesStep } from "../../features/onboarding/hooks/useCurrenciesStep";
 import { useStepNavigation } from "../../features/onboarding/hooks/useStepNavigation";
 import { WizardActions } from "../../features/onboarding/components/WizardActions";
 import { ContinueLater } from "../../features/onboarding/components/ContinueLater";
@@ -11,32 +11,33 @@ import { useLeaveOnboarding } from "../../features/onboarding/hooks/useLeaveOnbo
 // guard every Next/Back became a serverless round trip (often a cold start)
 // before the next step could render. Static pages switch instantly, and the
 // data is still guarded by Firestore rules and the API routes.
-function OnboardingMethods() {
-  const state = useMethodsStep();
-  const { busy, error, flush, go } = useStepNavigation(async () => {
-    await state.save();
-  }, "Could not save your payment methods. Please try again.");
+function OnboardingCurrencies() {
+  const state = useCurrenciesStep();
+  const { busy, error, flush, go } = useStepNavigation(
+    state.save,
+    "Could not save your currencies. Please try again."
+  );
   const later = useLeaveOnboarding(flush);
 
   return (
     <OnboardingLayout
-      step={3}
-      description="How you pay: your cards and accounts, so each plan item knows where it is charged."
+      step={2}
+      description="Pick the currency your plan is read in, and every currency your money moves in."
       onNavigate={go}
       busy={busy || later.leaving}
       footer={
         <WizardActions
-          leading={<ContinueLater step={3} onClick={later.leave} busy={busy || later.leaving} />}
-          onBack={() => go("/onboarding/currencies")}
-          onNext={() => go("/onboarding/incomes")}
+          leading={<ContinueLater step={2} onClick={later.leave} busy={busy || later.leaving} />}
+          onBack={() => go("/onboarding/categories")}
+          onNext={() => go("/onboarding/methods")}
           busy={busy || later.leaving}
           error={error ?? later.error}
         />
       }
     >
-      <MethodsStep state={state} />
+      <CurrenciesStep state={state} />
     </OnboardingLayout>
   );
 }
 
-export default withPageAuthRequired(OnboardingMethods);
+export default withPageAuthRequired(OnboardingCurrencies);
