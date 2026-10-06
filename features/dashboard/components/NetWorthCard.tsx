@@ -87,7 +87,7 @@ export function NetWorthCard({ worth, currency, loading = false, approximate = f
           value={worth.net}
           currency={currency}
           size="lg"
-          colorize
+          markNegative
           approximate={approximate}
         />
       }

@@ -7,6 +7,9 @@ interface Props {
   size?: "sm" | "md" | "lg";
   /** Sign-based coloring: --positive for >= 0, --negative below — never the build-tinted --accent. For net-flow figures. */
   colorize?: boolean;
+  /** Regular color when >= 0, --negative below (the "-" comes from the
+   *  formatter). For headline figures where positive is the normal case. */
+  markNegative?: boolean;
   /** Append the ISO code — pass when the value's currency differs from the
    *  reporting currency; USD/MXN/COP all render "$" and are otherwise
    *  indistinguishable. */
@@ -31,11 +34,17 @@ export function Amount({
   currency,
   size = "md",
   colorize = false,
+  markNegative = false,
   showCode = false,
   approximate = false,
 }: Props) {
   const { formatAmount } = useMoneyFormat();
-  const color = colorize ? (value >= 0 ? "var(--positive)" : "var(--negative)") : "var(--fg-0)";
+  const color =
+    (colorize || markNegative) && value < 0
+      ? "var(--negative)"
+      : colorize
+        ? "var(--positive)"
+        : "var(--fg-0)";
 
   return (
     <span className="amount">

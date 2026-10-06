@@ -13,6 +13,11 @@ describe("Amount", () => {
     expect(screen.getByText("≈")).toBeInTheDocument();
   });
 
+  it("writes the minus sign on a negative figure", () => {
+    render(<Amount value={-320} currency="USD" markNegative />);
+    expect(screen.getByText(/-\$320\.00/)).toBeInTheDocument();
+  });
+
   it("appends the ISO code when asked", () => {
     render(<Amount value={100} currency="COP" showCode />);
     expect(screen.getByText("COP")).toBeInTheDocument();

@@ -49,7 +49,13 @@ export function NetFlowCard({ flow, currency, approximate = false }: Props) {
           : { label: "On plan", tone: "success" }
       }
       figure={
-        <Amount value={flow.net} currency={currency} size="lg" colorize approximate={approximate} />
+        <Amount
+          value={flow.net}
+          currency={currency}
+          size="lg"
+          markNegative
+          approximate={approximate}
+        />
       }
       sub={
         overCommitted
