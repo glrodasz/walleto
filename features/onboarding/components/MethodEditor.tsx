@@ -1,9 +1,8 @@
 import { Select } from "../../../components/atoms/Select";
 import { TextField } from "../../../components/atoms/TextField";
 import { Combobox } from "../../../components/atoms/Combobox";
-import { Button } from "../../../components/atoms/Button";
 import { Last4Field } from "../../../components/molecules/Last4Field";
-import { Trash } from "../../../components/atoms/Icons";
+import { EditorFooter } from "../../../components/molecules/EditorFooter";
 import {
   CARD_TYPES,
   NETWORK_SUGGESTIONS,
@@ -98,15 +97,11 @@ export function MethodEditor({
       </div>
 
       <div className="footer">
-        {canRemove && (
-          <Button variant="ghost" size="sm" className="remove" onClick={onRemove}>
-            <Trash size={16} />
-            Remove
-          </Button>
-        )}
-        <Button variant="secondary" size="sm" className="done" onClick={onDone}>
-          Done
-        </Button>
+        <EditorFooter
+          onRemove={canRemove ? onRemove : undefined}
+          removeLabel={`Remove ${row.name || "payment method"}`}
+          onDone={onDone}
+        />
       </div>
 
       <style jsx>{`
@@ -158,21 +153,6 @@ export function MethodEditor({
           margin: 0;
           font-size: 0.72rem;
           color: var(--accent-hot);
-        }
-
-        .footer {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        /* Button is a child component: its className needs :global(). */
-        .footer :global(.remove) {
-          color: var(--accent-hot);
-        }
-
-        .footer :global(.done) {
-          margin-left: auto;
         }
       `}</style>
     </div>

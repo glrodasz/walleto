@@ -135,6 +135,9 @@
   /* A pane nested inside a pane — a stats block on a card, a progress track.
      No blur of its own: what is behind it is already blurred glass. */
   --glass-inset: rgba(255, 255, 255, 0.45);
+  /* A card set into an inset pane — one of a list of editable rows — one step
+     darker, so neighbouring cards read as separate cards. */
+  --glass-sunken: rgba(15, 23, 42, 0.045);
   --glass-blur: 20px;
   --glass-blur-lg: 34px;
   --glass-saturate: 1.7;
@@ -313,6 +316,7 @@
   --glass-field: rgba(255, 255, 255, 0.06);
   --glass-raised: rgba(52, 52, 70, 0.82);
   --glass-inset: rgba(255, 255, 255, 0.05);
+  --glass-sunken: rgba(0, 0, 0, 0.22);
   --glass-blur: 20px;
   --glass-blur-lg: 34px;
   --glass-saturate: 1.4;
@@ -496,6 +500,7 @@
     --glass-field: var(--bg-1);
     --glass-raised: var(--bg-1);
     --glass-inset: var(--bg-2);
+    --glass-sunken: var(--bg-3);
   }
 }
 
@@ -508,6 +513,7 @@
     --glass-field: var(--bg-1);
     --glass-raised: var(--bg-1);
     --glass-inset: var(--bg-2);
+    --glass-sunken: var(--bg-3);
     --glass-blur: 0px;
     --glass-blur-lg: 0px;
     --scrim-blur: 0px;

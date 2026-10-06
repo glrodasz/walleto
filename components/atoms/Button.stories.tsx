@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
 import { fn } from "storybook/test";
 import { Button } from "./Button";
-import { Plus } from "./Icons";
+import { Plus, Trash } from "./Icons";
 
 const meta = {
   title: "Atoms/Button",
@@ -9,7 +9,7 @@ const meta = {
   tags: ["autodocs"],
   args: { children: "Save changes", variant: "primary", size: "md", onClick: fn() },
   argTypes: {
-    variant: { control: "radio", options: ["primary", "secondary", "ghost"] },
+    variant: { control: "radio", options: ["primary", "secondary", "ghost", "danger"] },
     size: { control: "radio", options: ["sm", "md"] },
   },
 } satisfies Meta<typeof Button>;
@@ -20,6 +20,18 @@ type Story = StoryObj<typeof meta>;
 export const Primary: Story = {};
 export const Secondary: Story = { args: { variant: "secondary", children: "Cancel" } };
 export const Ghost: Story = { args: { variant: "ghost", children: "Skip for now" } };
+/** A destructive action; see EditorFooter for where it goes. */
+export const Danger: Story = {
+  args: {
+    variant: "danger",
+    size: "sm",
+    children: (
+      <>
+        <Trash size={16} /> Remove
+      </>
+    ),
+  },
+};
 export const Small: Story = { args: { size: "sm", children: "Add" } };
 export const Disabled: Story = { args: { disabled: true } };
 export const WithIcon: Story = {
@@ -39,6 +51,7 @@ export const Gallery: Story = {
       <Button variant="primary">Primary</Button>
       <Button variant="secondary">Secondary</Button>
       <Button variant="ghost">Ghost</Button>
+      <Button variant="danger">Danger</Button>
       <Button variant="primary" size="sm">
         Small
       </Button>
