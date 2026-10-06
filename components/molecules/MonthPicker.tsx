@@ -191,9 +191,6 @@ export function MonthPicker({ value, windows, onChange, onStep }: Props) {
       >
         <ChevronLeft size={16} />
       </button>
-      <span className="icon" aria-hidden="true">
-        <Calendar size={16} />
-      </span>
       <button
         ref={triggerRef}
         type="button"
@@ -210,6 +207,9 @@ export function MonthPicker({ value, windows, onChange, onStep }: Props) {
           }
         }}
       >
+        <span className="icon" aria-hidden="true">
+          <Calendar size={16} />
+        </span>
         <span className="text long" aria-hidden="true">
           {current?.longLabel ?? ""}
         </span>
@@ -305,17 +305,25 @@ export function MonthPicker({ value, windows, onChange, onStep }: Props) {
           cursor: default;
         }
 
+        /* Inside the month button, so its hover and open state light the
+           calendar glyph and the month as one target. */
         .icon {
           display: inline-flex;
           color: var(--fg-2);
-          padding-left: 4px;
+          transition: color 150ms ease;
+        }
+
+        .month:hover .icon,
+        .month[aria-expanded="true"] .icon {
+          color: var(--fg-0);
         }
 
         .month {
           display: inline-flex;
           align-items: center;
+          gap: 6px;
           height: 34px;
-          padding: 0 8px;
+          padding: 0 10px 0 8px;
           border: none;
           border-radius: var(--r-pill);
           background: transparent;
