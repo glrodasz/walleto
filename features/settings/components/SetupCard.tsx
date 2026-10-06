@@ -4,7 +4,7 @@ import { Compass, Play, Rocket } from "../../../components/atoms/Icons";
 import { IconDisc } from "../../../components/molecules/IconDisc";
 import { t } from "../../../helpers/i18n";
 import { useUserDoc } from "../../../hooks/useUserDoc";
-import { ONBOARDING_ENTRY, ONBOARDING_INTRO } from "../../onboarding/helpers/routes";
+import { ONBOARDING_ENTRY, ONBOARDING_TOUR } from "../../onboarding/helpers/routes";
 import { SettingsCard } from "./SettingsCard";
 
 /** Tools that reshape the account: re-running the assisted setup, or replaying its intro. */
@@ -61,16 +61,14 @@ export function SetupCard() {
           type="button"
           className="tool"
           aria-label="Watch the intro"
-          onClick={() => router.push(ONBOARDING_INTRO)}
+          onClick={() => router.push(ONBOARDING_TOUR)}
         >
           <IconDisc size={40}>
             <Compass size={16} />
           </IconDisc>
           <span className="text">
             <span className="title">Watch the intro</span>
-            <span className="desc">
-              Replay the short tour of what the app is for, shown before setup the first time.
-            </span>
+            <span className="desc">Replay the short tour of what the app is for.</span>
           </span>
           <span className="chevron" aria-hidden="true">
             ›

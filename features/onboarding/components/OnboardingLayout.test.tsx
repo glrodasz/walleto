@@ -139,6 +139,25 @@ describe("OnboardingLayout", () => {
     expect(screen.getByText("body")).toBeInTheDocument();
   });
 
+  it("previews the steps at step 0: all ahead, none current, none clickable", () => {
+    const { container } = render(
+      <OnboardingLayout title="Welcome" step={0}>
+        <p>body</p>
+      </OnboardingLayout>
+    );
+
+    const nav = screen.getByRole("navigation", { name: "Setup progress" });
+    expect(nav).toHaveClass("stepper--preview");
+    ONBOARDING_STEPS.forEach((s) => {
+      const tab = screen.getByRole("button", { name: s.label });
+      expect(tab).toBeDisabled();
+      expect(tab).not.toHaveAttribute("aria-current");
+      expect(tab.closest("li")).toHaveClass("tab--todo");
+    });
+    expect(container.querySelector(".fill")).toHaveStyle({ width: "0%" });
+    expect(nav.style.getPropertyValue("--current-accent")).toBe("var(--accent)");
+  });
+
   it("only stretches to the screen's height when asked to fill", () => {
     const { container, rerender } = render(
       <OnboardingLayout step={1}>

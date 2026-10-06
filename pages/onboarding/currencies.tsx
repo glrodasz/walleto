@@ -1,6 +1,7 @@
 import { withPageAuthRequired } from "@auth0/nextjs-auth0/client";
 import { OnboardingLayout } from "../../features/onboarding/components/OnboardingLayout";
 import { CurrenciesStep } from "../../features/onboarding/components/CurrenciesStep";
+import { StepLead } from "../../features/onboarding/components/StepLead";
 import { useCurrenciesStep } from "../../features/onboarding/hooks/useCurrenciesStep";
 import { useStepNavigation } from "../../features/onboarding/hooks/useStepNavigation";
 import { WizardActions } from "../../features/onboarding/components/WizardActions";
@@ -22,7 +23,6 @@ function OnboardingCurrencies() {
   return (
     <OnboardingLayout
       step={2}
-      description="Pick the currency your plan is read in, and every currency your money moves in."
       onNavigate={go}
       busy={busy || later.leaving}
       footer={
@@ -35,6 +35,7 @@ function OnboardingCurrencies() {
         />
       }
     >
+      <StepLead id="currencies" />
       <CurrenciesStep state={state} />
     </OnboardingLayout>
   );

@@ -27,9 +27,6 @@ export function ReviewStep({ state, onEdit }: Props) {
         approximate={approximate}
         stats={["income", "expenses"]}
       />
-      <p className="note">
-        Investments, savings and debts join the plan later, from their own pages.
-      </p>
 
       {groups.map((group) => (
         <PlanPreviewList
@@ -48,15 +45,10 @@ export function ReviewStep({ state, onEdit }: Props) {
           gap: 20px;
         }
 
-        .note,
         .loading {
           margin: 0;
           font-size: 0.8125rem;
           color: var(--fg-2);
-        }
-
-        .note {
-          margin-top: -8px;
         }
       `}</style>
     </div>

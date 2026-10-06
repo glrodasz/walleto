@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { withPageAuthRequired } from "@auth0/nextjs-auth0/client";
 import { OnboardingLayout } from "../../features/onboarding/components/OnboardingLayout";
 import { ReviewStep } from "../../features/onboarding/components/ReviewStep";
+import { StepLead } from "../../features/onboarding/components/StepLead";
 import { useReviewStep } from "../../features/onboarding/hooks/useReviewStep";
 import { WizardActions } from "../../features/onboarding/components/WizardActions";
 import { ContinueLater } from "../../features/onboarding/components/ContinueLater";
@@ -58,6 +59,7 @@ function OnboardingReview() {
         />
       }
     >
+      <StepLead id="worth" />
       <ReviewStep state={state} onEdit={go} />
     </OnboardingLayout>
   );

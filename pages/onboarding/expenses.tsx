@@ -1,6 +1,7 @@
 import { withPageAuthRequired } from "@auth0/nextjs-auth0/client";
 import { OnboardingLayout } from "../../features/onboarding/components/OnboardingLayout";
 import { RecurrentStep } from "../../features/onboarding/components/RecurrentStep";
+import { StepLead } from "../../features/onboarding/components/StepLead";
 import { useRecurrentStep } from "../../features/onboarding/hooks/useRecurrentStep";
 import { useStepNavigation } from "../../features/onboarding/hooks/useStepNavigation";
 import { WizardActions } from "../../features/onboarding/components/WizardActions";
@@ -37,6 +38,7 @@ function OnboardingExpenses() {
         />
       }
     >
+      <StepLead id="essentials" />
       <section className="expenses">
         <h2 className="heading">What do you pay every month?</h2>
         <RecurrentStep state={state} showPaymentMethod />

@@ -3,7 +3,11 @@
  * expectations before setup starts: a planner rather than a logbook, start by
  * seeing where the money goes, nothing has to be finished today.
  *
- * `id` also picks the scene IntroStage draws above the text.
+ * First run shows only the Welcome (below); the full deck is the tour
+ * Settings › Setup replays. Three slides also lead the wizard step they
+ * explain (StepLead), so their copy lives here once.
+ *
+ * `id` also picks the scene drawn above (or beside) the text.
  */
 export type IntroSlideId = "planner" | "clarity" | "later" | "essentials" | "worth" | "currencies";
 
@@ -47,8 +51,9 @@ export const INTRO_SLIDES: readonly IntroSlide[] = [
   {
     id: "worth",
     label: "After setup",
-    title: "Investments, savings and debts come later.",
-    body: "They're **not part of this setup**. When you're ready, add them from their own pages and Walleto sums everything into your **net worth**.",
+    title: "The bigger picture comes later.",
+    // Leads the Review step without its title, so the body names its subject.
+    body: "**Investments, savings and debts** aren't part of this setup. When you're ready, add them from their own pages and Walleto sums everything into your **net worth**.",
   },
   {
     id: "currencies",
@@ -57,3 +62,18 @@ export const INTRO_SLIDES: readonly IntroSlide[] = [
     body: "Paid in one currency, renting in another, saving in a third? Every amount **stays in its own currency**, and Walleto **converts only when it adds things up**.",
   },
 ];
+
+/**
+ * The one screen a new user sees before the wizard: the planner, clarity and
+ * "no rush" slides in one card, on the planner's scene. The other slides
+ * either lead their step or wait for the tour.
+ */
+export const WELCOME: IntroSlide = {
+  id: "planner",
+  label: "A planner, not a logbook",
+  title: "Plan your month. Skip logging every coffee.",
+  body: "Tell Walleto **what usually comes in and goes out**, and it shows **where your money goes** and whether the month is on plan. Add **what you know now** — you can change anything later.",
+};
+
+export const introSlide = (id: IntroSlideId): IntroSlide =>
+  INTRO_SLIDES.find((slide) => slide.id === id)!;

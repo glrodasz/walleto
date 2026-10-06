@@ -10,6 +10,7 @@ import { CurrenciesStep } from "./CurrenciesStep";
 import { ReviewStep } from "./ReviewStep";
 import { WizardActions } from "./WizardActions";
 import { ContinueLater } from "./ContinueLater";
+import { StepLead } from "./StepLead";
 import { useMethodsStep } from "../hooks/useMethodsStep";
 import { useCurrenciesStep } from "../hooks/useCurrenciesStep";
 import { useReviewStep } from "../hooks/useReviewStep";
@@ -22,7 +23,8 @@ import { hookDefaults } from "../../../stories/fixtures/hookDefaults";
 import { STORY_USER_DOC } from "../../../stories/fixtures/user";
 
 /*
- * The intro and the six wizard pages composed exactly as pages/onboarding/*.tsx do.
+ * The Welcome, the tour and the six wizard pages composed exactly as
+ * pages/onboarding/*.tsx do.
  * The page files themselves stay out of Storybook: they're wrapped in the
  * Auth0 client guard. Navigation goes to the
  * Storybook router mock, so "Next" logs an action instead of leaving.
@@ -62,7 +64,6 @@ function Currencies() {
   return (
     <OnboardingLayout
       step={2}
-      description="Pick the currency your plan is read in, and every currency your money moves in."
       onNavigate={go}
       busy={busy || later.leaving}
       footer={
@@ -75,6 +76,7 @@ function Currencies() {
         />
       }
     >
+      <StepLead id="currencies" />
       <CurrenciesStep state={state} />
     </OnboardingLayout>
   );
@@ -161,6 +163,7 @@ function Expenses() {
         />
       }
     >
+      <StepLead id="essentials" />
       <section style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         <h2 style={{ margin: 0, fontSize: "0.9375rem", fontWeight: 600, color: "var(--fg-1)" }}>
           What do you pay every month?
@@ -193,6 +196,7 @@ function Review() {
         />
       }
     >
+      <StepLead id="worth" />
       <ReviewStep state={state} onEdit={go} />
     </OnboardingLayout>
   );
@@ -209,7 +213,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** A new user, before the wizard (the demo profile is onboarded, which would make it a replay). */
+/** A new user, before the wizard (the demo profile is already onboarded). */
 const firstRun = () => {
   mocked(useUserDoc).mockReturnValue({
     ...hookDefaults.useUserDoc(),
@@ -217,21 +221,27 @@ const firstRun = () => {
   });
 };
 
-export const Step0Intro: Story = {
+/** The one screen before step 1, with the stepper as a preview. */
+export const Step0Welcome: Story = {
   render: () => <IntroPage />,
   parameters: at("/onboarding"),
   beforeEach: firstRun,
 };
-/** Opened from Settings › Setup by someone already onboarded: Close / Done lead back. */
+/** Settings › Setup › "Watch the intro": the full tour; Close / Done lead back. */
 export const IntroReplay: Story = {
   render: () => <IntroPage />,
-  parameters: at("/onboarding"),
+  parameters: at("/onboarding", { tour: "1" }),
 };
-export const MobileIntro: Story = {
+export const MobileWelcome: Story = {
   render: () => <IntroPage />,
   parameters: at("/onboarding"),
   globals: MOBILE,
   beforeEach: firstRun,
+};
+export const MobileIntroReplay: Story = {
+  render: () => <IntroPage />,
+  parameters: at("/onboarding", { tour: "1" }),
+  globals: MOBILE,
 };
 export const Step1Categories: Story = {};
 export const Step2Currencies: Story = {

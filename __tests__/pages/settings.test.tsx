@@ -122,7 +122,7 @@ describe("SettingsPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Watch the intro" }));
 
-    expect(pushMock).toHaveBeenCalledWith("/onboarding");
+    expect(pushMock).toHaveBeenCalledWith("/onboarding?tour=1");
     expect(updateMock).not.toHaveBeenCalled();
   });
 

@@ -44,7 +44,22 @@ export const Busy: Story = {
 /** Without onNavigate the stepper is display-only. */
 export const DisplayOnlyStepper: Story = { args: { onNavigate: undefined } };
 export const Mobile: Story = { globals: { viewport: { value: "mobile1", isRotated: false } } };
-/** No step: the intro uses the same shell (title, body, footer) without the stepper. */
+/** Step 0, the Welcome: the stepper as a preview, every step still ahead. */
+export const WelcomePreview: Story = {
+  args: {
+    step: 0,
+    title: "Welcome",
+    description: undefined,
+    onNavigate: undefined,
+    footer: <WizardActions onNext={fn()} nextLabel="Start setup" />,
+  },
+};
+/** On phones no tab is current, so the six icons spread over the track. */
+export const MobileWelcomePreview: Story = {
+  ...WelcomePreview,
+  globals: { viewport: { value: "mobile1", isRotated: false } },
+};
+/** No step: the tour uses the same shell (title, body, footer) without the stepper. */
 export const NoStepper: Story = {
   args: {
     step: undefined,

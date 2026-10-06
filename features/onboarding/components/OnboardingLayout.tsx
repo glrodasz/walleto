@@ -37,7 +37,10 @@ export const ONBOARDING_STEPS: readonly OnboardingStep[] = [
 export const stepAccent = (step: OnboardingStep | undefined) => step?.accent ?? "var(--accent)";
 
 interface Props {
-  /** 1-based index into ONBOARDING_STEPS. Without it (the intro) there is no stepper. */
+  /**
+   * 1-based index into ONBOARDING_STEPS. 0 is the Welcome: the stepper as a
+   * preview, every step still ahead. Without it (the tour) there is no stepper.
+   */
   step?: number;
   /** The heading, and the tab title before " — Walleto". */
   title?: string;
@@ -50,7 +53,7 @@ interface Props {
   busy?: boolean;
   /**
    * On phones, stretch the body down to the footer bar so a single child
-   * (with `flex: 1`) can take the whole screen. The intro uses it.
+   * (with `flex: 1`) can take the whole screen. The Welcome and the tour use it.
    */
   fill?: boolean;
 }
@@ -94,7 +97,7 @@ export function OnboardingLayout({
 
           {step !== undefined && (
             <nav
-              className="stepper"
+              className={`stepper${step === 0 ? " stepper--preview" : ""}`}
               aria-label="Setup progress"
               style={
                 { "--current-accent": stepAccent(ONBOARDING_STEPS[step - 1]) } as CSSProperties
@@ -349,6 +352,12 @@ export function OnboardingLayout({
 
           .tab:not(.tab--current) .tab-label {
             display: none;
+          }
+
+          /* The Welcome's preview has no current tab to stretch, so the six
+             icons spread over the track instead of bunching up on the left. */
+          .stepper--preview .tabs {
+            justify-content: space-between;
           }
 
           /* The layout is a single-line flex row, so its min-height already
