@@ -57,9 +57,9 @@ export function ValuationModal({
   onClose,
 }: Props) {
   const { formatAmount, decimals } = useMoneyFormat();
-  const { sanitize, parse, toInput } = useDecimalInput();
+  const { sanitize, parse, toInput, toPrefill } = useDecimalInput();
   const [date, setDate] = useState(toDateInputValue(new Date()));
-  const [gain, setGain] = useState("0");
+  const [gain, setGain] = useState("");
   const [value, setValue] = useState("");
   const [note, setNote] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -72,18 +72,18 @@ export function ValuationModal({
     setError(null);
     if (valuation) {
       setDate(toDateInputValue(valuation.asOf.toDate()));
-      setGain(toInput(roundTo(valuation.gainPct, 2)));
-      setValue(toInput(roundTo(valuation.value, decimals)));
+      setGain(toPrefill(roundTo(valuation.gainPct, 2)));
+      setValue(toPrefill(roundTo(valuation.value, decimals)));
       setNote(valuation.note ?? "");
       setCategoryId(valuation.categoryId ?? "");
     } else {
       setDate(toDateInputValue(new Date()));
-      setGain("0");
-      setValue(toInput(roundTo(owes ? (latestValue ?? 0) : costBasis, decimals)));
+      setGain("");
+      setValue(toPrefill(roundTo(owes ? (latestValue ?? 0) : costBasis, decimals)));
       setNote("");
       setCategoryId(suggestedCategoryId ?? "");
     }
-  }, [open, valuation, costBasis, suggestedCategoryId, owes, latestValue, toInput, decimals]);
+  }, [open, valuation, costBasis, suggestedCategoryId, owes, latestValue, toPrefill, decimals]);
 
   const basis = valuation ? valuation.costBasis : costBasis;
   // A gain % needs something to be a percentage of: with withdrawals the net
@@ -108,7 +108,9 @@ export function ValuationModal({
 
   const submit = async () => {
     const v = parse(value) ?? NaN;
-    const pct = valueOnly ? 0 : (parse(gain) ?? NaN);
+    // An empty gain follows the value: the placeholder 0 only means "no gain"
+    // when the value says so too.
+    const pct = valueOnly ? 0 : (parse(gain) ?? gainFromValue(basis, v) ?? 0);
     if (!(v >= 0) || !Number.isFinite(pct)) {
       return setError(owes ? "Enter the balance owed" : "Enter a value or a gain %");
     }
@@ -176,6 +178,7 @@ export function ValuationModal({
               inputMode="decimal"
               prefix={CURRENCY_SYMBOL[currency]}
               align="right"
+              placeholder="0"
               value={value}
               onValueChange={onValueChange}
             />
@@ -193,6 +196,7 @@ export function ValuationModal({
                 label="Gain %"
                 inputMode="decimal"
                 align="right"
+                placeholder="0"
                 value={gain}
                 onValueChange={onGainChange}
               />
@@ -201,6 +205,7 @@ export function ValuationModal({
                 inputMode="decimal"
                 prefix={CURRENCY_SYMBOL[currency]}
                 align="right"
+                placeholder="0"
                 value={value}
                 onValueChange={onValueChange}
               />

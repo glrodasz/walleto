@@ -26,4 +26,18 @@ describe("cadenceSections", () => {
       expect(s.frequencies).toContain(s.defaultFrequency);
     }
   });
+
+  it("has exactly one primary section, and it is the monthly one, first", () => {
+    expect(CADENCE_SECTIONS.filter((s) => s.primary).map((s) => s.id)).toEqual(["monthly"]);
+    expect(CADENCE_SECTIONS[0].primary).toBe(true);
+  });
+
+  it("names the cadence on every add chip", () => {
+    const label = (id: string, more = false) =>
+      CADENCE_SECTIONS.find((s) => s.id === id)!.addLabel("expense", more);
+    expect(label("monthly")).toBe("Add a monthly expense");
+    expect(label("yearly", true)).toBe("Add another yearly expense");
+    expect(label("other")).toBe("Add an expense on another cadence");
+    expect(label("oneTime")).toBe("Add a one-time expense");
+  });
 });

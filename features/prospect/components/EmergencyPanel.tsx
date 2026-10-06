@@ -27,11 +27,10 @@ const MAX_MONTHS = 60;
  */
 function useCommittedNumber(value: number, commit: (n: number) => void, integer = false) {
   const decimal = useDecimalInput();
-  const show = (n: number) => (n === 0 ? "" : decimal.toInput(n));
-  const [text, setText] = useState(() => show(value));
+  const [text, setText] = useState(() => decimal.toPrefill(value));
 
   useEffect(() => {
-    if ((decimal.parse(text) ?? 0) !== value) setText(show(value));
+    if ((decimal.parse(text) ?? 0) !== value) setText(decimal.toPrefill(value));
     // Only an outside change of the stored value re-seeds the field.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
@@ -42,7 +41,7 @@ function useCommittedNumber(value: number, commit: (n: number) => void, integer 
     onBlur: () => {
       const parsed = Math.max(0, decimal.parse(text) ?? 0);
       const next = integer ? Math.min(MAX_MONTHS, Math.round(parsed)) : parsed;
-      setText(show(next));
+      setText(decimal.toPrefill(next));
       if (next !== value) commit(next);
     },
   };

@@ -325,12 +325,12 @@ describe("groupByTag / groupByMethod", () => {
     expect(groups[0].share).toBeCloseTo(150 / 175);
   });
 
-  it("groups by payment method with the table label", () => {
+  it("groups by payment method with the table label and its type", () => {
     const groups = groupByMethod(rows, methods, ctx);
-    expect(groups.map((g) => [g.key, g.label, g.total])).toEqual([
-      ["m1", "SEB", 100],
-      ["__none", "No method", 50],
-      ["m2", "Visa - 4242", 25],
+    expect(groups.map((g) => [g.key, g.label, g.detail, g.total])).toEqual([
+      ["m1", "SEB", "Bank transfer", 100],
+      ["__none", "No method", undefined, 50],
+      ["m2", "Visa - 4242", "Credit card", 25],
     ]);
   });
 });

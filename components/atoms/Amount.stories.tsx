@@ -22,6 +22,7 @@ export const Small: Story = { args: { size: "sm", value: 15.49 } };
 /** Positive reads as accent, negative as hot. */
 export const ColorizedNegative: Story = { args: { colorize: true, value: -320 } };
 export const ColorizedPositive: Story = { args: { colorize: true, value: 1180 } };
+export const MarkNegative: Story = { args: { markNegative: true, value: -320 } };
 /** Converted totals that mix currencies without live rates. */
 export const Approximate: Story = { args: { approximate: true, value: 6231.4 } };
 export const WithCode: Story = { args: { showCode: true, currency: "EUR", value: 900 } };

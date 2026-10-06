@@ -5,7 +5,7 @@ import type { StatRow } from "../../../components/molecules/StatCard";
 import { CategoryBreakdown } from "../../../components/molecules/CategoryBreakdown";
 import Skeleton from "../../../components/Skeleton";
 import { ErrorState } from "../../../components/atoms/ErrorState";
-import { NetFlowCard } from "./NetFlowCard";
+import { NetFlowCard } from "../../../components/organisms/NetFlowCard";
 import { NetWorthCard } from "./NetWorthCard";
 import { CashFlowCard } from "./CashFlowCard";
 import { UpcomingPayments } from "./UpcomingPayments";

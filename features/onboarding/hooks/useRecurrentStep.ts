@@ -1,8 +1,12 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useCategories } from "../../../hooks/useCategories";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { useRecurrentTransactions } from "../../../hooks/useRecurrentTransactions";
-import { createTransaction, deleteTransaction } from "../../../hooks/useTransactions";
+import {
+  createTransaction,
+  deleteTransaction,
+  updateTransaction,
+} from "../../../hooks/useTransactions";
 import { useDraftRows } from "../../../hooks/useDraftRows";
 import type { DraftRow } from "../../../hooks/useDraftRows";
 import {
@@ -11,8 +15,10 @@ import {
   toDateInputValue,
 } from "../../../helpers/scheduleAnchor";
 import { sectionFor } from "../helpers/cadenceSections";
+import { oneTimePatch, recurrentPatch } from "../helpers/recurrentPatch";
 import { useDecimalInput } from "../../../hooks/useDecimalInput";
 import { saveAll } from "../../../utils/saveAll";
+import { UserFacingError } from "../../../utils/errorMessage";
 import type { Currency, Domain, Frequency, RecurrentTransactionType } from "../../../types";
 
 export interface RecurrentRow extends DraftRow {
@@ -32,6 +38,10 @@ export interface RecurrentRow extends DraftRow {
   date: string;
 }
 
+/** A saved row can be edited, but not emptied: removing it is the way out. */
+export const SAVED_ROW_ERROR =
+  "Every saved item needs a category, a name and an amount — or remove it.";
+
 /** Sensible default `type` so rows aren't all recorded as OTHER. */
 const DEFAULT_TYPE: Partial<Record<Domain, RecurrentTransactionType>> = {
   INCOME: "SALARY",
@@ -43,11 +53,14 @@ const DEFAULT_TYPE: Partial<Record<Domain, RecurrentTransactionType>> = {
  *   its own currency after that (an EUR retainer next to a COP rent is normal).
  */
 export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
-  const { items, loading, create, remove } = useRecurrentTransactions(domain);
+  const { items, loading, create, update, remove } = useRecurrentTransactions(domain);
   const { categories } = useCategories(domain);
   const { methods } = usePaymentMethods();
   const { parse, toInput } = useDecimalInput();
   const [backfill, setBackfill] = useState(true);
+  // One-time rows are ledger entries that are never re-read: what each one
+  // looked like when it saved is what an edit is compared against.
+  const savedOneTime = useRef(new Map<string, RecurrentRow>());
 
   const saved = useMemo(
     () =>
@@ -99,59 +112,101 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
     return DEFAULT_TYPE[domain] ?? "OTHER";
   };
 
-  /**
-   * Persists rows that don't have an id yet; returns the number created.
-   * The POSTs go out in parallel; rows that saved keep their id even if
-   * another fails, so a retry doesn't duplicate them.
-   */
-  const save = () => {
-    const rows = draft.rows.filter((row) => {
-      const amount = parse(row.amount) ?? NaN;
-      // Skip rows the user left blank or only partially filled.
-      return !row.id && row.categoryId && row.name.trim() && amount > 0;
+  const amountOf = (row: RecurrentRow) => parse(row.amount) ?? NaN;
+
+  /** New rows that would be sent; blank or half-filled ones are skipped. */
+  const pending = () =>
+    draft.rows.filter((row) => !row.id && row.categoryId && row.name.trim() && amountOf(row) > 0);
+
+  /** Saved rows the owner edited here, each with the request that applies it. */
+  const edits = () =>
+    draft.rows.flatMap((row) => {
+      if (!row.id) return [];
+      const id = row.id;
+      const amount = amountOf(row);
+      const before = savedOneTime.current.get(id);
+      if (before) {
+        const patch = oneTimePatch(row, before, { amount, beforeAmount: amountOf(before) });
+        return patch ? [{ row, send: () => updateTransaction(id, patch) }] : [];
+      }
+      const item = items.find((i) => i.id === id);
+      const patch = item
+        ? recurrentPatch(row, item, { amount, type: typeFor(row), backfill })
+        : null;
+      return patch ? [{ row, send: () => update(id, patch) }] : [];
     });
 
-    return saveAll(
-      rows,
-      (row) => {
-        const amount = parse(row.amount) as number;
-        const startDate = anchorStartDate({
-          frequency: row.frequency,
-          dayOfMonth: row.dayOfMonth,
-          secondDayOfMonth: row.secondDayOfMonth,
-          month: row.month,
-          date: row.date,
-          backfill: backfill && sectionFor(row.frequency).recurring,
-        });
+  /**
+   * Persists rows that don't have an id yet and patches the saved ones that
+   * changed; returns the number created. Saved rows are checked before any
+   * request goes out. The requests go out in parallel; rows that saved keep
+   * their id even if another fails, so a retry doesn't duplicate them.
+   */
+  const save = async () => {
+    if (
+      draft.rows.some((row) => row.id && !(row.categoryId && row.name.trim() && amountOf(row) > 0))
+    ) {
+      throw new UserFacingError(SAVED_ROW_ERROR);
+    }
 
-        // A one-time row is a ledger entry, not a plan: it becomes a dated
-        // transaction and is not re-hydrated as a row on the way back.
-        return row.frequency === "ONE_TIME"
-          ? createTransaction({
-              domain,
-              categoryId: row.categoryId,
-              name: row.name.trim(),
-              amount,
-              currency: row.currency,
-              occurredAt: startDate.toISOString(),
-              status: "PAID",
-              ...(row.paymentMethodId ? { paymentMethodId: row.paymentMethodId } : {}),
-            })
-          : create({
-              domain,
-              categoryId: row.categoryId,
-              name: row.name.trim(),
-              amount,
-              currency: row.currency,
-              frequency: row.frequency,
-              ...(row.frequency === "BIWEEKLY" ? { secondDayOfMonth: row.secondDayOfMonth } : {}),
-              type: typeFor(row),
-              startDate: startDate.toISOString(),
-              ...(row.paymentMethodId ? { paymentMethodId: row.paymentMethodId } : {}),
-            });
-      },
-      (row, id) => draft.update(row.key, { id })
-    );
+    const [created, patched] = await Promise.allSettled([
+      saveAll(
+        pending(),
+        (row) => {
+          const amount = amountOf(row);
+          const startDate = anchorStartDate({
+            frequency: row.frequency,
+            dayOfMonth: row.dayOfMonth,
+            secondDayOfMonth: row.secondDayOfMonth,
+            month: row.month,
+            date: row.date,
+            backfill: backfill && sectionFor(row.frequency).recurring,
+          });
+
+          // A one-time row is a ledger entry, not a plan: it becomes a dated
+          // transaction and is not re-hydrated as a row on the way back.
+          return row.frequency === "ONE_TIME"
+            ? createTransaction({
+                domain,
+                categoryId: row.categoryId,
+                name: row.name.trim(),
+                amount,
+                currency: row.currency,
+                occurredAt: startDate.toISOString(),
+                status: "PAID",
+                ...(row.paymentMethodId ? { paymentMethodId: row.paymentMethodId } : {}),
+              })
+            : create({
+                domain,
+                categoryId: row.categoryId,
+                name: row.name.trim(),
+                amount,
+                currency: row.currency,
+                frequency: row.frequency,
+                ...(row.frequency === "BIWEEKLY" ? { secondDayOfMonth: row.secondDayOfMonth } : {}),
+                type: typeFor(row),
+                startDate: startDate.toISOString(),
+                ...(row.paymentMethodId ? { paymentMethodId: row.paymentMethodId } : {}),
+              });
+        },
+        (row, id) => {
+          if (row.frequency === "ONE_TIME") savedOneTime.current.set(id, { ...row, id });
+          draft.update(row.key, { id });
+        }
+      ),
+      saveAll(
+        edits(),
+        ({ send }) => send(),
+        ({ row }) => {
+          if (row.id && savedOneTime.current.has(row.id)) {
+            savedOneTime.current.set(row.id, { ...row });
+          }
+        }
+      ),
+    ]);
+    if (created.status === "rejected") throw created.reason;
+    if (patched.status === "rejected") throw patched.reason;
+    return created.value;
   };
 
   /**
@@ -162,6 +217,7 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
     const row = draft.rows.find((r) => r.key === key);
     draft.removeAt(key);
     if (row?.id) {
+      savedOneTime.current.delete(row.id);
       const del = row.frequency === "ONE_TIME" ? deleteTransaction(row.id) : remove(row.id);
       del.catch((err) => console.error("Failed to delete row:", err));
     }
@@ -169,6 +225,7 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
 
   return {
     ...draft,
+    domain,
     addTo,
     removeAt,
     save,

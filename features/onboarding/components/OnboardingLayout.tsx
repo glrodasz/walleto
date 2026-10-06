@@ -1,14 +1,40 @@
 import { useEffect } from "react";
-import type { ReactNode } from "react";
+import type { ComponentType, CSSProperties, ReactNode } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
+import { ArrowDown, ArrowUp, Check, Coins, CreditCard, Tag } from "../../../components/atoms/Icons";
+import type { IconProps } from "../../../components/atoms/Icons";
 
-export const ONBOARDING_STEPS = [
-  { label: "Categories", href: "/onboarding/categories" },
-  { label: "Payment methods", href: "/onboarding/methods" },
-  { label: "Income", href: "/onboarding/incomes" },
-  { label: "Expenses", href: "/onboarding/expenses" },
-] as const;
+interface OnboardingStep {
+  label: string;
+  href: string;
+  /** Stands in for a step number: the steps are tabs, not a forced sequence. */
+  Icon: ComponentType<IconProps>;
+  /** The domain colour for the Income / Expenses steps; the app accent otherwise. */
+  accent?: string;
+}
+
+export const ONBOARDING_STEPS: readonly OnboardingStep[] = [
+  { label: "Categories", href: "/onboarding/categories", Icon: Tag },
+  { label: "Currencies", href: "/onboarding/currencies", Icon: Coins },
+  { label: "Payment methods", href: "/onboarding/methods", Icon: CreditCard },
+  {
+    label: "Income",
+    href: "/onboarding/incomes",
+    Icon: ArrowUp,
+    accent: "var(--domain-income)",
+  },
+  {
+    label: "Expenses",
+    href: "/onboarding/expenses",
+    Icon: ArrowDown,
+    accent: "var(--domain-expense)",
+  },
+  { label: "Review", href: "/onboarding/review", Icon: Check },
+];
+
+/** The colour a step is tinted with (stepper tab, progress fill, its panels). */
+export const stepAccent = (step: OnboardingStep | undefined) => step?.accent ?? "var(--accent)";
 
 interface Props {
   /** 1-based index into ONBOARDING_STEPS. Without it (the intro) there is no stepper. */
@@ -67,22 +93,36 @@ export function OnboardingLayout({
           </header>
 
           {step !== undefined && (
-            <nav className="stepper" aria-label="Setup progress">
+            <nav
+              className="stepper"
+              aria-label="Setup progress"
+              style={
+                { "--current-accent": stepAccent(ONBOARDING_STEPS[step - 1]) } as CSSProperties
+              }
+            >
               <ol className="tabs">
                 {ONBOARDING_STEPS.map((s, i) => {
                   const n = i + 1;
                   const state = n === step ? "current" : n < step ? "done" : "todo";
                   const isCurrent = n === step;
                   return (
-                    <li key={s.href} className={`tab tab--${state}`}>
+                    <li
+                      key={s.href}
+                      className={`tab tab--${state}`}
+                      style={{ "--step-accent": stepAccent(s) } as CSSProperties}
+                    >
                       <button
                         type="button"
                         className="tab-btn"
+                        aria-label={s.label}
                         aria-current={isCurrent ? "step" : undefined}
                         disabled={isCurrent || busy || !onNavigate}
                         onClick={() => onNavigate?.(s.href)}
                       >
-                        {n}. {s.label}
+                        <span className="tab-icon">
+                          <s.Icon size={14} />
+                        </span>
+                        <span className="tab-label">{s.label}</span>
                       </button>
                     </li>
                   );
@@ -151,8 +191,10 @@ export function OnboardingLayout({
           margin: 0;
           padding: 0;
           display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 8px;
+          /* One equal column per step, however many there are. */
+          grid-auto-flow: column;
+          grid-auto-columns: minmax(0, 1fr);
+          gap: 6px;
         }
 
         .tab {
@@ -161,22 +203,56 @@ export function OnboardingLayout({
 
         .tab-btn {
           width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 8px;
           padding: 6px 8px;
           border: none;
           border-radius: var(--r-sm);
           background: transparent;
           font: inherit;
-          font-size: 0.9375rem;
+          font-size: 0.875rem;
           font-weight: 600;
           text-align: left;
           color: var(--fg-2);
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
           cursor: pointer;
           transition:
             background 0.15s,
             color 0.15s;
+        }
+
+        .tab-icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 26px;
+          height: 26px;
+          flex-shrink: 0;
+          border-radius: 999px;
+          border: 1px solid var(--glass-rim);
+          color: var(--fg-2);
+          transition:
+            background 0.15s,
+            color 0.15s,
+            border-color 0.15s;
+        }
+
+        .tab-label {
+          min-width: 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .tab--done .tab-icon {
+          color: var(--step-accent);
+          border-color: var(--step-accent);
+        }
+
+        .tab--current .tab-icon {
+          color: var(--step-accent);
+          border-color: var(--step-accent);
+          background: color-mix(in srgb, var(--step-accent) 18%, transparent);
         }
 
         .tab-btn:hover:not(:disabled) {
@@ -187,7 +263,7 @@ export function OnboardingLayout({
         /* The current step is disabled only so it can't be re-navigated to;
            it must not look faded like a truly unavailable control would. */
         .tab--current .tab-btn {
-          color: var(--fg-0);
+          color: var(--step-accent);
           cursor: default;
         }
 
@@ -209,8 +285,10 @@ export function OnboardingLayout({
         .fill {
           height: 100%;
           border-radius: 999px;
-          background: var(--accent);
-          transition: width 240ms ease;
+          background: var(--current-accent);
+          transition:
+            width 240ms ease,
+            background 240ms ease;
         }
 
         .description {
@@ -249,13 +327,28 @@ export function OnboardingLayout({
             font-size: 1.125rem;
           }
 
+          /* Six labels don't fit a phone: every step is its icon, and only the
+             current one keeps its name next to it. */
           .tabs {
+            display: flex;
             gap: 4px;
           }
 
+          .tab {
+            flex: 0 0 auto;
+          }
+
+          .tab--current {
+            flex: 1 1 auto;
+          }
+
           .tab-btn {
-            font-size: 0.75rem;
-            padding: 6px 4px;
+            font-size: 0.8125rem;
+            padding: 4px;
+          }
+
+          .tab:not(.tab--current) .tab-label {
+            display: none;
           }
 
           /* The layout is a single-line flex row, so its min-height already

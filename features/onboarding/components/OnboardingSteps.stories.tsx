@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import type { Meta, StoryObj } from "@storybook/nextjs";
 import { mocked } from "storybook/test";
 import { useRouter } from "next/router";
@@ -7,10 +6,13 @@ import { IntroPage } from "./IntroPage";
 import { CategoriesStep } from "./CategoriesStep";
 import { MethodsStep } from "./MethodsStep";
 import { RecurrentStep } from "./RecurrentStep";
-import { CurrencyPicker } from "./CurrencyPicker";
+import { CurrenciesStep } from "./CurrenciesStep";
+import { ReviewStep } from "./ReviewStep";
 import { WizardActions } from "./WizardActions";
 import { ContinueLater } from "./ContinueLater";
 import { useMethodsStep } from "../hooks/useMethodsStep";
+import { useCurrenciesStep } from "../hooks/useCurrenciesStep";
+import { useReviewStep } from "../hooks/useReviewStep";
 import { useRecurrentStep } from "../hooks/useRecurrentStep";
 import { useStepNavigation } from "../hooks/useStepNavigation";
 import { useLeaveOnboarding } from "../hooks/useLeaveOnboarding";
@@ -18,10 +20,9 @@ import { useUserDoc } from "../../../hooks/useUserDoc";
 import { at, MOBILE, screen } from "../../../stories/templates";
 import { hookDefaults } from "../../../stories/fixtures/hookDefaults";
 import { STORY_USER_DOC } from "../../../stories/fixtures/user";
-import type { Currency } from "../../../types";
 
 /*
- * The intro and the four wizard pages composed exactly as pages/onboarding/*.tsx do.
+ * The intro and the six wizard pages composed exactly as pages/onboarding/*.tsx do.
  * The page files themselves stay out of Storybook: they're wrapped in the
  * Auth0 client guard. Navigation goes to the
  * Storybook router mock, so "Next" logs an action instead of leaving.
@@ -40,13 +41,41 @@ function Categories() {
       footer={
         <WizardActions
           leading={<ContinueLater step={1} onClick={leave} busy={leaving} />}
-          onNext={() => go("/onboarding/methods")}
+          onNext={() => go("/onboarding/currencies")}
           busy={leaving}
           error={error}
         />
       }
     >
       <CategoriesStep />
+    </OnboardingLayout>
+  );
+}
+
+function Currencies() {
+  const state = useCurrenciesStep();
+  const { busy, error, flush, go } = useStepNavigation(
+    state.save,
+    "Could not save your currencies. Please try again."
+  );
+  const later = useLeaveOnboarding(flush);
+  return (
+    <OnboardingLayout
+      step={2}
+      description="Pick the currency your plan is read in, and every currency your money moves in."
+      onNavigate={go}
+      busy={busy || later.leaving}
+      footer={
+        <WizardActions
+          leading={<ContinueLater step={2} onClick={later.leave} busy={busy || later.leaving} />}
+          onBack={() => go("/onboarding/categories")}
+          onNext={() => go("/onboarding/methods")}
+          busy={busy || later.leaving}
+          error={error ?? later.error}
+        />
+      }
+    >
+      <CurrenciesStep state={state} />
     </OnboardingLayout>
   );
 }
@@ -59,14 +88,14 @@ function Methods() {
   const later = useLeaveOnboarding(flush);
   return (
     <OnboardingLayout
-      step={2}
+      step={3}
       description="How you pay: your cards and accounts, so each plan item knows where it is charged."
       onNavigate={go}
       busy={busy || later.leaving}
       footer={
         <WizardActions
-          leading={<ContinueLater step={2} onClick={later.leave} busy={busy || later.leaving} />}
-          onBack={() => go("/onboarding/categories")}
+          leading={<ContinueLater step={3} onClick={later.leave} busy={busy || later.leaving} />}
+          onBack={() => go("/onboarding/currencies")}
           onNext={() => go("/onboarding/incomes")}
           busy={busy || later.leaving}
           error={error ?? later.error}
@@ -79,26 +108,20 @@ function Methods() {
 }
 
 function Incomes() {
-  const { userDoc, update } = useUserDoc();
-  const [currency, setCurrency] = useState<Currency>("USD");
-  const [touched, setTouched] = useState(false);
-  const state = useRecurrentStep("INCOME", currency);
-  useEffect(() => {
-    if (!touched && userDoc?.mainCurrency) setCurrency(userDoc.mainCurrency);
-  }, [userDoc?.mainCurrency, touched]);
+  const { userDoc } = useUserDoc();
+  const state = useRecurrentStep("INCOME", userDoc?.mainCurrency ?? "USD");
   const { busy, error, flush, go } = useStepNavigation(async () => {
-    if (currency !== userDoc?.mainCurrency) await update({ mainCurrency: currency });
     await state.save();
   }, "Could not save your income. Please try again.");
   const later = useLeaveOnboarding(flush);
   return (
     <OnboardingLayout
-      step={3}
+      step={4}
       onNavigate={go}
       busy={busy || later.leaving}
       footer={
         <WizardActions
-          leading={<ContinueLater step={3} onClick={later.leave} busy={busy || later.leaving} />}
+          leading={<ContinueLater step={4} onClick={later.leave} busy={busy || later.leaving} />}
           onBack={() => go("/onboarding/methods")}
           onNext={() => go("/onboarding/expenses")}
           busy={busy || later.leaving}
@@ -106,13 +129,6 @@ function Incomes() {
         />
       }
     >
-      <CurrencyPicker
-        value={currency}
-        onChange={(next) => {
-          setTouched(true);
-          setCurrency(next);
-        }}
-      />
       <section style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         <h2 style={{ margin: 0, fontSize: "0.9375rem", fontWeight: 600, color: "var(--fg-1)" }}>
           What do you earn each month?
@@ -132,22 +148,52 @@ function Expenses() {
   const later = useLeaveOnboarding(flush);
   return (
     <OnboardingLayout
-      step={4}
-      description="What do you pay every month?"
+      step={5}
       onNavigate={go}
       busy={busy || later.leaving}
       footer={
         <WizardActions
-          leading={<ContinueLater step={4} onClick={later.leave} busy={busy || later.leaving} />}
+          leading={<ContinueLater step={5} onClick={later.leave} busy={busy || later.leaving} />}
           onBack={() => go("/onboarding/incomes")}
-          onNext={() => go("/")}
-          nextLabel="Finish setup"
+          onNext={() => go("/onboarding/review")}
           busy={busy || later.leaving}
           error={error ?? later.error}
         />
       }
     >
-      <RecurrentStep state={state} showPaymentMethod />
+      <section style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        <h2 style={{ margin: 0, fontSize: "0.9375rem", fontWeight: 600, color: "var(--fg-1)" }}>
+          What do you pay every month?
+        </h2>
+        <RecurrentStep state={state} showPaymentMethod />
+      </section>
+    </OnboardingLayout>
+  );
+}
+
+function Review() {
+  const router = useRouter();
+  const state = useReviewStep();
+  const later = useLeaveOnboarding();
+  const go = (href: string) => router.push(href);
+  return (
+    <OnboardingLayout
+      step={6}
+      description="Here is your plan as the dashboard will show it. Go back to any step to change it."
+      onNavigate={go}
+      busy={later.leaving}
+      footer={
+        <WizardActions
+          leading={<ContinueLater step={6} onClick={later.leave} busy={later.leaving} />}
+          onBack={() => go("/onboarding/expenses")}
+          onNext={() => go("/")}
+          nextLabel="Finish"
+          busy={later.leaving}
+          error={later.error}
+        />
+      }
+    >
+      <ReviewStep state={state} onEdit={go} />
     </OnboardingLayout>
   );
 }
@@ -188,17 +234,30 @@ export const MobileIntro: Story = {
   beforeEach: firstRun,
 };
 export const Step1Categories: Story = {};
-export const Step2Methods: Story = {
+export const Step2Currencies: Story = {
+  render: () => <Currencies />,
+  parameters: at("/onboarding/currencies"),
+};
+export const Step3Methods: Story = {
   render: () => <Methods />,
   parameters: at("/onboarding/methods"),
 };
-export const Step3Incomes: Story = {
+export const Step4Incomes: Story = {
   render: () => <Incomes />,
   parameters: at("/onboarding/incomes"),
 };
-export const Step4Expenses: Story = {
+export const Step5Expenses: Story = {
   render: () => <Expenses />,
   parameters: at("/onboarding/expenses"),
+};
+export const Step6Review: Story = {
+  render: () => <Review />,
+  parameters: at("/onboarding/review"),
+};
+export const MobileExpenses: Story = {
+  render: () => <Expenses />,
+  parameters: at("/onboarding/expenses"),
+  globals: MOBILE,
 };
 export const Mobile: Story = {
   render: () => <Methods />,

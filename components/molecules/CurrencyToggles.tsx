@@ -1,6 +1,6 @@
-import { Chip } from "../../../components/atoms/Chip";
-import { CURRENCIES, CURRENCY_SYMBOL } from "../../../constants";
-import type { Currency } from "../../../types";
+import { Chip } from "../atoms/Chip";
+import { CURRENCIES, CURRENCY_SYMBOL } from "../../constants";
+import type { Currency } from "../../types";
 
 interface Props {
   /** Currently offered by the pickers. */
@@ -31,10 +31,6 @@ export function CurrencyToggles({ enabled, locked, onToggle, disabled = false }:
           );
         })}
       </div>
-      <p className="note">
-        Amounts already saved in a currency you turn off keep it — it just stops being offered for
-        new ones.
-      </p>
 
       <style jsx>{`
         .toggles {
@@ -48,12 +44,6 @@ export function CurrencyToggles({ enabled, locked, onToggle, disabled = false }:
           display: flex;
           flex-wrap: wrap;
           gap: 8px;
-        }
-
-        .note {
-          margin: 0;
-          font-size: 0.75rem;
-          color: var(--fg-2);
         }
       `}</style>
     </div>

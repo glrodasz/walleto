@@ -187,7 +187,7 @@ export function ProspectPage({ initialMode = "whatif" }: Props) {
               labelA="As planned"
               labelB="If cancelled"
               colorA="var(--fg-2)"
-              colorB="var(--accent)"
+              colorB="var(--positive)"
             />
           </Card>
 

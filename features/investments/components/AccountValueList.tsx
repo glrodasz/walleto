@@ -241,11 +241,11 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
         }
 
         .up {
-          color: var(--accent);
+          color: var(--positive);
         }
 
         .down {
-          color: var(--accent-hot);
+          color: var(--negative);
         }
       `}</style>
     </>
