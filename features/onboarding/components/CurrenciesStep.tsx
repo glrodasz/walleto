@@ -1,3 +1,4 @@
+import { InfoTip } from "../../../components/atoms/InfoTip";
 import { CurrencyToggles } from "../../../components/molecules/CurrencyToggles";
 import { CurrencyPicker } from "./CurrencyPicker";
 import type { useCurrenciesStep } from "../hooks/useCurrenciesStep";
@@ -20,7 +21,13 @@ export function CurrenciesStep({ state }: Props) {
 
       <section className="offered">
         <header className="head">
-          <h2 className="heading">Currencies you use</h2>
+          <h2 className="heading">
+            Currencies you use
+            <InfoTip label="About turning off a currency" placement="bottom">
+              Amounts already saved in a currency you turn off keep it — it just stops being offered
+              for new ones.
+            </InfoTip>
+          </h2>
           <p className="hint">
             Turn on every currency you earn or pay in — these are the ones offered when you enter an
             amount.
@@ -49,6 +56,9 @@ export function CurrenciesStep({ state }: Props) {
         }
 
         .heading {
+          display: flex;
+          align-items: center;
+          gap: 10px;
           margin: 0;
           font-size: 0.9375rem;
           font-weight: 600;
