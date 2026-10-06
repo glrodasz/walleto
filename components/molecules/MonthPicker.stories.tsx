@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/nextjs";
-import { fn } from "storybook/test";
+import { fn, userEvent, within } from "storybook/test";
 import { MonthPicker } from "./MonthPicker";
 import { monthWindows } from "../../features/domains/helpers/months";
 import { NOW } from "../../stories/fixtures";
@@ -28,3 +28,21 @@ type Story = StoryObj<typeof meta>;
 export const CurrentMonth: Story = {};
 export const PastMonth: Story = { args: { value: WINDOWS[WINDOWS.length - 4].key } };
 export const Oldest: Story = { args: { value: WINDOWS[0].key } };
+
+/** The list open: the last six months, with "Show more" at the foot. */
+export const Open: Story = {
+  play: async ({ canvasElement }) => {
+    await userEvent.click(within(canvasElement).getByRole("button", { name: /^Month:/ }));
+  },
+};
+
+/** "Show more" twice: the full two years, scrolling inside the list. */
+export const ShowingTwoYears: Story = {
+  play: async ({ canvasElement }) => {
+    await userEvent.click(within(canvasElement).getByRole("button", { name: /^Month:/ }));
+    // The list is portaled onto the body, outside the story's canvas.
+    const body = within(canvasElement.ownerDocument.body);
+    await userEvent.click(await body.findByRole("button", { name: "Show last 12 months" }));
+    await userEvent.click(await body.findByRole("button", { name: "Show last 24 months" }));
+  },
+};
