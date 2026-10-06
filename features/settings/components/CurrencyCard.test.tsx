@@ -3,7 +3,6 @@ import { CurrencyCard } from "./CurrencyCard";
 import type { UserDoc } from "../../../hooks/useUserDoc";
 
 const update = jest.fn().mockResolvedValue(undefined);
-const setDisplayCurrency = jest.fn().mockResolvedValue(undefined);
 let userDoc: Partial<UserDoc>;
 let target = "USD";
 
@@ -11,7 +10,7 @@ jest.mock("../../../hooks/useUserDoc", () => ({
   useUserDoc: () => ({ userDoc, update }),
 }));
 jest.mock("../../../hooks/useMoneyContext", () => ({
-  useMoneyContext: () => ({ target, setDisplayCurrency }),
+  useMoneyContext: () => ({ target }),
 }));
 
 /** The toggle for one currency, found by the code in its label ("$ USD"). */
@@ -26,7 +25,6 @@ const optionCodes = (label: string) =>
 
 beforeEach(() => {
   update.mockClear();
-  setDisplayCurrency.mockClear();
   userDoc = { mainCurrency: "USD" };
   target = "USD";
 });
@@ -38,8 +36,17 @@ describe("CurrencyCard", () => {
     expect(chip("EUR")).toHaveAttribute("aria-pressed", "true");
     expect(chip("GBP")).toHaveAttribute("aria-pressed", "true");
     expect(chip("JPY")).toHaveAttribute("aria-pressed", "false");
-    expect(optionCodes("Main currency")).toEqual(["USD", "EUR", "GBP"]);
-    expect(optionCodes("Display currency")).toEqual(["USD", "EUR", "GBP"]);
+    expect(optionCodes("Your currency")).toEqual(["USD", "EUR", "GBP"]);
+    // One choice: no second select for the currency totals are shown in.
+    expect(screen.queryByLabelText("Display currency")).not.toBeInTheDocument();
+  });
+
+  it("writes both the default for new entries and the display currency", async () => {
+    render(<CurrencyCard />);
+    fireEvent.change(screen.getByLabelText("Your currency"), { target: { value: "EUR" } });
+    await waitFor(() =>
+      expect(update).toHaveBeenCalledWith({ mainCurrency: "EUR", displayCurrency: "EUR" })
+    );
   });
 
   it("turns a currency on, saving the list on the user doc", async () => {
@@ -59,7 +66,7 @@ describe("CurrencyCard", () => {
     );
   });
 
-  it("locks the main and display currencies on", () => {
+  it("locks your currency and the one totals are shown in", () => {
     userDoc = { mainCurrency: "MXN", displayCurrency: "SEK", enabledCurrencies: ["USD"] };
     target = "SEK";
     render(<CurrencyCard />);
@@ -68,12 +75,12 @@ describe("CurrencyCard", () => {
     expect(chip("SEK")).toBeDisabled();
     expect(chip("USD")).toBeEnabled();
     // Both are folded into the pickers even though only USD was chosen.
-    expect(optionCodes("Main currency")).toEqual(["USD", "MXN", "SEK"]);
+    expect(optionCodes("Your currency")).toEqual(["USD", "MXN", "SEK"]);
   });
 
   it("keeps a disabled currency in the select that already holds it", () => {
     userDoc = { mainCurrency: "JPY", enabledCurrencies: ["USD", "EUR"] };
     render(<CurrencyCard />);
-    expect(optionCodes("Main currency")).toEqual(["USD", "EUR", "JPY"]);
+    expect(optionCodes("Your currency")).toEqual(["USD", "EUR", "JPY"]);
   });
 });

@@ -75,14 +75,29 @@ features/
                 `onboardingIntroSeen` no esté, y después directo al paso 1; Settings › Setup la repite ("Watch the
                 intro", que vuelve a Settings). Cada escena es iconos en IconDisc sobre un lienzo fijo de 320×200
                 (`intro/SceneCanvas`), y todo el movimiento vive en `intro/SceneBit` (keyframes una sola vez).
-                El wizard no tiene flecha arriba: Back, Next y la salida viven solo en el pie. El paso 2 (MethodsStep, también en
+                Seis pasos: Categories → Currencies → Payment methods → Income → Expenses → Review. El stepper son
+                pestañas, no una secuencia: cada paso es su icono (nunca "1."), y Income / Expenses van con el color de
+                su dominio (`--step-accent`; la barra de progreso sigue al paso actual). En mobile solo el actual
+                conserva su nombre. Currencies (CurrenciesStep + hooks/useCurrenciesStep) es una sola elección —
+                "Your currency", que escribe `mainCurrency` y `displayCurrency` juntas — más qué monedas ofrecen los
+                selects (`components/molecules/CurrencyToggles`, las mismas chips de Settings). Income y Expenses
+                (RecurrentStep) agrupan por cadencia: cada una es un `CadencePanel` con su "Add a monthly expense"
+                adentro, Monthly primero y más grande, el resto apartado bajo "Less often" — el "Add" de una cadencia
+                nunca queda pegado a la siguiente. Las filas guardadas se editan (RecurrentRowEditor; solo la sección
+                de cadencia queda fija) y `save()` manda un PATCH con lo que cambió (helpers/recurrentPatch; el
+                schedule se compara como elección con `isSameSchedule`, nunca re-anclando, que tiraría el backfill).
+                Review (ReviewStep + hooks/useReviewStep) muestra el plan como lo verá el dashboard: el mismo
+                `components/organisms/NetFlowCard` (solo income / expenses) y la lista de items con su equivalente
+                mensual; "Finish" vive ahí.
+                El wizard no tiene flecha arriba: Back, Next y la salida viven solo en el pie. El paso 3 (MethodsStep, también en
                 Settings) es una billetera: cada método es una MethodFace colapsada; tocarla la abre (WalletItem +
                 MethodEditor, una a la vez, hooks/useOpenRow) y el "Remove" va en el pie del editor, nunca en una
                 columna al lado de los campos. Los métodos guardados se editan ahí mismo (solo el tipo queda fijo) y
                 `save()` los manda como PATCH con solo lo que cambió. Cada paso tiene salida
                 (ContinueLater: "Skip for now" en el 1, "Continue later" después — useLeaveOnboarding guarda
                 el paso, marca onboardingCompleted y vuelve al dashboard; Settings › Setup lo reabre)
-  dashboard/    la home: hero del plan mensual (NetFlowCard, con veredicto "On plan" /
+  dashboard/    la home: hero del plan mensual (`components/organisms/NetFlowCard` — compartido con el Review del
+                onboarding —, con veredicto "On plan" /
                 "Over-committed"), patrimonio de hoy (NetWorthCard + hooks/useNetWorth + helpers/netWorth) — las dos
                 son la misma pieza, `components/molecules/SummaryCard` (título + pill, cifra a la izquierda,
                 desglose a la derecha; Prospect la usa también),
@@ -111,8 +126,8 @@ features/
                 (listener desde el origen: móntalo solo donde se muestre la cifra) y hooks/useDomainGains
   settings/     pestañas de sección (General / Categories / Tags / Payment methods / Accounts & debts, la activa
                 va en el hash de la URL). General son seis tarjetas (Account, Currency, Preferences, Setup, Data &
-                privacy, About) sobre SettingsCard + SettingsRow; Currency además cura la lista de monedas
-                disponibles (CurrencyToggles, ver §3.1); CategoriesSettings, TagsSettings y AccountsSettings
+                privacy, About) sobre SettingsCard + SettingsRow; Currency es una sola fila "Your currency" (ver
+                §3.1) y además cura la lista de monedas disponibles (CurrencyToggles); CategoriesSettings, TagsSettings y AccountsSettings
                 paginan de a 25 (`Pager`); MethodsSettings monta el MethodsStep del wizard más la lista
   prospect/     el simulador del plan, con dos modos (el switch "Emergency mode", ProspectModeToggle).
                 What-if: CancelableItemsList agrupa lo que sale del plan (helpers/rankCancelable) en Non-essential
@@ -157,7 +172,7 @@ constants.ts                            constantes y mapas de presentación; MON
 
 `pnpm storybook` monta cada pieza sola y en contexto, ordenada por Atomic Design: **Atoms** y **Molecules** (`components/`), **Organisms** (`components/organisms/` y `features/*/components/`) y **Templates** (las pantallas enteras: `DashboardPage`, `DomainPage`, `ProspectPage`, `SettingsPage`, el wizard y `login-error`). Reglas:
 
-- La story va **colocada** junto al componente, como el test: `Button.stories.tsx`. El `title` decide el nivel (`Atoms/Button`, `Organisms/Dashboard/NetFlowCard`, `Templates/Settings`). **Nunca** una story dentro de `pages/` (Next la compila como ruta; `__tests__/pagesDirectory.test.ts` lo vigila).
+- La story va **colocada** junto al componente, como el test: `Button.stories.tsx`. El `title` decide el nivel (`Atoms/Button`, `Organisms/Dashboard/CashFlowCard`, `Templates/Settings`). **Nunca** una story dentro de `pages/` (Next la compila como ruta; `__tests__/pagesDirectory.test.ts` lo vigila).
 - Storybook no toca Firestore ni Auth0. `.storybook/preview.tsx` envuelve todo en `UserProvider` (usuario fijo) y `PreferencesProvider`, y sustituye cada hook de datos de `hooks/` (y `firebase/client`) por su hermano en `__mocks__/` vía `sb.mock()`. Los mocks devuelven un solo perfil demo desde `stories/fixtures/` (categorías, tags, métodos, cuentas, un plan multi-moneda y el ledger derivado con `helpers/materializeOccurrences`).
 - Otro estado = otro hook: `mocked(useCategories).mockImplementation(...)` en el `beforeEach` de la story; `resetStoryMocks()` restaura los defaults antes de cada una. Los componentes por props reciben los fixtures directamente (`STORY_CATEGORIES`, `STORY_CTX`…).
 - Un hook nuevo que lea Firestore necesita tres cosas: su default en `stories/fixtures/hookDefaults.ts`, `hooks/__mocks__/<hook>.ts` con **todos** los nombres que exporta el módulo real envueltos en `fn()`, y su alta en `.storybook/preview.tsx` y en `stories/fixtures/mocks.ts`.
@@ -306,7 +321,8 @@ Todo monto se **guarda en su moneda nativa** y se **convierte solo al leer**. El
 
 - **`useSelectedMonth()`** (`hooks/useSelectedMonth.tsx`) es el mes que mira toda la app: estado en React, espejo en `?month=YYYY-MM` (replace shallow), nunca posterior al mes actual; el `MonthPicker` del header lo cambia y las páginas de dominio lo acotan a su ventana de barras. `usePreferences()` / `useDateFormat()` (`hooks/usePreferences.ts`) leen formato de fecha, inicio de semana e idioma desde un contexto que `PreferencesProvider` llena con el user doc — los componentes de presentación nunca tocan Firestore por esto.
 - **`useMoneyContext()`** (`hooks/useMoneyContext.ts`) es el único lugar que decide moneda objetivo y tasas: `target = displayCurrency ?? mainCurrency`, `rates = useExchangeRates() ?? IDENTITY_RATES`. Cualquier pantalla que muestre montos agregados lo usa — no leas `mainCurrency` directo de `useUserDoc`.
-- **`useEnabledCurrencies()`** (`hooks/useEnabledCurrencies.ts`) es el único lugar que decide **qué monedas ofrece un select**: `users.enabledCurrencies` (las chips de Settings › Currency) o `DEFAULT_ENABLED_CURRENCIES` (USD/EUR/GBP) mientras el usuario no elija, siempre con `mainCurrency` y `displayCurrency` dentro — esas dos no se pueden apagar. `CURRENCIES` sigue siendo lo que la app _soporta_ (tasas, tipos, Zod); esto es solo lo que se muestra. Usa `optionsFor(valor)` cuando el campo ya tiene un valor: una moneda apagada después de guardar un registro no desaparece de su propio select. La única excepción es el picker de moneda principal del onboarding, que ofrece el catálogo entero (`SELECTABLE_CURRENCIES`) porque todavía no hay elección que leer.
+- **Una sola elección de moneda**: para el owner hay una, "Your currency" (paso Currencies del onboarding y Settings › Currency), y escribe `mainCurrency` (con la que arranca todo registro nuevo) y `displayCurrency` (a la que se convierten los totales) a la vez. El selector del header es lo único que mueve `displayCurrency` sola: leer los totales en otra moneda un rato, sin cambiar la de los registros nuevos. Por eso los campos siguen siendo dos en el user doc.
+- **`useEnabledCurrencies()`** (`hooks/useEnabledCurrencies.ts`) es el único lugar que decide **qué monedas ofrece un select**: `users.enabledCurrencies` (las chips de Settings › Currency) o `DEFAULT_ENABLED_CURRENCIES` (USD/EUR/GBP) mientras el usuario no elija, siempre con `mainCurrency` y `displayCurrency` dentro — esas dos no se pueden apagar. `CURRENCIES` sigue siendo lo que la app _soporta_ (tasas, tipos, Zod); esto es solo lo que se muestra. Usa `optionsFor(valor)` cuando el campo ya tiene un valor: una moneda apagada después de guardar un registro no desaparece de su propio select. La única excepción es el "Your currency" del paso Currencies del onboarding (`CurrencyPicker`), que ofrece el catálogo entero (`SELECTABLE_CURRENCIES`) porque todavía no hay elección que leer — y justo debajo deja elegir las monedas ofrecidas, para que nadie llegue a Expenses sin la moneda en la que paga.
 - **Precedencia del par charged**: si un item tiene `chargedAmount`/`chargedCurrency` y `chargedCurrency === target`, se usa `chargedAmount` tal cual — lo que de verdad se cobró le gana a cualquier tasa de mercado.
 - **`IDENTITY_RATES`** (`helpers/fx.ts`) son tasas 1:1 — útiles en tests y como fallback cuando no hay tasas reales; con ellas la salida es la suma cruda (para verificar mecánicamente un refactor).
 - **Honestidad ante la falta de datos**: `fxMissing` (nunca hubo cache) y `fxStale` (sirviendo cache vencido o el fallback del servidor) se propagan hasta la UI. Nunca se inventa un número — cuando `fxMissing` y hay monedas mezcladas, se muestra un aviso en vez de una suma falsa (ver `pages/index.tsx`).

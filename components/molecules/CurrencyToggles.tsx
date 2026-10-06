@@ -1,6 +1,6 @@
-import { Chip } from "../../../components/atoms/Chip";
-import { CURRENCIES, CURRENCY_SYMBOL } from "../../../constants";
-import type { Currency } from "../../../types";
+import { Chip } from "../atoms/Chip";
+import { CURRENCIES, CURRENCY_SYMBOL } from "../../constants";
+import type { Currency } from "../../types";
 
 interface Props {
   /** Currently offered by the pickers. */

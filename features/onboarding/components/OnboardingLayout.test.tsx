@@ -21,7 +21,7 @@ describe("OnboardingLayout", () => {
     );
   });
 
-  it("renders the title and all four step labels", () => {
+  it("renders the title and every step's label", () => {
     render(
       <OnboardingLayout step={1}>
         <p>body</p>
@@ -29,22 +29,41 @@ describe("OnboardingLayout", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Build your plan" })).toBeInTheDocument();
-    ONBOARDING_STEPS.forEach((s, i) => {
-      expect(screen.getByText(`${i + 1}. ${s.label}`)).toBeInTheDocument();
+    ONBOARDING_STEPS.forEach((s) => {
+      expect(screen.getByRole("button", { name: s.label })).toBeInTheDocument();
     });
+    // Icons stand in for numbers: the steps are tabs, not a forced sequence.
+    expect(screen.queryByText(/^\d\. /)).not.toBeInTheDocument();
     expect(screen.getByText("body")).toBeInTheDocument();
   });
 
   it("marks the current step with aria-current", () => {
     render(
-      <OnboardingLayout step={3}>
+      <OnboardingLayout step={4}>
         <p>body</p>
       </OnboardingLayout>
     );
 
-    const current = screen.getByText("3. Income");
+    const current = screen.getByRole("button", { name: "Income" });
     expect(current).toHaveAttribute("aria-current", "step");
-    expect(screen.getByText("1. Categories")).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("button", { name: "Categories" })).not.toHaveAttribute("aria-current");
+  });
+
+  it("tints the Income and Expenses tabs with their domain colour", () => {
+    const { container } = render(
+      <OnboardingLayout step={5}>
+        <p>body</p>
+      </OnboardingLayout>
+    );
+
+    const tab = (label: string) =>
+      screen.getByRole("button", { name: label }).closest("li") as HTMLElement;
+    expect(tab("Income").style.getPropertyValue("--step-accent")).toBe("var(--domain-income)");
+    expect(tab("Expenses").style.getPropertyValue("--step-accent")).toBe("var(--domain-expense)");
+    expect(tab("Categories").style.getPropertyValue("--step-accent")).toBe("var(--accent)");
+    // The progress fill follows the current step's colour.
+    const nav = container.querySelector(".stepper") as HTMLElement;
+    expect(nav.style.getPropertyValue("--current-accent")).toBe("var(--domain-expense)");
   });
 
   it("fills the progress bar proportionally to the step", () => {
@@ -53,10 +72,12 @@ describe("OnboardingLayout", () => {
         <p>body</p>
       </OnboardingLayout>
     );
-    expect(container.querySelector(".fill")).toHaveStyle({ width: "25%" });
+    expect(container.querySelector(".fill")).toHaveStyle({
+      width: `${(1 / ONBOARDING_STEPS.length) * 100}%`,
+    });
 
     rerender(
-      <OnboardingLayout step={4}>
+      <OnboardingLayout step={ONBOARDING_STEPS.length}>
         <p>body</p>
       </OnboardingLayout>
     );
@@ -81,28 +102,28 @@ describe("OnboardingLayout", () => {
       </OnboardingLayout>
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "1. Categories" }));
+    fireEvent.click(screen.getByRole("button", { name: "Categories" }));
     expect(onNavigate).toHaveBeenCalledWith("/onboarding/categories");
     // Steps ahead are reachable too — nothing forces a linear walk.
-    fireEvent.click(screen.getByRole("button", { name: "4. Expenses" }));
+    fireEvent.click(screen.getByRole("button", { name: "Expenses" }));
     expect(onNavigate).toHaveBeenCalledWith("/onboarding/expenses");
   });
 
   it("does not let a click re-enter the current step or fire while saving", () => {
     const onNavigate = jest.fn();
     const { rerender } = render(
-      <OnboardingLayout step={3} onNavigate={onNavigate}>
+      <OnboardingLayout step={4} onNavigate={onNavigate}>
         <p>body</p>
       </OnboardingLayout>
     );
-    expect(screen.getByRole("button", { name: "3. Income" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Income" })).toBeDisabled();
 
     rerender(
-      <OnboardingLayout step={3} onNavigate={onNavigate} busy>
+      <OnboardingLayout step={4} onNavigate={onNavigate} busy>
         <p>body</p>
       </OnboardingLayout>
     );
-    expect(screen.getByRole("button", { name: "1. Categories" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Categories" })).toBeDisabled();
   });
 
   it("takes a custom title and leaves the stepper out when there is no step", () => {
