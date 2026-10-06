@@ -4,12 +4,15 @@ import { OnboardingLayout } from "./OnboardingLayout";
 import { WizardActions } from "./WizardActions";
 import { Card } from "../../../components/atoms/Card";
 import { EmptyState } from "../../../components/atoms/EmptyState";
+import { DESKTOP, MOBILE, TABLET } from "../../../stories/templates";
 
 const meta = {
   title: "Organisms/Onboarding/OnboardingLayout",
   component: OnboardingLayout,
   tags: ["autodocs"],
   parameters: { layout: "fullscreen" },
+  // Wide enough for the intro to sit beside the step.
+  globals: DESKTOP,
   args: {
     step: 2,
     description:
@@ -27,7 +30,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The wizard shell: stepper with progress, a description, the body and a footer. */
+/** The wizard shell: the step's intro beside the stepper, description, body and footer. */
 export const StepTwo: Story = {};
 export const StepOne: Story = {
   args: { step: 1, description: "Your plan is sorted by category." },
@@ -43,24 +46,22 @@ export const Busy: Story = {
 };
 /** Without onNavigate the stepper is display-only. */
 export const DisplayOnlyStepper: Story = { args: { onNavigate: undefined } };
-export const Mobile: Story = { globals: { viewport: { value: "mobile1", isRotated: false } } };
-/** Step 0, the Welcome: the stepper as a preview, every step still ahead. */
-export const WelcomePreview: Story = {
+/** Below 1200px one column: the intro's text above the step. */
+export const Tablet: Story = { globals: TABLET };
+export const Mobile: Story = { globals: MOBILE };
+/** No step but an intro: the Welcome's shell, with no stepper. */
+export const Welcome: Story = {
   args: {
-    step: 0,
+    step: undefined,
+    intro: "planner",
     title: "Welcome",
     description: undefined,
     onNavigate: undefined,
     footer: <WizardActions onNext={fn()} nextLabel="Start setup" />,
   },
 };
-/** On phones no tab is current, so the six icons spread over the track. */
-export const MobileWelcomePreview: Story = {
-  ...WelcomePreview,
-  globals: { viewport: { value: "mobile1", isRotated: false } },
-};
-/** No step: the tour uses the same shell (title, body, footer) without the stepper. */
-export const NoStepper: Story = {
+/** Neither step nor intro: just the shell (title, body, footer). */
+export const NoAside: Story = {
   args: {
     step: undefined,
     title: "Welcome",

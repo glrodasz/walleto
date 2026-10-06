@@ -1,17 +1,24 @@
-import { IntroTour } from "./IntroTour";
-import { IntroWelcome } from "./IntroWelcome";
+import { OnboardingLayout } from "./OnboardingLayout";
+import { SetupOverview } from "./SetupOverview";
+import { WizardActions } from "./WizardActions";
+import { WELCOME_INTRO } from "../data/steps";
 import { useLeaveIntro } from "../hooks/useLeaveIntro";
 
 /**
- * /onboarding. A new user gets the Welcome, once (the guard sends them here
- * until `onboardingIntroSeen`); Settings › Setup opens it with `?tour=1` for
- * the full six-slide tour.
+ * /onboarding, the Welcome: what Walleto is beside what the setup covers,
+ * then "Start setup". The guard sends new users here until
+ * `onboardingIntroSeen`; Settings › Setup › "Run setup again" opens it too.
  */
 export function IntroPage() {
-  const { ready, replay, leave } = useLeaveIntro();
+  const { leave } = useLeaveIntro();
 
-  // The query isn't parsed yet: never flash the Welcome at someone replaying.
-  if (!ready) return null;
-
-  return replay ? <IntroTour onLeave={leave} /> : <IntroWelcome onStart={leave} />;
+  return (
+    <OnboardingLayout
+      title="Welcome"
+      intro={WELCOME_INTRO}
+      footer={<WizardActions onNext={leave} nextLabel="Start setup" />}
+    >
+      <SetupOverview />
+    </OnboardingLayout>
+  );
 }

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-/** The accent kicker above an intro slide's title, or beside a step's lead. */
+/** The accent kicker above an intro slide's title. */
 export function IntroLabel({ children }: { children: ReactNode }) {
   return (
     <p className="label">

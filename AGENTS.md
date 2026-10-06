@@ -68,14 +68,23 @@ Everything that serves only one feature lives together:
 
 ```
 features/
-  onboarding/   the initial setup wizard + the access guard. Before step 1 comes the animated intro
-                (`/onboarding`, IntroPage: six "what Walleto is" slides — a planner, not a tracker; understanding
-                where the money goes; nothing urgent; essentials first; net worth; multi-currency —, the copy in
-                data/introSlides). It's shown **only once**: the guard sends you to the intro while
-                `onboardingIntroSeen` is unset, and straight to step 1 after that; Settings › Setup replays it ("Watch the
-                intro", which returns to Settings). Each scene is icons in IconDisc on a fixed 320×200 canvas
-                (`intro/SceneCanvas`), and all the motion lives in `intro/SceneBit` (keyframes defined once).
-                Six steps: Categories → Currencies → Payment methods → Income → Expenses → Review. The stepper is
+  onboarding/   the initial setup wizard + the access guard. Every screen is **intro + step**: on desktop
+                (≥1200px) the left column is that screen's slide (`IntroPanel`: scene, label, h2 title and body;
+                sticky) and the right column is the step; below that, a single column with the slide's text on top,
+                no scene and no glass (`.card` becomes `display: contents`), so the form stays close. The pairing
+                lives in `data/steps.ts` (`ONBOARDING_STEPS`: label, href, icon, accent, `intro`, `summary`), the
+                copy in `data/introSlides` (`INTRO_SLIDES`, a Record by id), and `stepNav(id)` gives the number,
+                Back and Next: no page writes them by hand. Before step 1 comes the welcome (`/onboarding`,
+                IntroPage): `planner` on the left (the only slide that keeps its scene when stacked: there's no form
+                under it) and "What we'll set up" on the right (`SetupOverview`, one `ListItem` per step with its
+                `summary`), no stepper, and "Start setup". The guard sends you there while `onboardingIntroSeen` is
+                unset, and straight to step 1 after that. There's no separate tour: Settings › Setup has a single
+                tool, "Run setup again" (re-seeds categories, sets `onboardingCompleted: false` and opens the
+                welcome). Each scene is icons in IconDisc on a fixed 320×200 canvas (`intro/SceneCanvas`; id →
+                scene in `intro/scenes`), and all the motion lives in `intro/SceneBit` (keyframes defined once;
+                every step is its own route, so the scene enters again on each one).
+                Six steps: Categories → Payment methods → Currencies → Income → Expenses → Review (currency comes
+                right before Income: new rows start in `mainCurrency`). The stepper is
                 tabs, not a sequence: each step is its icon (never "1."), and Income / Expenses take their
                 domain's color (`--step-accent`; the progress bar follows the current step). On mobile only the current
                 one keeps its name. Currencies (CurrenciesStep + hooks/useCurrenciesStep) is a single choice —
@@ -89,7 +98,7 @@ features/
                 Review (ReviewStep + hooks/useReviewStep) shows the plan the way the dashboard will see it: the same
                 `components/organisms/NetFlowCard` (income / expenses only) and the list of items with their monthly
                 equivalent; "Finish" lives there.
-                The wizard has no top arrow: Back, Next and the exit live only in the footer. Step 3 (MethodsStep, also in
+                The wizard has no top arrow: Back, Next and the exit live only in the footer. Step 2 (MethodsStep, also in
                 Settings) is a wallet: each method is a collapsed MethodFace; tapping it opens it (WalletItem +
                 MethodEditor, one at a time, hooks/useOpenRow) and "Remove" goes in the editor's footer, never in a
                 column next to the fields. Saved methods are edited right there (only the type is fixed) and

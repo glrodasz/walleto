@@ -1,5 +1,7 @@
-import { render, screen, fireEvent } from "@testing-library/react";
-import { OnboardingLayout, ONBOARDING_STEPS } from "./OnboardingLayout";
+import { render, screen, fireEvent, within } from "@testing-library/react";
+import { OnboardingLayout } from "./OnboardingLayout";
+import { ONBOARDING_STEPS } from "../data/steps";
+import { INTRO_SLIDES } from "../data/introSlides";
 
 const pushMock = jest.fn();
 const prefetchMock = jest.fn((_href: string) => Promise.resolve());
@@ -135,43 +137,54 @@ describe("OnboardingLayout", () => {
 
     expect(screen.getByRole("heading", { name: "Welcome" })).toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: "Setup progress" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+    expect(container.querySelector(".shell")).not.toHaveClass("shell--split");
     expect(container.querySelector(".fill")).toBeNull();
     expect(screen.getByText("body")).toBeInTheDocument();
   });
 
-  it("previews the steps at step 0: all ahead, none current, none clickable", () => {
-    const { container } = render(
-      <OnboardingLayout title="Welcome" step={0}>
+  it.each(ONBOARDING_STEPS.map((s, i) => [s.label, i + 1, s.intro] as const))(
+    "puts the %s step's intro slide beside it",
+    (_label, step, intro) => {
+      render(
+        <OnboardingLayout step={step}>
+          <p>body</p>
+        </OnboardingLayout>
+      );
+      const aside = screen.getByRole("complementary");
+      expect(
+        within(aside).getByRole("heading", { level: 2, name: INTRO_SLIDES[intro].title })
+      ).toBeInTheDocument();
+      // A step has a form under it, so stacked it keeps only the text.
+      expect(aside.querySelector(".panel")).toHaveClass("panel--bare");
+    }
+  );
+
+  it("takes an intro without a step, keeping its scene when stacked", () => {
+    render(
+      <OnboardingLayout title="Welcome" intro="planner">
         <p>body</p>
       </OnboardingLayout>
     );
-
-    const nav = screen.getByRole("navigation", { name: "Setup progress" });
-    expect(nav).toHaveClass("stepper--preview");
-    ONBOARDING_STEPS.forEach((s) => {
-      const tab = screen.getByRole("button", { name: s.label });
-      expect(tab).toBeDisabled();
-      expect(tab).not.toHaveAttribute("aria-current");
-      expect(tab.closest("li")).toHaveClass("tab--todo");
-    });
-    expect(container.querySelector(".fill")).toHaveStyle({ width: "0%" });
-    expect(nav.style.getPropertyValue("--current-accent")).toBe("var(--accent)");
+    const aside = screen.getByRole("complementary");
+    expect(within(aside).getByRole("heading", { level: 2 })).toHaveTextContent(
+      INTRO_SLIDES.planner.title
+    );
+    expect(aside.querySelector(".panel")).not.toHaveClass("panel--bare");
+    expect(screen.queryByRole("navigation", { name: "Setup progress" })).not.toBeInTheDocument();
   });
 
-  it("only stretches to the screen's height when asked to fill", () => {
-    const { container, rerender } = render(
-      <OnboardingLayout step={1}>
+  it("reads intro first, then the step, with the footer under the step", () => {
+    const { container } = render(
+      <OnboardingLayout step={2} footer={<span>actions</span>}>
         <p>body</p>
       </OnboardingLayout>
     );
-    expect(container.querySelector(".layout")).not.toHaveClass("layout--fill");
-
-    rerender(
-      <OnboardingLayout title="Welcome" fill>
-        <p>body</p>
-      </OnboardingLayout>
-    );
-    expect(container.querySelector(".layout")).toHaveClass("layout--fill");
+    const aside = screen.getByRole("complementary");
+    const main = container.querySelector(".main") as HTMLElement;
+    expect(aside.compareDocumentPosition(main) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(main).toContainElement(screen.getByText("actions"));
+    expect(container.querySelector(".shell")).toHaveClass("shell--split");
   });
 
   it("renders the description and footer when provided", () => {
