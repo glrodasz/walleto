@@ -77,6 +77,7 @@ export function CurrencyCard() {
       />
       <SettingsRow
         label="Available currencies"
+        hint="Amounts already saved in a currency you turn off keep it — it just stops being offered for new ones."
         fill
         control={
           <CurrencyToggles
