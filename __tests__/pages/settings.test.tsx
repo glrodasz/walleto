@@ -105,32 +105,31 @@ describe("SettingsPage", () => {
     expect(within(main).getByText("ada@example.com")).toBeInTheDocument();
   });
 
-  it("resets onboardingCompleted and navigates to the wizard on redo", async () => {
+  it("runs setup again from the welcome, resetting onboardingCompleted", async () => {
     updateMock.mockResolvedValue(undefined);
     render(<SettingsPage />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Redo onboarding" }));
+    fireEvent.click(screen.getByRole("button", { name: "Run setup again" }));
 
     await waitFor(() => {
       expect(updateMock).toHaveBeenCalledWith({ onboardingCompleted: false });
-      expect(pushMock).toHaveBeenCalledWith("/onboarding/categories");
+      expect(pushMock).toHaveBeenCalledWith("/onboarding");
     });
   });
 
-  it("replays the intro without touching onboarding state", () => {
+  it("has one setup tool: the intro runs inside the setup, not on its own", () => {
     render(<SettingsPage />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Watch the intro" }));
-
-    expect(pushMock).toHaveBeenCalledWith("/onboarding");
-    expect(updateMock).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Run setup again" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Watch the intro" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Redo onboarding" })).not.toBeInTheDocument();
   });
 
   it("backfills missing default categories before reopening the wizard", async () => {
     updateMock.mockResolvedValue(undefined);
     render(<SettingsPage />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Redo onboarding" }));
+    fireEvent.click(screen.getByRole("button", { name: "Run setup again" }));
 
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith("/api/categories/defaults", { method: "POST" })
@@ -142,7 +141,7 @@ describe("SettingsPage", () => {
     const spy = jest.spyOn(console, "error").mockImplementation(() => {});
     render(<SettingsPage />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Redo onboarding" }));
+    fireEvent.click(screen.getByRole("button", { name: "Run setup again" }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     expect(updateMock).not.toHaveBeenCalled();
@@ -155,7 +154,7 @@ describe("SettingsPage", () => {
     const spy = jest.spyOn(console, "error").mockImplementation(() => {});
     render(<SettingsPage />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Redo onboarding" }));
+    fireEvent.click(screen.getByRole("button", { name: "Run setup again" }));
 
     await waitFor(() => expect(updateMock).toHaveBeenCalled());
     expect(pushMock).not.toHaveBeenCalled();

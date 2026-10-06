@@ -1,7 +1,7 @@
 import { Select } from "../../../components/atoms/Select";
 import { TextField } from "../../../components/atoms/TextField";
-import { Close } from "../../../components/atoms/Icons";
 import { ScheduleFields } from "../../../components/molecules/ScheduleFields";
+import { EditorFooter } from "../../../components/molecules/EditorFooter";
 import { CURRENCY_SYMBOL, FREQUENCY_LABELS } from "../../../constants";
 import { useEnabledCurrencies } from "../../../hooks/useEnabledCurrencies";
 import { useDecimalInput } from "../../../hooks/useDecimalInput";
@@ -103,28 +103,24 @@ export function RecurrentRowEditor({
         )}
       </div>
 
-      <button
-        type="button"
-        className="remove"
-        onClick={onRemove}
-        aria-label={`Remove ${row.name || "row"}`}
-      >
-        <Close size={20} />
-      </button>
+      {/* Always open, so there's nothing for a "Done" to close. */}
+      <EditorFooter onRemove={onRemove} removeLabel={`Remove ${row.name || "row"}`} />
 
       <style jsx>{`
-        /* Already inside the panel's inset: a row is set apart by its rim only. */
+        /* A card set into the panel's inset: one step darker, so one row reads
+           apart from the next. The fields span its full width; Remove waits
+           in the footer below them. */
         .row {
           display: flex;
-          align-items: flex-end;
+          flex-direction: column;
           gap: 12px;
           padding: 14px;
           border: 1px solid var(--glass-rim);
           border-radius: var(--r-md);
+          background: var(--glass-sunken);
         }
 
         .fields {
-          flex: 1;
           min-width: 0;
           display: flex;
           flex-wrap: wrap;
@@ -152,31 +148,7 @@ export function RecurrentRowEditor({
           min-width: 0;
         }
 
-        .remove {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 40px;
-          height: 40px;
-          flex-shrink: 0;
-          padding: 0;
-          border: none;
-          border-radius: var(--r-md);
-          background: transparent;
-          color: var(--fg-2);
-          cursor: pointer;
-        }
-
-        .remove:hover {
-          color: var(--accent-hot);
-          background: var(--glass-hover);
-        }
-
         @media (max-width: 767px) {
-          .row {
-            align-items: flex-start;
-          }
-
           .field,
           .field--category,
           .field--name,

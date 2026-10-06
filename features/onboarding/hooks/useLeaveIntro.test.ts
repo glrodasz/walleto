@@ -22,7 +22,6 @@ afterEach(() => jest.restoreAllMocks());
 describe("useLeaveIntro", () => {
   it("remembers the intro was seen and starts the wizard", () => {
     const { result } = renderHook(() => useLeaveIntro());
-    expect(result.current.replay).toBe(false);
     result.current.leave();
     expect(update).toHaveBeenCalledWith({ onboardingIntroSeen: true });
     expect(push).toHaveBeenCalledWith("/onboarding/categories");
@@ -36,15 +35,6 @@ describe("useLeaveIntro", () => {
     expect(push).toHaveBeenCalledWith("/onboarding/categories");
   });
 
-  it("goes back to Settings on a replay, without writing anything", () => {
-    userDoc = { onboardingCompleted: true, onboardingIntroSeen: true };
-    const { result } = renderHook(() => useLeaveIntro());
-    expect(result.current.replay).toBe(true);
-    result.current.leave();
-    expect(update).not.toHaveBeenCalled();
-    expect(push).toHaveBeenCalledWith("/settings");
-  });
-
   it("still starts the wizard when remembering the intro fails", async () => {
     update.mockRejectedValue(new Error("offline"));
     const { result } = renderHook(() => useLeaveIntro());
@@ -55,9 +45,11 @@ describe("useLeaveIntro", () => {
     expect(console.error).toHaveBeenCalled();
   });
 
-  it("treats a doc that hasn't loaded yet as a first run", () => {
+  it("starts the wizard even before the user doc loads", () => {
     userDoc = null;
     const { result } = renderHook(() => useLeaveIntro());
-    expect(result.current.replay).toBe(false);
+    result.current.leave();
+    expect(update).toHaveBeenCalledWith({ onboardingIntroSeen: true });
+    expect(push).toHaveBeenCalledWith("/onboarding/categories");
   });
 });

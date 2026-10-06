@@ -68,14 +68,24 @@ Everything that serves only one feature lives together:
 
 ```
 features/
-  onboarding/   the initial setup wizard + the access guard. Before step 1 comes the animated intro
-                (`/onboarding`, IntroPage: six "what Walleto is" slides — a planner, not a tracker; understanding
-                where the money goes; nothing urgent; essentials first; net worth; multi-currency —, the copy in
-                data/introSlides). It's shown **only once**: the guard sends you to the intro while
-                `onboardingIntroSeen` is unset, and straight to step 1 after that; Settings › Setup replays it ("Watch the
-                intro", which returns to Settings). Each scene is icons in IconDisc on a fixed 320×200 canvas
-                (`intro/SceneCanvas`), and all the motion lives in `intro/SceneBit` (keyframes defined once).
-                Six steps: Categories → Currencies → Payment methods → Income → Expenses → Review. The stepper is
+  onboarding/   the initial setup wizard + the access guard. Every screen is **intro + step**: on desktop
+                (≥1200px) the left column is that screen's slide (`IntroPanel`: scene, label, h2 title and body;
+                sticky) and the right column is the step; below that, a single column with the slide's text on top,
+                no scene and no glass (`.card` becomes `display: contents`), so the form stays close. The pairing
+                lives in `data/steps.ts` (`ONBOARDING_STEPS`: label, href, icon, accent, `tint`, `intro`, `summary`), the
+                copy in `data/introSlides` (`INTRO_SLIDES`, a Record by id), and `stepNav(id)` gives the number,
+                Back and Next: no page writes them by hand. Before step 1 comes the welcome (`/onboarding`,
+                IntroPage): `planner` on the left (the only slide that keeps its scene when stacked: there's no form
+                under it) and "What we'll set up" on the right (`SetupOverview`, one `ListItem` per step with its
+                `summary`; each icon in its step's `tint` — `--setup-*` or the domain color, never `--accent`, which
+                is red on staging; the stepper keeps the accent), no stepper, and "Start setup". The guard sends you there while `onboardingIntroSeen` is
+                unset, and straight to step 1 after that. There's no separate tour: Settings › Setup has a single
+                tool, "Run setup again" (re-seeds categories, sets `onboardingCompleted: false` and opens the
+                welcome). Each scene is icons in IconDisc on a fixed 320×200 canvas (`intro/SceneCanvas`; id →
+                scene in `intro/scenes`), and all the motion lives in `intro/SceneBit` (keyframes defined once;
+                every step is its own route, so the scene enters again on each one).
+                Six steps: Categories → Payment methods → Currencies → Income → Expenses → Review (currency comes
+                right before Income: new rows start in `mainCurrency`). The stepper is
                 tabs, not a sequence: each step is its icon (never "1."), and Income / Expenses take their
                 domain's color (`--step-accent`; the progress bar follows the current step). On mobile only the current
                 one keeps its name. Currencies (CurrenciesStep + hooks/useCurrenciesStep) is a single choice —
@@ -83,16 +93,17 @@ features/
                 selects offer (`components/molecules/CurrencyToggles`, the same chips as Settings). Income and Expenses
                 (RecurrentStep) group by cadence: each one is a `CadencePanel` with its "Add a monthly expense"
                 inside, Monthly first and larger, the rest set aside under "Less often" — a cadence's "Add"
-                never sits glued to the next one. Saved rows are edited (RecurrentRowEditor; only the cadence
+                never sits glued to the next one. Each row is a card on `--glass-sunken` with an `EditorFooter`
+                holding just "Remove" (rows are always open: no Done). Saved rows are edited (RecurrentRowEditor; only the cadence
                 section is fixed) and `save()` sends a PATCH with what changed (helpers/recurrentPatch; the
                 schedule is compared as a choice with `isSameSchedule`, never by re-anchoring, which would drop the backfill).
                 Review (ReviewStep + hooks/useReviewStep) shows the plan the way the dashboard will see it: the same
                 `components/organisms/NetFlowCard` (income / expenses only) and the list of items with their monthly
                 equivalent; "Finish" lives there.
-                The wizard has no top arrow: Back, Next and the exit live only in the footer. Step 3 (MethodsStep, also in
+                The wizard has no top arrow: Back, Next and the exit live only in the footer. Step 2 (MethodsStep, also in
                 Settings) is a wallet: each method is a collapsed MethodFace; tapping it opens it (WalletItem +
-                MethodEditor, one at a time, hooks/useOpenRow) and "Remove" goes in the editor's footer, never in a
-                column next to the fields. Saved methods are edited right there (only the type is fixed) and
+                MethodEditor, one at a time, hooks/useOpenRow) and its `EditorFooter` is `Remove | Done` (see
+                "Removing and action rows"). Saved methods are edited right there (only the type is fixed) and
                 `save()` sends them as a PATCH with only what changed. Every step has an exit
                 (ContinueLater: "Skip for now" on step 1, "Continue later" afterwards — useLeaveOnboarding saves
                 the step, sets onboardingCompleted and returns to the dashboard; Settings › Setup reopens it)
@@ -206,7 +217,7 @@ Every floating surface — Card, Sidebar, the bottom bar, menus, sheets, pills, 
 
 **It's a global class on purpose.** The alternative was copying six declarations into twenty components and watching them diverge. styled-jsx is still the place for geometry (radius, padding, grid) and anything component-specific.
 
-The rest of the vocabulary, for when something can't carry the class (a native `<dialog>`, a `::before`): `--glass-field` (fields: a well carved into the glass, not a tile), `--glass-inset` (a panel inside another panel: a card's stats block, a progress bar's track — no blur of its own, what's behind it is already blurred), `--glass-raised` (the raised pill of a TabStrip / SegmentedControl), `--glass-hover`, `--scrim` + `--scrim-blur` (overlays), `--shadow-sm/lg`.
+The rest of the vocabulary, for when something can't carry the class (a native `<dialog>`, a `::before`): `--glass-field` (fields: a well carved into the glass, not a tile), `--glass-inset` (a panel inside another panel: a card's stats block, a progress bar's track — no blur of its own, what's behind it is already blurred), `--glass-sunken` (a card set into an inset panel, one of a list of editable rows: one step darker, so neighbouring cards read apart — the Income / Expenses rows), `--glass-raised` (the raised pill of a TabStrip / SegmentedControl), `--glass-hover`, `--scrim` + `--scrim-blur` (overlays), `--shadow-sm/lg`.
 
 **The only exception to glass is payment method faces** (`MethodFace`): a card or a banknote is an object resting on the glass, not a floating surface, so it carries its own paper / plastic / metal with the `--face-*` tokens (defined in both palettes, each ink next to the background it sits on). Don't use them for anything else.
 
@@ -233,6 +244,15 @@ The slots: `leading` (IconDisc, DateBadge), `name`, `badges`, `meta`, `note`, `p
 
 - Per-domain accents: `--domain-income`, `--domain-expense`, `--domain-investment`, `--domain-saving`, `--domain-debt`, their soft tints `--domain-*-soft` and the `--tint-{domain}-1..6` ramps for category-stacked bars. **Never** put `color-mix()` in a JS string (recharts doesn't understand it in SVG attributes): define the token in CSS and pass `var(--x)`.
 - Icons: `components/atoms/Icons.tsx` (Feather stroke). Category icons are picked by key (`constants.ICON_KEYS`) in `CategoryIcon`; with no pick, `helpers/categoryIcons` decides by name.
+
+### Removing and action rows (important)
+
+**Never an icon-only × in a column beside a form's fields.** It took 52px from every field on a phone (the Income / Expenses rows were like that). Removing an editable item — a row in a list of editable rows, an open editor — goes in its footer: `components/molecules/EditorFooter.tsx`, a right-aligned `Remove | Done`.
+
+- **"Remove" is `Button variant="danger"`**: the `Trash` icon plus the word, in `--accent-hot` at rest and on hover (never the accent, which is red on staging and green in dev). Its accessible name names the item (`removeLabel="Remove Rent"`), since there's one per card.
+- **"Done"** closes an editor that collapses (payment methods). An always-open editor (Income / Expenses rows) has no Done: the footer is just Remove, still on the right.
+- **Every action row is right-aligned, dismissive first and primary last**: `Cancel | Save`, `Remove | Done`. Modals, inline edits (AccountsSettings, TagsSettings' rename) and creators follow it; nothing is pushed to the opposite edge.
+- **What × is still for**: closing (the Modal's top-right ×: it closes, it doesn't delete), a `Chip`'s × inside the pill (removing a chip, not a form), and dismissing a `TipBanner`. A read-only list row puts destructive actions in its kebab with `danger` (also `--accent-hot`, hover included).
 
 ### Specificity trap (important)
 

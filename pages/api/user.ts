@@ -34,7 +34,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
     await ref.set({ ...parsed.data }, { merge: true });
 
     // The onboarding guard caches this flag in the session; keep it honest so
-    // "Redo onboarding" sends the user back through the wizard.
+    // "Run setup again" sends the user back through the wizard.
     if (parsed.data.onboardingCompleted !== undefined) {
       await auth0.updateSession(req, res, {
         ...session,

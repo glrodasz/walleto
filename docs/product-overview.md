@@ -383,7 +383,7 @@ Accounts & debts** — remembered in the URL hash.
   (English), Decimal separator (point or comma; typing accepts either key, this
   is how numbers are written back), Decimals (0–4 shown, default 2, with a live
   example; zero-decimal currencies stay at 0), Theme (Light / Dark / System).
-- **Setup** — Redo onboarding.
+- **Setup** — Run setup again (the welcome, then the guided setup).
 - **Data & privacy** — informational rows; export and deletion are not
   self-service yet and say so.
 - **About** — Version, Built with, Help & support, Feedback.

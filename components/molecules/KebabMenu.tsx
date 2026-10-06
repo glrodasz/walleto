@@ -188,7 +188,10 @@ export function KebabMenu({ actions, "aria-label": ariaLabel = "More options" }:
           color: var(--fg-0);
         }
 
-        .item.danger {
+        /* Destructive stays in the danger colour, on hover too (the hover rule
+           above is more specific, so it's repeated here). */
+        .item.danger,
+        .item.danger:hover:not(:disabled) {
           color: var(--accent-hot);
         }
 

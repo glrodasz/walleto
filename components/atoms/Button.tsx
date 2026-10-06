@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-type Variant = "primary" | "secondary" | "ghost";
+type Variant = "primary" | "secondary" | "ghost" | "danger";
 
 interface Props extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> {
   children: ReactNode;
@@ -97,6 +97,18 @@ export function Button({
         .btn--ghost:hover:not(:disabled) {
           color: var(--fg-0);
           background: var(--accent-soft);
+        }
+
+        /* A destructive action ("Remove"): ghost geometry in the danger colour,
+           which it keeps on hover — never the accent, which is red on staging
+           and green in dev. */
+        .btn--danger {
+          background: transparent;
+          color: var(--accent-hot);
+        }
+
+        .btn--danger:hover:not(:disabled) {
+          background: color-mix(in srgb, var(--accent-hot) 12%, transparent);
         }
 
         .btn:focus-visible {

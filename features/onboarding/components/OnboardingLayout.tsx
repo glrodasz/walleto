@@ -1,44 +1,19 @@
 import { useEffect } from "react";
-import type { ComponentType, CSSProperties, ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { ArrowDown, ArrowUp, Check, Coins, CreditCard, Tag } from "../../../components/atoms/Icons";
-import type { IconProps } from "../../../components/atoms/Icons";
-
-interface OnboardingStep {
-  label: string;
-  href: string;
-  /** Stands in for a step number: the steps are tabs, not a forced sequence. */
-  Icon: ComponentType<IconProps>;
-  /** The domain colour for the Income / Expenses steps; the app accent otherwise. */
-  accent?: string;
-}
-
-export const ONBOARDING_STEPS: readonly OnboardingStep[] = [
-  { label: "Categories", href: "/onboarding/categories", Icon: Tag },
-  { label: "Currencies", href: "/onboarding/currencies", Icon: Coins },
-  { label: "Payment methods", href: "/onboarding/methods", Icon: CreditCard },
-  {
-    label: "Income",
-    href: "/onboarding/incomes",
-    Icon: ArrowUp,
-    accent: "var(--domain-income)",
-  },
-  {
-    label: "Expenses",
-    href: "/onboarding/expenses",
-    Icon: ArrowDown,
-    accent: "var(--domain-expense)",
-  },
-  { label: "Review", href: "/onboarding/review", Icon: Check },
-];
-
-/** The colour a step is tinted with (stepper tab, progress fill, its panels). */
-export const stepAccent = (step: OnboardingStep | undefined) => step?.accent ?? "var(--accent)";
+import { ONBOARDING_STEPS, stepAccent } from "../data/steps";
+import type { IntroSlideId } from "../data/introSlides";
+import { IntroPanel } from "./IntroPanel";
 
 interface Props {
-  /** 1-based index into ONBOARDING_STEPS. Without it (the intro) there is no stepper. */
+  /**
+   * 1-based index into ONBOARDING_STEPS: draws the stepper, and the step's
+   * intro slide beside it. Without it (the Welcome) there is no stepper.
+   */
   step?: number;
+  /** The intro slide for a screen that isn't a step (the Welcome). */
+  intro?: IntroSlideId;
   /** The heading, and the tab title before " — Walleto". */
   title?: string;
   description?: string;
@@ -48,24 +23,20 @@ interface Props {
   onNavigate?: (href: string) => void;
   /** Disables the stepper while the current step is saving. */
   busy?: boolean;
-  /**
-   * On phones, stretch the body down to the footer bar so a single child
-   * (with `flex: 1`) can take the whole screen. The intro uses it.
-   */
-  fill?: boolean;
 }
 
 export function OnboardingLayout({
   step,
+  intro: introProp,
   title = "Build your plan",
   description,
   children,
   footer,
   onNavigate,
   busy = false,
-  fill = false,
 }: Props) {
   const router = useRouter();
+  const intro = introProp ?? (step ? ONBOARDING_STEPS[step - 1]?.intro : undefined);
 
   // Steps navigate with router.push, which (unlike <Link>) doesn't prefetch:
   // load the other steps' code up front so Next/Back don't wait on a chunk.
@@ -84,8 +55,8 @@ export function OnboardingLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      <div className={`layout${fill ? " layout--fill" : ""}`}>
-        <div className="shell">
+      <div className="layout">
+        <div className={`shell${intro ? " shell--split" : ""}`}>
           {/* No back arrow up here: Back, Next and the way out all live in the
               footer, so a second Back would only be a duplicate. */}
           <header className="header">
@@ -137,15 +108,30 @@ export function OnboardingLayout({
             </nav>
           )}
 
-          {description && <p className="description">{description}</p>}
+          {/* Intro beside the step on desktop, its text above the step below
+              that. The footer stays the last child of .main: on phones it is
+              position: fixed, so nothing up this tree may become its
+              containing block (transform, filter, backdrop-filter…). */}
+          <div className="columns">
+            {intro && (
+              <aside className="aside">
+                {/* A screen without a step has no form under its intro, so the
+                    scene can stay when it stacks. */}
+                <IntroPanel id={intro} sceneWhenStacked={step === undefined} />
+              </aside>
+            )}
+            <div className="main">
+              {description && <p className="description">{description}</p>}
 
-          <div className="body">{children}</div>
+              <div className="body">{children}</div>
 
-          {footer && (
-            <div className="footer" data-overlay-bottom-bar>
-              {footer}
+              {footer && (
+                <div className="footer" data-overlay-bottom-bar>
+                  {footer}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
@@ -184,6 +170,7 @@ export function OnboardingLayout({
           display: flex;
           flex-direction: column;
           gap: 10px;
+          margin-bottom: 28px;
         }
 
         .tabs {
@@ -291,25 +278,65 @@ export function OnboardingLayout({
             background 240ms ease;
         }
 
+        .columns {
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
+        }
+
+        .main {
+          display: flex;
+          flex-direction: column;
+          gap: 28px;
+          min-width: 0;
+        }
+
         .description {
-          margin: 28px 0 0;
+          margin: 0;
           font-size: 0.9375rem;
           color: var(--fg-1);
         }
 
         .body {
-          margin-top: 28px;
           display: flex;
           flex-direction: column;
           gap: 32px;
         }
 
         .footer {
-          margin-top: 48px;
+          margin-top: 20px;
           display: flex;
           align-items: center;
           justify-content: flex-end;
           gap: 12px;
+        }
+
+        /* Desktop: the intro beside the step. Not below 1200px: the payment
+           method editor needs about 700px of its own (IntroPanel stacks at the
+           same width, so keep the two in step). */
+        @media (min-width: 1200px) {
+          .shell--split {
+            max-width: 1240px;
+          }
+
+          .shell--split .columns {
+            display: grid;
+            grid-template-columns: 360px minmax(0, 1fr);
+            align-items: start;
+            gap: 48px;
+          }
+
+          .aside {
+            position: sticky;
+            top: 32px;
+          }
+        }
+
+        /* Too short for the sticky panel to fit: let it scroll away. */
+        @media (min-width: 1200px) and (max-height: 640px) {
+          .aside {
+            position: static;
+          }
         }
 
         @media (max-width: 767px) {
@@ -351,15 +378,8 @@ export function OnboardingLayout({
             display: none;
           }
 
-          /* The layout is a single-line flex row, so its min-height already
-             stretches the shell; the body then takes what the header leaves. */
-          .layout--fill {
-            min-height: 100dvh;
-          }
-
-          .layout--fill .body {
-            flex: 1;
-            margin-top: 20px;
+          .columns {
+            gap: 20px;
           }
 
           .footer {

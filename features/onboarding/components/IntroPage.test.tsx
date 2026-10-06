@@ -1,6 +1,7 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { UserDoc } from "../../../hooks/useUserDoc";
 import { INTRO_SLIDES } from "../data/introSlides";
+import { ONBOARDING_STEPS, WELCOME_INTRO } from "../data/steps";
 
 const push = jest.fn();
 const update = jest.fn();
@@ -13,8 +14,7 @@ jest.mock("../../../hooks/useUserDoc", () => ({ useUserDoc: () => ({ userDoc, up
 
 import { IntroPage } from "./IntroPage";
 
-const heading = () => screen.getByRole("heading", { level: 2 });
-const next = () => fireEvent.click(screen.getByRole("button", { name: /^Next/ }));
+const welcome = INTRO_SLIDES[WELCOME_INTRO];
 
 beforeEach(() => {
   push.mockReset();
@@ -22,80 +22,47 @@ beforeEach(() => {
   userDoc = { onboardingCompleted: false };
 });
 
-describe("IntroPage", () => {
-  it("opens on the first slide, with no Back and no header arrow", () => {
+describe("IntroPage — the Welcome", () => {
+  it("leads with the planner slide, bold key phrases and no markers", () => {
     render(<IntroPage />);
     expect(screen.getByRole("heading", { level: 1, name: "Welcome" })).toBeInTheDocument();
-    expect(heading()).toHaveTextContent(INTRO_SLIDES[0].title);
+    const title = screen.getByRole("heading", { level: 2, name: welcome.title });
+    const body = title.nextElementSibling as HTMLElement;
+    expect(body.textContent).not.toContain("**");
+    expect(body.querySelector("strong")).not.toBeNull();
+  });
+
+  it("is not a step: no stepper, no Back, no way to skip", () => {
+    render(<IntroPage />);
+    expect(screen.queryByRole("navigation", { name: "Setup progress" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Back/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Go back" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Skip/ })).not.toBeInTheDocument();
   });
 
-  it("bolds the marked key phrases and never shows the markers", () => {
+  it("lists every setup step ahead, in order, with its summary", () => {
     render(<IntroPage />);
-    for (let n = 0; n < INTRO_SLIDES.length; n++) {
-      const body = heading().nextElementSibling as HTMLElement;
-      expect(body.textContent).not.toContain("**");
-      expect(body.querySelector("strong")).not.toBeNull();
-      if (n < INTRO_SLIDES.length - 1) next();
-    }
+    const heading = screen.getByRole("heading", { level: 2, name: "What we'll set up" });
+    const rows = within(heading.closest(".card") as HTMLElement).getAllByRole("listitem");
+    expect(rows).toHaveLength(ONBOARDING_STEPS.length);
+    ONBOARDING_STEPS.forEach((step, n) => {
+      expect(rows[n]).toHaveTextContent(step.label);
+      expect(rows[n]).toHaveTextContent(step.summary);
+      // Each icon in its step's own hue, not the per-build accent.
+      const disc = rows[n].querySelector(".disc") as HTMLElement;
+      expect(disc.style.getPropertyValue("--disc-color")).toBe(step.tint);
+    });
   });
 
-  it("moves through the slides with Next and Back", () => {
+  it("Start setup remembers the Welcome and starts the wizard", () => {
     render(<IntroPage />);
-    next();
-    expect(heading()).toHaveTextContent(INTRO_SLIDES[1].title);
-
-    fireEvent.click(screen.getByRole("button", { name: /Back/ }));
-    expect(heading()).toHaveTextContent(INTRO_SLIDES[0].title);
-  });
-
-  it("moves with the arrow keys too", () => {
-    render(<IntroPage />);
-    fireEvent.keyDown(window, { key: "ArrowRight" });
-    fireEvent.keyDown(window, { key: "ArrowRight" });
-    expect(heading()).toHaveTextContent(INTRO_SLIDES[2].title);
-
-    fireEvent.keyDown(window, { key: "ArrowLeft" });
-    expect(heading()).toHaveTextContent(INTRO_SLIDES[1].title);
-  });
-
-  it("jumps to a slide from its dot and marks it current", () => {
-    render(<IntroPage />);
-    const dot = screen.getByRole("button", { name: `Slide 4 of ${INTRO_SLIDES.length}` });
-    fireEvent.click(dot);
-    expect(heading()).toHaveTextContent(INTRO_SLIDES[3].title);
-    expect(dot).toHaveAttribute("aria-current", "step");
-  });
-
-  it("ends on Start setup, which starts the wizard", () => {
-    render(<IntroPage />);
-    for (let n = 1; n < INTRO_SLIDES.length; n++) next();
-    expect(heading()).toHaveTextContent(INTRO_SLIDES[INTRO_SLIDES.length - 1].title);
-    // The last slide's primary button already leaves, so the skip link goes.
-    expect(screen.queryByRole("button", { name: "Skip intro" })).not.toBeInTheDocument();
-
     fireEvent.click(screen.getByRole("button", { name: /Start setup/ }));
     expect(update).toHaveBeenCalledWith({ onboardingIntroSeen: true });
     expect(push).toHaveBeenCalledWith("/onboarding/categories");
   });
 
-  it("can be skipped from any slide", () => {
+  it("shows while the user doc is still loading", () => {
+    userDoc = null;
     render(<IntroPage />);
-    next();
-    fireEvent.click(screen.getByRole("button", { name: "Skip intro" }));
-    expect(update).toHaveBeenCalledWith({ onboardingIntroSeen: true });
-    expect(push).toHaveBeenCalledWith("/onboarding/categories");
-  });
-
-  it("on a replay from Settings, closes back to Settings", () => {
-    userDoc = { onboardingCompleted: true, onboardingIntroSeen: true };
-    render(<IntroPage />);
-    fireEvent.click(screen.getByRole("button", { name: "Close" }));
-    expect(push).toHaveBeenCalledWith("/settings");
-
-    for (let n = 1; n < INTRO_SLIDES.length; n++) next();
-    expect(screen.getByRole("button", { name: /Done/ })).toBeInTheDocument();
-    expect(update).not.toHaveBeenCalled();
+    expect(screen.getByRole("heading", { level: 2, name: welcome.title })).toBeInTheDocument();
   });
 });

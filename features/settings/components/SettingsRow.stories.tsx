@@ -42,7 +42,7 @@ export const WithControl: Story = {
   },
 };
 export const Clickable: Story = {
-  args: { label: "Redo onboarding", value: undefined, onClick: fn() },
+  args: { label: "Run setup again", value: undefined, onClick: fn() },
 };
 export const ExternalLink: Story = {
   args: { label: "Change password", value: undefined, href: "https://example.com/account" },

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import { withPageAuthRequired } from "@auth0/nextjs-auth0/client";
 import { OnboardingLayout } from "../../features/onboarding/components/OnboardingLayout";
+import { stepNav } from "../../features/onboarding/helpers/stepNav";
 import { ReviewStep } from "../../features/onboarding/components/ReviewStep";
 import { useReviewStep } from "../../features/onboarding/hooks/useReviewStep";
 import { WizardActions } from "../../features/onboarding/components/WizardActions";
@@ -9,6 +10,8 @@ import { ContinueLater } from "../../features/onboarding/components/ContinueLate
 import { useLeaveOnboarding } from "../../features/onboarding/hooks/useLeaveOnboarding";
 import { useUserDoc } from "../../hooks/useUserDoc";
 import { materializeNow } from "../../hooks/useMaterialize";
+
+const { step, back } = stepNav("review");
 
 // Auth is checked on the client, not in getServerSideProps: with a server
 // guard every Next/Back became a serverless round trip (often a cold start)
@@ -43,14 +46,14 @@ function OnboardingReview() {
 
   return (
     <OnboardingLayout
-      step={6}
+      step={step}
       description="Here is your plan as the dashboard will show it. Go back to any step to change it."
       onNavigate={go}
       busy={pending}
       footer={
         <WizardActions
-          leading={<ContinueLater step={6} onClick={later.leave} busy={pending} />}
-          onBack={() => go("/onboarding/expenses")}
+          leading={<ContinueLater step={step} onClick={later.leave} busy={pending} />}
+          onBack={back ? () => go(back) : undefined}
           onNext={complete}
           nextLabel="Finish"
           busy={pending}

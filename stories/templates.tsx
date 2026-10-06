@@ -19,3 +19,7 @@ export const withHash = (hash: string) => () => {
 };
 
 export const MOBILE = { viewport: { value: "mobile1", isRotated: false } };
+/** 834px wide: one column, like a tablet or a narrow laptop window. */
+export const TABLET = { viewport: { value: "tablet", isRotated: false } };
+/** 1280px wide: wide enough for layouts that split into columns (onboarding's ≥1200). */
+export const DESKTOP = { viewport: { value: "desktop", isRotated: false } };

@@ -5,5 +5,5 @@
 
 /** The first wizard step. */
 export const ONBOARDING_ENTRY = "/onboarding/categories";
-/** The animated "what is Walleto" intro, shown once before the wizard. */
+/** The Welcome, before step 1: once for a new user, and on "Run setup again". */
 export const ONBOARDING_INTRO = "/onboarding";

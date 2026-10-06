@@ -89,11 +89,11 @@ export function TagsSettings() {
                     autoFocus
                     onValueChange={setDraft}
                   />
-                  <Button type="submit" variant="primary" size="sm">
-                    Save
-                  </Button>
                   <Button variant="ghost" size="sm" onClick={() => setEditingId(null)}>
                     Cancel
+                  </Button>
+                  <Button type="submit" variant="primary" size="sm">
+                    Save
                   </Button>
                 </form>
               ) : (

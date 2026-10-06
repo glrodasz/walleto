@@ -135,6 +135,9 @@
   /* A pane nested inside a pane — a stats block on a card, a progress track.
      No blur of its own: what is behind it is already blurred glass. */
   --glass-inset: rgba(255, 255, 255, 0.45);
+  /* A card set into an inset pane — one of a list of editable rows — one step
+     darker, so neighbouring cards read as separate cards. */
+  --glass-sunken: rgba(15, 23, 42, 0.045);
   --glass-blur: 20px;
   --glass-blur-lg: 34px;
   --glass-saturate: 1.7;
@@ -188,6 +191,14 @@
   --domain-investment-soft: color-mix(in srgb, var(--domain-investment) 16%, transparent);
   --domain-saving-soft: color-mix(in srgb, var(--domain-saving) 16%, transparent);
   --domain-debt-soft: color-mix(in srgb, var(--domain-debt) 16%, transparent);
+
+  /* The onboarding's other steps, each with a hue of its own (its overview
+     icon). Not the accent: that changes per build. Income / Expenses use
+     their domain colors. */
+  --setup-categories: #7c3aed;
+  --setup-methods: #ca8a04;
+  --setup-currencies: #ea580c;
+  --setup-review: #2563eb;
 
   /* Categorical palette for "by currency" charts, in legend order. */
   --palette-1: #16a34a;
@@ -305,6 +316,7 @@
   --glass-field: rgba(255, 255, 255, 0.06);
   --glass-raised: rgba(52, 52, 70, 0.82);
   --glass-inset: rgba(255, 255, 255, 0.05);
+  --glass-sunken: rgba(0, 0, 0, 0.22);
   --glass-blur: 20px;
   --glass-blur-lg: 34px;
   --glass-saturate: 1.4;
@@ -344,6 +356,11 @@
   --domain-investment-soft: color-mix(in srgb, var(--domain-investment) 18%, transparent);
   --domain-saving-soft: color-mix(in srgb, var(--domain-saving) 18%, transparent);
   --domain-debt-soft: color-mix(in srgb, var(--domain-debt) 18%, transparent);
+
+  --setup-categories: #b794ff;
+  --setup-methods: #ffd84d;
+  --setup-currencies: #ff9a4d;
+  --setup-review: #6ea8ff;
 
   --palette-1: #7cffb2;
   --palette-2: #5ee8ff;
@@ -483,6 +500,7 @@
     --glass-field: var(--bg-1);
     --glass-raised: var(--bg-1);
     --glass-inset: var(--bg-2);
+    --glass-sunken: var(--bg-3);
   }
 }
 
@@ -495,6 +513,7 @@
     --glass-field: var(--bg-1);
     --glass-raised: var(--bg-1);
     --glass-inset: var(--bg-2);
+    --glass-sunken: var(--bg-3);
     --glass-blur: 0px;
     --glass-blur-lg: 0px;
     --scrim-blur: 0px;
