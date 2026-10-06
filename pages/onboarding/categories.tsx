@@ -25,7 +25,7 @@ function OnboardingCategories() {
       footer={
         <WizardActions
           leading={<ContinueLater step={1} onClick={leave} busy={leaving} />}
-          onNext={() => go("/onboarding/methods")}
+          onNext={() => go("/onboarding/currencies")}
           busy={leaving}
           error={error}
         />

@@ -32,7 +32,11 @@ export const StepTwo: Story = {};
 export const StepOne: Story = {
   args: { step: 1, description: "Your plan is sorted by category." },
 };
-export const LastStep: Story = { args: { step: 4, description: "What do you pay every month?" } };
+export const LastStep: Story = {
+  args: { step: 6, description: "Here is your plan as the dashboard will show it." },
+};
+/** A domain step: its tab and the progress fill take the domain colour. */
+export const ExpensesStep: Story = { args: { step: 5 } };
 /** Saving: the stepper locks. */
 export const Busy: Story = {
   args: { busy: true, footer: <WizardActions onBack={fn()} onNext={fn()} busy /> },

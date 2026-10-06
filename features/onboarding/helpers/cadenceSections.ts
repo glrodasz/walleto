@@ -12,6 +12,13 @@ export interface CadenceSection {
   defaultFrequency: Frequency;
   /** Whether "backfill the last 6 months" applies — one-time items have a date instead. */
   recurring: boolean;
+  /**
+   * The section most of a plan lives in: drawn larger and first, while the
+   * others sit apart under "Less often" so an add aimed at it can't land in one.
+   */
+  primary: boolean;
+  /** The add chip's label, naming the cadence: "Add a monthly expense". */
+  addLabel: (noun: string, more: boolean) => string;
 }
 
 /**
@@ -22,19 +29,23 @@ export interface CadenceSection {
 export const CADENCE_SECTIONS: readonly CadenceSection[] = [
   {
     id: "monthly",
-    title: "Recurring monthly",
+    title: "Every month",
     hint: "Salary, rent, subscriptions — anything that lands every month.",
     frequencies: ["MONTHLY"],
     defaultFrequency: "MONTHLY",
     recurring: true,
+    primary: true,
+    addLabel: (noun, more) => `Add ${more ? "another" : "a"} monthly ${noun}`,
   },
   {
     id: "yearly",
-    title: "Recurring yearly",
+    title: "Once a year",
     hint: "Annual plans, insurance renewals, taxes.",
     frequencies: ["YEARLY"],
     defaultFrequency: "YEARLY",
     recurring: true,
+    primary: false,
+    addLabel: (noun, more) => `Add ${more ? "another" : "a"} yearly ${noun}`,
   },
   {
     id: "other",
@@ -43,6 +54,8 @@ export const CADENCE_SECTIONS: readonly CadenceSection[] = [
     frequencies: ["WEEKLY", "BIWEEKLY", "QUARTERLY"],
     defaultFrequency: "QUARTERLY",
     recurring: true,
+    primary: false,
+    addLabel: (noun, more) => `Add ${more ? "another" : "an"} ${noun} on another cadence`,
   },
   {
     id: "oneTime",
@@ -51,6 +64,8 @@ export const CADENCE_SECTIONS: readonly CadenceSection[] = [
     frequencies: ["ONE_TIME"],
     defaultFrequency: "ONE_TIME",
     recurring: false,
+    primary: false,
+    addLabel: (noun, more) => `Add ${more ? "another" : "a"} one-time ${noun}`,
   },
 ];
 

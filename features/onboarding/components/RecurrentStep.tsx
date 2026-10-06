@@ -1,68 +1,50 @@
-import { Select } from "../../../components/atoms/Select";
-import { TextField } from "../../../components/atoms/TextField";
-import { Chip } from "../../../components/atoms/Chip";
+import type { CSSProperties } from "react";
 import { CheckboxField } from "../../../components/atoms/CheckboxField";
-import { Close } from "../../../components/atoms/Icons";
 import { useRecurrentStep } from "../hooks/useRecurrentStep";
-import type { RecurrentRow } from "../hooks/useRecurrentStep";
-import { CADENCE_SECTIONS, sectionFor } from "../helpers/cadenceSections";
+import { CADENCE_SECTIONS } from "../helpers/cadenceSections";
 import type { CadenceSection } from "../helpers/cadenceSections";
 import { paymentMethodOptionLabel } from "../../../helpers/paymentMethodLabel";
 import { sortByName } from "../../../helpers/paymentMethodOptions";
 import { BACKFILL_MONTHS } from "../../../helpers/scheduleAnchor";
-import { ScheduleFields } from "../../../components/molecules/ScheduleFields";
-import { CURRENCY_SYMBOL, FREQUENCY_LABELS } from "../../../constants";
-import { useEnabledCurrencies } from "../../../hooks/useEnabledCurrencies";
-import { useDecimalInput } from "../../../hooks/useDecimalInput";
-import type { Currency, Frequency } from "../../../types";
+import type { Domain } from "../../../types";
+import { CadencePanel } from "./CadencePanel";
+import { RecurrentRowEditor } from "./RecurrentRowEditor";
 
 interface Props {
   state: ReturnType<typeof useRecurrentStep>;
   showPaymentMethod?: boolean;
 }
 
+const NOUN: Partial<Record<Domain, string>> = { INCOME: "income", EXPENSE: "expense" };
+
+/**
+ * The Income / Expenses step: monthly first and largest, everything else
+ * apart under "Less often", each cadence a panel of its own — tinted with the
+ * step's domain colour, like its tab in the stepper.
+ */
 export function RecurrentStep({ state, showPaymentMethod = false }: Props) {
-  const { rows, addTo, update, removeAt, categories, methods, backfill, setBackfill } = state;
-  const { optionsFor } = useEnabledCurrencies();
-  const { sanitize } = useDecimalInput();
+  const { domain, rows, addTo, update, removeAt, categories, methods, backfill, setBackfill } =
+    state;
 
   const categoryOptions = categories
     .filter((c) => !c.parentId)
     .map((c) => ({ value: c.id!, label: c.name }));
 
-  const methodOptions = sortByName(methods).map((m) => ({
-    value: m.id!,
-    label: paymentMethodOptionLabel(m),
-  }));
+  const methodOptions = showPaymentMethod
+    ? sortByName(methods).map((m) => ({ value: m.id!, label: paymentMethodOptionLabel(m) }))
+    : undefined;
 
+  const noun = NOUN[domain] ?? "item";
   const rowsIn = (section: CadenceSection) =>
     rows.filter((r) => section.frequencies.includes(r.frequency));
-
-  const renderSchedule = (row: RecurrentRow, section: CadenceSection) => {
-    const disabled = Boolean(row.id);
-    return (
-      <>
-        {section.id === "other" && (
-          <Select
-            label="Cadence"
-            options={section.frequencies.map((f) => ({ value: f, label: FREQUENCY_LABELS[f] }))}
-            value={row.frequency}
-            disabled={disabled}
-            onValueChange={(v) => update(row.key, { frequency: v as Frequency })}
-          />
-        )}
-        <ScheduleFields
-          frequency={row.frequency}
-          value={row}
-          disabled={disabled}
-          onChange={(p) => update(row.key, p)}
-        />
-      </>
-    );
-  };
+  const primary = CADENCE_SECTIONS.filter((s) => s.primary);
+  const secondary = CADENCE_SECTIONS.filter((s) => !s.primary);
 
   return (
-    <div className="step">
+    <div
+      className="step"
+      style={{ "--step-accent": `var(--domain-${domain.toLowerCase()})` } as CSSProperties}
+    >
       <div className="backfill">
         <CheckboxField
           label={`Backfill recurring items for the last ${BACKFILL_MONTHS} months`}
@@ -72,101 +54,58 @@ export function RecurrentStep({ state, showPaymentMethod = false }: Props) {
         />
       </div>
 
-      {CADENCE_SECTIONS.map((section) => {
-        const sectionRows = rowsIn(section);
-        return (
-          <section key={section.id} className="section">
-            <header className="section-head">
-              <h3 className="section-title">{section.title}</h3>
-              <p className="section-hint">{section.hint}</p>
-            </header>
+      {primary.map((section) => (
+        <CadencePanel
+          key={section.id}
+          section={section}
+          noun={noun}
+          count={rowsIn(section).length}
+          onAdd={() => addTo(section.defaultFrequency)}
+        >
+          {rowsIn(section).map((row) => (
+            <RecurrentRowEditor
+              key={row.key}
+              row={row}
+              section={section}
+              categoryOptions={categoryOptions}
+              methodOptions={methodOptions}
+              onChange={(patch) => update(row.key, patch)}
+              onRemove={() => removeAt(row.key)}
+            />
+          ))}
+        </CadencePanel>
+      ))}
 
-            {sectionRows.map((row) => {
-              const disabled = Boolean(row.id);
-              return (
-                <div key={row.key} className="row">
-                  <div className="fields">
-                    <div className="field field--category">
-                      <Select
-                        label="Category"
-                        placeholder="Main category"
-                        options={categoryOptions}
-                        value={row.categoryId}
-                        disabled={disabled}
-                        onValueChange={(value) => update(row.key, { categoryId: value })}
-                      />
-                    </div>
-                    <div className="field field--name">
-                      <TextField
-                        label="Name"
-                        placeholder="Name"
-                        value={row.name}
-                        disabled={disabled}
-                        onValueChange={(value) => update(row.key, { name: value })}
-                      />
-                    </div>
-                    <div className="field field--amount">
-                      <TextField
-                        label="Amount"
-                        placeholder="0"
-                        inputMode="decimal"
-                        prefix={CURRENCY_SYMBOL[row.currency]}
-                        align="right"
-                        value={row.amount}
-                        disabled={disabled}
-                        onValueChange={(value) => update(row.key, { amount: sanitize(value) })}
-                      />
-                    </div>
-                    <div className="field field--currency">
-                      <Select
-                        label="Currency"
-                        options={optionsFor(row.currency)}
-                        value={row.currency}
-                        disabled={disabled}
-                        onValueChange={(value) => update(row.key, { currency: value as Currency })}
-                      />
-                    </div>
-                    <div className="field field--schedule">{renderSchedule(row, section)}</div>
-                    {showPaymentMethod && (
-                      <div className="field field--method">
-                        <Select
-                          label="Payment method"
-                          placeholder="None"
-                          options={methodOptions}
-                          value={row.paymentMethodId}
-                          disabled={disabled}
-                          onValueChange={(value) => update(row.key, { paymentMethodId: value })}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    className="remove"
-                    onClick={() => removeAt(row.key)}
-                    aria-label={`Remove ${row.name || "row"}`}
-                  >
-                    <Close size={20} />
-                  </button>
-                </div>
-              );
-            })}
-
-            <div>
-              <Chip variant="add" onClick={() => addTo(section.defaultFrequency)}>
-                {sectionRows.length ? "Add more" : `Add ${section.title.toLowerCase()}`}
-              </Chip>
-            </div>
-          </section>
-        );
-      })}
+      <div className="secondary">
+        <h3 className="secondary-title">Less often</h3>
+        {secondary.map((section) => (
+          <CadencePanel
+            key={section.id}
+            section={section}
+            noun={noun}
+            count={rowsIn(section).length}
+            onAdd={() => addTo(section.defaultFrequency)}
+          >
+            {rowsIn(section).map((row) => (
+              <RecurrentRowEditor
+                key={row.key}
+                row={row}
+                section={section}
+                categoryOptions={categoryOptions}
+                methodOptions={methodOptions}
+                onChange={(patch) => update(row.key, patch)}
+                onRemove={() => removeAt(row.key)}
+              />
+            ))}
+          </CadencePanel>
+        ))}
+      </div>
 
       <style jsx>{`
         .step {
           display: flex;
           flex-direction: column;
-          gap: 28px;
+          gap: 24px;
         }
 
         .backfill {
@@ -176,101 +115,21 @@ export function RecurrentStep({ state, showPaymentMethod = false }: Props) {
           background: var(--glass-inset);
         }
 
-        .section {
+        .secondary {
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 12px;
+          padding-top: 20px;
+          border-top: 1px solid var(--line);
         }
 
-        .section-head {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-
-        .section-title {
+        .secondary-title {
           margin: 0;
-          font-size: 0.9375rem;
+          font-size: 0.75rem;
           font-weight: 700;
-          color: var(--fg-0);
-        }
-
-        .section-hint {
-          margin: 0;
-          font-size: 0.8125rem;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
           color: var(--fg-2);
-        }
-
-        .row {
-          display: flex;
-          align-items: flex-end;
-          gap: 12px;
-          padding: 14px;
-          border: 1px solid var(--glass-rim);
-          border-radius: var(--r-md);
-          background: var(--glass-inset);
-        }
-
-        .fields {
-          flex: 1;
-          min-width: 0;
-          display: flex;
-          flex-wrap: wrap;
-          gap: 12px;
-        }
-
-        .field {
-          flex: 1 1 140px;
-          min-width: 0;
-        }
-
-        .field--category,
-        .field--name {
-          flex: 2 1 180px;
-        }
-
-        .field--schedule {
-          display: flex;
-          gap: 12px;
-          flex: 1 1 160px;
-        }
-
-        .field--schedule > :global(*) {
-          flex: 1;
-          min-width: 0;
-        }
-
-        .remove {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 40px;
-          height: 40px;
-          flex-shrink: 0;
-          padding: 0;
-          border: none;
-          border-radius: var(--r-md);
-          background: transparent;
-          color: var(--fg-2);
-          cursor: pointer;
-        }
-
-        .remove:hover {
-          color: var(--accent-hot);
-          background: var(--glass-hover);
-        }
-
-        @media (max-width: 767px) {
-          .row {
-            align-items: flex-start;
-          }
-
-          .field,
-          .field--category,
-          .field--name,
-          .field--schedule {
-            flex-basis: 100%;
-          }
         }
       `}</style>
     </div>

@@ -1,22 +1,21 @@
-import { Amount } from "../../../components/atoms/Amount";
-import {
-  ArrowDown,
-  ArrowUpRight,
-  Circle,
-  CreditCard,
-  TrendingUp,
-} from "../../../components/atoms/Icons";
-import { SummaryCard } from "../../../components/molecules/SummaryCard";
-import type { SummaryStat } from "../../../components/molecules/SummaryCard";
-import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
-import type { Currency } from "../../../types";
-import type { MoneyFlow } from "../../../helpers";
+import { Amount } from "../atoms/Amount";
+import { ArrowDown, ArrowUpRight, Circle, CreditCard, TrendingUp } from "../atoms/Icons";
+import { SummaryCard } from "../molecules/SummaryCard";
+import type { SummaryStat } from "../molecules/SummaryCard";
+import { useMoneyFormat } from "../../hooks/useMoneyFormat";
+import type { Currency } from "../../types";
+import type { MoneyFlow } from "../../helpers";
 
 interface Props {
   flow: MoneyFlow;
   currency: Currency;
   /** Aggregates converted with real FX rates get the "≈" marker. */
   approximate?: boolean;
+  /**
+   * Which domain stats sit beside the figure; all five by default. The
+   * onboarding review only has income and expenses to show.
+   */
+  stats?: (keyof MoneyFlow)[];
 }
 
 const STATS: (Omit<SummaryStat, "value"> & { key: keyof MoneyFlow })[] = [
@@ -35,7 +34,7 @@ const STATS: (Omit<SummaryStat, "value"> & { key: keyof MoneyFlow })[] = [
  * spending. Every number here is the plan's monthly
  * run-rate, and the pill says whether the plan fits inside the income.
  */
-export function NetFlowCard({ flow, currency, approximate = false }: Props) {
+export function NetFlowCard({ flow, currency, approximate = false, stats }: Props) {
   const { formatAmount } = useMoneyFormat();
   // The verdict the pill gives: does the plan fit inside what comes in?
   const overCommitted = flow.net < 0;
@@ -56,7 +55,10 @@ export function NetFlowCard({ flow, currency, approximate = false }: Props) {
           ? "more planned out than coming in, each month"
           : "left to allocate each month"
       }
-      stats={STATS.map((s) => ({ ...s, value: formatAmount(flow[s.key], currency) }))}
+      stats={STATS.filter((s) => !stats || stats.includes(s.key)).map((s) => ({
+        ...s,
+        value: formatAmount(flow[s.key], currency),
+      }))}
     />
   );
 }
