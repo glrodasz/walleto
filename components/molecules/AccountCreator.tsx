@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { Select } from "../atoms/Select";
-import { TextField } from "../atoms/TextField";
 import { Button } from "../atoms/Button";
+import { AccountFormFields } from "./AccountFormFields";
 import { ACCOUNT_NOUN } from "../../helpers/accounts";
-import { useEnabledCurrencies } from "../../hooks/useEnabledCurrencies";
+import { emptyAccountDraft, readAccountDraft } from "../../helpers/accountDraft";
 import { useDecimalInput } from "../../hooks/useDecimalInput";
-import type { Account, AccountDomain, Currency, InterestPeriod } from "../../types";
+import type { Account, AccountDomain, Currency } from "../../types";
 import type { AccountInput } from "../../schemas";
 
 interface Props {
@@ -18,18 +17,18 @@ interface Props {
   onCreated: (accountId: string) => void;
   onCancel: () => void;
   onError?: (message: string) => void;
+  /**
+   * Dashed frame with a "New …" legend, to set it apart inside another form
+   * (`AccountField`). Settings turns it off: there it sits in the list, like
+   * the edit form.
+   */
+  framed?: boolean;
 }
 
-const PERIOD_OPTIONS: { value: InterestPeriod; label: string }[] = [
-  { value: "YEARLY", label: "Yearly" },
-  { value: "MONTHLY", label: "Monthly" },
-];
-
 /**
- * The inline "new account / pocket / debt" form: name, bank or broker (the
- * lender, for a debt), currency and an optional interest rate as the bank
- * quotes it. Shared by the entry forms (`AccountField`) and Settings.
- * Mounted fresh each time, so its state needs no reset.
+ * The inline "new account / pocket / debt" form: the same fields as editing
+ * one (`AccountFormFields`). Shared by the entry forms (`AccountField`) and
+ * Settings. Mounted fresh each time, so its state needs no reset.
  */
 export function AccountCreator({
   domain,
@@ -39,93 +38,47 @@ export function AccountCreator({
   onCreated,
   onCancel,
   onError,
+  framed = true,
 }: Props) {
   const noun = ACCOUNT_NOUN[domain].singular;
-  const { optionsFor } = useEnabledCurrencies();
-  const { sanitize, parse } = useDecimalInput();
+  const { parse } = useDecimalInput();
   const [busy, setBusy] = useState(false);
-  const [name, setName] = useState("");
-  const [provider, setProvider] = useState("");
-  const [currency, setCurrency] = useState<Currency>(defaultCurrency);
-  const [rate, setRate] = useState("");
-  const [period, setPeriod] = useState<InterestPeriod>("YEARLY");
+  const [draft, setDraft] = useState(() => emptyAccountDraft(defaultCurrency));
 
   const commit = async () => {
-    const trimmed = name.trim();
-    if (!trimmed) return onError?.(`Give the ${noun} a name`);
-    const existing = accounts.find((a) => a.name.toLowerCase() === trimmed.toLowerCase());
-    if (existing?.id) {
+    const existing = accounts.find((a) => a.name.toLowerCase() === draft.name.trim().toLowerCase());
+    if (draft.name.trim() && existing?.id) {
       onCreated(existing.id);
       return;
     }
-    const rateValue = rate.trim() === "" ? null : (parse(rate) ?? NaN);
-    if (rateValue !== null && !(rateValue >= 0 && rateValue <= 100)) {
-      return onError?.("Interest rate must be between 0 and 100");
-    }
+    const read = readAccountDraft(draft, parse, noun);
+    if ("error" in read) return onError?.(read.error);
+    const { name, provider, currency, interestRate } = read.values;
     setBusy(true);
     try {
       const id = await createAccount({
         domain,
-        name: trimmed,
+        name,
         currency,
-        ...(provider.trim() ? { provider: provider.trim() } : {}),
-        ...(rateValue !== null ? { interestRate: { value: rateValue, period } } : {}),
+        ...(provider ? { provider } : {}),
+        ...(interestRate ? { interestRate } : {}),
       });
       onCreated(id);
     } catch (err) {
       console.error("Failed to create account:", err);
-      onError?.(`Couldn't create the ${noun} "${trimmed}"`);
+      onError?.(`Couldn't create the ${noun} "${name}"`);
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <fieldset className="creator">
-      <legend className="legend">New {noun}</legend>
-      <TextField
-        label="Name"
-        placeholder={
-          domain === "SAVING"
-            ? "Emergency fund"
-            : domain === "DEBT"
-              ? "Credit card"
-              : "Broker account"
-        }
-        autoFocus
-        value={name}
-        onValueChange={setName}
-      />
-      <div className="pair">
-        <TextField
-          label={domain === "DEBT" ? "Lender (optional)" : "Bank or broker (optional)"}
-          placeholder={domain === "DEBT" ? "Bank or a friend's name" : "Avanza"}
-          value={provider}
-          onValueChange={setProvider}
-        />
-        <Select
-          label="Currency"
-          options={optionsFor(currency)}
-          value={currency}
-          onValueChange={(v) => setCurrency(v as Currency)}
-        />
-      </div>
-      <div className="pair">
-        <TextField
-          label="Interest rate % (optional)"
-          placeholder="0"
-          inputMode="decimal"
-          align="right"
-          value={rate}
-          onValueChange={(v) => setRate(sanitize(v))}
-        />
-        <Select
-          label="Rate period"
-          options={PERIOD_OPTIONS}
-          value={period}
-          onValueChange={(v) => setPeriod(v as InterestPeriod)}
-        />
-      </div>
+    <fieldset
+      className={framed ? "creator creator--framed" : "creator"}
+      aria-label={framed ? undefined : `New ${noun}`}
+    >
+      {framed && <legend className="legend">New {noun}</legend>}
+      <AccountFormFields domain={domain} draft={draft} onChange={setDraft} autoFocus />
       <div className="actions">
         <Button variant="ghost" size="sm" onClick={onCancel} disabled={busy}>
           Cancel
@@ -140,7 +93,13 @@ export function AccountCreator({
           display: flex;
           flex-direction: column;
           gap: 10px;
+          min-width: 0;
           margin: 0;
+          padding: 8px 0;
+          border: none;
+        }
+
+        .creator--framed {
           padding: 12px;
           border: 1px dashed var(--line);
           border-radius: var(--r-sm);
@@ -155,22 +114,10 @@ export function AccountCreator({
           color: var(--fg-2);
         }
 
-        .pair {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 12px;
-        }
-
         .actions {
           display: flex;
           justify-content: flex-end;
           gap: 8px;
-        }
-
-        @media (max-width: 480px) {
-          .pair {
-            grid-template-columns: 1fr;
-          }
         }
       `}</style>
     </fieldset>

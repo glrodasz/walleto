@@ -68,14 +68,14 @@ describe("AccountField", () => {
     const { onChange, createAccount } = setup();
     fireEvent.click(screen.getByRole("button", { name: /New pocket/ }));
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "SEB savings" } });
-    fireEvent.change(screen.getByLabelText("Bank or broker (optional)"), {
+    fireEvent.change(screen.getByLabelText("Bank or broker"), {
       target: { value: "SEB" },
     });
     fireEvent.change(screen.getByLabelText("Currency"), { target: { value: "SEK" } });
-    fireEvent.change(screen.getByLabelText("Interest rate % (optional)"), {
+    fireEvent.change(screen.getByLabelText("Interest rate %"), {
       target: { value: "2.5" },
     });
-    fireEvent.change(screen.getByLabelText("Rate period"), { target: { value: "YEARLY" } });
+    fireEvent.change(screen.getByLabelText("Period"), { target: { value: "YEARLY" } });
     fireEvent.click(screen.getByRole("button", { name: "Add pocket" }));
 
     await waitFor(() => expect(onChange).toHaveBeenCalledWith("new1"));
@@ -117,7 +117,7 @@ describe("AccountField", () => {
     const { onError, createAccount } = setup();
     fireEvent.click(screen.getByRole("button", { name: /New pocket/ }));
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Odd" } });
-    fireEvent.change(screen.getByLabelText("Interest rate % (optional)"), {
+    fireEvent.change(screen.getByLabelText("Interest rate %"), {
       target: { value: "250" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Add pocket" }));

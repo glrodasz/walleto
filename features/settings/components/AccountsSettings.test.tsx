@@ -107,4 +107,15 @@ describe("AccountsSettings — creating", () => {
       expect(screen.getByRole("button", { name: /Add pocket/ })).toBeInTheDocument()
     );
   });
+
+  it("opens the same fields as editing, without the framed legend", () => {
+    render(<AccountsSettings />);
+    fireEvent.click(screen.getByRole("tab", { name: "Debts" }));
+    fireEvent.click(screen.getByRole("button", { name: /Add debt/ }));
+    expect(screen.getByRole("group", { name: "New debt" })).toBeInTheDocument();
+    expect(screen.queryByText("New debt")).not.toBeInTheDocument();
+    for (const label of ["Name", "Lender", "Currency", "Interest rate %", "Period"]) {
+      expect(screen.getByLabelText(label)).toBeInTheDocument();
+    }
+  });
 });
