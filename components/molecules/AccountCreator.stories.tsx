@@ -29,3 +29,7 @@ export const Investment: Story = {};
 export const SavingPocket: Story = { args: { domain: "SAVING", accounts: accountsFor("SAVING") } };
 /** A debt names its lender instead of a bank or broker. */
 export const Debt: Story = { args: { domain: "DEBT", accounts: accountsFor("DEBT") } };
+/** Settings: no frame, so it matches the inline edit form. */
+export const Unframed: Story = {
+  args: { domain: "SAVING", accounts: accountsFor("SAVING"), framed: false },
+};

@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
-import { TextField } from "../../../components/atoms/TextField";
-import { Select } from "../../../components/atoms/Select";
 import { Button } from "../../../components/atoms/Button";
 import { Chip } from "../../../components/atoms/Chip";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
@@ -10,38 +8,19 @@ import { TabStrip } from "../../../components/atoms/TabStrip";
 import { Pager } from "../../../components/molecules/Pager";
 import { paginate } from "../../../utils/paginate";
 import { AccountCreator } from "../../../components/molecules/AccountCreator";
+import { AccountFormFields } from "../../../components/molecules/AccountFormFields";
 import { ErrorState } from "../../../components/atoms/ErrorState";
 import { useAccounts } from "../../../hooks/useAccounts";
 import { useUserDoc } from "../../../hooks/useUserDoc";
 import { ACCOUNT_NOUN, accountLabel, formatInterestRate } from "../../../helpers/accounts";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
-import { useEnabledCurrencies } from "../../../hooks/useEnabledCurrencies";
 import { useDecimalInput } from "../../../hooks/useDecimalInput";
-import type { Account, AccountDomain, Currency, InterestPeriod } from "../../../types";
+import { accountDraftOf, readAccountDraft } from "../../../helpers/accountDraft";
+import type { AccountDraft } from "../../../helpers/accountDraft";
+import type { Account, AccountDomain } from "../../../types";
 
 const DOMAINS: AccountDomain[] = ["INVESTMENT", "SAVING", "DEBT"];
 const PAGE_SIZE = 25;
-
-const PERIOD_OPTIONS: { value: InterestPeriod; label: string }[] = [
-  { value: "YEARLY", label: "Yearly" },
-  { value: "MONTHLY", label: "Monthly" },
-];
-
-interface Draft {
-  name: string;
-  provider: string;
-  currency: Currency;
-  rate: string;
-  period: InterestPeriod;
-}
-
-const draftOf = (a: Account, toInput: (n: number) => string): Draft => ({
-  name: a.name,
-  provider: a.provider ?? "",
-  currency: a.currency,
-  rate: a.interestRate ? toInput(a.interestRate.value) : "",
-  period: a.interestRate?.period ?? "YEARLY",
-});
 
 /**
  * Investment accounts, savings pockets and debts: create, rename, change the
@@ -53,10 +32,9 @@ export function AccountsSettings() {
   const { accounts, loading, error, create, update, remove } = useAccounts(domain);
   const { userDoc } = useUserDoc();
   const decimal = useDecimalInput();
-  const { optionsFor } = useEnabledCurrencies();
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [draft, setDraft] = useState<Draft | null>(null);
+  const [draft, setDraft] = useState<AccountDraft | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -78,7 +56,7 @@ export function AccountsSettings() {
 
   const startEdit = (a: Account) => {
     setEditingId(a.id!);
-    setDraft(draftOf(a, decimal.toInput));
+    setDraft(accountDraftOf(a, decimal.toInput));
     setMessage(null);
   };
 
@@ -86,24 +64,10 @@ export function AccountsSettings() {
     const id = editingId;
     const d = draft;
     if (!id || !d) return;
-    const name = d.name.trim();
-    if (!name) return setMessage(`Give the ${noun} a name`);
-    const rate = d.rate.trim() === "" ? null : (decimal.parse(d.rate) ?? NaN);
-    if (rate !== null && !(rate >= 0 && rate <= 100)) {
-      return setMessage("Interest rate must be between 0 and 100");
-    }
+    const read = readAccountDraft(d, decimal.parse, noun);
+    if ("error" in read) return setMessage(read.error);
     setEditingId(null);
-    await run(
-      id,
-      () =>
-        update(id, {
-          name,
-          provider: d.provider.trim() || null,
-          currency: d.currency,
-          interestRate: rate === null ? null : { value: rate, period: d.period },
-        }),
-      `Couldn't update the ${noun}`
-    );
+    await run(id, () => update(id, read.values), `Couldn't update the ${noun}`);
   };
 
   return (
@@ -142,44 +106,7 @@ export function AccountsSettings() {
                     save();
                   }}
                 >
-                  <div className="pair">
-                    <TextField
-                      label="Name"
-                      autoFocus
-                      value={draft.name}
-                      onValueChange={(v) => setDraft({ ...draft, name: v })}
-                    />
-                    <TextField
-                      label={domain === "DEBT" ? "Lender" : "Bank or broker"}
-                      placeholder="Optional"
-                      value={draft.provider}
-                      onValueChange={(v) => setDraft({ ...draft, provider: v })}
-                    />
-                  </div>
-                  <div className="pair">
-                    <Select
-                      label="Currency"
-                      options={optionsFor(draft.currency)}
-                      value={draft.currency}
-                      onValueChange={(v) => setDraft({ ...draft, currency: v as Currency })}
-                    />
-                    <div className="pair">
-                      <TextField
-                        label="Interest rate %"
-                        placeholder="None"
-                        inputMode="decimal"
-                        align="right"
-                        value={draft.rate}
-                        onValueChange={(v) => setDraft({ ...draft, rate: decimal.sanitize(v) })}
-                      />
-                      <Select
-                        label="Period"
-                        options={PERIOD_OPTIONS}
-                        value={draft.period}
-                        onValueChange={(v) => setDraft({ ...draft, period: v as InterestPeriod })}
-                      />
-                    </div>
-                  </div>
+                  <AccountFormFields domain={domain} draft={draft} onChange={setDraft} autoFocus />
                   <div className="actions">
                     <Button variant="ghost" size="sm" onClick={() => setEditingId(null)}>
                       Cancel
@@ -230,6 +157,7 @@ export function AccountsSettings() {
             accounts={accounts}
             defaultCurrency={userDoc?.mainCurrency ?? "USD"}
             createAccount={create}
+            framed={false}
             onCreated={() => setCreating(false)}
             onCancel={() => setCreating(false)}
             onError={setMessage}
@@ -304,12 +232,6 @@ export function AccountsSettings() {
           padding: 8px 0;
         }
 
-        .pair {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-        }
-
         .actions {
           display: flex;
           justify-content: flex-end;
@@ -330,12 +252,6 @@ export function AccountsSettings() {
           margin: 10px 0 0;
           font-size: 0.85rem;
           color: var(--accent-hot);
-        }
-
-        @media (max-width: 480px) {
-          .pair {
-            grid-template-columns: 1fr;
-          }
         }
       `}</style>
     </Card>
