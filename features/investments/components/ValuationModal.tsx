@@ -4,6 +4,8 @@ import { TextField } from "../../../components/atoms/TextField";
 import { Select } from "../../../components/atoms/Select";
 import { Button } from "../../../components/atoms/Button";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
+import { useMoneyContext } from "../../../hooks/useMoneyContext";
+import { useEnabledCurrencies } from "../../../hooks/useEnabledCurrencies";
 import { useDecimalInput } from "../../../hooks/useDecimalInput";
 import { roundTo } from "../../../utils/decimal";
 import {
@@ -11,6 +13,8 @@ import {
   updateInvestmentValuation,
 } from "../../../hooks/useInvestmentValuations";
 import { toDateInputValue } from "../../../helpers/scheduleAnchor";
+import { convert } from "../../../helpers/fx";
+import { ACCOUNT_NOUN } from "../../../helpers/accounts";
 import { gainFromValue, valueFromGain } from "../helpers/valuation";
 import type { ValueSelector } from "../helpers/valuation";
 import { CURRENCY_SYMBOL } from "../../../constants";
@@ -27,6 +31,7 @@ interface Props {
   costBasis: number;
   /** Debts: what the balance is estimated to be today, to open the form on. */
   latestValue?: number;
+  /** What `costBasis` and `latestValue` are in; the form opens on it, the owner can switch. */
   currency: Currency;
   /** Present = edit. */
   valuation?: InvestmentValuation;
@@ -42,6 +47,10 @@ interface Props {
  * other from the basis; whichever was edited last is what gets saved — so
  * "+100% → 260, but actually it's 230" is a two-keystroke correction. A debt
  * has no gain to type: the form is just the balance owed, saved with a 0 %.
+ *
+ * The check is written in whichever currency the statement is in: switching
+ * it converts the basis (and what's typed) at today's rate, so the gain %
+ * still compares like with like.
  */
 export function ValuationModal({
   open,
@@ -58,6 +67,10 @@ export function ValuationModal({
 }: Props) {
   const { formatAmount, decimals } = useMoneyFormat();
   const { sanitize, parse, toInput, toPrefill } = useDecimalInput();
+  const { ctx, fxMissing } = useMoneyContext();
+  const { optionsFor } = useEnabledCurrencies();
+  const sourceCurrency = valuation?.currency ?? currency;
+  const [checkCurrency, setCheckCurrency] = useState<Currency>(sourceCurrency);
   const [date, setDate] = useState(toDateInputValue(new Date()));
   const [gain, setGain] = useState("");
   const [value, setValue] = useState("");
@@ -70,6 +83,7 @@ export function ValuationModal({
   useEffect(() => {
     if (!open) return;
     setError(null);
+    setCheckCurrency(valuation?.currency ?? currency);
     if (valuation) {
       setDate(toDateInputValue(valuation.asOf.toDate()));
       setGain(toPrefill(roundTo(valuation.gainPct, 2)));
@@ -83,12 +97,36 @@ export function ValuationModal({
       setNote("");
       setCategoryId(suggestedCategoryId ?? "");
     }
-  }, [open, valuation, costBasis, suggestedCategoryId, owes, latestValue, toPrefill, decimals]);
+  }, [
+    open,
+    valuation,
+    costBasis,
+    currency,
+    suggestedCategoryId,
+    owes,
+    latestValue,
+    toPrefill,
+    decimals,
+  ]);
 
-  const basis = valuation ? valuation.costBasis : costBasis;
+  const sourceBasis = valuation ? valuation.costBasis : costBasis;
+  const basis =
+    checkCurrency === sourceCurrency
+      ? sourceBasis
+      : convert(sourceBasis, sourceCurrency, checkCurrency, ctx.rates);
   // A gain % needs something to be a percentage of: with withdrawals the net
   // basis can be zero or below, and then the value is all there is to say.
   const valueOnly = owes || basis <= 0;
+
+  // Same worth, other units: the typed value follows, and the gain % — a
+  // ratio of two converted figures — doesn't move.
+  const onCurrencyChange = (next: Currency) => {
+    const v = parse(value);
+    if (v !== null) {
+      setValue(toInput(roundTo(convert(v, checkCurrency, next, ctx.rates), decimals)));
+    }
+    setCheckCurrency(next);
+  };
 
   const onGainChange = (raw: string) => {
     const cleaned = sanitize(raw, { negative: true });
@@ -126,6 +164,9 @@ export function ValuationModal({
           asOf,
           gainPct: pct,
           value: v,
+          ...(checkCurrency !== valuation.currency
+            ? { currency: checkCurrency, costBasis: basis }
+            : {}),
           note: note.trim() || null,
           ...(categories ? { categoryId: categoryId || null } : {}),
         });
@@ -136,7 +177,7 @@ export function ValuationModal({
           gainPct: pct,
           value: v,
           costBasis: basis,
-          currency,
+          currency: checkCurrency,
           ...(categoryId ? { categoryId } : {}),
           ...(note.trim() ? { note: note.trim() } : {}),
         });
@@ -166,17 +207,28 @@ export function ValuationModal({
     >
       <div className="form">
         <p className="basis">
-          {owes ? "Repaid" : "Invested"} so far: <strong>{formatAmount(basis, currency)}</strong>
+          {owes ? "Repaid" : "Invested"} so far:{" "}
+          <strong>{formatAmount(basis, checkCurrency)}</strong>
         </p>
 
-        <TextField label="As of" type="date" value={date} onValueChange={setDate} />
+        <div className="pair">
+          <TextField label="As of" type="date" value={date} onValueChange={setDate} />
+          <Select
+            label="Currency"
+            options={optionsFor(checkCurrency)}
+            value={checkCurrency}
+            /* Without rates a switch would convert 1:1 — a made-up basis. */
+            disabled={fxMissing}
+            onValueChange={(v) => onCurrencyChange(v as Currency)}
+          />
+        </div>
 
         {valueOnly ? (
           <>
             <TextField
               label={owes ? "Balance owed" : "Current value"}
               inputMode="decimal"
-              prefix={CURRENCY_SYMBOL[currency]}
+              prefix={CURRENCY_SYMBOL[checkCurrency]}
               align="right"
               placeholder="0"
               value={value}
@@ -184,8 +236,9 @@ export function ValuationModal({
             />
             {!owes && (
               <p className="hint">
-                Nothing is net invested after withdrawals, so there is no gain % to type — just what
-                the position is worth.
+                {basis === 0
+                  ? `Nothing has been paid into this ${ACCOUNT_NOUN[domain].singular} yet, so there is no gain % to work out — just what it's worth.`
+                  : "Nothing is net invested after withdrawals, so there is no gain % to type — just what the position is worth."}
               </p>
             )}
           </>
@@ -203,7 +256,7 @@ export function ValuationModal({
               <TextField
                 label="Current value"
                 inputMode="decimal"
-                prefix={CURRENCY_SYMBOL[currency]}
+                prefix={CURRENCY_SYMBOL[checkCurrency]}
                 align="right"
                 placeholder="0"
                 value={value}

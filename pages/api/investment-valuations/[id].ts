@@ -31,7 +31,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
-    const { categoryId, asOf, gainPct, value, costBasis, note } = parsed.data;
+    const { categoryId, asOf, gainPct, value, costBasis, currency, note } = parsed.data;
 
     // Same check as on create: the category must be the caller's and share
     // the valuation's domain.
@@ -57,6 +57,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       ...(gainPct !== undefined ? { gainPct } : {}),
       ...(value !== undefined ? { value } : {}),
       ...(costBasis !== undefined ? { costBasis } : {}),
+      ...(currency ? { currency } : {}),
       ...(note !== undefined ? { note: note ?? admin.firestore.FieldValue.delete() } : {}),
     });
 
