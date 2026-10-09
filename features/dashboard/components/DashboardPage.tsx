@@ -245,7 +245,7 @@ export function DashboardPage() {
 
         /* One row that never wraps: five equal columns when they fit, each at least
            300px (the big figure needs it), and a swipe/scroll with no visible bar
-           when they don't. The padding + negative margin keep the glass shadow
+           when they don't (phones stack instead). The padding + negative margin keep the glass shadow
            from being clipped by the scroll container. */
         .cards {
           display: grid;
@@ -275,6 +275,15 @@ export function DashboardPage() {
         }
 
         @media (max-width: 767px) {
+          .cards {
+            grid-auto-flow: row;
+            grid-auto-columns: auto;
+            grid-template-columns: 1fr;
+            overflow: visible;
+            padding: 0;
+            margin: 0;
+          }
+
           .bottom {
             grid-template-columns: 1fr;
           }
