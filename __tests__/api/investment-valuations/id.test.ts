@@ -78,6 +78,22 @@ describe("PATCH /api/investment-valuations/[id]", () => {
     expect(update).toHaveBeenCalledWith({ value: 230, gainPct: 76.9, note: "DELETE_FIELD" });
   });
 
+  it("re-denominates the check with its basis", async () => {
+    const { update } = wireDoc({ userId: "user1" });
+    const res = mockRes();
+    await handler(req("PATCH", { value: 1100, costBasis: 1000, currency: "SEK" }), res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(update).toHaveBeenCalledWith({ value: 1100, costBasis: 1000, currency: "SEK" });
+  });
+
+  it("rejects an unknown currency", async () => {
+    wireDoc({ userId: "user1" });
+    const res = mockRes();
+    await handler(req("PATCH", { currency: "XYZ" }), res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
   it("rejects an empty patch", async () => {
     wireDoc({ userId: "user1" });
     const res = mockRes();

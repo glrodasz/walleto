@@ -296,6 +296,8 @@ export const InvestmentValuationUpdateSchema = z
     gainPct: z.number().finite().optional(),
     value: z.number().min(0).optional(),
     costBasis: z.number().finite().optional(),
+    /** Re-denominates the check; send the `value` and `costBasis` in it alongside. */
+    currency: CurrencySchema.optional(),
     note: z.string().max(200).trim().nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "At least one field is required" });
