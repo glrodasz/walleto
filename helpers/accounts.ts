@@ -37,6 +37,15 @@ export function sortAccountsByLabel<T extends { name: string; provider?: string 
   );
 }
 
+/**
+ * Money borrowed on a debt. It raises what is owed — the balance maths keeps
+ * it — but it is something that happened, not a payment: the month's figures
+ * and charts leave it out instead of reading it as negative repayment.
+ */
+export function isBorrowing(row: { domain: Domain; direction?: TransactionDirection }): boolean {
+  return row.domain === "DEBT" && row.direction === "OUT";
+}
+
 /** What a one-off row's direction is called on this kind of account. */
 export function directionLabel(domain: AccountDomain, direction: TransactionDirection): string {
   if (domain === "DEBT") return direction === "OUT" ? "Borrowed" : "Repayment";

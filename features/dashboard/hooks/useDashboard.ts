@@ -8,6 +8,7 @@ import { useSelectedMonth } from "../../../hooks/useSelectedMonth";
 import { groupByCategory, computeMoM, computeFlow, shareByCurrency } from "../../../helpers";
 import type { MoneyContext } from "../../../helpers";
 import { hiddenItemIds, withoutHidden } from "../../../helpers/hidden";
+import { isBorrowing } from "../../../helpers/accounts";
 import { monthWindows } from "../../domains/helpers/months";
 import { cashFlowSeries } from "../helpers/cashFlowSeries";
 import type { CashFlowGroupBy } from "../helpers/cashFlowSeries";
@@ -79,7 +80,8 @@ export function useDashboard({ period, groupBy }: Options) {
       EXPENSE: withoutHidden(expense.transactions, hiddenItems),
       INVESTMENT: withoutHidden(investment.transactions, hiddenItems),
       SAVING: withoutHidden(saving.transactions, hiddenItems),
-      DEBT: withoutHidden(debt.transactions, hiddenItems),
+      // Borrowing raises what is owed (NetWorthCard) but is not a payment.
+      DEBT: withoutHidden(debt.transactions, hiddenItems).filter((t) => !isBorrowing(t)),
     }),
     [
       income.transactions,

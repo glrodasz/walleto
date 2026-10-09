@@ -32,7 +32,7 @@ import {
   unfiledGain,
 } from "../../investments/helpers/valuationGains";
 import { GAIN_KEY, gainLabel, withGains } from "../helpers/gainStack";
-import { isAccountDomain } from "../../../helpers/accounts";
+import { isAccountDomain, isBorrowing } from "../../../helpers/accounts";
 import { convertedAmount } from "../../../helpers/aggregations";
 import { INCEPTION } from "../../investments/helpers/valuation";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
@@ -154,6 +154,13 @@ export function DomainPage({ domain }: Props) {
   const { methods } = usePaymentMethods();
   const { tags } = useTags();
   const error = txError ?? itemsError ?? catError;
+  // Money borrowed on a debt raises what is owed — the gains chain and the
+  // Owed view read the whole ledger — but it is not a payment, so the month's
+  // figures and charts leave it out. Activity still lists it.
+  const flowTransactions = useMemo(
+    () => transactions.filter((t) => !isBorrowing(t)),
+    [transactions]
+  );
 
   // Categories hidden from the chart stay out of the bars and the month
   // figure unless the owner flips "Show hidden"; the lists below always show
@@ -171,8 +178,8 @@ export function DomainPage({ domain }: Props) {
   // Spread first, then hide: the slices carry the item id and category.
   const spreadIds = useMemo(() => spreadItemIds(items), [items]);
   const planRows = useMemo(
-    () => spreadTransactions(items, transactions, windows),
-    [items, transactions, windows]
+    () => spreadTransactions(items, flowTransactions, windows),
+    [items, flowTransactions, windows]
   );
   const chartTransactions = useMemo(
     () => (showHidden ? planRows : planRows.filter((t) => !hiddenCategories.has(t.categoryId))),
@@ -244,6 +251,11 @@ export function DomainPage({ domain }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [transactions, window]
   );
+  const monthFlow = useMemo(
+    () => flowTransactions.filter(inWindow),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [flowTransactions, window]
+  );
   const monthPlanRows = useMemo(
     () => planRows.filter(inWindow),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -255,10 +267,10 @@ export function DomainPage({ domain }: Props) {
   // What left the accounts this month, so the summary can show both sides of the net figure.
   const monthWithdrawn = useMemo(
     () =>
-      monthTransactions
+      monthFlow
         .filter((t) => t.direction === "OUT")
         .reduce((sum, t) => sum + Math.abs(convertedAmount(t, ctx)), 0),
-    [monthTransactions, ctx]
+    [monthFlow, ctx]
   );
   const expected = useMemo(
     () => expectedForMonth(window, realized, chartItems, ctx, now),
@@ -273,9 +285,9 @@ export function DomainPage({ domain }: Props) {
   // was converted into the figure just like a transaction.
   const hasForeign = useMemo(
     () =>
-      monthTransactions.some((t) => t.currency !== currency) ||
+      monthFlow.some((t) => t.currency !== currency) ||
       gainRows.some((r) => monthKey(r.at) === window.key && r.currency !== currency),
-    [monthTransactions, currency, gainRows, window.key]
+    [monthFlow, currency, gainRows, window.key]
   );
 
   // One bar per month, stacked by the top categories or by currency, capped
@@ -388,14 +400,8 @@ export function DomainPage({ domain }: Props) {
       },
     ];
   }, [categoryRows, monthUnfiledGain, realized, domain]);
-  const byTag = useMemo(
-    () => groupByTag(monthTransactions, tags, ctx),
-    [monthTransactions, tags, ctx]
-  );
-  const byMethod = useMemo(
-    () => groupByMethod(monthTransactions, methods, ctx),
-    [monthTransactions, methods, ctx]
-  );
+  const byTag = useMemo(() => groupByTag(monthFlow, tags, ctx), [monthFlow, tags, ctx]);
+  const byMethod = useMemo(() => groupByMethod(monthFlow, methods, ctx), [monthFlow, methods, ctx]);
 
   const openEdit = (item: RecurrentTransaction) => {
     setEditingItem(item);

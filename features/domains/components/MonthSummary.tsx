@@ -27,7 +27,10 @@ interface Props {
    * is a loss. Debts: negative is the interest the balance checks revealed.
    */
   gain?: number;
-  /** Account domains: what left the accounts this month, as a positive figure. */
+  /**
+   * Investments / savings: what left the accounts this month, as a positive
+   * figure. Money borrowed on a debt never reaches here: it is not a payment.
+   */
   withdrawn?: number;
 }
 
@@ -70,9 +73,7 @@ export function MonthSummary({
   // `contributed` is net of withdrawals; the line spells out both sides.
   const breakdown = [
     `${formatAmount((contributed ?? 0) + withdrawn, currency)} ${owes ? "repaid" : "contributed"}`,
-    withdrawn > 0
-      ? `${formatAmount(withdrawn, currency)} ${owes ? "borrowed" : "withdrawn"}`
-      : null,
+    withdrawn > 0 ? `${formatAmount(withdrawn, currency)} withdrawn` : null,
     hasGain ? `${formatAmount(Math.abs(gain!), currency)} ${gainWord}` : null,
   ]
     .filter(Boolean)

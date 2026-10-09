@@ -148,7 +148,11 @@ in (a deposit, a contribution, a repayment) or money **out** — a withdrawal, o
 on a debt money borrowed. Withdrawals read as negative amounts with a badge in
 the ledger, net out of the month's figure ("$1,200.00 contributed · $500.00
 withdrawn"), lower what the value view says went in, and lower the balance a
-check is measured against; a card charge raises what is owed. Moving money
+check is measured against. Money borrowed is different: it raises what is owed
+(the Owed view, net worth, and the balance a check is measured against — under
+"Unassigned" when it names no debt) but it is not a payment, so the month's
+figure, the bars, the categories and the dashboard's cash flow leave it out;
+the ledger still lists it with its "Borrowed" badge. Moving money
 between two accounts is two rows: a withdrawal from one, a deposit into the
 other. Recurring rules never carry a direction.
 

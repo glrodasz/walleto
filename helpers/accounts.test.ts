@@ -3,8 +3,18 @@ import {
   accountLabel,
   formatInterestRate,
   isAccountDomain,
+  isBorrowing,
   sortAccountsByLabel,
 } from "./accounts";
+
+describe("isBorrowing", () => {
+  it("is only money out on a debt", () => {
+    expect(isBorrowing({ domain: "DEBT", direction: "OUT" })).toBe(true);
+    expect(isBorrowing({ domain: "DEBT", direction: "IN" })).toBe(false);
+    expect(isBorrowing({ domain: "DEBT" })).toBe(false);
+    expect(isBorrowing({ domain: "SAVING", direction: "OUT" })).toBe(false);
+  });
+});
 
 describe("isAccountDomain", () => {
   it("is true for investments and savings only", () => {
