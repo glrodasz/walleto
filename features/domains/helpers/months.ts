@@ -377,6 +377,15 @@ export function groupByTag(
   return toGroupedTotals(buckets, whole);
 }
 
+/**
+ * What sits beside a method's name: its network, then its type — "Autogiro ·
+ * Bank transfer" — so two methods at the same bank read apart.
+ */
+function methodDetail(method: PaymentMethod): string {
+  const type = PAYMENT_METHOD_TYPE_LABELS[method.type];
+  return method.network && method.network !== method.name ? `${method.network} · ${type}` : type;
+}
+
 /** The month by payment method; rows without one form "No method". */
 export function groupByMethod(
   transactions: Transaction[],
@@ -393,7 +402,7 @@ export function groupByMethod(
     const key = method && t.paymentMethodId ? t.paymentMethodId : NO_METHOD_KEY;
     const b = buckets.get(key) ?? {
       label: method ? paymentMethodLabel(method) : "No method",
-      detail: method ? PAYMENT_METHOD_TYPE_LABELS[method.type] : undefined,
+      detail: method ? methodDetail(method) : undefined,
       total: 0,
       count: 0,
     };

@@ -333,6 +333,18 @@ describe("groupByTag / groupByMethod", () => {
       ["m2", "Visa - 4242", "Credit card", 25],
     ]);
   });
+
+  it("names the network so two methods at the same bank read apart", () => {
+    const sameBank = [
+      { id: "m1", name: "SEB", type: "BANK_TRANSFER", network: "Autogiro" },
+      { id: "m2", name: "SEB", type: "BANK_TRANSFER", network: "Swish" },
+    ] as never;
+    const groups = groupByMethod(rows, sameBank, ctx);
+    expect(groups.filter((g) => g.key !== "__none").map((g) => [g.label, g.detail])).toEqual([
+      ["SEB", "Autogiro · Bank transfer"],
+      ["SEB", "Swish · Bank transfer"],
+    ]);
+  });
 });
 
 describe("withdrawals", () => {
