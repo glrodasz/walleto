@@ -243,10 +243,29 @@ export function DashboardPage() {
           min-width: 0;
         }
 
+        /* One row that never wraps: five equal columns when they fit, each at least
+           300px (the big figure needs it), and a swipe/scroll with no visible bar
+           when they don't. The padding + negative margin keep the glass shadow
+           from being clipped by the scroll container. */
         .cards {
           display: grid;
-          grid-template-columns: repeat(5, minmax(0, 1fr));
+          grid-auto-flow: column;
+          grid-auto-columns: minmax(300px, 1fr);
           gap: 16px;
+          overflow-x: auto;
+          overscroll-behavior-x: contain;
+          scroll-snap-type: x proximity;
+          scrollbar-width: none;
+          padding: 8px 8px 24px;
+          margin: -8px -8px -24px;
+        }
+
+        .cards::-webkit-scrollbar {
+          display: none;
+        }
+
+        .cards > :global(*) {
+          scroll-snap-align: start;
         }
 
         .bottom {
@@ -255,20 +274,7 @@ export function DashboardPage() {
           gap: 16px;
         }
 
-        @media (max-width: 1280px) {
-          .cards {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-          }
-        }
-
-        @media (max-width: 1100px) {
-          .cards {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-        }
-
         @media (max-width: 767px) {
-          .cards,
           .bottom {
             grid-template-columns: 1fr;
           }
