@@ -112,7 +112,10 @@ features/
                 "Over-committed" verdict), today's net worth (NetWorthCard + hooks/useNetWorth + helpers/netWorth) — both
                 are the same piece, `components/molecules/SummaryCard` (title + pill, figure on the left,
                 breakdown on the right; Prospect uses it too),
-                per-domain stat cards ("planned per month"),
+                per-domain stat cards ("planned per month"; one row, min 300px each, that scrolls sideways
+                with no bar — mouse drag included, `hooks/useScrollRow` — and stacks below 768px; the
+                edge fade is a mask on **each card**, never on the row: a masked ancestor turns off the
+                glass's `backdrop-filter`),
                 5-domain cash flow stacked by category / currency (CashFlowCard + helpers/cashFlowSeries; by
                 category / currency the tooltip is per bar — `StackTooltip` —, by domain it compares all five),
                 top categories, upcoming plan payments; the tip goes at the very top
