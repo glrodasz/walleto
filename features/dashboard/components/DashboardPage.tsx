@@ -16,6 +16,7 @@ import { topWithOther } from "../helpers/topWithOther";
 import type { CashFlowGroupBy } from "../helpers/cashFlowSeries";
 import { useDashboard } from "../hooks/useDashboard";
 import { useNetWorth } from "../hooks/useNetWorth";
+import { useScrollRow } from "../hooks/useScrollRow";
 import { useUserDoc } from "../../../hooks/useUserDoc";
 import { useMaterialize } from "../../../hooks/useMaterialize";
 import { useLocalPreference } from "../../../hooks/useLocalPreference";
@@ -85,6 +86,7 @@ export function DashboardPage() {
   } = useDashboard({ period, groupBy });
   const { ctx } = useMoneyContext();
   const { loading: worthLoading, ...worth } = useNetWorth(categories, ctx);
+  const cardsRef = useScrollRow<HTMLElement>();
 
   const firstName = (user?.name ?? user?.nickname ?? "there").split(" ")[0];
 
@@ -174,7 +176,7 @@ export function DashboardPage() {
         />
       </section>
 
-      <section className="cards">
+      <section className="cards" ref={cardsRef}>
         {userDoc
           ? cards.map((c) => (
               <StatCard
@@ -244,9 +246,10 @@ export function DashboardPage() {
         }
 
         /* One row that never wraps: five equal columns when they fit, each at least
-           300px (the big figure needs it), and a swipe/scroll with no visible bar
-           when they don't (phones stack instead). The padding + negative margin keep the glass shadow
-           from being clipped by the scroll container. */
+           300px (the big figure needs it), and a swipe/scroll/drag with no visible
+           bar when they don't (phones stack instead). The padding + negative
+           margin keep the glass shadow from being clipped by the scroll container.
+           useScrollRow sets the data attributes below. */
         .cards {
           display: grid;
           grid-auto-flow: column;
@@ -255,6 +258,7 @@ export function DashboardPage() {
           overflow-x: auto;
           overscroll-behavior-x: contain;
           scroll-snap-type: x proximity;
+          scroll-padding-inline: 8px;
           scrollbar-width: none;
           padding: 8px 8px 24px;
           margin: -8px -8px -24px;
@@ -266,6 +270,41 @@ export function DashboardPage() {
 
         .cards > :global(*) {
           scroll-snap-align: start;
+        }
+
+        .cards[data-overflowing] {
+          cursor: grab;
+        }
+
+        .cards[data-dragging],
+        .cards[data-dragging] :global(*) {
+          cursor: grabbing;
+          user-select: none;
+        }
+
+        .cards[data-dragging],
+        .cards[data-settling] {
+          scroll-snap-type: none;
+        }
+
+        /* A card under an edge with more to scroll fades out into the page. The
+           mask goes on the card, never on .cards: a masked ancestor turns off
+           the glass blur of everything inside it. */
+        .cards > :global([data-edge-fade]) {
+          -webkit-mask-image: linear-gradient(
+            to right,
+            transparent var(--fade-0),
+            #000 var(--fade-1),
+            #000 var(--fade-2),
+            transparent var(--fade-3)
+          );
+          mask-image: linear-gradient(
+            to right,
+            transparent var(--fade-0),
+            #000 var(--fade-1),
+            #000 var(--fade-2),
+            transparent var(--fade-3)
+          );
         }
 
         .bottom {
