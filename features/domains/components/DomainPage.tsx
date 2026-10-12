@@ -32,6 +32,15 @@ import {
   unfiledGain,
 } from "../../investments/helpers/valuationGains";
 import { GAIN_KEY, gainLabel, withGains } from "../helpers/gainStack";
+import {
+  gainsByCategoryUntil,
+  gainsByWindow,
+  historyWindows,
+  parseChartMeasure,
+  runningTotals,
+  unfiledGainUntil,
+} from "../helpers/worthStack";
+import type { ChartMeasure } from "../helpers/worthStack";
 import { isAccountDomain } from "../../../helpers/accounts";
 import { convertedAmount } from "../../../helpers/aggregations";
 import { INCEPTION } from "../../investments/helpers/valuation";
@@ -49,6 +58,7 @@ import {
   trailingAverage,
 } from "../helpers/months";
 import { monthTotalsByCategory } from "../../../helpers/stacks";
+import type { StackedTotals } from "../../../helpers/stacks";
 import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
 import { useCategories } from "../../../hooks/useCategories";
 import { useRecurrentTransactions, markItemPaid } from "../../../hooks/useRecurrentTransactions";
@@ -96,6 +106,16 @@ export function DomainPage({ domain }: Props) {
   );
   const [mode, setMode] = useLocalPreference<StackMode>(`walleto:chart:${domain}:mode`, "category");
   const [showHidden, setShowHidden] = useLocalPreference(`walleto:showHidden:${domain}`, false);
+  // Investments and savings are about what they hold, so their bars show it
+  // by default; the month's activity is one tap away. A debt keeps activity:
+  // its balance is not the sum of its rows (the loan itself never was one).
+  const offersWorth = domain === "INVESTMENT" || domain === "SAVING";
+  const [measure, setMeasure] = useLocalPreference<ChartMeasure>(
+    `walleto:chart:${domain}:measure`,
+    "worth",
+    parseChartMeasure
+  );
+  const showWorth = offersWorth && measure === "worth";
 
   // The bars draw `period` months ending with the current one. The figures
   // reach back as far as the header picker does, because the page has to
@@ -280,15 +300,23 @@ export function DomainPage({ domain }: Props) {
 
   // One bar per month, stacked by the top categories or by currency, capped
   // with the month's gain — which belongs to neither split, so it rides on top
-  // of both.
-  const stacks = useMemo(() => {
+  // of both. Worth and activity share it: worth is the same stack over the
+  // whole history, carried forward month by month.
+  const buildStacks = (
+    rows: Transaction[],
+    filedGains: Transaction[],
+    gainsPerWindow: Record<string, number>,
+    unfiledPerWindow: Record<string, number>,
+    wins: typeof windows,
+    fallbackTotals: Record<string, number>
+  ): StackedTotals => {
     // By category a filed gain joins its own category's segment, so the bar
     // and Top categories read the same. By currency it cannot: a gain is not
     // denominated in anything, so every gain stays its own segment there.
     const base =
       mode === "currency"
         ? (() => {
-            const byCurrency = monthTotalsByCurrency(chartTransactions, ctx, chartWindows);
+            const byCurrency = monthTotalsByCurrency(rows, ctx, wins);
             return {
               totals: byCurrency.totals as Record<string, Record<string, number>>,
               series: byCurrency.currencies.map((c) => ({
@@ -298,13 +326,10 @@ export function DomainPage({ domain }: Props) {
               })),
             };
           })()
-        : monthTotalsByCategory(
-            [...chartTransactions, ...gainLedger],
-            categories,
-            ctx,
-            chartWindows,
-            { domain, top: 5 }
-          );
+        : monthTotalsByCategory([...rows, ...filedGains], categories, ctx, wins, {
+            domain,
+            top: 5,
+          });
     // Nothing to split by (no transactions at all) still needs one series, so
     // a month that is pure gain has something to stack on.
     const withFallback =
@@ -313,27 +338,80 @@ export function DomainPage({ domain }: Props) {
         : {
             series: [{ key: "amount", label: config.spentLabel, color: config.accent }],
             totals: Object.fromEntries(
-              chartWindows.map((w) => [w.key, { amount: txTotals[w.key] ?? 0 }])
+              wins.map((w) => [w.key, { amount: fallbackTotals[w.key] ?? 0 }])
             ),
           };
     return withGains(
       withFallback,
-      mode === "currency" ? chartGains : unfiledByMonth,
+      mode === "currency" ? gainsPerWindow : unfiledPerWindow,
       gainLabel(domain)
     );
+  };
+  const activityStacks = useMemo(
+    () =>
+      buildStacks(
+        chartTransactions,
+        gainLedger,
+        chartGains,
+        unfiledByMonth,
+        chartWindows,
+        txTotals
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      mode,
+      chartTransactions,
+      gainLedger,
+      categories,
+      ctx,
+      chartWindows,
+      domain,
+      config,
+      txTotals,
+      chartGains,
+      unfiledByMonth,
+    ]
+  );
+  // Worth reads the real ledger, not the spread slices: a yearly deposit is
+  // held from the day it lands. Hidden categories leave with their gains.
+  const worthStacks = useMemo(() => {
+    if (!showWorth) return null;
+    const rows = showHidden
+      ? transactions
+      : transactions.filter((t) => !hiddenCategories.has(t.categoryId));
+    const checks = showHidden
+      ? gainRows
+      : gainRows.filter((r) => !r.categoryId || !hiddenCategories.has(r.categoryId));
+    const history = historyWindows(
+      [...rows.map((t) => toDate(t.occurredAt)), ...checks.map((r) => r.at)],
+      now,
+      chartWindows.length
+    );
+    const flow = buildStacks(
+      rows,
+      gainRowsAsTransactions(checks, ctx, domain),
+      gainsByWindow(checks, history),
+      gainsByWindow(checks, history, true),
+      history,
+      monthTotals(rows, ctx, history)
+    );
+    return runningTotals(flow, history);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    showWorth,
+    showHidden,
+    transactions,
+    hiddenCategories,
+    gainRows,
+    now,
+    chartWindows.length,
     mode,
-    chartTransactions,
-    gainLedger,
     categories,
     ctx,
-    chartWindows,
     domain,
     config,
-    txTotals,
-    chartGains,
-    unfiledByMonth,
   ]);
+  const stacks = worthStacks ?? activityStacks;
   const series: BarSeries[] = stacks.series;
   const bars: MonthBar[] = useMemo(
     () =>
@@ -342,9 +420,12 @@ export function DomainPage({ domain }: Props) {
         label: w.label,
         isCurrent: w.isCurrent,
         ...Object.fromEntries(series.map((s) => [s.key, stacks.totals[w.key]?.[s.key] ?? 0])),
-        ...(w.isCurrent && expected > realized ? { planned: expected - realized } : {}),
+        // The plan is a flow: it has nothing to add on top of a balance.
+        ...(!showWorth && w.isCurrent && expected > realized
+          ? { planned: expected - realized }
+          : {}),
       })),
-    [chartWindows, series, stacks, expected, realized]
+    [chartWindows, series, stacks, expected, realized, showWorth]
   );
 
   // The selected month by category, for the side card and the Categories
@@ -368,8 +449,35 @@ export function DomainPage({ domain }: Props) {
       ),
     [categories, monthPlanRows, planItems, ctx, window, now, monthGainsByCategory]
   );
+  // In worth, Top categories is what each category holds at the end of the
+  // month: everything paid in before then plus every gain reported, i.e. how
+  // the portfolio is split.
+  const worthCategoryRows = useMemo(
+    () =>
+      showWorth
+        ? categoryMonthRows(
+            categories,
+            transactions.filter((t) => toDate(t.occurredAt) < window.end),
+            [],
+            ctx,
+            window,
+            now,
+            gainsByCategoryUntil(gainRows, window.end)
+          )
+        : null,
+    [showWorth, categories, transactions, ctx, window, now, gainRows]
+  );
+  const worthUnfiledGain = useMemo(
+    () => (showWorth ? unfiledGainUntil(gainRows, window.end) : 0),
+    [showWorth, gainRows, window.end]
+  );
   const topCategories = useMemo(() => {
-    const rows = categoryRows.slice(0, 6).map((r) => ({
+    const source = worthCategoryRows ?? categoryRows;
+    const unfiled = worthCategoryRows ? worthUnfiledGain : monthUnfiledGain;
+    const whole = worthCategoryRows
+      ? worthCategoryRows.reduce((sum, r) => sum + Math.max(0, r.total), 0) + Math.max(0, unfiled)
+      : realized;
+    const rows = source.slice(0, 6).map((r) => ({
       categoryId: r.category.id ?? r.category.name,
       name: r.category.name,
       amount: r.total,
@@ -377,17 +485,17 @@ export function DomainPage({ domain }: Props) {
     }));
     // Gains from checks recorded before the form asked for a category have no
     // row to join, so they get their own rather than quietly going missing.
-    if (monthUnfiledGain === 0) return rows;
+    if (unfiled === 0) return rows;
     return [
       ...rows,
       {
         categoryId: GAIN_KEY,
         name: gainLabel(domain),
-        amount: monthUnfiledGain,
-        percent: realized > 0 ? (Math.max(0, monthUnfiledGain) / realized) * 100 : 0,
+        amount: unfiled,
+        percent: whole > 0 ? (Math.max(0, unfiled) / whole) * 100 : 0,
       },
     ];
-  }, [categoryRows, monthUnfiledGain, realized, domain]);
+  }, [worthCategoryRows, worthUnfiledGain, categoryRows, monthUnfiledGain, realized, domain]);
   const byTag = useMemo(
     () => groupByTag(monthTransactions, tags, ctx),
     [monthTransactions, tags, ctx]
@@ -610,12 +718,21 @@ export function DomainPage({ domain }: Props) {
           <SectionTitle
             title={`Monthly ${config.noun}`}
             subtitle={`${
-              accountDomain
-                ? `Actual ${config.noun} and ${domain === "DEBT" ? "accrued interest" : "reported gain"}`
-                : `Actual ${config.noun}`
+              showWorth
+                ? "What it was worth at the end of each month"
+                : accountDomain
+                  ? `Actual ${config.noun} and ${domain === "DEBT" ? "accrued interest" : "reported gain"}`
+                  : `Actual ${config.noun}`
             }, split by ${mode === "category" ? "category" : "currency"}.`}
           >
-            <ChartControls period={period} onPeriod={setPeriod} mode={mode} onMode={setMode} />
+            <ChartControls
+              period={period}
+              onPeriod={setPeriod}
+              mode={mode}
+              onMode={setMode}
+              measure={offersWorth ? measure : undefined}
+              onMeasure={offersWorth ? setMeasure : undefined}
+            />
           </SectionTitle>
           <MonthlyBarsChart
             data={bars}
@@ -623,7 +740,7 @@ export function DomainPage({ domain }: Props) {
             stacked={stacks.series.length > 1}
             currency={currency}
             loading={txLoading}
-            average={average}
+            average={showWorth ? null : average}
             /* Only when the bars actually draw it — otherwise every bar
                dims and the whole chart greys out. */
             selectedKey={selectedOnChart ? window.key : undefined}
