@@ -122,7 +122,11 @@ features/
   domains/      DomainPage — the month-first screen shared by incomes/expenses/investments/savings/debts:
                 the month comes from the header (hooks/useSelectedMonth), MonthSummary (first what's expected this
                 month and how much arrived; then actuals vs the previous month),
-                bars stacked by category or currency (ChartControls; the charts only display — the month
+                bars stacked by category or currency (ChartControls; in Investments and Savings the bars and Top
+                categories show **Worth** by default — each category's end-of-month balance, the running sum from
+                inception of its rows and filed gains (`helpers/worthStack`) — with "Activity" (the month's flow) one
+                tap away; Debts stays on activity; MonthSummary and the Categories view are always the month's flow;
+                the charts only display — the month
                 is set by the header picker, which is why the list of months the page computes is longer
                 than the one the bars draw), Top categories, and the views
                 Plan (RecurringChecklist, the default view) / Activity (TransactionsTable with search/filters) /

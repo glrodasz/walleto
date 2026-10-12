@@ -2,6 +2,7 @@ import { Select } from "../../../components/atoms/Select";
 import { SegmentedControl } from "../../../components/molecules/SegmentedControl";
 import { MONTH_PERIODS } from "../../../constants";
 import type { MonthPeriod } from "../../../constants";
+import type { ChartMeasure } from "../helpers/worthStack";
 
 export type StackMode = "category" | "currency";
 
@@ -10,12 +11,30 @@ interface Props {
   onPeriod: (period: MonthPeriod) => void;
   mode: StackMode;
   onMode: (mode: StackMode) => void;
+  /** Only the account domains pass it: their bars can show worth or activity. */
+  measure?: ChartMeasure;
+  onMeasure?: (measure: ChartMeasure) => void;
 }
 
-/** The chart card's controls: how many months, and what the bars stack by. */
-export function ChartControls({ period, onPeriod, mode, onMode }: Props) {
+/**
+ * The chart card's controls: what the bars measure (account domains only),
+ * how many months, and what they stack by.
+ */
+export function ChartControls({ period, onPeriod, mode, onMode, measure, onMeasure }: Props) {
   return (
     <div className="controls">
+      {measure && onMeasure && (
+        <SegmentedControl
+          label="Bars show"
+          size="sm"
+          options={[
+            { key: "worth", label: "Worth" },
+            { key: "activity", label: "Activity" },
+          ]}
+          value={measure}
+          onChange={onMeasure}
+        />
+      )}
       <SegmentedControl
         label="Stack bars by"
         size="sm"

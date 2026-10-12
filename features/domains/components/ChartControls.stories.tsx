@@ -4,12 +4,22 @@ import { fn } from "storybook/test";
 import { ChartControls } from "./ChartControls";
 import type { StackMode } from "./ChartControls";
 import type { MonthPeriod } from "../../../constants";
+import type { ChartMeasure } from "../helpers/worthStack";
 
 function Controlled(props: React.ComponentProps<typeof ChartControls>) {
   const [period, setPeriod] = useState<MonthPeriod>(props.period);
   const [mode, setMode] = useState<StackMode>(props.mode);
+  const [measure, setMeasure] = useState<ChartMeasure | undefined>(props.measure);
   return (
-    <ChartControls {...props} period={period} onPeriod={setPeriod} mode={mode} onMode={setMode} />
+    <ChartControls
+      {...props}
+      period={period}
+      onPeriod={setPeriod}
+      mode={mode}
+      onMode={setMode}
+      measure={measure}
+      onMeasure={props.measure ? setMeasure : undefined}
+    />
   );
 }
 
@@ -27,3 +37,4 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 export const ThreeMonths: Story = { args: { period: 3 } };
 export const ByCurrencyTwelveMonths: Story = { args: { period: 12, mode: "currency" } };
+export const WorthOrActivity: Story = { args: { measure: "worth", onMeasure: fn() } };
