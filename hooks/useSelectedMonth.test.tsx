@@ -66,6 +66,19 @@ describe("useSelectedMonth", () => {
     );
   });
 
+  it("keeps the query's other params and the hash when the month changes", () => {
+    query = { q: "netflix" };
+    globalThis.history.replaceState(null, "", "/expenses?q=netflix#activity");
+    const { result } = renderHook(() => useSelectedMonth(), { wrapper });
+    act(() => result.current.select(keyBack(2)));
+    expect(replace).toHaveBeenCalledWith(
+      { pathname: "/expenses", query: { q: "netflix", month: keyBack(2) }, hash: "activity" },
+      undefined,
+      { shallow: true }
+    );
+    globalThis.history.replaceState(null, "", "/");
+  });
+
   it("hydrates from ?month= and stays inside the months the picker offers", () => {
     query = { month: keyBack(9) };
     const { result } = renderHook(() => useSelectedMonth(), { wrapper });

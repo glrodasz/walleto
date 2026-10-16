@@ -18,6 +18,7 @@ import { MonthSummary } from "./MonthSummary";
 import { ChartControls } from "./ChartControls";
 import type { StackMode } from "./ChartControls";
 import { DEFAULT_DOMAIN_VIEW, ViewTabs, parseDomainView } from "./ViewTabs";
+import { useFilterQuery } from "../hooks/useFilterQuery";
 import type { DomainView } from "./ViewTabs";
 import { CategoryMonthList, categoryMonthRows } from "./CategoryMonthList";
 import { CategoryDrilldown } from "./CategoryDrilldown";
@@ -133,6 +134,8 @@ export function DomainPage({ domain }: Props) {
   const [view, setView] = useState<DomainView>(DEFAULT_DOMAIN_VIEW);
   const [drillCategoryId, setDrillCategoryId] = useState<string | null>(null);
   const [preset, setPreset] = useState<Partial<TransactionFilters> | undefined>(undefined);
+  // Activity's search and filters live in the query, so changing month keeps them.
+  const filterQuery = useFilterQuery(view);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<RecurrentTransaction | undefined>(undefined);
   const [busyItemId, setBusyItemId] = useState<string | null>(null);
@@ -629,8 +632,8 @@ export function DomainPage({ domain }: Props) {
         onDelete={deleteTx}
         deletingId={deletingTxId}
         showMethod={config.showPaymentMethod}
-        initialFilters={preset}
-        resetKey={window.key}
+        initialFilters={preset ?? filterQuery.initial}
+        onFiltersChange={filterQuery.write}
       />
     ) : view === "tags" ? (
       <Card>

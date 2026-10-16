@@ -92,7 +92,9 @@ export function MonthProvider({ children }: { children: ReactNode }) {
       if (key === currentKey) delete query[MONTH_QUERY];
       else query[MONTH_QUERY] = key;
       if ((router.query[MONTH_QUERY] ?? currentKey) === key) return;
-      void router.replace({ pathname: router.pathname, query }, undefined, { shallow: true });
+      // Keep the hash: a domain page's view lives there.
+      const hash = globalThis.location?.hash.slice(1) || undefined;
+      void router.replace({ pathname: router.pathname, query, hash }, undefined, { shallow: true });
     },
     [router, currentKey]
   );

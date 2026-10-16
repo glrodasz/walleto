@@ -63,6 +63,8 @@ interface Props {
   initialFilters?: Partial<TransactionFilters>;
   /** Clears the filters when it changes (the selected month). */
   resetKey?: string;
+  /** Called whenever the search, filters or sort change. */
+  onFiltersChange?: (filters: TransactionFilters) => void;
   /** Rows shown before the "and N more" line. A month is bounded; 60 covers it. */
   limit?: number;
 }
@@ -94,6 +96,7 @@ export function TransactionsTable({
   showCategoryFilter = true,
   initialFilters,
   resetKey,
+  onFiltersChange,
   limit = 60,
 }: Props) {
   const filter = useTransactionFilters({
@@ -103,6 +106,7 @@ export function TransactionsTable({
     ctx,
     initial: initialFilters,
     resetKey,
+    onChange: onFiltersChange,
   });
   const shown = filter.rows.slice(0, limit);
   const hidden = filter.rows.length - shown.length;

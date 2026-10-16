@@ -67,3 +67,37 @@ export function filterTransactions(
     return diff * sign;
   });
 }
+
+/** The query keys the Activity filters use, so the month picker can keep them. */
+export const FILTER_QUERY_KEYS = ["q", "category", "method", "sort"] as const;
+type FilterQueryKey = (typeof FILTER_QUERY_KEYS)[number];
+const SORTS = ["date-desc", "date-asc", "amount-desc", "amount-asc"];
+
+const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
+
+/** Filters from a URL query; unknown or malformed values fall back to the defaults. */
+export function filtersFromQuery(
+  query: Record<string, string | string[] | undefined>
+): TransactionFilters {
+  const sort = first(query.sort);
+  const [by, dir] = sort && SORTS.includes(sort) ? sort.split("-") : [];
+  return {
+    search: first(query.q) ?? "",
+    categoryId: first(query.category) ?? "",
+    paymentMethodId: first(query.method) ?? "",
+    sort: by ? { by: by as SortBy, dir: dir as SortDir } : EMPTY_FILTERS.sort,
+  };
+}
+
+/** The query that describes `filters`: only what differs from the defaults. */
+export function filtersToQuery(
+  filters: TransactionFilters
+): Partial<Record<FilterQueryKey, string>> {
+  const query: Partial<Record<FilterQueryKey, string>> = {};
+  if (filters.search) query.q = filters.search;
+  if (filters.categoryId) query.category = filters.categoryId;
+  if (filters.paymentMethodId) query.method = filters.paymentMethodId;
+  const { by, dir } = filters.sort;
+  if (by !== EMPTY_FILTERS.sort.by || dir !== EMPTY_FILTERS.sort.dir) query.sort = `${by}-${dir}`;
+  return query;
+}
