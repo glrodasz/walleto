@@ -3,6 +3,8 @@ import { SetupOverview } from "./SetupOverview";
 import { WizardActions } from "./WizardActions";
 import { WELCOME_INTRO } from "../data/steps";
 import { useLeaveIntro } from "../hooks/useLeaveIntro";
+import { useT } from "../../../hooks/useT";
+import { ONBOARDING_MESSAGES } from "../messages";
 
 /**
  * /onboarding, the Welcome: what Walleto is beside what the setup covers,
@@ -11,12 +13,13 @@ import { useLeaveIntro } from "../hooks/useLeaveIntro";
  */
 export function IntroPage() {
   const { leave } = useLeaveIntro();
+  const t = useT(ONBOARDING_MESSAGES);
 
   return (
     <OnboardingLayout
-      title="Welcome"
+      title={t("welcome.title")}
       intro={WELCOME_INTRO}
-      footer={<WizardActions onNext={leave} nextLabel="Start setup" />}
+      footer={<WizardActions onNext={leave} nextLabel={t("welcome.start")} />}
     >
       <SetupOverview />
     </OnboardingLayout>

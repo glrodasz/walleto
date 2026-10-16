@@ -1,13 +1,13 @@
 import { render, screen } from "@testing-library/react";
 import type { IntroSlideId } from "../data/introSlides";
-import { INTRO_SLIDES } from "../data/introSlides";
+import { INTRO_SLIDE_IDS, introSlide } from "../data/introSlides";
 import { IntroPanel } from "./IntroPanel";
 
-const IDS = Object.keys(INTRO_SLIDES) as IntroSlideId[];
+const IDS: IntroSlideId[] = [...INTRO_SLIDE_IDS];
 
 describe("IntroPanel", () => {
   it.each(IDS)("shows the %s slide: label, title, and bold key phrases", (id) => {
-    const slide = INTRO_SLIDES[id];
+    const slide = introSlide(id);
     const { container } = render(<IntroPanel id={id} />);
 
     expect(screen.getByText(slide.label)).toBeInTheDocument();

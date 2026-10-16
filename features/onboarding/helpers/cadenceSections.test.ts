@@ -1,4 +1,5 @@
-import { CADENCE_SECTIONS, sectionFor } from "./cadenceSections";
+import { CADENCE_SECTIONS, cadenceAddLabel, sectionFor } from "./cadenceSections";
+import type { CadenceSectionId } from "./cadenceSections";
 import type { Frequency } from "../../../types";
 
 const ALL: Frequency[] = ["ONE_TIME", "WEEKLY", "BIWEEKLY", "MONTHLY", "QUARTERLY", "YEARLY"];
@@ -33,11 +34,16 @@ describe("cadenceSections", () => {
   });
 
   it("names the cadence on every add chip", () => {
-    const label = (id: string, more = false) =>
-      CADENCE_SECTIONS.find((s) => s.id === id)!.addLabel("expense", more);
+    const label = (id: CadenceSectionId, more = false) => cadenceAddLabel(id, "EXPENSE", more);
     expect(label("monthly")).toBe("Add a monthly expense");
     expect(label("yearly", true)).toBe("Add another yearly expense");
     expect(label("other")).toBe("Add an expense on another cadence");
     expect(label("oneTime")).toBe("Add a one-time expense");
+  });
+
+  it("writes each add chip as a whole Spanish sentence, with the domain's own noun", () => {
+    expect(cadenceAddLabel("monthly", "EXPENSE", false, "es")).toBe("Agregar un gasto mensual");
+    expect(cadenceAddLabel("yearly", "INCOME", true, "es")).toBe("Agregar otro ingreso anual");
+    expect(cadenceAddLabel("oneTime", "EXPENSE", false, "es")).toBe("Agregar un gasto puntual");
   });
 });

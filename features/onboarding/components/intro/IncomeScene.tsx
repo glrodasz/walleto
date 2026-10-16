@@ -3,12 +3,15 @@ import { Badge } from "../../../../components/atoms/Badge";
 import { Briefcase } from "../../../../components/atoms/Icons";
 import { SceneBit } from "./SceneBit";
 import { SceneCanvas } from "./SceneCanvas";
+import { useT } from "../../../../hooks/useT";
+import { ONBOARDING_MESSAGES } from "../../messages";
 
 /**
  * "Your main income comes first": income drops in, then the salary pops up
  * underneath, with room for side income later.
  */
 export function IncomeScene() {
+  const t = useT(ONBOARDING_MESSAGES);
   return (
     <SceneCanvas>
       <div className="at item">
@@ -17,17 +20,17 @@ export function IncomeScene() {
             <IconDisc domain="INCOME" size={60}>
               <Briefcase size={26} />
             </IconDisc>
-            <span className="caption">Income</span>
+            <span className="caption">{t("scene.income")}</span>
           </span>
         </SceneBit>
       </div>
 
       <div className="at chips">
         <SceneBit i={1} inline>
-          <Badge color="var(--domain-income)">Salary</Badge>
+          <Badge color="var(--domain-income)">{t("scene.salary")}</Badge>
         </SceneBit>
         <SceneBit i={2} inline>
-          <Badge variant="outline">+ side income</Badge>
+          <Badge variant="outline">{t("scene.sideIncome")}</Badge>
         </SceneBit>
       </div>
 

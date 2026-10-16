@@ -2,6 +2,9 @@ import { Chip } from "../../../components/atoms/Chip";
 import { WalletItem } from "./WalletItem";
 import { rowProblem, useMethodsStep } from "../hooks/useMethodsStep";
 import { useOpenRow } from "../hooks/useOpenRow";
+import { usePreferences } from "../../../hooks/usePreferences";
+import { useT } from "../../../hooks/useT";
+import { ONBOARDING_MESSAGES } from "../messages";
 
 interface Props {
   state: ReturnType<typeof useMethodsStep>;
@@ -14,7 +17,9 @@ interface Props {
  */
 export function MethodsStep({ state }: Props) {
   const { rows, add, update, removeAt, attempted, attempt } = state;
-  const problemOf = (row: (typeof rows)[number]) => (attempted ? rowProblem(row) : null);
+  const { language } = usePreferences();
+  const t = useT(ONBOARDING_MESSAGES);
+  const problemOf = (row: (typeof rows)[number]) => (attempted ? rowProblem(row, language) : null);
   const firstInvalid = rows.find((row) => problemOf(row));
   const { openKey, toggle, close } = useOpenRow(rows, firstInvalid?.key ?? null, attempt);
 
@@ -39,7 +44,7 @@ export function MethodsStep({ state }: Props) {
         {/* Never `onClick={add}`: add() takes overrides, so the click event got
             spread into the new row and its `type` became "click". */}
         <Chip variant="add" onClick={() => add()}>
-          Add more
+          {t("methods.addMore")}
         </Chip>
       </div>
 

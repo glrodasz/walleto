@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import { useUserDoc } from "../../../hooks/useUserDoc";
 import { materializeNow } from "../../../hooks/useMaterialize";
-
-const FAILURE = "Could not save your progress. Please try again.";
+import { useT } from "../../../hooks/useT";
+import { ONBOARDING_MESSAGES } from "../messages";
 
 /**
  * "Skip for now" / "Continue later": leave the wizard for the dashboard with
@@ -17,6 +17,7 @@ const FAILURE = "Could not save your progress. Please try again.";
 export function useLeaveOnboarding(flush?: () => Promise<boolean>) {
   const router = useRouter();
   const { update } = useUserDoc();
+  const t = useT(ONBOARDING_MESSAGES);
   const [leaving, setLeaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,7 +32,7 @@ export function useLeaveOnboarding(flush?: () => Promise<boolean>) {
       router.push("/");
     } catch (err) {
       console.error("Failed to leave onboarding:", err);
-      setError(FAILURE);
+      setError(t("later.failed"));
       setLeaving(false);
     }
   };

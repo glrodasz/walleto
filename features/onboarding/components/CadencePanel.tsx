@@ -1,11 +1,14 @@
 import type { ReactNode } from "react";
 import { Chip } from "../../../components/atoms/Chip";
+import { usePreferences } from "../../../hooks/usePreferences";
+import type { Domain } from "../../../types";
+import { cadenceAddLabel, cadenceHint, cadenceTitle } from "../helpers/cadenceSections";
 import type { CadenceSection } from "../helpers/cadenceSections";
 
 interface Props {
   section: CadenceSection;
-  /** "income" / "expense": the add chip names what it adds and how often. */
-  noun: string;
+  /** The add chip names what it adds (an income, an expense) and how often. */
+  domain: Domain;
   count: number;
   onAdd: () => void;
   /** The section's rows. */
@@ -19,9 +22,10 @@ interface Props {
  * primary (monthly) panel is larger and tinted with the step's domain colour;
  * an empty secondary one folds into a single line.
  */
-export function CadencePanel({ section, noun, count, onAdd, children }: Props) {
+export function CadencePanel({ section, domain, count, onAdd, children }: Props) {
+  const { language } = usePreferences();
   const empty = count === 0;
-  const label = section.addLabel(noun, !empty);
+  const label = cadenceAddLabel(section.id, domain, !empty, language);
   const classes = [
     "panel",
     section.primary ? "panel--primary" : "panel--secondary",
@@ -35,9 +39,9 @@ export function CadencePanel({ section, noun, count, onAdd, children }: Props) {
       <header className="head">
         <div className="titles">
           <h3 className="title" id={`cadence-${section.id}`}>
-            {section.title}
+            {cadenceTitle(section.id, language)}
           </h3>
-          <p className="hint">{section.hint}</p>
+          <p className="hint">{cadenceHint(section.id, language)}</p>
         </div>
         {!section.primary && empty && (
           <Chip variant="add" onClick={onAdd}>

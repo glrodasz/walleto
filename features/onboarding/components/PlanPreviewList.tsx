@@ -5,9 +5,11 @@ import { IconDisc } from "../../../components/molecules/IconDisc";
 import { ListItem, ListItems } from "../../../components/molecules/ListItem";
 import { toMonthlyAmount } from "../../../helpers/aggregations";
 import type { MoneyContext } from "../../../helpers/aggregations";
-import { FREQUENCY_LABELS } from "../../../constants";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import type { PlanGroup } from "../hooks/useReviewStep";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { ONBOARDING_MESSAGES } from "../messages";
 
 interface Props {
   group: PlanGroup;
@@ -20,24 +22,25 @@ interface Props {
 /** One domain of the plan on the Review step, with the way back to its step. */
 export function PlanPreviewList({ group, monthly, ctx, onEdit }: Props) {
   const { formatAmount, formatNative } = useMoneyFormat();
+  const t = useT(ONBOARDING_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
   const count = group.items.length;
-  const noun = group.domain === "INCOME" ? "income" : "expenses";
 
   return (
     <Card>
       <SectionTitle
-        title={group.title}
+        title={t(`review.title.${group.domain}`)}
         subtitle={
           count
-            ? `${count} ${count === 1 ? "item" : "items"} · ${formatAmount(monthly, ctx.target)} a month`
+            ? t("review.summary", { count, amount: formatAmount(monthly, ctx.target) })
             : undefined
         }
         onAction={() => onEdit(group.href)}
-        actionLabel="Edit"
+        actionLabel={tc("action.edit")}
       />
 
       {count === 0 ? (
-        <p className="empty">No {noun} in your plan yet.</p>
+        <p className="empty">{t(`review.empty.${group.domain}`)}</p>
       ) : (
         <ListItems>
           {group.items.map((item) => {
@@ -45,7 +48,9 @@ export function PlanPreviewList({ group, monthly, ctx, onEdit }: Props) {
             const perMonth =
               item.frequency === "MONTHLY"
                 ? undefined
-                : `≈ ${formatAmount(toMonthlyAmount(item, ctx), ctx.target)} / month`;
+                : t("review.perMonth", {
+                    amount: formatAmount(toMonthlyAmount(item, ctx), ctx.target),
+                  });
             return (
               <ListItem
                 key={item.id}
@@ -55,7 +60,7 @@ export function PlanPreviewList({ group, monthly, ctx, onEdit }: Props) {
                   </IconDisc>
                 }
                 name={item.name}
-                meta={[FREQUENCY_LABELS[item.frequency], category?.name]
+                meta={[tc(`frequency.${item.frequency}`), category?.name]
                   .filter(Boolean)
                   .join(" · ")}
                 amount={formatNative(item.amount, item.currency, ctx.target)}

@@ -1,11 +1,11 @@
-import { ONBOARDING_STEPS, WELCOME_INTRO, stepAccent } from "./steps";
-import { INTRO_SLIDES } from "./introSlides";
+import { ONBOARDING_STEPS, WELCOME_INTRO, stepAccent, stepLabel, stepSummary } from "./steps";
+import { INTRO_SLIDE_IDS, introSlide } from "./introSlides";
 import { INTRO_SCENES } from "../components/intro/scenes";
 import { ONBOARDING_ENTRY } from "../helpers/routes";
 
 describe("ONBOARDING_STEPS", () => {
   it("puts Currencies right before Income, where new rows pick up its currency", () => {
-    expect(ONBOARDING_STEPS.map((s) => s.label)).toEqual([
+    expect(ONBOARDING_STEPS.map((s) => stepLabel(s.id))).toEqual([
       "Categories",
       "Payment methods",
       "Currencies",
@@ -23,14 +23,17 @@ describe("ONBOARDING_STEPS", () => {
   it("pairs every screen with its own slide, and every slide with a screen", () => {
     const intros = [WELCOME_INTRO, ...ONBOARDING_STEPS.map((s) => s.intro)];
     expect(new Set(intros).size).toBe(intros.length);
-    expect([...intros].sort()).toEqual(Object.keys(INTRO_SLIDES).sort());
+    expect([...intros].sort()).toEqual([...INTRO_SLIDE_IDS].sort());
     for (const id of intros) expect(INTRO_SCENES[id]).toBeDefined();
   });
 
   it("keeps each summary to one short line", () => {
     for (const step of ONBOARDING_STEPS) {
-      expect(step.summary.length).toBeGreaterThan(0);
-      expect(step.summary.length).toBeLessThanOrEqual(60);
+      for (const language of ["en", "es"] as const) {
+        const summary = stepSummary(step.id, language);
+        expect(summary.length).toBeGreaterThan(0);
+        expect(summary.length).toBeLessThanOrEqual(60);
+      }
     }
   });
 
@@ -61,8 +64,11 @@ describe("overview tints", () => {
   });
 });
 
-describe("INTRO_SLIDES", () => {
-  it("marks a key phrase on every slide", () => {
-    for (const slide of Object.values(INTRO_SLIDES)) expect(slide.body).toMatch(/\*\*.+?\*\*/);
+describe("introSlide", () => {
+  it("marks a key phrase on every slide, in every language", () => {
+    for (const id of INTRO_SLIDE_IDS) {
+      expect(introSlide(id).body).toMatch(/\*\*.+?\*\*/);
+      expect(introSlide(id, "es").body).toMatch(/\*\*.+?\*\*/);
+    }
   });
 });

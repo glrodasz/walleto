@@ -4,6 +4,9 @@ import { paymentMethodDescription } from "../../../helpers/paymentMethodLabel";
 import { MethodEditor } from "./MethodEditor";
 import type { MethodRow } from "../hooks/useMethodsStep";
 import { usePreferences } from "../../../hooks/usePreferences";
+import { useT } from "../../../hooks/useT";
+import { FIELD_MESSAGES } from "../../../messages/fields";
+import { ONBOARDING_MESSAGES } from "../messages";
 
 interface Props {
   row: MethodRow;
@@ -37,17 +40,19 @@ export function WalletItem({
 }: Props) {
   const editorId = useId();
   const { language } = usePreferences();
+  const t = useT(ONBOARDING_MESSAGES);
+  const tf = useT(FIELD_MESSAGES);
   const label = row.type
     ? paymentMethodDescription(
         {
-          name: row.name.trim() || "Untitled",
+          name: row.name.trim() || t("methods.untitled"),
           type: row.type,
           network: row.network.trim() || undefined,
           last4: row.last4 || undefined,
         },
         language
       )
-    : "New payment method";
+    : tf("method.new");
 
   return (
     <div className={`item${open ? " item--open" : ""}`}>
@@ -68,7 +73,7 @@ export function WalletItem({
             </div>
           ) : (
             <div className="placeholder" aria-hidden="true">
-              Select a type first
+              {t("methods.selectTypeFirst")}
             </div>
           )
         ) : (

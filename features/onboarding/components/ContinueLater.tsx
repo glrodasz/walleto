@@ -1,4 +1,6 @@
 import { InfoTip } from "../../../components/atoms/InfoTip";
+import { useT } from "../../../hooks/useT";
+import { ONBOARDING_MESSAGES } from "../messages";
 
 interface Props {
   /** 1-based wizard step: step 1 skips, later steps continue later. */
@@ -9,17 +11,15 @@ interface Props {
 
 /** The way out of the wizard, on every step, with a note on how to come back. */
 export function ContinueLater({ step, onClick, busy }: Props) {
-  const label = step === 1 ? "Skip for now" : "Continue later";
+  const t = useT(ONBOARDING_MESSAGES);
+  const label = step === 1 ? t("later.skip") : t("later.continue");
 
   return (
     <span className="later">
       <button type="button" className="link" onClick={onClick} disabled={busy}>
         {label}
       </button>
-      <InfoTip label="How to finish setup later">
-        Everything you&apos;ve saved stays. Run setup again anytime from Settings&nbsp;›&nbsp;Setup,
-        or add categories, payment methods and plan items later on their own.
-      </InfoTip>
+      <InfoTip label={t("later.tipLabel")}>{t("later.tip")}</InfoTip>
 
       <style jsx>{`
         .later {

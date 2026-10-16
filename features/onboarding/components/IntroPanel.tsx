@@ -1,5 +1,6 @@
 import type { IntroSlideId } from "../data/introSlides";
-import { INTRO_SLIDES } from "../data/introSlides";
+import { introSlide } from "../data/introSlides";
+import { usePreferences } from "../../../hooks/usePreferences";
 import { INTRO_SCENES } from "./intro/scenes";
 import { IntroLabel } from "./IntroLabel";
 import { Emphasized } from "./Emphasized";
@@ -21,7 +22,8 @@ interface Props {
  * Every step is its own route, so the scene animates in again on each one.
  */
 export function IntroPanel({ id, sceneWhenStacked = false }: Props) {
-  const slide = INTRO_SLIDES[id];
+  const { language } = usePreferences();
+  const slide = introSlide(id, language);
   const Scene = INTRO_SCENES[id];
 
   return (

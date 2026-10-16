@@ -8,7 +8,6 @@ import type { Category, RecurrentTransaction } from "../../../types";
 
 export interface PlanGroup {
   domain: "INCOME" | "EXPENSE";
-  title: string;
   /** The wizard step that edits it. */
   href: string;
   items: RecurrentTransaction[];
@@ -37,14 +36,12 @@ export function useReviewStep() {
     () => [
       {
         domain: "INCOME",
-        title: "Income in your plan",
         href: "/onboarding/incomes",
         items: sortPlanItems(income.items, ctx),
         categories: incomeCategories,
       },
       {
         domain: "EXPENSE",
-        title: "Expenses in your plan",
         href: "/onboarding/expenses",
         items: sortPlanItems(expense.items, ctx),
         categories: expenseCategories,

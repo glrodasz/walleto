@@ -12,6 +12,10 @@ import {
 import type { MethodRow } from "../hooks/useMethodsStep";
 import type { PaymentMethodType } from "../../../types";
 import { usePreferences } from "../../../hooks/usePreferences";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { FIELD_MESSAGES } from "../../../messages/fields";
+import { ONBOARDING_MESSAGES } from "../messages";
 
 interface Props {
   id: string;
@@ -43,6 +47,9 @@ export function MethodEditor({
 }: Props) {
   const { type } = row;
   const { language } = usePreferences();
+  const t = useT(ONBOARDING_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
+  const tf = useT(FIELD_MESSAGES);
   const networkSuggestions = type ? NETWORK_SUGGESTIONS[type] : undefined;
   const showLast4 = type ? CARD_TYPES.includes(type) : false;
   const saved = Boolean(row.id);
@@ -54,8 +61,8 @@ export function MethodEditor({
       <div className="fields">
         {/* A saved method's type is fixed: plan items already point at it. */}
         <Select
-          label="Type"
-          placeholder="Select a type"
+          label={tf("method.type")}
+          placeholder={tf("method.selectType")}
           options={paymentMethodTypeOptions(language)}
           value={type}
           disabled={saved}
@@ -70,7 +77,7 @@ export function MethodEditor({
               <Combobox
                 label={networkLabel}
                 fieldLabel={networkLabel}
-                placeholder="Search or type your own"
+                placeholder={tf("method.searchOrType")}
                 suggestions={networkSuggestions}
                 value={row.network}
                 onSelect={(value) => onChange({ network: value })}
@@ -88,8 +95,8 @@ export function MethodEditor({
 
         <div className="alias">
           <TextField
-            label="Alias"
-            placeholder="Ex: Chase Sapphire"
+            label={tf("method.alias")}
+            placeholder={tf("method.aliasPlaceholder")}
             value={row.name}
             aria-invalid={aliasProblem ? true : undefined}
             onValueChange={(value) => onChange({ name: value })}
@@ -101,7 +108,9 @@ export function MethodEditor({
       <div className="footer">
         <EditorFooter
           onRemove={canRemove ? onRemove : undefined}
-          removeLabel={`Remove ${row.name || "payment method"}`}
+          removeLabel={
+            row.name ? tc("action.removeItem", { name: row.name }) : t("methods.removeUnnamed")
+          }
           onDone={onDone}
         />
       </div>

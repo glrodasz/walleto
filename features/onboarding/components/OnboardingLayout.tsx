@@ -2,7 +2,10 @@ import { useEffect } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { ONBOARDING_STEPS, stepAccent } from "../data/steps";
+import { ONBOARDING_STEPS, stepAccent, stepLabel } from "../data/steps";
+import { usePreferences } from "../../../hooks/usePreferences";
+import { useT } from "../../../hooks/useT";
+import { ONBOARDING_MESSAGES } from "../messages";
 import type { IntroSlideId } from "../data/introSlides";
 import { IntroPanel } from "./IntroPanel";
 
@@ -28,7 +31,7 @@ interface Props {
 export function OnboardingLayout({
   step,
   intro: introProp,
-  title = "Build your plan",
+  title: titleProp,
   description,
   children,
   footer,
@@ -36,6 +39,9 @@ export function OnboardingLayout({
   busy = false,
 }: Props) {
   const router = useRouter();
+  const { language } = usePreferences();
+  const t = useT(ONBOARDING_MESSAGES);
+  const title = titleProp ?? t("layout.title");
   const intro = introProp ?? (step ? ONBOARDING_STEPS[step - 1]?.intro : undefined);
 
   // Steps navigate with router.push, which (unlike <Link>) doesn't prefetch:
@@ -51,7 +57,7 @@ export function OnboardingLayout({
   return (
     <>
       <Head>
-        <title>{`${title} — Walleto`}</title>
+        <title>{t("layout.pageTitle", { title })}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
@@ -66,7 +72,7 @@ export function OnboardingLayout({
           {step !== undefined && (
             <nav
               className="stepper"
-              aria-label="Setup progress"
+              aria-label={t("layout.progress")}
               style={
                 { "--current-accent": stepAccent(ONBOARDING_STEPS[step - 1]) } as CSSProperties
               }
@@ -76,6 +82,7 @@ export function OnboardingLayout({
                   const n = i + 1;
                   const state = n === step ? "current" : n < step ? "done" : "todo";
                   const isCurrent = n === step;
+                  const label = stepLabel(s.id, language);
                   return (
                     <li
                       key={s.href}
@@ -85,7 +92,7 @@ export function OnboardingLayout({
                       <button
                         type="button"
                         className="tab-btn"
-                        aria-label={s.label}
+                        aria-label={label}
                         aria-current={isCurrent ? "step" : undefined}
                         disabled={isCurrent || busy || !onNavigate}
                         onClick={() => onNavigate?.(s.href)}
@@ -93,7 +100,7 @@ export function OnboardingLayout({
                         <span className="tab-icon">
                           <s.Icon size={14} />
                         </span>
-                        <span className="tab-label">{s.label}</span>
+                        <span className="tab-label">{label}</span>
                       </button>
                     </li>
                   );

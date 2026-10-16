@@ -2,19 +2,21 @@ import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { IconDisc } from "../../../components/molecules/IconDisc";
 import { ListItem, ListItems } from "../../../components/molecules/ListItem";
-import { ONBOARDING_STEPS } from "../data/steps";
+import { ONBOARDING_STEPS, stepLabel, stepSummary } from "../data/steps";
+import { usePreferences } from "../../../hooks/usePreferences";
+import { useT } from "../../../hooks/useT";
+import { ONBOARDING_MESSAGES } from "../messages";
 
 /**
  * The Welcome's right-hand side: every setup step ahead, one line each, each
  * icon in its step's own hue.
  */
 export function SetupOverview() {
+  const { language } = usePreferences();
+  const t = useT(ONBOARDING_MESSAGES);
   return (
     <Card>
-      <SectionTitle
-        title="What we'll set up"
-        subtitle="Six short steps. Skip any of them and come back later."
-      />
+      <SectionTitle title={t("overview.title")} subtitle={t("overview.subtitle")} />
       <ListItems>
         {ONBOARDING_STEPS.map((step) => (
           <ListItem
@@ -24,8 +26,8 @@ export function SetupOverview() {
                 <step.Icon size={16} />
               </IconDisc>
             }
-            name={step.label}
-            meta={step.summary}
+            name={stepLabel(step.id, language)}
+            meta={stepSummary(step.id, language)}
           />
         ))}
       </ListItems>

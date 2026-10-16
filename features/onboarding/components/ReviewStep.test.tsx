@@ -24,14 +24,12 @@ const state = (
   groups: [
     {
       domain: "INCOME",
-      title: "Income in your plan",
       href: "/onboarding/incomes",
       items: income,
       categories: [category("INCOME")],
     },
     {
       domain: "EXPENSE",
-      title: "Expenses in your plan",
       href: "/onboarding/expenses",
       items: expense,
       categories: [category("EXPENSE")],

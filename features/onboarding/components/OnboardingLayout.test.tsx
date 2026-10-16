@@ -1,7 +1,8 @@
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { OnboardingLayout } from "./OnboardingLayout";
-import { ONBOARDING_STEPS } from "../data/steps";
-import { INTRO_SLIDES } from "../data/introSlides";
+import { ONBOARDING_STEPS, stepLabel } from "../data/steps";
+import { introSlide } from "../data/introSlides";
+import { DEFAULT_PREFERENCES, PreferencesContext } from "../../../hooks/usePreferences";
 
 const pushMock = jest.fn();
 const prefetchMock = jest.fn((_href: string) => Promise.resolve());
@@ -32,7 +33,7 @@ describe("OnboardingLayout", () => {
 
     expect(screen.getByRole("heading", { name: "Build your plan" })).toBeInTheDocument();
     ONBOARDING_STEPS.forEach((s) => {
-      expect(screen.getByRole("button", { name: s.label })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: stepLabel(s.id) })).toBeInTheDocument();
     });
     // Icons stand in for numbers: the steps are tabs, not a forced sequence.
     expect(screen.queryByText(/^\d\. /)).not.toBeInTheDocument();
@@ -143,7 +144,7 @@ describe("OnboardingLayout", () => {
     expect(screen.getByText("body")).toBeInTheDocument();
   });
 
-  it.each(ONBOARDING_STEPS.map((s, i) => [s.label, i + 1, s.intro] as const))(
+  it.each(ONBOARDING_STEPS.map((s, i) => [stepLabel(s.id), i + 1, s.intro] as const))(
     "puts the %s step's intro slide beside it",
     (_label, step, intro) => {
       render(
@@ -153,7 +154,7 @@ describe("OnboardingLayout", () => {
       );
       const aside = screen.getByRole("complementary");
       expect(
-        within(aside).getByRole("heading", { level: 2, name: INTRO_SLIDES[intro].title })
+        within(aside).getByRole("heading", { level: 2, name: introSlide(intro).title })
       ).toBeInTheDocument();
       // A step has a form under it, so stacked it keeps only the text.
       expect(aside.querySelector(".panel")).toHaveClass("panel--bare");
@@ -168,7 +169,7 @@ describe("OnboardingLayout", () => {
     );
     const aside = screen.getByRole("complementary");
     expect(within(aside).getByRole("heading", { level: 2 })).toHaveTextContent(
-      INTRO_SLIDES.planner.title
+      introSlide("planner").title
     );
     expect(aside.querySelector(".panel")).not.toHaveClass("panel--bare");
     expect(screen.queryByRole("navigation", { name: "Setup progress" })).not.toBeInTheDocument();
@@ -204,5 +205,26 @@ describe("OnboardingLayout", () => {
       )
     ).toBeInTheDocument();
     expect(screen.getByText("actions")).toBeInTheDocument();
+  });
+
+  it("speaks Spanish: title, stepper, progress and the step's slide", () => {
+    render(
+      <PreferencesContext.Provider value={{ ...DEFAULT_PREFERENCES, language: "es" }}>
+        <OnboardingLayout step={4}>
+          <p>body</p>
+        </OnboardingLayout>
+      </PreferencesContext.Provider>
+    );
+
+    expect(screen.getByRole("heading", { level: 1, name: "Arma tu plan" })).toBeInTheDocument();
+    const nav = screen.getByRole("navigation", { name: "Progreso de la configuración" });
+    expect(within(nav).getByRole("button", { name: "Medios de pago" })).toBeInTheDocument();
+    expect(within(nav).getByRole("button", { name: "Ingresos" })).toHaveAttribute(
+      "aria-current",
+      "step"
+    );
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Primero, tu ingreso principal." })
+    ).toBeInTheDocument();
   });
 });

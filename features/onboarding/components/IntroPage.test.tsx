@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { UserDoc } from "../../../hooks/useUserDoc";
-import { INTRO_SLIDES } from "../data/introSlides";
-import { ONBOARDING_STEPS, WELCOME_INTRO } from "../data/steps";
+import { introSlide } from "../data/introSlides";
+import { ONBOARDING_STEPS, WELCOME_INTRO, stepLabel, stepSummary } from "../data/steps";
 
 const push = jest.fn();
 const update = jest.fn();
@@ -14,7 +14,7 @@ jest.mock("../../../hooks/useUserDoc", () => ({ useUserDoc: () => ({ userDoc, up
 
 import { IntroPage } from "./IntroPage";
 
-const welcome = INTRO_SLIDES[WELCOME_INTRO];
+const welcome = introSlide(WELCOME_INTRO);
 
 beforeEach(() => {
   push.mockReset();
@@ -45,8 +45,8 @@ describe("IntroPage — the Welcome", () => {
     const rows = within(heading.closest(".card") as HTMLElement).getAllByRole("listitem");
     expect(rows).toHaveLength(ONBOARDING_STEPS.length);
     ONBOARDING_STEPS.forEach((step, n) => {
-      expect(rows[n]).toHaveTextContent(step.label);
-      expect(rows[n]).toHaveTextContent(step.summary);
+      expect(rows[n]).toHaveTextContent(stepLabel(step.id));
+      expect(rows[n]).toHaveTextContent(stepSummary(step.id));
       // Each icon in its step's own hue, not the per-build accent.
       const disc = rows[n].querySelector(".disc") as HTMLElement;
       expect(disc.style.getPropertyValue("--disc-color")).toBe(step.tint);
