@@ -30,8 +30,8 @@ import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { directionLabel, isAccountDomain } from "../../../helpers/accounts";
 import { isEssential } from "../../../helpers/essential";
 import {
-  BACKFILL_MONTHS,
   anchorStartDate,
+  backfillPeriodLabel,
   isSameSchedule,
   scheduleChoiceFromStartDate,
   toDateInputValue,
@@ -88,7 +88,7 @@ interface FormState extends ScheduleValue {
   applyToExisting: boolean;
   /** Non-monthly cadences: chart amount ÷ N each month instead of the real spike. */
   spreadMonthly: boolean;
-  /** Create only: anchor the schedule BACKFILL_MONTHS back so history gets written. */
+  /** Create only: anchor the schedule `backfillMonths(frequency)` back so history gets written. */
   backfill: boolean;
   /** Create only, INVESTMENT + ONE_TIME: record how the purchase has done so far. */
   gainPct: string;
@@ -717,7 +717,7 @@ export function RecurrentTransactionModal({
 
         {!item && isRecurring && (
           <CheckboxField
-            label={`Backfill the last ${BACKFILL_MONTHS} months`}
+            label={`Backfill ${backfillPeriodLabel(form.frequency)}`}
             hint="I’ve been paying this for a while."
             checked={form.backfill}
             onChange={(backfill) => patch({ backfill })}

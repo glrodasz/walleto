@@ -130,6 +130,28 @@ describe("POST /api/transactions/materialize", () => {
     );
   });
 
+  it("reaches two years back for a yearly item, so a 2-year backfill gets both payments", async () => {
+    // Anchored 23 months ago: one payment then, one 11 months ago.
+    wireItems([
+      {
+        id: "yearly1",
+        data: {
+          ...monthlyItem.data,
+          frequency: "YEARLY",
+          startDate: ts(monthsAgo(23).toISOString()),
+        },
+      },
+    ]);
+    getAllMock.mockImplementation((...refs: { id: string }[]) =>
+      Promise.resolve(refs.map((ref) => ({ ref, exists: false })))
+    );
+
+    const res = mockRes();
+    await handler({ method: "POST" } as NextApiRequest, res);
+
+    expect((res.json as jest.Mock).mock.calls[0][0].created).toBe(2);
+  });
+
   it("skips occurrences that already exist instead of overwriting them", async () => {
     wireItems([monthlyItem]);
     getAllMock.mockImplementation((...refs: { id: string }[]) =>

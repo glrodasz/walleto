@@ -10,7 +10,7 @@ export interface CadenceSection {
   frequencies: readonly Frequency[];
   /** The frequency a row added from this section starts with. */
   defaultFrequency: Frequency;
-  /** Whether "backfill the last 6 months" applies — one-time items have a date instead. */
+  /** Whether backfilling history applies — one-time items have a date instead. */
   recurring: boolean;
   /**
    * The section most of a plan lives in: drawn larger and first, while the
