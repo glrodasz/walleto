@@ -131,7 +131,9 @@ features/
                 than the one the bars draw), Top categories, and the views
                 Plan (RecurringChecklist, the default view) / Activity (TransactionsTable with search/filters) /
                 Categories / Tags / Payment methods (/ Worth, which is called Owed in debts). The hash keys are
-                `plan` / `activity` / …; `#recurring` and `#transactions` still work (parseDomainView)
+                `plan` / `activity` / …; `#recurring` and `#transactions` still work (parseDomainView). Activity's search, filters and sort
+                live in the query (`q`, `category`, `method`, `sort`; hooks/useFilterQuery), next to `?month=`,
+                so changing month keeps them and Clear drops them
   methods/      MethodsList (saved methods as a wallet: one MethodFace per method, grouped by type) +
                 EditMethodModal (with the full-size face as a preview) — used by Settings › Payment methods
                 (the /methods page redirects)

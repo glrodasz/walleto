@@ -1,5 +1,11 @@
 import { IDENTITY_RATES } from "../../../helpers/fx";
-import { EMPTY_FILTERS, NO_METHOD, filterTransactions } from "./transactionFilters";
+import {
+  EMPTY_FILTERS,
+  NO_METHOD,
+  filterTransactions,
+  filtersFromQuery,
+  filtersToQuery,
+} from "./transactionFilters";
 import type { Category, Tag, Transaction } from "../../../types";
 
 const ctx = { rates: IDENTITY_RATES, target: "USD" as const };
@@ -72,5 +78,37 @@ describe("filterTransactions", () => {
     expect(by({ categoryId: "fun" })).toEqual(["a"]);
     expect(by({ paymentMethodId: "card" })).toEqual(["a"]);
     expect(by({ paymentMethodId: NO_METHOD })).toEqual(["c", "b"]);
+  });
+});
+
+describe("filters in the URL query", () => {
+  it("writes only what differs from the defaults", () => {
+    expect(filtersToQuery(EMPTY_FILTERS)).toEqual({});
+    expect(
+      filtersToQuery({
+        search: "netflix",
+        categoryId: "fun",
+        paymentMethodId: NO_METHOD,
+        sort: { by: "amount", dir: "asc" },
+      })
+    ).toEqual({ q: "netflix", category: "fun", method: NO_METHOD, sort: "amount-asc" });
+  });
+
+  it("reads back what it wrote", () => {
+    const filters = {
+      search: "rent",
+      categoryId: "home",
+      paymentMethodId: "card",
+      sort: { by: "date" as const, dir: "asc" as const },
+    };
+    expect(filtersFromQuery(filtersToQuery(filters))).toEqual(filters);
+  });
+
+  it("falls back to the defaults on an empty or malformed query", () => {
+    expect(filtersFromQuery({})).toEqual(EMPTY_FILTERS);
+    expect(filtersFromQuery({ sort: "price-up", q: ["a", "b"] })).toEqual({
+      ...EMPTY_FILTERS,
+      search: "a",
+    });
   });
 });

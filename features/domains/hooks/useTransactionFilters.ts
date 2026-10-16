@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { EMPTY_FILTERS, filterTransactions } from "../helpers/transactionFilters";
 import type { SortBy, TransactionFilters } from "../helpers/transactionFilters";
 import type { MoneyContext } from "../../../helpers/aggregations";
@@ -13,17 +13,41 @@ interface Args {
   initial?: Partial<TransactionFilters>;
   /** Anything that should clear the filters when it changes (the selected month). */
   resetKey?: string;
+  /** Told about every change, e.g. to mirror the filters in the URL. */
+  onChange?: (filters: TransactionFilters) => void;
 }
 
 /** Search, narrow and sort the month's rows; the pure work is in helpers/transactionFilters. */
-export function useTransactionFilters({ rows, categories, tags, ctx, initial, resetKey }: Args) {
+export function useTransactionFilters({
+  rows,
+  categories,
+  tags,
+  ctx,
+  initial,
+  resetKey,
+  onChange,
+}: Args) {
   const [filters, setFilters] = useState<TransactionFilters>({ ...EMPTY_FILTERS, ...initial });
 
   useEffect(() => {
     setFilters({ ...EMPTY_FILTERS, ...initial });
     // `initial` is an object literal from the parent; its fields are what matters.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resetKey, initial?.categoryId, initial?.paymentMethodId, initial?.search]);
+  }, [
+    resetKey,
+    initial?.categoryId,
+    initial?.paymentMethodId,
+    initial?.search,
+    initial?.sort?.by,
+    initial?.sort?.dir,
+  ]);
+
+  // A ref, so a new callback each render doesn't count as a change.
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  useEffect(() => {
+    onChangeRef.current?.(filters);
+  }, [filters]);
 
   const set = <K extends keyof TransactionFilters>(key: K, value: TransactionFilters[K]) =>
     setFilters((f) => ({ ...f, [key]: value }));
