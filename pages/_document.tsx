@@ -1,4 +1,7 @@
-import { Html, Head, Main, NextScript } from "next/document";
+import Document, { Html, Head, Main, NextScript } from "next/document";
+import type { DocumentContext, DocumentInitialProps } from "next/document";
+import { requestLanguage } from "../helpers/requestLanguage";
+import type { Language } from "../types";
 import { buildInfo } from "../helpers/buildInfo";
 
 /**
@@ -9,13 +12,15 @@ import { buildInfo } from "../helpers/buildInfo";
  */
 const THEME_BOOT = `(function(){try{var p=localStorage.getItem("walleto:theme")||"system";var d=p==="dark"||(p==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light"}catch(e){}})()`;
 
-export default function Document() {
+type Props = DocumentInitialProps & { language: Language };
+
+export default function AppDocument({ language }: Props) {
   // data-env recolours the accent per build (styles/globals.css); the favicon
   // follows. The .ico and touch icon are blue rasters, so only production
   // links them — elsewhere a browser could prefer them over the tinted SVG.
   const { env, favicon } = buildInfo();
   return (
-    <Html lang="en" data-theme="light" data-env={env}>
+    <Html lang={language} data-theme="light" data-env={env}>
       <Head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
         <meta name="description" content="A clear plan today, a freer tomorrow." />
@@ -34,3 +39,9 @@ export default function Document() {
     </Html>
   );
 }
+
+// Same resolution as pages/_app.tsx, so <html lang> matches the text.
+AppDocument.getInitialProps = async (ctx: DocumentContext): Promise<Props> => {
+  const initialProps = await Document.getInitialProps(ctx);
+  return { ...initialProps, language: requestLanguage(ctx.req) };
+};

@@ -17,3 +17,13 @@ describe("formatRelativeDay", () => {
     expect(formatRelativeDay(new Date(2026, 5, 20, 15, 0), now)).toBe("Jun 20");
   });
 });
+
+describe("formatRelativeDay in Spanish", () => {
+  const now = new Date(2026, 8, 10, 9);
+  it("speaks Spanish", () => {
+    expect(formatRelativeDay(new Date(2026, 8, 10), now, "MDY", "es")).toBe("Hoy");
+    expect(formatRelativeDay(new Date(2026, 8, 9), now, "MDY", "es")).toBe("Ayer");
+    expect(formatRelativeDay(new Date(2026, 8, 7), now, "MDY", "es")).toBe("hace 3 días");
+    expect(formatRelativeDay(new Date(2026, 7, 1), now, "MDY", "es")).toBe("1 ago");
+  });
+});

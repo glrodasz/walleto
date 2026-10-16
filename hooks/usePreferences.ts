@@ -34,12 +34,12 @@ export function usePreferences(): Preferences {
   return useContext(PreferencesContext);
 }
 
-/** `formatDate` bound to the user's date format. */
+/** `formatDate` bound to the user's date format and language. */
 export function useDateFormat() {
-  const { dateFormat } = usePreferences();
+  const { dateFormat, language } = usePreferences();
   const fmt = useCallback(
-    (date: Date, style: DateStyle) => formatDate(date, style, dateFormat),
-    [dateFormat]
+    (date: Date, style: DateStyle) => formatDate(date, style, dateFormat, language),
+    [dateFormat, language]
   );
-  return { format: dateFormat, formatDate: fmt };
+  return { format: dateFormat, language, formatDate: fmt };
 }

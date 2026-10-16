@@ -44,7 +44,7 @@ export type ThemePreference = "light" | "dark" | "system";
 export type DateFormat = "MDY" | "DMY" | "YMD";
 /** 0 = Sunday, 1 = Monday, as in Date#getDay(). */
 export type WeekStart = 0 | 1;
-export type Language = "en";
+export type Language = "en" | "es";
 export type { DecimalSeparator, Decimals } from "../utils/decimal";
 
 export interface User {

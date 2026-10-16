@@ -1,14 +1,16 @@
+import { formatDate } from "../../helpers/dates";
+import { usePreferences } from "../../hooks/usePreferences";
+
 interface Props {
   date: Date;
 }
 
-const MONTH = new Intl.DateTimeFormat("en", { month: "short" });
-
 /** "SEP" over "21": the calendar-leaf date on upcoming payment rows. */
 export function DateBadge({ date }: Props) {
+  const { language } = usePreferences();
   return (
     <span className="badge" aria-hidden="true">
-      <span className="month">{MONTH.format(date)}</span>
+      <span className="month">{formatDate(date, "month", undefined, language)}</span>
       <span className="day">{date.getDate()}</span>
       <style jsx>{`
         .badge {

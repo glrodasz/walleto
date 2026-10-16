@@ -11,7 +11,7 @@ export const STORY_USER: UserProfile = {
   email_verified: true,
 };
 
-/** The Firestore user doc: onboarded, reporting in USD, light theme. */
+/** The Firestore user doc: onboarded, reporting in USD, light theme; no saved language, so the toolbar's applies. */
 export const STORY_USER_DOC: UserDoc = {
   mainCurrency: "USD",
   displayCurrency: "USD",
@@ -20,7 +20,6 @@ export const STORY_USER_DOC: UserDoc = {
   theme: "light",
   dateFormat: "MDY",
   weekStart: 1,
-  language: "en",
   emergencyPlan: {
     currency: "USD",
     benefitMonthly: 1800,

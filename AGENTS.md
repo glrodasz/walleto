@@ -47,7 +47,9 @@ helpers/stacks.ts                 monthTotalsBy / monthTotalsByCategory — stac
 helpers/categoryTree.ts           categoryIdSet / rootIdMap — fold children into their root category
 helpers/categoryIcons.ts          defaultIconFor(name, domain) / iconFor(category) — default icon when there's no pick
 helpers/money.ts                  formatAmount / formatCompact / formatNative — how an amount is written (and how it's masked)
-helpers/i18n.ts                   t(key, language) — catalog ("en" only) for the Settings strings
+helpers/i18n.ts                   languages (en, es), negotiation (cookie → Accept-Language / navigator.languages → en),
+                                  defineMessages / translate (plurals via Intl.PluralRules); see §3.7
+helpers/requestLanguage.ts        the language a request (or the browser) resolves to — _app and _document
 helpers/recurrence.ts             next occurrence by Frequency
 helpers/seedDefaultCategories.ts  default categories
 ```
@@ -445,6 +447,35 @@ The app is a **planner**, not an expense tracker: it answers "what's my plan, is
 - **Worth** — where the owner stands today: accounts and pockets minus debts. NetWorthCard, Worth / Owed view.
 
 "Recurring" is only a cadence adjective, never the name of a screen or a figure. Verbs follow the same rule: an item is **added to the plan** ("Add … to your plan"), a one-off is **logged** ("Log a one-off …"), a position is **updated** ("Update current value / balance"). The "+" offers the plan first. Internal names (`transactions`, `recurrentTransactions`, `RecurringChecklist`) don't change: they belong to the model, not the UI.
+
+### 3.7 Language (important)
+
+The interface speaks English and Spanish. **Every visible string goes through a catalog**: nothing user-facing
+is written inline in a component, a helper or a `constants.ts` map.
+
+- **Which language**: the saved choice (`users.language`, Settings › Preferences) → the browser's languages →
+  English. The saved choice is mirrored in the `locale` cookie (`PreferencesProvider`), and `_app` / `_document`
+  resolve the same order on the server (`helpers/requestLanguage`), so the first paint and `<html lang>` are
+  already right before Firestore answers. There are **no locale-prefixed URLs**: every screen is behind a login,
+  nothing is crawled or shared by link, so the language belongs to the user, not the page.
+- **Catalogs** are built with `defineMessages(en, es)`: English is the type source, so a key missing in Spanish
+  fails `tsc`. They live next to their consumers, like any other module: `messages/common.ts` (actions, the five
+  domains, cadences, method types, counts — what two or more areas say the same way), `messages/<area>.ts` for
+  shared components, `features/<name>/messages.ts` for a feature. A component reads one with
+  `const t = useT(CATALOG)`; code outside React (helpers that build labels) takes a `language` parameter and calls
+  `translate(CATALOG, language, key, params)` — it never reads the context.
+- **Whole sentences**, interpolated: `"Add a {cadence} expense"` doesn't survive Spanish word order and gender;
+  write one key per sentence (`"add.MONTHLY": "Agregar un gasto mensual"`). Counts are plural messages
+  (`{ one: "{count} mes", other: "{count} meses" }`), never `n === 1 ? … : …s`. Lists go through
+  `formatList(items, t("list.and"))`.
+- **Dates** go through `formatDate(…, language)` / `useDateFormat()`: in Spanish month names come from Intl,
+  day-first ("6 sept"), and standalone month labels are capitalised ("Sept 2026"). Amounts are unchanged: the
+  user's decimal separator preference (§3.1) already decides how a number is written.
+- **Never translated**: currency codes, and anything the user typed or that was seeded as their data (item,
+  category, tag, account and method names).
+- **Spanish voice**: "tú", neutral Latin-American Spanish, sentence case. The three nouns of §3.6 are
+  Plan / Actividad / Patrimonio; "Medio de pago" for payment method, "Etiqueta" for tag, "Bolsillo" for pocket.
+- Storybook has a **Language** toolbar next to Theme; tests render without a provider, so they read English.
 
 ## 7. Deferred on purpose
 

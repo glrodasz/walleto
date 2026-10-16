@@ -3,6 +3,7 @@ import type { Preview } from "@storybook/nextjs";
 import { UserProvider } from "@auth0/nextjs-auth0/client";
 import { sb } from "storybook/test";
 import { PreferencesProvider } from "../hooks/PreferencesProvider";
+import type { Language } from "../types";
 import { PrivacyProvider } from "../hooks/usePrivacy";
 import { STORY_USER } from "../stories/fixtures/user";
 import { resetStoryMocks } from "../stories/fixtures/mocks";
@@ -50,9 +51,22 @@ const preview: Preview = {
         dynamicTitle: true,
       },
     },
+    locale: {
+      description: "Interface language (what the locale cookie would pick)",
+      toolbar: {
+        title: "Language",
+        icon: "globe",
+        items: [
+          { value: "en", title: "English" },
+          { value: "es", title: "Español" },
+        ],
+        dynamicTitle: true,
+      },
+    },
   },
   initialGlobals: {
     theme: "light",
+    locale: "en",
   },
   parameters: {
     // globals.css paints the body (backdrop art + ambient light), so the
@@ -83,7 +97,7 @@ const preview: Preview = {
       // which need the router and Firestore; useSelectedMonth falls back to
       // the current month on its own and the theme comes from the toolbar.
       <UserProvider user={STORY_USER}>
-        <PreferencesProvider>
+        <PreferencesProvider initialLanguage={(globals.locale as Language) ?? "en"}>
           <PrivacyProvider>
             <ThemeSync theme={(globals.theme as Theme) ?? "light"} />
             <div style={{ minHeight: "100%", fontFamily: "var(--font-sans)" }}>
