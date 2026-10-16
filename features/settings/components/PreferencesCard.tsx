@@ -1,8 +1,9 @@
 import { Select } from "../../../components/atoms/Select";
 import { Monitor, Moon, Sliders, Sun } from "../../../components/atoms/Icons";
+import { LanguageToggle } from "../../../components/molecules/LanguageToggle";
 import { SegmentedControl } from "../../../components/molecules/SegmentedControl";
 import { DATE_FORMAT_LABELS, formatDate } from "../../../helpers/dates";
-import { LANGUAGE_LABELS, LANGUAGES, t } from "../../../helpers/i18n";
+import { t } from "../../../helpers/i18n";
 import { formatAmount } from "../../../helpers/money";
 import { usePreferences } from "../../../hooks/usePreferences";
 import { useT } from "../../../hooks/useT";
@@ -13,7 +14,6 @@ import type {
   DateFormat,
   DecimalSeparator,
   Decimals,
-  Language,
   ThemePreference,
   WeekStart,
 } from "../../../types";
@@ -72,17 +72,6 @@ export function PreferencesCard() {
         })}
       />
       <SettingsRow
-        label={tr("preferences.language")}
-        control={
-          <Select
-            aria-label={tr("preferences.language")}
-            options={LANGUAGES.map((l) => ({ value: l, label: LANGUAGE_LABELS[l] }))}
-            value={language}
-            onValueChange={(v) => save({ language: v as Language })}
-          />
-        }
-      />
-      <SettingsRow
         label={tr("preferences.decimalSeparator")}
         control={
           <Select
@@ -109,6 +98,7 @@ export function PreferencesCard() {
         }
         hint={tr("preferences.example", { value: example })}
       />
+      <SettingsRow label={tr("preferences.language")} control={<LanguageToggle />} />
       <SettingsRow
         label={tr("preferences.theme")}
         control={

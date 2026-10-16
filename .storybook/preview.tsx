@@ -97,7 +97,7 @@ const preview: Preview = {
       // which need the router and Firestore; useSelectedMonth falls back to
       // the current month on its own and the theme comes from the toolbar.
       <UserProvider user={STORY_USER}>
-        <PreferencesProvider initialLanguage={(globals.locale as Language) ?? "en"}>
+        <PreferencesProvider language={(globals.locale as Language) ?? "en"}>
           <PrivacyProvider>
             <ThemeSync theme={(globals.theme as Theme) ?? "light"} />
             <div style={{ minHeight: "100%", fontFamily: "var(--font-sans)" }}>

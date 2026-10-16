@@ -1,89 +1,28 @@
+import { DEFAULT_LOCALE, LANGUAGE_NAMES, LOCALES } from "../i18n/locale";
 import type { Language } from "../types";
 
 /**
  * Interface language.
  *
- *   precedence  saved choice (user doc `language`, mirrored in the `locale`
- *               cookie) → the browser's languages → English
+ *   which       the URL: English unprefixed, Spanish under /es (i18n/locale.ts,
+ *               the core shared with middleware.ts). An unprefixed first visit
+ *               is redirected by the `locale` cookie, else the browser's
+ *               languages; the toggle in Settings › Preferences sets the cookie
  *   messages    one catalog per area, built with `defineMessages`: English is
  *               the type source, so a key missing in Spanish fails `tsc`
  *   formatting  dates through helpers/dates (language-aware), plurals through
  *               Intl.PluralRules, never a hand-written month name or "s"
- *
- * There are no locale-prefixed URLs: every screen is behind a login, nothing
- * is crawled or shared by link, so the language is the user's, not the page's.
  */
 
-export const LANGUAGES: readonly Language[] = ["en", "es"];
+export const LANGUAGES: readonly Language[] = LOCALES;
 
-export const DEFAULT_LANGUAGE: Language = "en";
+export const DEFAULT_LANGUAGE: Language = DEFAULT_LOCALE;
 
 /** Each language in its own name: people scan for theirs. */
-export const LANGUAGE_LABELS: Record<Language, string> = { en: "English", es: "Español" };
+export const LANGUAGE_LABELS: Record<Language, string> = LANGUAGE_NAMES;
 
 /** BCP 47 tag handed to Intl (dates, plurals, relative days, lists). */
 export const INTL_LOCALE: Record<Language, string> = { en: "en-US", es: "es-ES" };
-
-/** Mirrors the saved choice so the server renders the right language before Firestore answers. */
-export const LANGUAGE_COOKIE = "locale";
-
-export function isLanguage(value: unknown): value is Language {
-  return typeof value === "string" && (LANGUAGES as readonly string[]).includes(value);
-}
-
-/** Accept-Language → tags in the user's priority order (q, then position). */
-export function parseAcceptLanguage(header: string | null | undefined): string[] {
-  if (!header) return [];
-  return header
-    .split(",")
-    .map((part, index) => {
-      const [tag, ...params] = part.trim().split(";");
-      const q = params.map((p) => p.trim()).find((p) => p.startsWith("q="));
-      const weight = q ? Number(q.slice(2)) : 1;
-      return { tag: tag.trim(), weight: Number.isFinite(weight) ? weight : 0, index };
-    })
-    .filter((entry) => entry.tag && entry.tag !== "*" && entry.weight > 0)
-    .sort((a, b) => b.weight - a.weight || a.index - b.index)
-    .map((entry) => entry.tag);
-}
-
-/** The first language in the user's list that we speak: `sv, es` → es; `en-US, es` → en. */
-export function negotiateLanguage(preferred: readonly string[]): Language | null {
-  for (const tag of preferred) {
-    const base = tag.toLowerCase().split("-")[0];
-    if (isLanguage(base)) return base;
-  }
-  return null;
-}
-
-export function readCookie(cookieHeader: string | null | undefined, name: string): string | null {
-  if (!cookieHeader) return null;
-  for (const part of cookieHeader.split(";")) {
-    const [key, ...rest] = part.trim().split("=");
-    if (key === name) return decodeURIComponent(rest.join("="));
-  }
-  return null;
-}
-
-/** Saved choice → browser languages → English. An unknown cookie value is ignored. */
-export function resolveLanguage({
-  cookie,
-  languages,
-}: {
-  cookie?: string | null;
-  languages?: readonly string[];
-}): Language {
-  if (isLanguage(cookie)) return cookie;
-  return negotiateLanguage(languages ?? []) ?? DEFAULT_LANGUAGE;
-}
-
-/** Browser only: remembers the choice for the server's next render. */
-export function persistLanguage(language: Language): void {
-  if (typeof document === "undefined") return;
-  if (readCookie(document.cookie, LANGUAGE_COOKIE) === language) return;
-  const secure = location.protocol === "https:" ? "; Secure" : "";
-  document.cookie = `${LANGUAGE_COOKIE}=${language}; Path=/; Max-Age=31536000; SameSite=Lax${secure}`;
-}
 
 // ── Messages ────────────────────────────────────────────────────────────────
 

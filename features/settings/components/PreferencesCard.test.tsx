@@ -7,6 +7,9 @@ const setPreference = jest.fn().mockResolvedValue(undefined);
 jest.mock("../../../hooks/useUserDoc", () => ({
   useUserDoc: () => ({ userDoc: { mainCurrency: "USD" }, update }),
 }));
+jest.mock("next/router", () => ({
+  useRouter: () => ({ locale: "en", asPath: "/settings#general" }),
+}));
 jest.mock("../../../hooks/useTheme", () => ({
   useTheme: () => ({ preference: "system", resolved: "light", setPreference }),
 }));
@@ -17,7 +20,7 @@ beforeEach(() => {
 });
 
 describe("PreferencesCard", () => {
-  it("saves the date format, week start and language on the user doc", async () => {
+  it("saves the date format and week start on the user doc", async () => {
     render(<PreferencesCard />);
     fireEvent.change(screen.getByRole("combobox", { name: "Date format" }), {
       target: { value: "YMD" },
@@ -28,8 +31,12 @@ describe("PreferencesCard", () => {
       target: { value: "0" },
     });
     await waitFor(() => expect(update).toHaveBeenCalledWith({ weekStart: 0 }));
+  });
 
-    expect(screen.getByRole("combobox", { name: "Language" })).toHaveValue("en");
+  it("offers Spanish as a link to this page's counterpart", () => {
+    render(<PreferencesCard />);
+    const toggle = screen.getByRole("link", { name: "Cambiar a español" });
+    expect(toggle).toHaveAttribute("href", "/es/settings#general");
   });
 
   it("saves the decimal separator and the decimals shown, with a live example", async () => {

@@ -2,10 +2,8 @@ import "../styles/globals.css";
 import ErrorBoundary from "../components/ErrorBoundary";
 import { UserProvider } from "@auth0/nextjs-auth0/client";
 import { Inter, JetBrains_Mono } from "next/font/google";
-import App from "next/app";
-import type { AppContext, AppProps } from "next/app";
-import { requestLanguage } from "../helpers/requestLanguage";
-import type { Language } from "../types";
+import type { AppProps } from "next/app";
+import { DEFAULT_LOCALE, isLocale } from "../i18n/locale";
 import { ThemeProvider } from "../hooks/useTheme";
 import { MonthProvider } from "../hooks/useSelectedMonth";
 import { PreferencesProvider } from "../hooks/PreferencesProvider";
@@ -24,14 +22,14 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-type Props = AppProps & { initialLanguage?: Language };
-
-function MyApp({ Component, pageProps, initialLanguage }: Props) {
+function MyApp({ Component, pageProps, router }: AppProps) {
+  // The URL decides the language: Next strips the /es prefix into router.locale.
+  const language = isLocale(router.locale) ? router.locale : DEFAULT_LOCALE;
   return (
     <UserProvider>
       <UserDocProvider>
         <ThemeProvider>
-          <PreferencesProvider initialLanguage={initialLanguage}>
+          <PreferencesProvider language={language}>
             <MonthProvider>
               <PrivacyProvider>
                 <div
@@ -50,14 +48,5 @@ function MyApp({ Component, pageProps, initialLanguage }: Props) {
     </UserProvider>
   );
 }
-
-// The language is decided before the first byte (the `locale` cookie, else
-// Accept-Language) so a Spanish reader never sees English while Firestore
-// loads. Every app page already renders per request (getServerSideProps), so
-// this costs no static optimisation there.
-MyApp.getInitialProps = async (context: AppContext) => {
-  const props = await App.getInitialProps(context);
-  return { ...props, initialLanguage: requestLanguage(context.ctx.req) };
-};
 
 export default MyApp;

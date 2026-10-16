@@ -10,6 +10,15 @@ const { version } = require("./package.json");
 
 const nextConfig = {
   reactStrictMode: true,
+  // English unprefixed, Spanish under /es (i18n/locale.ts). Next renders the
+  // prefixes and keeps <Link> / router.push in the current locale; detection
+  // is off because middleware.ts is the only detector (cookie, then
+  // Accept-Language, 307).
+  i18n: {
+    locales: ["en", "es"],
+    defaultLocale: "en",
+    localeDetection: false,
+  },
   env: {
     // Shown in Settings › About; the same number as package.json.
     NEXT_PUBLIC_APP_VERSION: version,
@@ -28,6 +37,8 @@ const nextConfig = {
       // any other site, and the app itself keeps DENY.
       {
         source: "/storybook/:path*",
+        // Static files, not pages: never matched under a locale prefix.
+        locale: false,
         headers: [
           { key: "X-Robots-Tag", value: "noindex, nofollow" },
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
@@ -42,7 +53,14 @@ const nextConfig = {
     // URL stays /storybook, where those paths resolve against the site root
     // and 404 — the page loads blank. Redirecting moves the browser, so the
     // base URL carries the folder and the assets resolve.
-    return [{ source: "/storybook", destination: "/storybook/index.html", permanent: false }];
+    return [
+      {
+        source: "/storybook",
+        destination: "/storybook/index.html",
+        permanent: false,
+        locale: false,
+      },
+    ];
   },
 };
 

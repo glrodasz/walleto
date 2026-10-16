@@ -7,6 +7,7 @@ import { defineMessages } from "../helpers/i18n";
  */
 export const UI_MESSAGES = defineMessages(
   {
+    "language.switchTo": "Switch to English",
     "combobox.placeholder": "Search or create",
     "combobox.create": "Create",
 
@@ -48,6 +49,7 @@ export const UI_MESSAGES = defineMessages(
     "boundary.reload": "Reload",
   },
   {
+    "language.switchTo": "Cambiar a español",
     "combobox.placeholder": "Busca o crea",
     "combobox.create": "Crear",
 
