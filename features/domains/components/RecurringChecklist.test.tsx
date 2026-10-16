@@ -4,6 +4,7 @@ import { monthWindows } from "../helpers/months";
 import { IDENTITY_RATES } from "../../../helpers/fx";
 import { occurrenceId } from "../../../helpers/materializeOccurrences";
 import type { Currency, RecurrentTransaction, Timestamp, Transaction } from "../../../types";
+import { DEFAULT_PREFERENCES, PreferencesContext } from "../../../hooks/usePreferences";
 
 const now = new Date(2026, 8, 6, 15);
 const sep = monthWindows(1, now)[0];
@@ -155,5 +156,43 @@ describe("RecurringChecklist", () => {
   it("shows the empty state without items", () => {
     setup({ items: [], transactions: [] });
     expect(screen.getByText(/Nothing in your plan yet/)).toBeInTheDocument();
+  });
+
+  it("speaks Spanish: groups, cadence, actions and the run-rate line", () => {
+    const onToggleHidden = jest.fn();
+    render(
+      <PreferencesContext.Provider value={{ ...DEFAULT_PREFERENCES, language: "es" }}>
+        <RecurringChecklist
+          domain="EXPENSE"
+          items={[rent, netflix, gym, insurance]}
+          transactions={[paidNetflix]}
+          paymentMethods={methods}
+          categories={[{ id: "c1", userId: "u1", domain: "EXPENSE", name: "Housing" }] as never}
+          ctx={ctx}
+          currency="USD"
+          window={monthWindows(1, now, "es")[0]}
+          now={now}
+          onMarkPaid={jest.fn()}
+          onEdit={jest.fn()}
+          onStop={jest.fn()}
+          onToggleHidden={onToggleHidden}
+          busyId={null}
+        />
+      </PreferencesContext.Provider>
+    );
+    const groups = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
+    expect(groups[0]).toContain("Vencidos");
+    expect(groups[1]).toContain("Pendientes");
+    expect(groups[2]).toContain("Pagados");
+    const due = screen.getByText("Rent").closest("li")!;
+    expect(within(due).getByText(/Mensual · Housing/)).toBeInTheDocument();
+    expect(screen.getByText("No es de este mes (1)")).toBeInTheDocument();
+    expect(screen.getByText(/Gastos mensuales planeados:/)).toHaveTextContent(
+      "Gastos mensuales planeados: $15,650.00/mes"
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Acciones de Gym" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Ocultar de Inicio" }));
+    expect(onToggleHidden).toHaveBeenCalledWith(gym);
   });
 });

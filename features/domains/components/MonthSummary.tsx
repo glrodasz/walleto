@@ -4,6 +4,9 @@ import { DeltaPill } from "../../../components/molecules/DeltaPill";
 import { ProgressBar } from "../../../components/molecules/ProgressBar";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
+import { SLOT, splitSlot } from "../helpers/slot";
+import { useT } from "../../../hooks/useT";
+import { DOMAIN_MESSAGES } from "../messages";
 import type { MonthDelta, MonthWindow } from "../helpers/months";
 import type { Currency, Domain } from "../../../types";
 
@@ -50,6 +53,7 @@ export function MonthSummary({
   withdrawn = 0,
 }: Props) {
   const { formatAmount } = useMoneyFormat();
+  const t = useT(DOMAIN_MESSAGES);
   const config = DOMAIN_CONFIG[domain];
   // A net-negative month (withdrawals) has landed nothing of the plan.
   const ratio = expected > 0 ? Math.max(0, realized) / expected : 0;
@@ -60,29 +64,36 @@ export function MonthSummary({
   const hasGain = gain !== undefined && gain !== 0;
   const showBreakdown = contributed !== undefined && (hasGain || withdrawn > 0);
   const owes = domain === "DEBT";
-  const gainWord = owes
+  const gainKey = owes
     ? (gain ?? 0) < 0
-      ? "interest & charges"
-      : "reduced"
+      ? "summary.interestCharges"
+      : "summary.reduced"
     : (gain ?? 0) >= 0
-      ? "gain"
-      : "loss";
+      ? "summary.gain"
+      : "summary.loss";
   // `contributed` is net of withdrawals; the line spells out both sides.
   const breakdown = [
-    `${formatAmount((contributed ?? 0) + withdrawn, currency)} ${owes ? "repaid" : "contributed"}`,
+    t(owes ? "summary.repaid" : "summary.contributed", {
+      amount: formatAmount((contributed ?? 0) + withdrawn, currency),
+    }),
     withdrawn > 0
-      ? `${formatAmount(withdrawn, currency)} ${owes ? "borrowed" : "withdrawn"}`
+      ? t(owes ? "summary.borrowed" : "summary.withdrawn", {
+          amount: formatAmount(withdrawn, currency),
+        })
       : null,
-    hasGain ? `${formatAmount(Math.abs(gain!), currency)} ${gainWord}` : null,
+    hasGain ? t(gainKey, { amount: formatAmount(Math.abs(gain!), currency) }) : null,
   ]
     .filter(Boolean)
     .join(" · ");
+  const [beforePct, afterPct] = splitSlot(t(`summary.progress.${domain}`, { pct: SLOT }));
 
   return (
     <Card>
       <div className="summary">
         <div className="panel plan">
-          <span className="label">{window.isCurrent ? "Expected this month" : "Month total"}</span>
+          <span className="label">
+            {window.isCurrent ? t("summary.expected") : t("summary.monthTotal")}
+          </span>
           <span className="figure">
             <Amount value={expected} currency={currency} size="lg" approximate={approximate} />
           </span>
@@ -90,19 +101,20 @@ export function MonthSummary({
             <ProgressBar
               ratio={ratio}
               color={config.accent}
-              label={`${config.spentLabel} of expected`}
+              label={t(`summary.ofExpected.${domain}`)}
             />
             <span className="bar-text">
               <span>
-                <span className="pct">{Math.round(Math.min(1, ratio) * 100)}%</span>{" "}
-                {config.spentLabel.toLowerCase()}
+                {beforePct}
+                <span className="pct">{Math.round(Math.min(1, ratio) * 100)}%</span>
+                {afterPct}
               </span>
               <span className="left">
                 {window.isCurrent
                   ? left > 0
-                    ? `${formatAmount(left, currency)} still to come`
-                    : "Nothing more planned"
-                  : "Month closed"}
+                    ? t("summary.stillToCome", { amount: formatAmount(left, currency) })
+                    : t("summary.nothingMore")
+                  : t("summary.closed")}
               </span>
             </span>
           </div>
@@ -110,9 +122,7 @@ export function MonthSummary({
 
         <div className="panel actual">
           <span className="label">
-            {window.isCurrent
-              ? `${config.spentLabel} so far`
-              : `Total ${config.spentLabel.toLowerCase()}`}
+            {window.isCurrent ? t(`summary.soFar.${domain}`) : t(`summary.total.${domain}`)}
           </span>
           <span className="figure">
             <Amount value={realized} currency={currency} size="md" approximate={approximate} />
@@ -123,8 +133,11 @@ export function MonthSummary({
           {showBreakdown && <span className="line breakdown">{breakdown}</span>}
           <span className="line">
             {delta.previousKey && previousLabel
-              ? `Compared to ${formatAmount(delta.previous, currency)} in ${previousLabel}`
-              : "No previous month to compare with"}
+              ? t("summary.comparedTo", {
+                  amount: formatAmount(delta.previous, currency),
+                  month: previousLabel,
+                })
+              : t("summary.noPrevious")}
           </span>
         </div>
       </div>

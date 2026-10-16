@@ -1,4 +1,7 @@
 import { TabStrip } from "../../../components/atoms/TabStrip";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { DOMAIN_MESSAGES } from "../messages";
 
 export type DomainView = "plan" | "activity" | "categories" | "tags" | "methods" | "value";
 
@@ -17,13 +20,21 @@ interface Props {
   showMethods?: boolean;
 }
 
-const VIEWS: { key: DomainView; label: string }[] = [
-  { key: "plan", label: "Plan" },
-  { key: "activity", label: "Activity" },
-  { key: "categories", label: "Categories" },
-  { key: "tags", label: "Tags" },
-  { key: "methods", label: "Payment methods" },
-  { key: "value", label: "Worth" },
+type NounKey =
+  | "noun.plan"
+  | "noun.activity"
+  | "noun.categories"
+  | "noun.tags"
+  | "noun.paymentMethods"
+  | "noun.worth";
+
+const VIEWS: { key: DomainView; label: NounKey }[] = [
+  { key: "plan", label: "noun.plan" },
+  { key: "activity", label: "noun.activity" },
+  { key: "categories", label: "noun.categories" },
+  { key: "tags", label: "noun.tags" },
+  { key: "methods", label: "noun.paymentMethods" },
+  { key: "value", label: "noun.worth" },
 ];
 
 /** Hashes from before the views were renamed, so old links still land. */
@@ -42,12 +53,17 @@ export function ViewTabs({
   valueLabel,
   showMethods = true,
 }: Props) {
+  const common = useT(COMMON_MESSAGES);
+  const t = useT(DOMAIN_MESSAGES);
   const views = VIEWS.filter(
     (v) => (v.key !== "value" || showValue) && (v.key !== "methods" || showMethods)
-  ).map((v) => (v.key === "value" && valueLabel ? { ...v, label: valueLabel } : v));
+  ).map((v) => ({
+    key: v.key,
+    label: v.key === "value" && valueLabel ? valueLabel : common(v.label),
+  }));
   return (
     <TabStrip
-      label="View"
+      label={t("view.label")}
       tabs={views}
       value={value}
       accent={accent}

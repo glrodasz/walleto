@@ -3,6 +3,9 @@ import { SegmentedControl } from "../../../components/molecules/SegmentedControl
 import { MONTH_PERIODS } from "../../../constants";
 import type { MonthPeriod } from "../../../constants";
 import type { ChartMeasure } from "../helpers/worthStack";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { DOMAIN_MESSAGES } from "../messages";
 
 export type StackMode = "category" | "currency";
 
@@ -21,34 +24,39 @@ interface Props {
  * how many months, and what they stack by.
  */
 export function ChartControls({ period, onPeriod, mode, onMode, measure, onMeasure }: Props) {
+  const t = useT(DOMAIN_MESSAGES);
+  const common = useT(COMMON_MESSAGES);
   return (
     <div className="controls">
       {measure && onMeasure && (
         <SegmentedControl
-          label="Bars show"
+          label={t("controls.barsShow")}
           size="sm"
           options={[
-            { key: "worth", label: "Worth" },
-            { key: "activity", label: "Activity" },
+            { key: "worth", label: common("noun.worth") },
+            { key: "activity", label: common("noun.activity") },
           ]}
           value={measure}
           onChange={onMeasure}
         />
       )}
       <SegmentedControl
-        label="Stack bars by"
+        label={t("controls.stackBy")}
         size="sm"
         options={[
-          { key: "category", label: "Category" },
-          { key: "currency", label: "Currency" },
+          { key: "category", label: common("noun.category") },
+          { key: "currency", label: common("noun.currency") },
         ]}
         value={mode}
         onChange={onMode}
       />
       <div className="period">
         <Select
-          aria-label="Period"
-          options={MONTH_PERIODS.map((p) => ({ value: String(p), label: `Last ${p} months` }))}
+          aria-label={t("controls.period")}
+          options={MONTH_PERIODS.map((p) => ({
+            value: String(p),
+            label: t("controls.lastMonths", { count: p }),
+          }))}
           value={String(period)}
           onValueChange={(v) => onPeriod(Number(v) as MonthPeriod)}
         />

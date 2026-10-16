@@ -5,6 +5,10 @@ import { Plus } from "../../../components/atoms/Icons";
 import { isAccountDomain } from "../../../helpers/accounts";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import type { Domain } from "../../../types";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { DOMAIN_MESSAGES } from "../../domains/messages";
+import { CREATE_MESSAGES } from "../messages";
 
 // Every page mounts the launcher, but the forms only load once one is picked.
 const RecurrentTransactionModal = dynamic(() =>
@@ -22,13 +26,6 @@ interface Props {
 }
 
 const DOMAINS: Domain[] = ["EXPENSE", "INCOME", "INVESTMENT", "SAVING", "DEBT"];
-const DOMAIN_LABEL: Record<Domain, string> = {
-  EXPENSE: "Expense",
-  INCOME: "Income",
-  INVESTMENT: "Investment",
-  SAVING: "Saving",
-  DEBT: "Debt",
-};
 
 type Kind = "quick" | "recurring" | "value";
 
@@ -39,6 +36,9 @@ type Kind = "quick" | "recurring" | "value";
  * open, so no page pays for their listeners.
  */
 export function CreateLauncher({ domain: fixedDomain }: Props) {
+  const t = useT(CREATE_MESSAGES);
+  const copy = useT(DOMAIN_MESSAGES);
+  const common = useT(COMMON_MESSAGES);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [domain, setDomain] = useState<Domain>(fixedDomain ?? "EXPENSE");
   const [kind, setKind] = useState<Kind | null>(null);
@@ -52,18 +52,21 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
     setKind(next);
   };
 
-  const singular = DOMAIN_CONFIG[domain].noun.replace(/s$/, "");
-
   return (
     <>
-      <button type="button" className="glass--tap fab" aria-label="Add" onClick={openSheet}>
+      <button
+        type="button"
+        className="glass--tap fab"
+        aria-label={common("action.add")}
+        onClick={openSheet}
+      >
         <Plus size={26} />
       </button>
 
-      <Modal open={sheetOpen} title="Add" onClose={() => setSheetOpen(false)}>
+      <Modal open={sheetOpen} title={common("action.add")} onClose={() => setSheetOpen(false)}>
         <div className="sheet">
           {!fixedDomain && (
-            <div className="domains" role="group" aria-label="Type">
+            <div className="domains" role="group" aria-label={t("sheet.type")}>
               {DOMAINS.map((d) => (
                 <button
                   key={d}
@@ -73,7 +76,7 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
                   style={{ "--tab-accent": DOMAIN_CONFIG[d].accent } as React.CSSProperties}
                   onClick={() => setDomain(d)}
                 >
-                  {DOMAIN_LABEL[d]}
+                  {common(`domainOne.${d}`)}
                 </button>
               ))}
             </div>
@@ -84,12 +87,12 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
             className="glass glass--tap option"
             onClick={() => choose("recurring")}
           >
-            <strong>Add {singular} to your plan</strong>
-            <span>Something that repeats: a subscription, a salary, rent</span>
+            <strong>{copy(`plan.add.${domain}`)}</strong>
+            <span>{t("sheet.recurringHint")}</span>
           </button>
           <button type="button" className="glass glass--tap option" onClick={() => choose("quick")}>
-            <strong>{DOMAIN_CONFIG[domain].oneOff.title}</strong>
-            <span>A single amount on a date, already paid</span>
+            <strong>{copy(`oneOff.title.${domain}`)}</strong>
+            <span>{t("sheet.oneOffHint")}</span>
           </button>
           {isAccountDomain(domain) && (
             <button
@@ -97,12 +100,8 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
               className="glass glass--tap option"
               onClick={() => choose("value")}
             >
-              <strong>Update current {domain === "DEBT" ? "balance" : "value"}</strong>
-              <span>
-                {domain === "DEBT"
-                  ? "What you still owe on a debt today"
-                  : `What ${domain === "SAVING" ? "a pocket" : "an account"} is worth today, as a gain % or a value`}
-              </span>
+              <strong>{t(`sheet.value.${domain}`)}</strong>
+              <span>{t(`sheet.valueHint.${domain}`)}</span>
             </button>
           )}
         </div>

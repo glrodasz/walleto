@@ -17,11 +17,18 @@ import type { MonthWindow } from "../helpers/months";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import { gainLabel } from "../helpers/gainStack";
 import type { Category, Currency, Domain, RecurrentTransaction, Transaction } from "../../../types";
+import { useT } from "../../../hooks/useT";
+import { usePreferences } from "../../../hooks/usePreferences";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { DOMAIN_MESSAGES } from "../messages";
 
 /** "gain" / "loss" for an asset; on a debt a check that came in high is "interest", low is "reduced". */
-function gainWord(domain: Domain, gain: number): string {
-  if (domain === "DEBT") return gain < 0 ? "interest" : "reduced";
-  return gain > 0 ? "gain" : "loss";
+function gainKey(
+  domain: Domain,
+  gain: number
+): "categories.interest" | "categories.reduced" | "categories.gain" | "categories.loss" {
+  if (domain === "DEBT") return gain < 0 ? "categories.interest" : "categories.reduced";
+  return gain > 0 ? "categories.gain" : "categories.loss";
 }
 
 interface Props {
@@ -132,6 +139,9 @@ export function CategoryMonthList({
   onToggleHidden,
 }: Props) {
   const { formatAmount } = useMoneyFormat();
+  const { language } = usePreferences();
+  const t = useT(DOMAIN_MESSAGES);
+  const common = useT(COMMON_MESSAGES);
   const config = DOMAIN_CONFIG[domain];
   const rows = useMemo(
     () => categoryMonthRows(categories, transactions, items, ctx, window, now, gains),
@@ -140,12 +150,12 @@ export function CategoryMonthList({
 
   return (
     <Card>
-      <SectionTitle title="Categories" />
+      <SectionTitle title={common("noun.categories")} />
 
       {loading ? (
-        <p className="empty">Loading…</p>
+        <p className="empty">{common("state.loading")}</p>
       ) : rows.length === 0 && unfiledGain === 0 ? (
-        <p className="empty">Nothing in this month yet</p>
+        <p className="empty">{t("categories.empty")}</p>
       ) : (
         <ListItems>
           {rows.map((r) => {
@@ -166,23 +176,30 @@ export function CategoryMonthList({
                      cannot shrink, and the kebab beside it spells the rest out. */
                   r.category.hiddenFromChart ? (
                     <Badge variant="outline" tone="warning" caps icon={<Chart size={12} />}>
-                      Hidden
+                      {t("categories.hidden")}
                     </Badge>
                   ) : undefined
                 }
-                meta={`${r.count} ${r.count === 1 ? "transaction" : "transactions"}${
-                  r.share > 0 ? ` · ${r.share.toFixed(0)}%` : ""
-                }${
+                meta={[
+                  t("categories.count", { count: r.count }),
+                  r.share > 0 ? t("categories.share", { share: r.share.toFixed(0) }) : null,
                   r.gain !== 0
-                    ? ` · ${formatAmount(Math.abs(r.gain), currency)} ${gainWord(domain, r.gain)}`
-                    : ""
-                }${r.planned > 0 ? ` · ${formatAmount(r.planned, currency)} planned` : ""}`}
+                    ? t(gainKey(domain, r.gain), {
+                        amount: formatAmount(Math.abs(r.gain), currency),
+                      })
+                    : null,
+                  r.planned > 0
+                    ? t("categories.planned", { amount: formatAmount(r.planned, currency) })
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
                 progress={
                   expected > 0
                     ? {
                         ratio: r.total / expected,
                         color: config.accent,
-                        label: `${r.category.name} landed`,
+                        label: t("categories.landed", { name: r.category.name }),
                       }
                     : undefined
                 }
@@ -195,10 +212,12 @@ export function CategoryMonthList({
                     </span>
                     {onToggleHidden && (
                       <KebabMenu
-                        aria-label={`Actions for ${r.category.name}`}
+                        aria-label={common("action.actionsFor", { name: r.category.name })}
                         actions={[
                           {
-                            label: r.category.hiddenFromChart ? "Show on chart" : "Hide from chart",
+                            label: r.category.hiddenFromChart
+                              ? t("categories.showOnChart")
+                              : t("categories.hideFromChart"),
                             onSelect: () => onToggleHidden(r.category),
                           },
                         ]}
@@ -216,8 +235,10 @@ export function CategoryMonthList({
                   <MoreHorizontal size={16} />
                 </IconDisc>
               }
-              name={gainLabel(domain)}
-              meta={`From ${domain === "DEBT" ? "balance" : "value"} checks that name no category`}
+              name={gainLabel(domain, language)}
+              meta={t(
+                domain === "DEBT" ? "categories.unfiled.balance" : "categories.unfiled.value"
+              )}
               amount={formatAmount(unfiledGain, currency)}
             />
           )}

@@ -75,6 +75,9 @@ import { hiddenCategoryIds, hiddenItemIds, hiddenRowReasons } from "../../../hel
 import { isSyntheticRow, spreadItemIds, spreadTransactions } from "../helpers/spread";
 import type { TransactionFilters } from "../helpers/transactionFilters";
 import type { Category, Currency, Domain, RecurrentTransaction, Transaction } from "../../../types";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { DOMAIN_MESSAGES } from "../messages";
 
 // The form is big and only needed once someone opens it; its own listeners
 // (categories, methods, tags…) also only start then.
@@ -95,6 +98,8 @@ export function DomainPage({ domain }: Props) {
   const config = DOMAIN_CONFIG[domain];
   const { ctx, target } = useMoneyContext();
   const { language } = usePreferences();
+  const t = useT(DOMAIN_MESSAGES);
+  const common = useT(COMMON_MESSAGES);
   const currency: Currency = target;
   // Investments and savings sit in accounts / pockets, which carry value.
   const accountDomain = isAccountDomain(domain) ? domain : null;
@@ -130,7 +135,10 @@ export function DomainPage({ domain }: Props) {
     [period, window.start, now, language]
   );
   const chartWindows = useMemo(() => windows.slice(-period), [windows, period]);
-  const previousWindow = useMemo(() => monthWindows(2, window.start)[0], [window.start]);
+  const previousWindow = useMemo(
+    () => monthWindows(2, window.start, language)[0],
+    [window.start, language]
+  );
   const selectedOnChart = chartWindows.some((w) => w.key === window.key);
 
   const [view, setView] = useState<DomainView>(DEFAULT_DOMAIN_VIEW);
@@ -230,8 +238,8 @@ export function DomainPage({ domain }: Props) {
   // same paths a contribution does — one ranking, one "Other" cap, one set of
   // shares. What nobody filed stays a segment of its own.
   const gainLedger = useMemo(
-    () => gainRowsAsTransactions(gainRows, ctx, domain),
-    [gainRows, ctx, domain]
+    () => gainRowsAsTransactions(gainRows, ctx, domain, language),
+    [gainRows, ctx, domain, language]
   );
   // Chart-scoped on purpose: `withGains` adds its series as soon as one month
   // is non-zero, so a gain in a month the bars do not draw would leave an empty
@@ -348,7 +356,7 @@ export function DomainPage({ domain }: Props) {
       base.series.length > 0
         ? base
         : {
-            series: [{ key: "amount", label: config.spentLabel, color: config.accent }],
+            series: [{ key: "amount", label: t(`spent.${domain}`), color: config.accent }],
             totals: Object.fromEntries(
               wins.map((w) => [w.key, { amount: fallbackTotals[w.key] ?? 0 }])
             ),
@@ -356,7 +364,7 @@ export function DomainPage({ domain }: Props) {
     return withGains(
       withFallback,
       mode === "currency" ? gainsPerWindow : unfiledPerWindow,
-      gainLabel(domain)
+      gainLabel(domain, language)
     );
   };
   const activityStacks = useMemo(
@@ -403,7 +411,7 @@ export function DomainPage({ domain }: Props) {
     );
     const flow = buildStacks(
       rows,
-      gainRowsAsTransactions(checks, ctx, domain),
+      gainRowsAsTransactions(checks, ctx, domain, language),
       gainsByWindow(checks, history),
       gainsByWindow(checks, history, true),
       history,
@@ -505,19 +513,27 @@ export function DomainPage({ domain }: Props) {
       ...rows,
       {
         categoryId: GAIN_KEY,
-        name: gainLabel(domain),
+        name: gainLabel(domain, language),
         amount: unfiled,
         percent: whole > 0 ? (Math.max(0, unfiled) / whole) * 100 : 0,
       },
     ];
-  }, [worthCategoryRows, worthUnfiledGain, categoryRows, monthUnfiledGain, realized, domain]);
+  }, [
+    worthCategoryRows,
+    worthUnfiledGain,
+    categoryRows,
+    monthUnfiledGain,
+    realized,
+    domain,
+    language,
+  ]);
   const byTag = useMemo(
-    () => groupByTag(monthTransactions, tags, ctx),
-    [monthTransactions, tags, ctx]
+    () => groupByTag(monthTransactions, tags, ctx, language),
+    [monthTransactions, tags, ctx, language]
   );
   const byMethod = useMemo(
-    () => groupByMethod(monthTransactions, methods, ctx),
-    [monthTransactions, methods, ctx]
+    () => groupByMethod(monthTransactions, methods, ctx, language),
+    [monthTransactions, methods, ctx, language]
   );
 
   const openEdit = (item: RecurrentTransaction) => {
@@ -628,8 +644,8 @@ export function DomainPage({ domain }: Props) {
       )
     ) : view === "activity" ? (
       <TransactionsTable
-        title="Activity"
-        subtitle={`What actually happened in ${window.longLabel}, planned or not.`}
+        title={common("noun.activity")}
+        subtitle={t("activity.subtitle", { month: window.longLabel })}
         rows={activityRows}
         domain={domain}
         categories={categories}
@@ -650,16 +666,13 @@ export function DomainPage({ domain }: Props) {
       />
     ) : view === "tags" ? (
       <Card>
-        <SectionTitle
-          title="Tags"
-          subtitle="A payment with several tags counts under each of them."
-        />
+        <SectionTitle title={common("noun.tags")} subtitle={t("tags.subtitle")} />
         <GroupedTotalsList
           groups={byTag}
           currency={currency}
           color={config.accent}
           loading={txLoading}
-          emptyLabel="No activity in this period"
+          emptyLabel={t("empty.period")}
           icon={() => <TagIcon size={16} />}
           onSelect={(key) =>
             narrowTo({
@@ -671,15 +684,15 @@ export function DomainPage({ domain }: Props) {
     ) : view === "methods" ? (
       <Card>
         <SectionTitle
-          title="Payment methods"
-          subtitle={`What was charged where in ${window.longLabel}.`}
+          title={common("noun.paymentMethods")}
+          subtitle={t("methods.subtitle", { month: window.longLabel })}
         />
         <GroupedTotalsList
           groups={byMethod}
           currency={currency}
           color={config.accent}
           loading={txLoading}
-          emptyLabel="No activity in this period"
+          emptyLabel={t("empty.period")}
           icon={() => <CreditCard size={16} />}
           onSelect={(key) => narrowTo({ paymentMethodId: key })}
         />
@@ -712,7 +725,11 @@ export function DomainPage({ domain }: Props) {
     );
 
   return (
-    <PageLayout title={config.title} subtitle={config.subtitle} domain={domain}>
+    <PageLayout
+      title={common(`domain.${domain}`)}
+      subtitle={t(`page.subtitle.${domain}`)}
+      domain={domain}
+    >
       {error && <ErrorState error={error} />}
 
       <MonthSummary
@@ -732,14 +749,10 @@ export function DomainPage({ domain }: Props) {
       <div className="charts">
         <Card>
           <SectionTitle
-            title={`Monthly ${config.noun}`}
-            subtitle={`${
-              showWorth
-                ? "What it was worth at the end of each month"
-                : accountDomain
-                  ? `Actual ${config.noun} and ${domain === "DEBT" ? "accrued interest" : "reported gain"}`
-                  : `Actual ${config.noun}`
-            }, split by ${mode === "category" ? "category" : "currency"}.`}
+            title={t(`chart.title.${domain}`)}
+            subtitle={t(
+              showWorth ? `chart.subtitle.worth.${mode}` : `chart.subtitle.${domain}.${mode}`
+            )}
           >
             <ChartControls
               period={period}
@@ -764,15 +777,15 @@ export function DomainPage({ domain }: Props) {
           />
           {anythingHidden && (
             <CheckboxField
-              label="Show hidden"
-              hint="Categories hidden from the chart."
+              label={t("chart.showHidden")}
+              hint={t("chart.showHiddenHint")}
               checked={showHidden}
               onChange={setShowHidden}
             />
           )}
         </Card>
         <CategoryBreakdown
-          title="Top categories"
+          title={t("chart.topCategories")}
           rows={topCategories}
           categories={categories}
           domain={domain}
@@ -788,7 +801,7 @@ export function DomainPage({ domain }: Props) {
           onChange={changeView}
           accent={config.accent}
           showValue={Boolean(accountDomain)}
-          valueLabel={domain === "DEBT" ? "Owed" : undefined}
+          valueLabel={domain === "DEBT" ? common("noun.owed") : undefined}
           showMethods={config.showPaymentMethod}
         />
         {panel}

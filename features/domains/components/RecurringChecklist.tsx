@@ -14,7 +14,11 @@ import { tagNames } from "../../../helpers/tags";
 import { monthOccurrences } from "../helpers/months";
 import type { MonthWindow, OccurrenceStatus } from "../helpers/months";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
-import { FREQUENCY_LABELS } from "../../../constants";
+import { SLOT, splitSlot } from "../helpers/slot";
+import { useT } from "../../../hooks/useT";
+import type { Translator } from "../../../helpers/i18n";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { DOMAIN_MESSAGES } from "../messages";
 import type {
   Category,
   Currency,
@@ -48,29 +52,23 @@ interface Props {
   busyId: string | null;
 }
 
+type DomainT = Translator<(typeof DOMAIN_MESSAGES)["en"]>;
+
 const hiddenAction = (
+  t: DomainT,
   item: RecurrentTransaction,
   onToggleHidden?: (item: RecurrentTransaction) => void
 ): KebabAction[] =>
   onToggleHidden
     ? [
         {
-          label: item.hiddenFromDashboard ? "Show on dashboard" : "Hide from dashboard",
+          label: item.hiddenFromDashboard ? t("plan.showOnDashboard") : t("plan.hideFromDashboard"),
           onSelect: () => onToggleHidden(item),
         },
       ]
     : [];
 
-const GROUPS: { status: OccurrenceStatus; title: string }[] = [
-  { status: "overdue", title: "Overdue" },
-  { status: "due", title: "Due" },
-  { status: "paid", title: "Paid" },
-];
-const STATUS_LABEL: Record<OccurrenceStatus, string> = {
-  overdue: "Overdue",
-  due: "Due",
-  paid: "Paid",
-};
+const GROUPS: OccurrenceStatus[] = ["overdue", "due", "paid"];
 
 interface RowProps {
   name: string;
@@ -106,11 +104,13 @@ function OccurrenceRow({
   labels,
   note,
 }: RowProps) {
+  const t = useT(DOMAIN_MESSAGES);
+  const common = useT(COMMON_MESSAGES);
   const flags = [
     ...(hidden
       ? [
           <Badge key="hidden" variant="outline" tone="warning" caps icon={<Home size={12} />}>
-            Hidden
+            {common("state.hidden")}
           </Badge>,
         ]
       : []),
@@ -131,11 +131,11 @@ function OccurrenceRow({
       amountMeta={
         status ? (
           <Badge color={STATUS_COLOR(status, accent)} caps>
-            {STATUS_LABEL[status]}
+            {t(`plan.status.${status}`)}
           </Badge>
         ) : undefined
       }
-      trailing={<KebabMenu aria-label={`Actions for ${name}`} actions={actions} />}
+      trailing={<KebabMenu aria-label={common("action.actionsFor", { name })} actions={actions} />}
     />
   );
 }
@@ -165,6 +165,8 @@ export function RecurringChecklist({
 }: Props) {
   const { formatDate, language } = useDateFormat();
   const { formatAmount, formatNative } = useMoneyFormat();
+  const t = useT(DOMAIN_MESSAGES);
+  const common = useT(COMMON_MESSAGES);
   const config = DOMAIN_CONFIG[domain];
   const { occurrences, notThisMonth } = useMemo(
     () => monthOccurrences(items, transactions, ctx, window, now),
@@ -182,30 +184,29 @@ export function RecurringChecklist({
       .join("");
   };
 
+  const [runRateBefore, runRateAfter] = splitSlot(t(`plan.runRate.${domain}`, { amount: SLOT }));
+
   return (
     <Card>
       <SectionTitle
-        title="Plan"
-        subtitle={`What repeats, and where it stands in ${window.longLabel}.`}
+        title={common("noun.plan")}
+        subtitle={t("plan.subtitle", { month: window.longLabel })}
       />
 
       {loading ? (
-        <p className="empty">Loading…</p>
+        <p className="empty">{common("state.loading")}</p>
       ) : occurrences.length === 0 && notThisMonth.length === 0 ? (
-        <p className="empty">
-          Nothing in your plan yet. Add what repeats (rent, a salary, a subscription) from the +
-          button.
-        </p>
+        <p className="empty">{t("plan.empty")}</p>
       ) : (
         <>
-          {GROUPS.map((g) => {
-            const rows = occurrences.filter((o) => o.status === g.status);
+          {GROUPS.map((status) => {
+            const rows = occurrences.filter((o) => o.status === status);
             if (rows.length === 0) return null;
             const total = rows.reduce((sum, o) => sum + o.amount, 0);
             return (
-              <section key={g.status} className="group">
+              <section key={status} className="group">
                 <h3 className="group-title">
-                  <span>{g.title}</span>
+                  <span>{t(`plan.group.${status}`)}</span>
                   <span className="group-total">{formatAmount(total, currency)}</span>
                 </h3>
                 <ListItems>
@@ -216,7 +217,7 @@ export function RecurringChecklist({
                       <OccurrenceRow
                         key={`${id}_${o.occurredAt.toISOString()}`}
                         name={o.item.name}
-                        meta={`${formatDate(o.occurredAt, "day")} · ${FREQUENCY_LABELS[o.item.frequency]}${details(o.item)}`}
+                        meta={`${formatDate(o.occurredAt, "day")} · ${common(`frequency.${o.item.frequency}`)}${details(o.item)}`}
                         hidden={Boolean(o.item.hiddenFromDashboard)}
                         labels={tagNames(o.item.tags, tags)}
                         note={o.item.note}
@@ -227,16 +228,16 @@ export function RecurringChecklist({
                           ...(o.status !== "paid"
                             ? [
                                 {
-                                  label: busy ? "Marking…" : "Mark as paid",
+                                  label: busy ? t("plan.marking") : t("plan.markPaid"),
                                   onSelect: () => onMarkPaid(id),
                                   disabled: busy,
                                 },
                               ]
                             : []),
-                          { label: "Edit", onSelect: () => onEdit(o.item) },
-                          ...hiddenAction(o.item, onToggleHidden),
+                          { label: common("action.edit"), onSelect: () => onEdit(o.item) },
+                          ...hiddenAction(t, o.item, onToggleHidden),
                           {
-                            label: "Stop",
+                            label: t("plan.stop"),
                             onSelect: () => onStop(id),
                             danger: true,
                             disabled: busy,
@@ -252,15 +253,15 @@ export function RecurringChecklist({
 
           {notThisMonth.length > 0 && (
             <details className="later">
-              <summary>Not this month ({notThisMonth.length})</summary>
+              <summary>{t("plan.notThisMonth", { count: notThisMonth.length })}</summary>
               <ListItems>
                 {notThisMonth.map((item) => (
                   <OccurrenceRow
                     key={item.id}
                     name={item.name}
-                    meta={`${FREQUENCY_LABELS[item.frequency]}${
+                    meta={`${common(`frequency.${item.frequency}`)}${
                       item.nextOccurrence
-                        ? ` · next ${formatDate(item.nextOccurrence.toDate(), "day")}`
+                        ? ` · ${t("plan.next", { date: formatDate(item.nextOccurrence.toDate(), "day") })}`
                         : ""
                     }`}
                     amount={formatNative(item.amount, item.currency, currency)}
@@ -269,10 +270,10 @@ export function RecurringChecklist({
                     labels={tagNames(item.tags, tags)}
                     note={item.note}
                     actions={[
-                      { label: "Edit", onSelect: () => onEdit(item) },
-                      ...hiddenAction(item, onToggleHidden),
+                      { label: common("action.edit"), onSelect: () => onEdit(item) },
+                      ...hiddenAction(t, item, onToggleHidden),
                       {
-                        label: "Stop",
+                        label: t("plan.stop"),
                         onSelect: () => item.id && onStop(item.id),
                         danger: true,
                       },
@@ -284,7 +285,9 @@ export function RecurringChecklist({
           )}
 
           <p className="footer">
-            {config.runRateLabel}: <strong>{formatAmount(runRate, currency)}</strong>/mo
+            {runRateBefore}
+            <strong>{formatAmount(runRate, currency)}</strong>
+            {runRateAfter}
           </p>
         </>
       )}
