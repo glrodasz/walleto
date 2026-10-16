@@ -204,6 +204,72 @@ describe("TransactionsTable", () => {
     expect(screen.getByText(/charged -SEK 4,600/)).toBeInTheDocument();
   });
 
+  it("labels a row paid before the item's current schedule as such", () => {
+    const bear = {
+      id: "bear",
+      name: "Bear",
+      amount: 399,
+      currency: "USD",
+      frequency: "YEARLY",
+      startDate: ts(new Date(2026, 8, 27, 12)),
+    };
+    render(
+      <TransactionsTable
+        {...base}
+        items={[bear] as never}
+        rows={[
+          tx("bear_2026-09-09", "Bear", new Date(2026, 8, 9, 12), {
+            recurrentTransactionId: "bear",
+          }),
+          tx("bear_2026-09-27", "Bear", new Date(2026, 8, 27, 12), {
+            recurrentTransactionId: "bear",
+            amount: 399,
+          }),
+        ]}
+        onDelete={jest.fn()}
+      />
+    );
+    const [yearly, monthly] = bodyRows();
+    expect(yearly).toHaveTextContent("recurring · Yearly");
+    expect(monthly).toHaveTextContent("recurring · earlier schedule");
+    expect(monthly).not.toHaveTextContent("Yearly");
+  });
+
+  it("shows a reflected monthly share as a read-only line that opens its item", () => {
+    const bear = {
+      id: "bear",
+      name: "Bear",
+      amount: 399,
+      currency: "USD",
+      frequency: "YEARLY",
+      startDate: ts(new Date(2026, 8, 27, 12)),
+    };
+    const onOpenItem = jest.fn();
+    render(
+      <TransactionsTable
+        {...base}
+        items={[bear] as never}
+        rows={[
+          {
+            ...tx("bear_spread_2026-09", "Bear", new Date(2026, 8, 1), {
+              recurrentTransactionId: "bear",
+              amount: 33.25,
+            }),
+            synthetic: true,
+          } as Transaction,
+        ]}
+        onOpenItem={onOpenItem}
+        onDelete={jest.fn()}
+      />
+    );
+    const [row] = bodyRows();
+    expect(row).toHaveTextContent("Monthly share");
+    expect(row).toHaveTextContent("$399.00 yearly, reflected monthly");
+    expect(within(row).queryByRole("button", { name: /actions for/i })).toBeNull();
+    fireEvent.click(within(row).getByRole("button", { name: /monthly share, edit Bear/ }));
+    expect(onOpenItem).toHaveBeenCalledWith(bear);
+  });
+
   it("caps the rows and leaves the method out when asked", () => {
     render(
       <TransactionsTable {...base} rows={rows} onDelete={jest.fn()} limit={2} showMethod={false} />

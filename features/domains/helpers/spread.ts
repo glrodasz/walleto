@@ -30,6 +30,8 @@ export function spreadItemIds(items: RecurrentTransaction[]): Set<string> {
   return new Set(items.filter((i) => i.id && isSpreadItem(i)).map((i) => i.id!));
 }
 
+const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
 const at = (date: Date) => ({
   seconds: Math.floor(date.getTime() / 1000),
   nanoseconds: 0,
@@ -38,7 +40,7 @@ const at = (date: Date) => ({
 
 /**
  * The rows the domain page charts: the real ones, minus those written by
- * spread items, plus one synthetic slice per spread item per window it was
+ * spread items' current schedule, plus one synthetic slice per spread item per window it was
  * live in (amount × FREQ_TO_MONTHS, the item's own currency, the charged
  * pair scaled alongside). Slices carry the item id and category, so hiding
  * composes through `helpers/hidden` unchanged. The ledger and the checklist
@@ -51,10 +53,14 @@ export function spreadTransactions(
 ): Transaction[] {
   const spread = items.filter((i) => i.id && isSpreadItem(i));
   if (spread.length === 0) return transactions;
-  const ids = new Set(spread.map((i) => i.id!));
-  const kept = transactions.filter(
-    (t) => !t.recurrentTransactionId || !ids.has(t.recurrentTransactionId)
-  );
+  // Only the current schedule's rows give way to slices: a row dated before
+  // the item's start was paid under an earlier schedule (the monthly SEK 39
+  // before the item turned yearly) and stays as it was.
+  const starts = new Map(spread.map((i) => [i.id!, startOfDay(i.startDate.toDate())]));
+  const kept = transactions.filter((t) => {
+    const start = t.recurrentTransactionId ? starts.get(t.recurrentTransactionId) : undefined;
+    return !start || t.occurredAt.toDate() < start;
+  });
 
   const slices: SpreadSlice[] = [];
   for (const item of spread) {

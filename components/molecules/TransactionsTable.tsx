@@ -5,13 +5,14 @@ import { TextField } from "../atoms/TextField";
 import { Select } from "../atoms/Select";
 import { Badge } from "../atoms/Badge";
 import { CategoryIcon } from "../atoms/CategoryIcon";
-import { Chart, Home, Search, Sliders } from "../atoms/Icons";
+import { Chart, Home, Repeat, Search, Sliders } from "../atoms/Icons";
 import { useMoneyFormat } from "../../hooks/useMoneyFormat";
 import { KebabMenu } from "./KebabMenu";
 import { IconDisc } from "./IconDisc";
 import { ListItem, ListItems } from "./ListItem";
 import { useTransactionFilters } from "../../features/domains/hooks/useTransactionFilters";
 import { NO_METHOD } from "../../features/domains/helpers/transactionFilters";
+import { isSyntheticRow } from "../../features/domains/helpers/spread";
 import type { HiddenReason } from "../../helpers/hidden";
 import type { TransactionFilters } from "../../features/domains/helpers/transactionFilters";
 import { useDateFormat } from "../../hooks/usePreferences";
@@ -46,6 +47,8 @@ interface Props {
   ctx: MoneyContext;
   loading?: boolean;
   onEdit?: (transaction: Transaction) => void;
+  /** Opens a recurring item: where a "reflected monthly" share is edited. */
+  onOpenItem?: (item: RecurrentTransaction) => void;
   /**
    * Every rule hiding a row: off the domain chart ("chart", by its recurring
    * item or its category) and/or off the dashboard ("dashboard", by its
@@ -87,6 +90,7 @@ export function TransactionsTable({
   ctx,
   loading,
   onEdit,
+  onOpenItem,
   hiddenReasons,
   onDelete,
   deletingId,
@@ -212,6 +216,7 @@ export function TransactionsTable({
               showMethod={showMethod}
               hidden={hiddenReasons?.(t) ?? []}
               onEdit={onEdit}
+              onOpenItem={onOpenItem}
               onDelete={onDelete}
               deleting={deletingId === t.id}
             />
@@ -345,6 +350,7 @@ interface RowProps {
   showMethod: boolean;
   hidden: HiddenReason[];
   onEdit?: (transaction: Transaction) => void;
+  onOpenItem?: (item: RecurrentTransaction) => void;
   onDelete: (transactionId: string) => void;
   deleting: boolean;
 }
@@ -361,18 +367,31 @@ function TransactionListRow({
   showMethod,
   hidden,
   onEdit,
+  onOpenItem,
   onDelete,
   deleting,
 }: RowProps) {
   const { formatDate } = useDateFormat();
   const { formatNative } = useMoneyFormat();
+  // A "reflected monthly" share is not a payment: it is the month's slice of
+  // a yearly (quarterly…) item, derived from it and edited only through it.
+  const share = isSyntheticRow(t);
+  const date = toDate(t.occurredAt);
   // "recurring · Monthly", plus the item's name when the row was renamed;
-  // a stopped item no longer resolves, so the row just says "recurring".
-  const origin = !t.recurrentTransactionId
-    ? "one-off"
-    : !item
-      ? "recurring"
-      : `recurring · ${FREQUENCY_LABELS[item.frequency]}${item.name !== t.name ? ` · ${item.name}` : ""}`;
+  // a stopped item no longer resolves, so the row just says "recurring". A
+  // row older than the item's start was paid under an earlier schedule, so
+  // the item's cadence today would mislabel it.
+  const origin = share
+    ? item
+      ? `${formatNative(item.amount, item.currency, displayCurrency)} ${FREQUENCY_LABELS[item.frequency].toLowerCase()}, reflected monthly`
+      : "reflected monthly"
+    : !t.recurrentTransactionId
+      ? "one-off"
+      : !item
+        ? "recurring"
+        : date < startOfDay(toDate(item.startDate))
+          ? `recurring · earlier schedule${item.name !== t.name ? ` · ${item.name}` : ""}`
+          : `recurring · ${FREQUENCY_LABELS[item.frequency]}${item.name !== t.name ? ` · ${item.name}` : ""}`;
 
   // Money that left the account: the amount reads negative and the row says
   // why ("Withdrawal", or "Borrowed" on a debt).
@@ -383,7 +402,7 @@ function TransactionListRow({
   // One string, not one span per fact: the row reads as a sentence, and the
   // ellipsis lands at the end instead of inside a column.
   const meta = [
-    formatDate(toDate(t.occurredAt), "day"),
+    formatDate(date, share ? "month" : "day"),
     category?.name,
     showMethod && method ? paymentMethodLabel(method) : null,
     origin,
@@ -402,8 +421,13 @@ function TransactionListRow({
       }
       name={t.name}
       badges={
-        hidden.length > 0 || outLabel || labels.length > 0 ? (
+        share || hidden.length > 0 || outLabel || labels.length > 0 ? (
           <>
+            {share && (
+              <Badge variant="outline" tone="info" caps icon={<Repeat size={12} />}>
+                Monthly share
+              </Badge>
+            )}
             {outLabel && (
               <Badge variant="outline" tone="info" caps>
                 {outLabel}
@@ -437,20 +461,26 @@ function TransactionListRow({
           ? `charged ${formatNative(signed(t.chargedAmount), t.chargedCurrency, displayCurrency)}`
           : undefined
       }
+      onClick={share && item && onOpenItem ? () => onOpenItem(item) : undefined}
+      aria-label={share ? `${t.name}: monthly share, edit ${item?.name ?? "the item"}` : undefined}
       trailing={
-        <KebabMenu
-          aria-label={`Actions for ${t.name}`}
-          actions={[
-            ...(onEdit ? [{ label: "Edit", onSelect: () => onEdit(t) }] : []),
-            {
-              label: deleting ? "Deleting…" : "Delete",
-              onSelect: () => t.id && onDelete(t.id),
-              danger: true,
-              disabled: deleting,
-            },
-          ]}
-        />
+        share ? undefined : (
+          <KebabMenu
+            aria-label={`Actions for ${t.name}`}
+            actions={[
+              ...(onEdit ? [{ label: "Edit", onSelect: () => onEdit(t) }] : []),
+              {
+                label: deleting ? "Deleting…" : "Delete",
+                onSelect: () => t.id && onDelete(t.id),
+                danger: true,
+                disabled: deleting,
+              },
+            ]}
+          />
+        )
       }
     />
   );
 }
+
+const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());

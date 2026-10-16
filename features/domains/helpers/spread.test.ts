@@ -101,6 +101,23 @@ describe("spreadTransactions", () => {
     expect(spreadTransactions([{ ...insurance, spreadMonthly: false }], rows, windows)).toBe(rows);
   });
 
+  it("keeps rows paid before the item's start, under an earlier schedule", () => {
+    // Was monthly at 39, turned yearly on Sep 27 (the slices start in Sep).
+    const bear = {
+      ...insurance,
+      id: "bear",
+      amount: 399,
+      startDate: ts(new Date(2026, 8, 27, 12)),
+    };
+    const history = [
+      tx("bear_2026-08-09", 39, new Date(2026, 7, 9, 12), { recurrentTransactionId: "bear" }),
+      tx("bear_2026-09-27", 399, new Date(2026, 8, 27, 12), { recurrentTransactionId: "bear" }),
+    ];
+    const out = spreadTransactions([bear], history, windows);
+    expect(out.filter((t) => !isSyntheticRow(t)).map((t) => t.id)).toEqual(["bear_2026-08-09"]);
+    expect(out.filter(isSyntheticRow).map((t) => t.id)).toEqual(["bear_spread_2026-09"]);
+  });
+
   it("composes with hiding through the item id", () => {
     const out = spreadTransactions([insurance], rows, windows);
     expect(withoutHidden(out, new Set(["ins"])).map((t) => t.id)).toEqual(["coffee"]);
