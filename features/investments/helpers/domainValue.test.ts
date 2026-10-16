@@ -63,7 +63,6 @@ describe("domainValueRows", () => {
       [tx(1_000, "acc-1"), tx(500, "acc-2")],
       [check(1_200, 1_000, new Date(2026, 5, 1), "acc-1")],
       "INVESTMENT",
-      "account",
       ctx,
       NOW
     );
@@ -79,7 +78,6 @@ describe("domainValueRows", () => {
       [tx(100, "acc-1"), tx(900, "acc-2")],
       [],
       "INVESTMENT",
-      "account",
       ctx,
       NOW
     );
@@ -87,15 +85,7 @@ describe("domainValueRows", () => {
   });
 
   it("adds the bucket row only when something is filed under no account", () => {
-    const withoutBucket = domainValueRows(
-      accounts,
-      [tx(100, "acc-1")],
-      [],
-      "INVESTMENT",
-      "account",
-      ctx,
-      NOW
-    );
+    const withoutBucket = domainValueRows(accounts, [tx(100, "acc-1")], [], "INVESTMENT", ctx, NOW);
     expect(withoutBucket.map((r) => r.key)).not.toContain("dom:INVESTMENT");
 
     const withBucket = domainValueRows(
@@ -103,7 +93,6 @@ describe("domainValueRows", () => {
       [tx(100, "acc-1"), tx(250)],
       [],
       "INVESTMENT",
-      "account",
       ctx,
       NOW
     );
@@ -119,7 +108,6 @@ describe("domainValueRows", () => {
       [],
       [check(800, 700, new Date(2026, 5, 1))],
       "INVESTMENT",
-      "account",
       ctx,
       NOW
     );
@@ -138,7 +126,6 @@ describe("domainValueTotals", () => {
         check(600, 500, new Date(2026, 7, 4), "acc-2"),
       ],
       "INVESTMENT",
-      "account",
       ctx,
       NOW
     );
@@ -150,16 +137,15 @@ describe("domainValueTotals", () => {
   });
 
   it("reports no check date when nothing has ever been checked", () => {
-    const rows = domainValueRows(
-      accounts,
-      [tx(100, "acc-1")],
-      [],
-      "INVESTMENT",
-      "account",
-      ctx,
-      NOW
-    );
+    const rows = domainValueRows(accounts, [tx(100, "acc-1")], [], "INVESTMENT", ctx, NOW);
     expect(domainValueTotals(rows).lastCheckedAt).toBeNull();
+  });
+});
+
+describe("domainValueRows in Spanish", () => {
+  it("names the bucket in the reader's language", () => {
+    const rows = domainValueRows([], [tx(250)], [], "INVESTMENT", ctx, NOW, "es");
+    expect(rows[0].name).toBe("Sin cuenta");
   });
 });
 
@@ -182,7 +168,6 @@ describe("domainValueRows for debts", () => {
       [repay(300, "visa"), repay(200, "visa"), repay(100, "loan")],
       [{ ...check(5000, 0, new Date(2026, 0, 1), "visa"), domain: "DEBT", gainPct: 0 }],
       "DEBT",
-      "debt",
       ctx,
       NOW
     );
@@ -207,7 +192,6 @@ describe("domainValueRows for debts", () => {
       [repay(50, undefined as unknown as string)],
       [],
       "DEBT",
-      "debt",
       ctx,
       NOW
     );
@@ -225,7 +209,6 @@ describe("domainValueRows with withdrawals", () => {
       [tx(100), { ...tx(150), direction: "OUT" }],
       [],
       "INVESTMENT",
-      "account",
       ctx,
       NOW
     );

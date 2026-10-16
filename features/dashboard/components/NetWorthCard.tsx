@@ -7,6 +7,8 @@ import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { useDateFormat } from "../../../hooks/usePreferences";
 import type { NetWorth } from "../helpers/netWorth";
 import type { Currency } from "../../../types";
+import { useT } from "../../../hooks/useT";
+import { DASHBOARD_MESSAGES } from "../messages";
 
 interface Props {
   worth: NetWorth;
@@ -24,12 +26,13 @@ interface Props {
 export function NetWorthCard({ worth, currency, loading = false, approximate = false }: Props) {
   const { formatAmount } = useMoneyFormat();
   const { formatDate } = useDateFormat();
-  const badge = { label: "Today", tone: "info" } as const;
+  const t = useT(DASHBOARD_MESSAGES);
+  const badge = { label: t("worth.today"), tone: "info" } as const;
 
   if (loading) {
     return (
       <SummaryCard
-        title="Net worth"
+        title={t("worth.title")}
         badge={badge}
         figure={<Skeleton.Box width={180} height={36} />}
       />
@@ -37,50 +40,41 @@ export function NetWorthCard({ worth, currency, loading = false, approximate = f
   }
 
   if (worth.empty) {
-    return (
-      <SummaryCard
-        title="Net worth"
-        badge={badge}
-        sub="Add your investment accounts, savings pockets and debts, then update what each is worth from the + button to see where you stand."
-      />
-    );
+    return <SummaryCard title={t("worth.title")} badge={badge} sub={t("worth.empty")} />;
   }
 
   const stats: SummaryStat[] = [
     {
       key: "investments",
-      label: "Investments",
+      label: t("worth.investments"),
       domain: "INVESTMENT",
       Icon: TrendingUp,
       value: formatAmount(worth.investments, currency),
     },
     {
       key: "savings",
-      label: "Savings",
+      label: t("worth.savings"),
       domain: "SAVING",
       Icon: Circle,
       value: formatAmount(worth.savings, currency),
     },
     {
       key: "debts",
-      label: "Owed on debts",
+      label: t("worth.debts"),
       domain: "DEBT",
       Icon: CreditCard,
       value: worth.debtsUnknown ? "—" : formatAmount(worth.debts, currency),
     },
   ];
 
-  const sub = [
-    "What you own minus what you owe",
-    worth.lastCheckedAt ? `last checked ${formatDate(worth.lastCheckedAt, "day")}` : null,
-    worth.estimated ? "partly estimated" : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const date = worth.lastCheckedAt ? formatDate(worth.lastCheckedAt, "day") : null;
+  const sub = date
+    ? t(worth.estimated ? "worth.sub.checkedEstimated" : "worth.sub.checked", { date })
+    : t(worth.estimated ? "worth.sub.estimated" : "worth.sub");
 
   return (
     <SummaryCard
-      title="Net worth"
+      title={t("worth.title")}
       badge={badge}
       figure={
         <Amount
@@ -93,11 +87,7 @@ export function NetWorthCard({ worth, currency, loading = false, approximate = f
       }
       sub={sub}
       stats={stats}
-      note={
-        worth.debtsUnknown
-          ? "A debt has no recorded balance yet, so it isn't counted. Update its balance to include it."
-          : undefined
-      }
+      note={worth.debtsUnknown ? t("worth.debtsUnknown") : undefined}
     />
   );
 }

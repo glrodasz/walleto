@@ -27,6 +27,9 @@ import { DEFAULT_MONTH_PERIOD, parseMonthPeriod } from "../../../constants";
 import type { MonthPeriod } from "../../../constants";
 import type { Currency, Domain } from "../../../types";
 import { usePreferences } from "../../../hooks/usePreferences";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { DASHBOARD_MESSAGES } from "../messages";
 
 interface CategoryAmount {
   categoryId: string;
@@ -56,6 +59,8 @@ export function DashboardPage() {
   const { userDoc } = useUserDoc();
   const { formatAmount } = useMoneyFormat();
   const { language } = usePreferences();
+  const t = useT(DASHBOARD_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
   useMaterialize();
   const [period, setPeriod] = useLocalPreference<MonthPeriod>(
     "walleto:dashboard:period",
@@ -90,7 +95,8 @@ export function DashboardPage() {
   const { loading: worthLoading, ...worth } = useNetWorth(categories, ctx);
   const cardsRef = useScrollRow<HTMLElement>();
 
-  const firstName = (user?.name ?? user?.nickname ?? "there").split(" ")[0];
+  const firstName = (user?.name ?? user?.nickname ?? "").split(" ")[0];
+  const hello = greeting(new Date(), language);
 
   const cards: {
     domain: Domain;
@@ -102,7 +108,7 @@ export function DashboardPage() {
   }[] = [
     {
       domain: "INCOME",
-      title: "Income",
+      title: tc("domain.INCOME"),
       href: "/incomes",
       amount: totals.income,
       list: incomesByCategory,
@@ -110,7 +116,7 @@ export function DashboardPage() {
     },
     {
       domain: "EXPENSE",
-      title: "Expenses",
+      title: tc("domain.EXPENSE"),
       href: "/expenses",
       amount: totals.expense,
       list: expensesByCategory,
@@ -118,7 +124,7 @@ export function DashboardPage() {
     },
     {
       domain: "INVESTMENT",
-      title: "Investments",
+      title: tc("domain.INVESTMENT"),
       href: "/investments",
       amount: totals.investment,
       list: investmentsByCategory,
@@ -126,7 +132,7 @@ export function DashboardPage() {
     },
     {
       domain: "SAVING",
-      title: "Savings",
+      title: tc("domain.SAVING"),
       href: "/savings",
       amount: totals.saving,
       list: savingsByCategory,
@@ -134,7 +140,7 @@ export function DashboardPage() {
     },
     {
       domain: "DEBT",
-      title: "Debts",
+      title: tc("domain.DEBT"),
       href: "/debts",
       amount: totals.debt,
       list: debtsByCategory,
@@ -144,22 +150,18 @@ export function DashboardPage() {
 
   return (
     <PageLayout
-      title={`${greeting(new Date(), language)}, ${firstName}`}
-      subtitle={`Here's where your money stands in ${window.longLabel}.`}
+      title={
+        firstName
+          ? t("title.named", { greeting: hello, name: firstName })
+          : t("title.anonymous", { greeting: hello })
+      }
+      subtitle={t("subtitle", { month: window.longLabel })}
       hideMonth
     >
       {error && <ErrorState error={error} />}
-      {fxUnavailable && (
-        <ErrorState
-          title="Exchange rates unavailable"
-          description="Totals mix currencies without conversion right now. They'll correct themselves when rates load again."
-        />
-      )}
+      {fxUnavailable && <ErrorState title={t("fx.title")} description={t("fx.description")} />}
 
-      <TipBanner id="create">
-        Build your plan from the + button: add what repeats (rent, a salary, a subscription), and
-        log one-offs as they happen.
-      </TipBanner>
+      <TipBanner id="create">{t("tip.create")}</TipBanner>
 
       <section className="block">
         {userDoc ? (
@@ -186,7 +188,7 @@ export function DashboardPage() {
                 title={c.title}
                 href={c.href}
                 amount={c.amount}
-                caption="planned per month"
+                caption={t("cards.caption")}
                 currency={currency}
                 domain={c.domain}
                 rows={cardRows(c.list, c.domain, currency, formatAmount)}
@@ -221,8 +223,8 @@ export function DashboardPage() {
 
       <section className="bottom">
         <CategoryBreakdown
-          title="Top expense categories"
-          rows={topWithOther(expensesByCategory, 5)}
+          title={t("topExpenses.title")}
+          rows={topWithOther(expensesByCategory, 5, language)}
           categories={categories}
           domain="EXPENSE"
           currency={currency}

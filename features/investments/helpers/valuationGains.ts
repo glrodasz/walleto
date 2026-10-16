@@ -18,6 +18,7 @@ import type {
   Currency,
   Domain,
   InvestmentValuation,
+  Language,
   Transaction,
 } from "../../../types";
 import type { Deposit } from "./interest";
@@ -135,7 +136,8 @@ export function valuationGainRows(
 export function gainRowsAsTransactions(
   rows: GainRow[],
   ctx: MoneyContext,
-  domain: Domain = "INVESTMENT"
+  domain: Domain = "INVESTMENT",
+  language: Language = "en"
 ): Transaction[] {
   return rows
     .filter((r) => r.categoryId && r.gain !== 0)
@@ -146,7 +148,7 @@ export function gainRowsAsTransactions(
           userId: "",
           domain,
           categoryId: r.categoryId!,
-          name: gainLabel(domain),
+          name: gainLabel(domain, language),
           amount: r.gain,
           currency: ctx.target,
           occurredAt: {

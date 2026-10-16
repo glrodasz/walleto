@@ -6,12 +6,10 @@ import type { CashFlowGroup, CashFlowGroupBy, GroupedBar } from "../helpers/cash
 import { MONTH_PERIODS } from "../../../constants";
 import type { MonthPeriod } from "../../../constants";
 import type { Currency } from "../../../types";
+import { useT } from "../../../hooks/useT";
+import { DASHBOARD_MESSAGES } from "../messages";
 
-const GROUP_BY_OPTIONS: { value: CashFlowGroupBy; label: string }[] = [
-  { value: "domain", label: "Group by domain" },
-  { value: "category", label: "Group by category" },
-  { value: "currency", label: "Group by currency" },
-];
+const GROUP_BY: CashFlowGroupBy[] = ["domain", "category", "currency"];
 
 interface Props {
   data: GroupedBar[];
@@ -37,15 +35,16 @@ export function CashFlowCard({
   onGroupBy,
   selectedKey,
 }: Props) {
+  const t = useT(DASHBOARD_MESSAGES);
   return (
     <Card>
-      <SectionTitle title="Monthly cash flow" subtitle="What actually happened, split by category.">
+      <SectionTitle title={t("cashFlow.title")} subtitle={t("cashFlow.subtitle")}>
         <div className="control">
           <Select
-            aria-label="Period"
+            aria-label={t("cashFlow.period")}
             options={MONTH_PERIODS.map((p) => ({
               value: String(p),
-              label: `Last ${p} months`,
+              label: t("cashFlow.lastMonths", { count: p }),
             }))}
             value={String(period)}
             onValueChange={(v) => onPeriod(Number(v) as MonthPeriod)}
@@ -53,8 +52,8 @@ export function CashFlowCard({
         </div>
         <div className="control">
           <Select
-            aria-label="Group by"
-            options={GROUP_BY_OPTIONS}
+            aria-label={t("cashFlow.groupBy")}
+            options={GROUP_BY.map((g) => ({ value: g, label: t(`cashFlow.groupBy.${g}`) }))}
             value={groupBy}
             onValueChange={(v) => onGroupBy(v as CashFlowGroupBy)}
           />
@@ -70,7 +69,7 @@ export function CashFlowCard({
         tooltip={groupBy === "domain" ? "shared" : "bar"}
       />
 
-      <ul className="legend" aria-label="Legend">
+      <ul className="legend" aria-label={t("cashFlow.legend")}>
         {groups.map((g) => (
           <li key={g.key} className="group">
             <details>
@@ -79,8 +78,9 @@ export function CashFlowCard({
                 <span className="label">{g.label}</span>
                 {groupBy !== "domain" && (
                   <span className="count">
-                    {g.series.length} {groupBy === "category" ? "categor" : "currenc"}
-                    {g.series.length === 1 ? "y" : "ies"}
+                    {t(groupBy === "category" ? "cashFlow.categories" : "cashFlow.currencies", {
+                      count: g.series.length,
+                    })}
                   </span>
                 )}
               </summary>

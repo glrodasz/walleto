@@ -7,7 +7,11 @@ import { useAccounts } from "../../../hooks/useAccounts";
 import { useCategories } from "../../../hooks/useCategories";
 import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
-import { ACCOUNT_NOUN, accountLabel } from "../../../helpers/accounts";
+import { accountLabel } from "../../../helpers/accounts";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { FIELD_MESSAGES } from "../../../messages/fields";
+import { INVESTMENT_MESSAGES } from "../messages";
 import { useAllInvestmentValuations } from "../../../hooks/useInvestmentValuations";
 import {
   INCEPTION,
@@ -44,9 +48,11 @@ export function RecordValueModal({ open, onClose, domain }: Props) {
   const { valuations: rawValuations } = useAllInvestmentValuations();
   const [picked, setPicked] = useState("");
   const [step, setStep] = useState<"pick" | "value">("pick");
-  const noun = ACCOUNT_NOUN[domain].singular;
+  const t = useT(INVESTMENT_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
+  const tf = useT(FIELD_MESSAGES);
   const owes = domain === "DEBT";
-  const entry = owes ? "repayment" : domain === "SAVING" ? "deposit" : "contribution";
+  const bucketLabel = t(`bucket.${domain}`);
   const now = useMemo(() => new Date(), []);
 
   const choices = useMemo(() => {
@@ -58,9 +64,9 @@ export function RecordValueModal({ open, onClose, domain }: Props) {
     const hasBucket =
       costBasisAt(transactions, bucket, now, ctx) !== 0 ||
       valuations.some((v) => matchesSelector(v, bucket));
-    const unassigned = hasBucket ? [{ selector: bucket, label: `No ${noun}` }] : [];
+    const unassigned = hasBucket ? [{ selector: bucket, label: bucketLabel }] : [];
     return [...byAccount, ...unassigned].map((c) => ({ ...c, key: selectorKey(c.selector) }));
-  }, [accounts, categories, domain, rawValuations, transactions, now, ctx, noun]);
+  }, [accounts, categories, domain, rawValuations, transactions, now, ctx, bucketLabel]);
 
   const choice = choices.find((c) => c.key === picked) ?? null;
   const invested = useMemo(
@@ -96,20 +102,19 @@ export function RecordValueModal({ open, onClose, domain }: Props) {
     );
   }
 
-  const label = noun.charAt(0).toUpperCase() + noun.slice(1);
-
   return (
-    <Modal open={open} title={`Update current ${owes ? "balance" : "value"}`} onClose={onClose}>
+    <Modal
+      open={open}
+      title={t(owes ? "record.title.balance" : "record.title.value")}
+      onClose={onClose}
+    >
       <div className="form">
         {choices.length === 0 ? (
-          <p className="basis">
-            No {noun} to {owes ? "record a balance for" : "value"} yet — file a {entry} under one
-            first.
-          </p>
+          <p className="basis">{t(`record.empty.${domain}`)}</p>
         ) : (
           <Select
-            label={label}
-            placeholder={`Pick ${owes ? "a debt" : domain === "SAVING" ? "a pocket" : "an account"}`}
+            label={tf(`account.label.${domain}`)}
+            placeholder={t(`record.pick.${domain}`)}
             options={choices.map((c) => ({ value: c.key, label: c.label }))}
             value={picked}
             onValueChange={setPicked}
@@ -117,15 +122,16 @@ export function RecordValueModal({ open, onClose, domain }: Props) {
         )}
         {choice && (
           <p className="basis">
-            {owes ? "Repaid" : "In"} so far: <strong>{formatAmount(invested, target)}</strong>
+            {t(owes ? "modal.repaidSoFar" : "record.inSoFar")}{" "}
+            <strong>{formatAmount(invested, target)}</strong>
           </p>
         )}
         <div className="actions">
           <Button variant="ghost" onClick={onClose}>
-            Cancel
+            {tc("action.cancel")}
           </Button>
           <Button variant="primary" onClick={() => setStep("value")} disabled={!choice}>
-            Continue
+            {tc("action.continue")}
           </Button>
         </div>
       </div>

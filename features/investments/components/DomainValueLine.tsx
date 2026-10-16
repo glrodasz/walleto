@@ -2,6 +2,8 @@ import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
 import { useDateFormat } from "../../../hooks/usePreferences";
 import { useDomainValue } from "../hooks/useDomainValue";
+import { useT } from "../../../hooks/useT";
+import { INVESTMENT_MESSAGES } from "../messages";
 import type { AccountDomain, Category, Currency } from "../../../types";
 
 interface Props {
@@ -25,6 +27,7 @@ export function DomainValueLine({ domain, categories, currency }: Props) {
   const { ctx } = useMoneyContext();
   const { formatAmount } = useMoneyFormat();
   const { formatDate } = useDateFormat();
+  const t = useT(INVESTMENT_MESSAGES);
   const { rows, value, lastCheckedAt, loading } = useDomainValue(domain, categories, ctx);
   const owes = domain === "DEBT";
 
@@ -32,15 +35,17 @@ export function DomainValueLine({ domain, categories, currency }: Props) {
   // No check anywhere, but a quoted rate somewhere: the figure is compounded,
   // not stated, and the line has to admit it.
   const estimated = !lastCheckedAt && rows.some((r) => r.rate);
+  const amount = formatAmount(value, currency);
+  const text = lastCheckedAt
+    ? t(owes ? "line.owed.checked" : "line.worth.checked", {
+        amount,
+        date: formatDate(lastCheckedAt, "day"),
+      })
+    : t(estimated ? "line.worth.estimated" : "line.worth", { amount });
 
   return (
     <span className="worth">
-      {owes ? "Owed" : "Worth"} {formatAmount(value, currency)}
-      {lastCheckedAt
-        ? ` · checked ${formatDate(lastCheckedAt, "day")}`
-        : estimated
-          ? " · estimated"
-          : ""}
+      {text}
       <style jsx>{`
         .worth {
           font-size: 0.72rem;
