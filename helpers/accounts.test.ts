@@ -1,5 +1,6 @@
 import {
   ACCOUNT_NOUN,
+  directionLabel,
   accountLabel,
   formatInterestRate,
   isAccountDomain,
@@ -44,5 +45,14 @@ describe("accountLabel / sortAccountsByLabel", () => {
     const out = sortAccountsByLabel(input);
     expect(out.map(accountLabel)).toEqual(["beta", "SEB - Alpha", "zeta"]);
     expect(input[0].name).toBe("zeta");
+  });
+});
+
+describe("in Spanish", () => {
+  it("writes the rate's period and a row's direction", () => {
+    expect(formatInterestRate({ value: 2.5, period: "YEARLY" }, ",", "es")).toBe("2,5% anual");
+    expect(formatInterestRate({ value: 1, period: "MONTHLY" }, ".", "es")).toBe("1% mensual");
+    expect(directionLabel("DEBT", "OUT", "es")).toBe("Préstamo");
+    expect(directionLabel("SAVING", "IN", "es")).toBe("Depósito");
   });
 });

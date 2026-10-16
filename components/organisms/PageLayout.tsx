@@ -7,6 +7,8 @@ import { MonthPicker } from "../molecules/MonthPicker";
 import { CreateLauncher } from "../../features/create/components/CreateLauncher";
 import { useMoneyContext } from "../../hooks/useMoneyContext";
 import { useSelectedMonth } from "../../hooks/useSelectedMonth";
+import { useT } from "../../hooks/useT";
+import { NAVIGATION_MESSAGES } from "../../messages/navigation";
 import type { Domain } from "../../types";
 
 interface Props {
@@ -33,10 +35,11 @@ export function PageLayout({ title, subtitle, domain, hideCurrency, hideMonth, c
   // the dashboard.
   const { target, setDisplayCurrency } = useMoneyContext();
   const month = useSelectedMonth();
+  const t = useT(NAVIGATION_MESSAGES);
   return (
     <>
       <Head>
-        <title>{title} — Walleto</title>
+        <title>{t("page.title", { title })}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 

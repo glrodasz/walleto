@@ -2,128 +2,118 @@ import Head from "next/head";
 import Link from "next/link";
 import { ChevronLeft, Shield } from "../components/atoms/Icons";
 import { Card } from "../components/atoms/Card";
+import { INTL_LOCALE } from "../helpers/i18n";
+import { usePreferences } from "../hooks/usePreferences";
+import { useT } from "../hooks/useT";
+import { PAGE_MESSAGES } from "../messages/pages";
+import { splitEmphasis } from "../utils/emphasis";
 
-const LAST_UPDATED = "September 26, 2026";
+const LAST_UPDATED = new Date(2026, 8, 26);
+
+type PageKey = keyof (typeof PAGE_MESSAGES)["en"];
+
+/**
+ * A sentence whose lead-in is bold ("**Preferences** — …"), from one
+ * translated string. Only inline runs: the `<li>` stays in the page's JSX so
+ * its scoped styles apply.
+ */
+function Emphasis({ text }: { text: string }) {
+  return (
+    <>
+      {splitEmphasis(text).map((part, n) =>
+        part.strong ? <strong key={n}>{part.text}</strong> : <span key={n}>{part.text}</span>
+      )}
+    </>
+  );
+}
 
 export default function Privacy() {
   const support = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? "walleto@guillermorodas.com";
+  const { language } = usePreferences();
+  const t = useT(PAGE_MESSAGES);
+  const updated = new Intl.DateTimeFormat(INTL_LOCALE[language], { dateStyle: "long" }).format(
+    LAST_UPDATED
+  );
+  const simple: [PageKey, PageKey][] = [
+    ["privacy.use.title", "privacy.use.body"],
+    ["privacy.storage.title", "privacy.storage.body"],
+    ["privacy.thirdParty.title", "privacy.thirdParty.body"],
+  ];
+  const closing: [PageKey, PageKey][] = [
+    ["privacy.rights.title", "privacy.rights.body"],
+    ["privacy.children.title", "privacy.children.body"],
+    ["privacy.changes.title", "privacy.changes.body"],
+  ];
+  const subject = encodeURIComponent(t("privacy.retention.subject"));
 
   return (
     <>
       <Head>
-        <title>Privacy Policy · Walleto</title>
+        <title>{t("privacy.title")}</title>
       </Head>
       <main className="wrap">
         <div className="page">
           <Link className="back" href="/">
-            <ChevronLeft size={16} /> Back to Walleto
+            <ChevronLeft size={16} /> {t("privacy.back")}
           </Link>
           <Card>
             <header className="head">
               <Shield size={22} />
               <div>
-                <h1 className="title">Privacy Policy</h1>
-                <p className="updated">Last updated: {LAST_UPDATED}</p>
+                <h1 className="title">{t("privacy.heading")}</h1>
+                <p className="updated">{t("privacy.updated", { date: updated })}</p>
               </div>
             </header>
 
             <section className="section">
-              <h2>Overview</h2>
-              <p>
-                Walleto is a personal finance planner. This policy explains what information we
-                collect, how we use it, and the choices you have. By using Walleto, you agree to the
-                collection and use of information as described here.
-              </p>
+              <h2>{t("privacy.overview.title")}</h2>
+              <p>{t("privacy.overview.body")}</p>
             </section>
 
             <section className="section">
-              <h2>Information we collect</h2>
-              <p>We collect only what the app needs to work:</p>
+              <h2>{t("privacy.collect.title")}</h2>
+              <p>{t("privacy.collect.intro")}</p>
               <ul>
                 <li>
-                  <strong>Account information</strong> — your name and email address, provided by
-                  our authentication provider when you sign in.
+                  <Emphasis text={t("privacy.collect.account")} />
                 </li>
                 <li>
-                  <strong>Financial data you enter</strong> — recurring items, transactions,
-                  categories, tags, payment methods, accounts, and balances you add to your plan. We
-                  never connect to your bank; every figure is one you typed in yourself.
+                  <Emphasis text={t("privacy.collect.financial")} />
                 </li>
                 <li>
-                  <strong>Preferences</strong> — currency, date format, theme, and similar display
-                  settings.
+                  <Emphasis text={t("privacy.collect.preferences")} />
                 </li>
               </ul>
             </section>
 
+            {simple.map(([title, body]) => (
+              <section className="section" key={title}>
+                <h2>{t(title)}</h2>
+                <p>{t(body)}</p>
+              </section>
+            ))}
+
             <section className="section">
-              <h2>How we use your information</h2>
+              <h2>{t("privacy.retention.title")}</h2>
               <p>
-                We use your information solely to operate Walleto: to show your plan, activity and
-                net worth, to convert amounts between currencies, and to keep your preferences
-                across sessions. We do not sell your data, and we do not use it for advertising.
+                {t("privacy.retention.before")}{" "}
+                <a href={`mailto:${support}?subject=${subject}`}>{support}</a>
+                {t("privacy.retention.after")}
               </p>
             </section>
 
-            <section className="section">
-              <h2>Data storage &amp; security</h2>
-              <p>
-                Your data is stored in Google Cloud Firestore and transmitted over encrypted
-                connections. Authentication is handled by Auth0; Walleto never sees or stores your
-                password. Signing out clears any financial data cached on that device.
-              </p>
-            </section>
+            {closing.map(([title, body]) => (
+              <section className="section" key={title}>
+                <h2>{t(title)}</h2>
+                <p>{t(body)}</p>
+              </section>
+            ))}
 
             <section className="section">
-              <h2>Third-party services</h2>
+              <h2>{t("privacy.contact.title")}</h2>
               <p>
-                We rely on a small number of providers to run the app: Auth0 for sign-in, Google
-                Cloud Firestore for storage, and a currency exchange-rate provider to convert
-                amounts between currencies. These providers process data only as needed to deliver
-                their service to us.
-              </p>
-            </section>
-
-            <section className="section">
-              <h2>Data retention &amp; deletion</h2>
-              <p>
-                We keep your data for as long as your account is active. You can request an export
-                or full deletion of your account and its data at any time by writing to{" "}
-                <a href={`mailto:${support}?subject=Delete%20my%20Walleto%20account`}>{support}</a>.
-                Deletion removes your financial records permanently and cannot be undone.
-              </p>
-            </section>
-
-            <section className="section">
-              <h2>Your rights</h2>
-              <p>
-                Depending on where you live, you may have the right to access, correct, export, or
-                delete your personal information. Contact us using the email above to exercise any
-                of these rights.
-              </p>
-            </section>
-
-            <section className="section">
-              <h2>Children&apos;s privacy</h2>
-              <p>
-                Walleto is not directed at children under 16, and we do not knowingly collect
-                information from them.
-              </p>
-            </section>
-
-            <section className="section">
-              <h2>Changes to this policy</h2>
-              <p>
-                We may update this policy from time to time. Material changes will be reflected by
-                updating the date at the top of this page.
-              </p>
-            </section>
-
-            <section className="section">
-              <h2>Contact us</h2>
-              <p>
-                Questions about this policy or your data? Write to us at{" "}
-                <a href={`mailto:${support}`}>{support}</a>.
+                {t("privacy.contact.before")} <a href={`mailto:${support}`}>{support}</a>
+                {t("privacy.contact.after")}
               </p>
             </section>
           </Card>

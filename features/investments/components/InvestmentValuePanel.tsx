@@ -78,7 +78,7 @@ export function InvestmentValuePanel({
   currency,
   accent = "var(--domain-investment)",
 }: Props) {
-  const { formatDate } = useDateFormat();
+  const { formatDate, language } = useDateFormat();
   const { formatAmount, formatPercent, separator } = useMoneyFormat();
   const owes = domain === "DEBT";
   const sign = positionSign(domain);
@@ -121,16 +121,27 @@ export function InvestmentValuePanel({
   );
 
   const series = useMemo(
-    () => valuationSeries(transactions, valuations, selector, ctx, CHART_MONTHS, now, rate, sign),
-    [transactions, valuations, selector, ctx, now, rate, sign]
+    () =>
+      valuationSeries(
+        transactions,
+        valuations,
+        selector,
+        ctx,
+        CHART_MONTHS,
+        now,
+        rate,
+        sign,
+        language
+      ),
+    [transactions, valuations, selector, ctx, now, rate, sign, language]
   );
 
   const valueMeta = latest
-    ? `checked ${formatDate(latest.asOf.toDate(), "dayYear")}${rate ? `, ${formatInterestRate(rate, separator)} since` : ""}`
+    ? `checked ${formatDate(latest.asOf.toDate(), "dayYear")}${rate ? `, ${formatInterestRate(rate, separator, language)} since` : ""}`
     : owes
       ? "no balance check yet"
       : rate
-        ? `estimated at ${formatInterestRate(rate, separator)}`
+        ? `estimated at ${formatInterestRate(rate, separator, language)}`
         : "no value check yet";
 
   const del = async (id: string) => {

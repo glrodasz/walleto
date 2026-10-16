@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { useT } from "../../../hooks/useT";
+import { METHOD_FACE_MESSAGES } from "../../../messages/methodFace";
 import { Bitcoin, Coins, Contactless, Plus } from "../../atoms/Icons";
 import { NetworkMark } from "./NetworkMark";
 import type { MethodFaceSize } from "./types";
@@ -259,9 +261,10 @@ export function Medallion({ size }: Sized) {
 
 /** A check's "Pay to the order of ______ [   ]". */
 export function PayLine() {
+  const t = useT(METHOD_FACE_MESSAGES);
   return (
     <span className="pay">
-      <span className="label">Pay to the order of</span>
+      <span className="label">{t("face.payTo")}</span>
       <span className="rule" />
       <span className="amount" />
       <style jsx>{`
@@ -298,9 +301,10 @@ export function PayLine() {
 
 /** A check's memo line; on a strip, a stamped box. */
 export function Memo({ size, value }: Sized & { value: string }) {
+  const t = useT(METHOD_FACE_MESSAGES);
   return (
     <span className={`memo memo--${size}`}>
-      <span className="label">Memo</span>
+      <span className="label">{t("face.memo")}</span>
       <span className="value">{value}</span>
       <style jsx>{`
         .memo {

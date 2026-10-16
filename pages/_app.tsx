@@ -31,8 +31,8 @@ function MyApp({ Component, pageProps, initialLanguage }: Props) {
     <UserProvider>
       <UserDocProvider>
         <ThemeProvider>
-          <MonthProvider>
-            <PreferencesProvider initialLanguage={initialLanguage}>
+          <PreferencesProvider initialLanguage={initialLanguage}>
+            <MonthProvider>
               <PrivacyProvider>
                 <div
                   className={`${inter.className} ${inter.variable} ${jetbrainsMono.variable}`}
@@ -43,8 +43,8 @@ function MyApp({ Component, pageProps, initialLanguage }: Props) {
                   </ErrorBoundary>
                 </div>
               </PrivacyProvider>
-            </PreferencesProvider>
-          </MonthProvider>
+            </MonthProvider>
+          </PreferencesProvider>
         </ThemeProvider>
       </UserDocProvider>
     </UserProvider>

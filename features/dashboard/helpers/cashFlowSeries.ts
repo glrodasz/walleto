@@ -3,7 +3,7 @@ import type { MoneyContext } from "../../../helpers/aggregations";
 import { domainAccent, monthTotalsBy, monthTotalsByCategory } from "../../../helpers/stacks";
 import type { StackSeries, StackedTotals } from "../../../helpers/stacks";
 import type { MonthWindow } from "../../domains/helpers/months";
-import type { Category, Currency, Domain, Transaction } from "../../../types";
+import type { Category, Currency, Domain, Language, Transaction } from "../../../types";
 
 export type CashFlowGroupBy = "domain" | "category" | "currency";
 
@@ -45,7 +45,7 @@ export function cashFlowSeries(
   categories: Category[],
   ctx: MoneyContext,
   windows: MonthWindow[],
-  opts: { groupBy: CashFlowGroupBy; top?: number }
+  opts: { groupBy: CashFlowGroupBy; top?: number; language?: Language }
 ): { data: GroupedBar[]; groups: CashFlowGroup[] } {
   const stacks: Record<Domain, StackedTotals> = {} as Record<Domain, StackedTotals>;
 
@@ -55,6 +55,7 @@ export function cashFlowSeries(
       stacks[domain] = monthTotalsByCategory(rows, categories, ctx, windows, {
         domain,
         top: opts.top ?? 5,
+        language: opts.language,
       });
     } else if (opts.groupBy === "currency") {
       const byCurrency = monthTotalsBy(rows, ctx, windows, (t) => t.currency, {

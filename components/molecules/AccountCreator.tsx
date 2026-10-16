@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { Button } from "../atoms/Button";
 import { AccountFormFields } from "./AccountFormFields";
-import { ACCOUNT_NOUN } from "../../helpers/accounts";
 import { emptyAccountDraft, readAccountDraft } from "../../helpers/accountDraft";
 import { useDecimalInput } from "../../hooks/useDecimalInput";
+import { usePreferences } from "../../hooks/usePreferences";
+import { useT } from "../../hooks/useT";
+import { COMMON_MESSAGES } from "../../messages/common";
+import { FIELD_MESSAGES } from "../../messages/fields";
 import type { Account, AccountDomain, Currency } from "../../types";
 import type { AccountInput } from "../../schemas";
 
@@ -40,7 +43,9 @@ export function AccountCreator({
   onError,
   framed = true,
 }: Props) {
-  const noun = ACCOUNT_NOUN[domain].singular;
+  const { language } = usePreferences();
+  const t = useT(FIELD_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
   const { parse } = useDecimalInput();
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState(() => emptyAccountDraft(defaultCurrency));
@@ -51,7 +56,7 @@ export function AccountCreator({
       onCreated(existing.id);
       return;
     }
-    const read = readAccountDraft(draft, parse, noun);
+    const read = readAccountDraft(draft, parse, domain, language);
     if ("error" in read) return onError?.(read.error);
     const { name, provider, currency, interestRate } = read.values;
     setBusy(true);
@@ -66,7 +71,7 @@ export function AccountCreator({
       onCreated(id);
     } catch (err) {
       console.error("Failed to create account:", err);
-      onError?.(`Couldn't create the ${noun} "${name}"`);
+      onError?.(t(`account.createFailed.${domain}`, { name }));
     } finally {
       setBusy(false);
     }
@@ -75,16 +80,16 @@ export function AccountCreator({
   return (
     <fieldset
       className={framed ? "creator creator--framed" : "creator"}
-      aria-label={framed ? undefined : `New ${noun}`}
+      aria-label={framed ? undefined : t(`account.new.${domain}`)}
     >
-      {framed && <legend className="legend">New {noun}</legend>}
+      {framed && <legend className="legend">{t(`account.new.${domain}`)}</legend>}
       <AccountFormFields domain={domain} draft={draft} onChange={setDraft} autoFocus />
       <div className="actions">
         <Button variant="ghost" size="sm" onClick={onCancel} disabled={busy}>
-          Cancel
+          {tc("action.cancel")}
         </Button>
         <Button variant="primary" size="sm" onClick={commit} disabled={busy}>
-          {busy ? "Saving…" : `Add ${noun}`}
+          {busy ? tc("action.saving") : t(`account.add.${domain}`)}
         </Button>
       </div>
 

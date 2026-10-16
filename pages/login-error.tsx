@@ -1,36 +1,36 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useT } from "../hooks/useT";
+import { PAGE_MESSAGES } from "../messages/pages";
 
 export default function LoginError() {
   const { query } = useRouter();
+  const t = useT(PAGE_MESSAGES);
   const reason = typeof query.reason === "string" ? query.reason : "";
 
   return (
     <>
       <Head>
-        <title>Sign-in failed · Walleto</title>
+        <title>{t("loginError.title")}</title>
       </Head>
       <main className="wrap">
         <section className="panel" role="alert">
-          <h1 className="title">Sign-in failed</h1>
-          <p className="body">
-            We couldn&apos;t complete the sign-in. This usually means the deployment&apos;s URL
-            isn&apos;t allowed by Auth0 yet, or a previous attempt expired.
-          </p>
+          <h1 className="title">{t("loginError.heading")}</h1>
+          <p className="body">{t("loginError.body")}</p>
           {reason && (
             <p className="reason mono">
-              <span className="reason-label">Reason:</span> {reason}
+              <span className="reason-label">{t("loginError.reason")}</span> {reason}
             </p>
           )}
           <div className="actions">
             {/* /api/auth/login is an Auth0 SDK route, not a Next page — must stay <a>. */}
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
             <a className="primary" href="/api/auth/login">
-              Try again
+              {t("loginError.retry")}
             </a>
             <Link className="ghost" href="/">
-              Back to home
+              {t("loginError.home")}
             </Link>
           </div>
         </section>

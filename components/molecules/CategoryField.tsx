@@ -3,6 +3,9 @@ import { Select } from "../atoms/Select";
 import { Chip } from "../atoms/Chip";
 import { Combobox } from "../atoms/Combobox";
 import { IconPicker } from "./IconPicker";
+import { useT } from "../../hooks/useT";
+import { COMMON_MESSAGES } from "../../messages/common";
+import { FIELD_MESSAGES } from "../../messages/fields";
 import type { Category, IconKey } from "../../types";
 
 interface Props {
@@ -33,6 +36,8 @@ export function CategoryField({
   onError,
   disabled,
 }: Props) {
+  const t = useT(FIELD_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
   const [creating, setCreating] = useState(false);
   const [icon, setIcon] = useState<IconKey | undefined>(undefined);
   const roots = categories.filter((c) => !c.parentId);
@@ -52,7 +57,7 @@ export function CategoryField({
       onChange(await createCategory(name, picked));
     } catch (err) {
       console.error("Failed to create category:", err);
-      onError?.(`Couldn't create the category "${name}"`);
+      onError?.(t("category.createFailed", { name }));
     }
   };
 
@@ -62,7 +67,7 @@ export function CategoryField({
         <Combobox
           autoFocus
           label={newLabel}
-          placeholder="Type a name"
+          placeholder={t("category.typeName")}
           suggestions={[]}
           onSelect={commit}
           onCancel={() => {
@@ -71,7 +76,7 @@ export function CategoryField({
           }}
         />
         <details className="icons">
-          <summary>Pick an icon (optional)</summary>
+          <summary>{t("category.pickIcon")}</summary>
           <div className="picker">
             <IconPicker value={icon} onChange={setIcon} />
           </div>
@@ -101,8 +106,8 @@ export function CategoryField({
   return (
     <div className="category">
       <Select
-        label="Category"
-        placeholder="Pick a category"
+        label={tc("noun.category")}
+        placeholder={t("category.pick")}
         options={options}
         value={value}
         disabled={disabled}
@@ -111,7 +116,7 @@ export function CategoryField({
       <div className="category-add">
         {!disabled && (
           <Chip variant="add" onClick={() => setCreating(true)}>
-            New category
+            {t("category.new")}
           </Chip>
         )}
       </div>

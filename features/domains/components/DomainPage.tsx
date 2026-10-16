@@ -68,6 +68,7 @@ import { useTags } from "../../../hooks/useTags";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
 import { useSelectedMonth } from "../../../hooks/useSelectedMonth";
 import { useLocalPreference } from "../../../hooks/useLocalPreference";
+import { usePreferences } from "../../../hooks/usePreferences";
 import { deleteTransaction } from "../../../hooks/useTransactions";
 import { toDate } from "../../../helpers/chartData";
 import { hiddenCategoryIds, hiddenItemIds, hiddenRowReasons } from "../../../helpers/hidden";
@@ -93,6 +94,7 @@ interface Props {
 export function DomainPage({ domain }: Props) {
   const config = DOMAIN_CONFIG[domain];
   const { ctx, target } = useMoneyContext();
+  const { language } = usePreferences();
   const currency: Currency = target;
   // Investments and savings sit in accounts / pockets, which carry value.
   const accountDomain = isAccountDomain(domain) ? domain : null;
@@ -124,8 +126,8 @@ export function DomainPage({ domain }: Props) {
   // are the tail of that list, so the two never disagree about a month they
   // share, and the chart no longer decides which month the page is about.
   const windows = useMemo(
-    () => monthWindows(Math.max(period, monthsApart(window.start, now) + 2), now),
-    [period, window.start, now]
+    () => monthWindows(Math.max(period, monthsApart(window.start, now) + 2), now, language),
+    [period, window.start, now, language]
   );
   const chartWindows = useMemo(() => windows.slice(-period), [windows, period]);
   const previousWindow = useMemo(() => monthWindows(2, window.start)[0], [window.start]);
@@ -338,6 +340,7 @@ export function DomainPage({ domain }: Props) {
         : monthTotalsByCategory([...rows, ...filedGains], categories, ctx, wins, {
             domain,
             top: 5,
+            language,
           });
     // Nothing to split by (no transactions at all) still needs one series, so
     // a month that is pure gain has something to stack on.
@@ -379,6 +382,7 @@ export function DomainPage({ domain }: Props) {
       txTotals,
       chartGains,
       unfiledByMonth,
+      language,
     ]
   );
   // Worth reads the real ledger, not the spread slices: a yearly deposit is
@@ -394,7 +398,8 @@ export function DomainPage({ domain }: Props) {
     const history = historyWindows(
       [...rows.map((t) => toDate(t.occurredAt)), ...checks.map((r) => r.at)],
       now,
-      chartWindows.length
+      chartWindows.length,
+      language
     );
     const flow = buildStacks(
       rows,
@@ -419,6 +424,7 @@ export function DomainPage({ domain }: Props) {
     ctx,
     domain,
     config,
+    language,
   ]);
   const stacks = worthStacks ?? activityStacks;
   const series: BarSeries[] = stacks.series;

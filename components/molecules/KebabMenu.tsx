@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useOverlayLayer } from "../../hooks/useOverlayLayer";
+import { useT } from "../../hooks/useT";
+import { UI_MESSAGES } from "../../messages/ui";
 
 export interface KebabAction {
   label: string;
@@ -28,7 +30,9 @@ const GAP = 6;
  * to render it somewhere else: the menu lives on `document.body`, positioned
  * against the trigger's viewport rect.
  */
-export function KebabMenu({ actions, "aria-label": ariaLabel = "More options" }: Props) {
+export function KebabMenu({ actions, "aria-label": label }: Props) {
+  const t = useT(UI_MESSAGES);
+  const ariaLabel = label ?? t("kebab.moreOptions");
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);

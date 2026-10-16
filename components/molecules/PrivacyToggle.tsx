@@ -1,5 +1,7 @@
 import { Eye, EyeOff } from "../atoms/Icons";
 import { usePrivacy } from "../../hooks/usePrivacy";
+import { useT } from "../../hooks/useT";
+import { UI_MESSAGES } from "../../messages/ui";
 
 /**
  * The header's privacy switch. It masks every amount in the app without
@@ -9,7 +11,8 @@ import { usePrivacy } from "../../hooks/usePrivacy";
  */
 export function PrivacyToggle() {
   const { hidden, toggle } = usePrivacy();
-  const label = hidden ? "Show amounts" : "Hide amounts";
+  const t = useT(UI_MESSAGES);
+  const label = hidden ? t("privacy.show") : t("privacy.hide");
 
   return (
     <button

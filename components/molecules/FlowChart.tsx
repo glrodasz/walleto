@@ -2,6 +2,9 @@ import dynamic from "next/dynamic";
 import { useMoneyFormat } from "../../hooks/useMoneyFormat";
 import type { FlowPoint } from "../../helpers/chartData";
 import type { Currency } from "../../types";
+import { useT } from "../../hooks/useT";
+import { CHART_MESSAGES } from "../../messages/charts";
+import { COMMON_MESSAGES } from "../../messages/common";
 
 // recharts is client-only and heavy, so every piece is loaded on demand.
 const AreaChart = dynamic(() => import("recharts").then((m) => m.AreaChart), { ssr: false });
@@ -42,19 +45,23 @@ export function FlowChart({
   currency,
   loading,
   height = 240,
-  labelA = "Income",
-  labelB = "Expenses",
+  labelA: labelAProp,
+  labelB: labelBProp,
   colorA = "var(--domain-income)",
   colorB = "var(--domain-expense)",
   curve = "monotone",
 }: Props) {
   const { formatAmount, formatTick } = useMoneyFormat();
+  const t = useT(CHART_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
+  const labelA = labelAProp ?? tc("domain.INCOME");
+  const labelB = labelBProp ?? tc("domain.EXPENSE");
   const hasMoney = data.some((p) => p.income !== 0 || p.expense !== 0);
 
   return (
     <div className="chart-area">
       {!loading && !hasMoney ? (
-        <p className="empty">No activity in this period</p>
+        <p className="empty">{t("chart.empty")}</p>
       ) : (
         <>
           <div className="legend">

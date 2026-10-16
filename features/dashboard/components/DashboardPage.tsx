@@ -26,6 +26,7 @@ import { greeting } from "../../../helpers/greeting";
 import { DEFAULT_MONTH_PERIOD, parseMonthPeriod } from "../../../constants";
 import type { MonthPeriod } from "../../../constants";
 import type { Currency, Domain } from "../../../types";
+import { usePreferences } from "../../../hooks/usePreferences";
 
 interface CategoryAmount {
   categoryId: string;
@@ -54,6 +55,7 @@ export function DashboardPage() {
   const { user } = useUser();
   const { userDoc } = useUserDoc();
   const { formatAmount } = useMoneyFormat();
+  const { language } = usePreferences();
   useMaterialize();
   const [period, setPeriod] = useLocalPreference<MonthPeriod>(
     "walleto:dashboard:period",
@@ -142,7 +144,7 @@ export function DashboardPage() {
 
   return (
     <PageLayout
-      title={`${greeting()}, ${firstName}`}
+      title={`${greeting(new Date(), language)}, ${firstName}`}
       subtitle={`Here's where your money stands in ${window.longLabel}.`}
       hideMonth
     >

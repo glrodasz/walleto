@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Select } from "../atoms/Select";
 import { Chip } from "../atoms/Chip";
 import { AccountCreator } from "./AccountCreator";
-import { ACCOUNT_NOUN, accountLabel } from "../../helpers/accounts";
+import { accountLabel } from "../../helpers/accounts";
+import { useT } from "../../hooks/useT";
+import { FIELD_MESSAGES } from "../../messages/fields";
 import type { Account, AccountDomain, Currency } from "../../types";
 import type { AccountInput } from "../../schemas";
 
@@ -20,10 +22,6 @@ interface Props {
   disabled?: boolean;
 }
 
-function capitalize(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
 /**
  * Account / pocket select with an inline creator, for the investment and
  * savings forms. "No account" is a real choice: valuations and interest only
@@ -39,11 +37,11 @@ export function AccountField({
   onError,
   disabled,
 }: Props) {
-  const noun = ACCOUNT_NOUN[domain].singular;
+  const t = useT(FIELD_MESSAGES);
   const [creating, setCreating] = useState(false);
 
   const options = [
-    { value: "", label: `No ${noun}` },
+    { value: "", label: t(`account.none.${domain}`) },
     ...accounts.map((a) => ({ value: a.id!, label: accountLabel(a) })),
   ];
 
@@ -67,7 +65,7 @@ export function AccountField({
   return (
     <div className="account">
       <Select
-        label={capitalize(noun)}
+        label={t(`account.label.${domain}`)}
         options={options}
         value={value}
         disabled={disabled}
@@ -76,7 +74,7 @@ export function AccountField({
       <div className="account-add">
         {!disabled && (
           <Chip variant="add" onClick={() => setCreating(true)}>
-            New {noun}
+            {t(`account.new.${domain}`)}
           </Chip>
         )}
       </div>

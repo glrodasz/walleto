@@ -2,6 +2,8 @@ import dynamic from "next/dynamic";
 import { Cell } from "./chartCell";
 import { useMoneyFormat } from "../../hooks/useMoneyFormat";
 import type { Currency } from "../../types";
+import { useT } from "../../hooks/useT";
+import { CHART_MESSAGES } from "../../messages/charts";
 
 // recharts is client-only and heavy, so every piece is loaded on demand.
 const BarChart = dynamic(() => import("recharts").then((m) => m.BarChart), { ssr: false });
@@ -69,6 +71,7 @@ export function MonthlyBarsChart({
   stacked = false,
 }: Props) {
   const { formatAmount, formatCompact, formatTick } = useMoneyFormat();
+  const t = useT(CHART_MESSAGES);
   const hasMoney = data.some(
     (d) => series.some((s) => Number(d[s.key]) !== 0) || (d.planned ?? 0) !== 0
   );
@@ -78,7 +81,7 @@ export function MonthlyBarsChart({
   return (
     <div className="chart-area">
       {!loading && !hasMoney ? (
-        <p className="empty">No activity in this period</p>
+        <p className="empty">{t("chart.empty")}</p>
       ) : (
         <>
           <div className="legend">
@@ -91,27 +94,29 @@ export function MonthlyBarsChart({
             {hasPlanned && (
               <span className="key">
                 <span className="dot hatched" style={{ borderColor: primary.color }} />
-                Still planned
+                {t("chart.stillPlanned")}
               </span>
             )}
             {average !== null && average !== undefined && (
               <span className="key">
                 <span className="dash" />
-                Avg {formatCompact(average, currency)}
+                {t("chart.average", { amount: formatCompact(average, currency) })}
               </span>
             )}
           </div>
 
           {/* The same numbers, readable without the SVG (and by tests). */}
-          <ul className="sr-only" aria-label="Monthly totals">
+          <ul className="sr-only" aria-label={t("chart.monthlyTotals")}>
             {data.map((d) => (
               <li key={d.key}>
                 {d.label}:{" "}
                 {series
                   .map((s) => `${s.label} ${formatAmount(Number(d[s.key] ?? 0), currency)}`)
                   .join(", ")}
-                {d.planned ? `, still planned ${formatAmount(d.planned, currency)}` : ""}
-                {d.isCurrent ? " (in progress)" : ""}
+                {d.planned
+                  ? t("chart.stillPlannedRow", { amount: formatAmount(d.planned, currency) })
+                  : ""}
+                {d.isCurrent ? t("chart.inProgress") : ""}
               </li>
             ))}
           </ul>
@@ -166,7 +171,7 @@ export function MonthlyBarsChart({
                 labelStyle={{ color: "var(--fg-2)", marginBottom: 4 }}
                 formatter={(v, name) => {
                   const amount = typeof v === "number" ? formatAmount(v, currency) : String(v);
-                  if (name === "planned") return [amount, "Still planned"];
+                  if (name === "planned") return [amount, t("chart.stillPlanned")];
                   return [amount, series.find((s) => s.key === name)?.label ?? String(name)];
                 }}
               />

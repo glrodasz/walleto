@@ -27,6 +27,11 @@ export interface FaceText {
   title: string;
   untitled: boolean;
   typeLabel: string;
+  /** A card's own word for its kind ("Debit"), printed instead of the whole type. */
+  cardKind?: string;
+  /** What the blank face (no type yet) prints. */
+  blankTitle: string;
+  blankHint: string;
   network?: string;
   last4?: string;
   currency?: Currency;

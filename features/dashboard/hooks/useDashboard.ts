@@ -5,6 +5,7 @@ import { useUpcomingItems } from "./useUpcomingItems";
 import { useCategories } from "../../../hooks/useCategories";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
 import { useSelectedMonth } from "../../../hooks/useSelectedMonth";
+import { usePreferences } from "../../../hooks/usePreferences";
 import { groupByCategory, computeMoM, computeFlow, shareByCurrency } from "../../../helpers";
 import type { MoneyContext } from "../../../helpers";
 import { hiddenItemIds, withoutHidden } from "../../../helpers/hidden";
@@ -63,7 +64,8 @@ export function useDashboard({ period, groupBy }: Options) {
 
   // The chart's months always end with the current one; the selected month
   // is highlighted, and the query reaches back far enough to include it.
-  const windows = useMemo(() => monthWindows(period, now), [period, now]);
+  const { language } = usePreferences();
+  const windows = useMemo(() => monthWindows(period, now, language), [period, now, language]);
   const chartStart = useMemo(
     () => (window.start < windows[0].start ? window.start : windows[0].start),
     [window.start, windows]
@@ -191,8 +193,8 @@ export function useDashboard({ period, groupBy }: Options) {
   );
 
   const cashFlow = useMemo(
-    () => cashFlowSeries(txByDomain, categories, ctx, windows, { groupBy, top: 5 }),
-    [txByDomain, categories, ctx, windows, groupBy]
+    () => cashFlowSeries(txByDomain, categories, ctx, windows, { groupBy, top: 5, language }),
+    [txByDomain, categories, ctx, windows, groupBy, language]
   );
 
   return {

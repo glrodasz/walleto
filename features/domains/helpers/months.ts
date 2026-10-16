@@ -9,6 +9,7 @@ import type { GroupedTotal } from "../../../components/molecules/GroupedTotalsLi
 import { DEFAULT_MONTH_PERIOD, PAYMENT_METHOD_TYPE_LABELS } from "../../../constants";
 import type {
   Currency,
+  Language,
   PaymentMethod,
   RecurrentTransaction,
   Tag,
@@ -37,7 +38,8 @@ export { monthKey };
  */
 export function monthWindows(
   count: number = DEFAULT_MONTH_PERIOD,
-  now: Date = new Date()
+  now: Date = new Date(),
+  language: Language = "en"
 ): MonthWindow[] {
   const windows: MonthWindow[] = [];
   for (let n = count - 1; n >= 0; n--) {
@@ -47,8 +49,8 @@ export function monthWindows(
       key: monthKey(start),
       start,
       end,
-      label: formatDate(start, "month"),
-      longLabel: formatDate(start, "monthLong"),
+      label: formatDate(start, "month", undefined, language),
+      longLabel: formatDate(start, "monthLong", undefined, language),
       isCurrent: n === 0,
     });
   }
@@ -277,7 +279,8 @@ export interface DayGroup {
 export function groupByDay(
   transactions: Transaction[],
   ctx: MoneyContext,
-  now: Date = new Date()
+  now: Date = new Date(),
+  language: Language = "en"
 ): DayGroup[] {
   const groups = new Map<string, DayGroup>();
   const sorted = [...transactions].sort(
@@ -288,7 +291,7 @@ export function groupByDay(
     const key = `${monthKey(date)}-${String(date.getDate()).padStart(2, "0")}`;
     let group = groups.get(key);
     if (!group) {
-      group = { key, label: formatRelativeDay(date, now), total: 0, rows: [] };
+      group = { key, label: formatRelativeDay(date, now, undefined, language), total: 0, rows: [] };
       groups.set(key, group);
     }
     group.total += convertedAmount(t, ctx);

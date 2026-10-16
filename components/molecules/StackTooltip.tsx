@@ -2,6 +2,8 @@ import { useMoneyFormat } from "../../hooks/useMoneyFormat";
 import { flatKey } from "../../features/dashboard/helpers/cashFlowSeries";
 import type { CashFlowGroup, GroupedBar } from "../../features/dashboard/helpers/cashFlowSeries";
 import type { Currency } from "../../types";
+import { useT } from "../../hooks/useT";
+import { COMMON_MESSAGES } from "../../messages/common";
 
 interface Props {
   /** What recharts hands a custom tooltip: with `shared={false}`, the one hovered segment. */
@@ -19,6 +21,7 @@ interface Props {
  */
 export function StackTooltip({ active, payload, groups, currency }: Props) {
   const { formatAmount } = useMoneyFormat();
+  const tc = useT(COMMON_MESSAGES);
   const item = active ? payload?.[0] : undefined;
   const groupKey = String(item?.dataKey ?? "").split(":")[0];
   const group = groups.find((g) => g.key === groupKey);
@@ -49,7 +52,7 @@ export function StackTooltip({ active, payload, groups, currency }: Props) {
       </ul>
       {rows.length > 1 && (
         <p className="row total">
-          <span className="name">Total</span>
+          <span className="name">{tc("state.total")}</span>
           <span className="value">{formatAmount(total, currency)}</span>
         </p>
       )}

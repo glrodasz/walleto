@@ -7,6 +7,8 @@ import { useStepNavigation } from "../../features/onboarding/hooks/useStepNaviga
 import { WizardActions } from "../../features/onboarding/components/WizardActions";
 import { ContinueLater } from "../../features/onboarding/components/ContinueLater";
 import { useLeaveOnboarding } from "../../features/onboarding/hooks/useLeaveOnboarding";
+import { useT } from "../../hooks/useT";
+import { PAGE_MESSAGES } from "../../messages/pages";
 
 const { step, back, next } = stepNav("methods");
 
@@ -15,16 +17,17 @@ const { step, back, next } = stepNav("methods");
 // before the next step could render. Static pages switch instantly, and the
 // data is still guarded by Firestore rules and the API routes.
 function OnboardingMethods() {
+  const t = useT(PAGE_MESSAGES);
   const state = useMethodsStep();
   const { busy, error, flush, go } = useStepNavigation(async () => {
     await state.save();
-  }, "Could not save your payment methods. Please try again.");
+  }, t("onboarding.methods.saveFailed"));
   const later = useLeaveOnboarding(flush);
 
   return (
     <OnboardingLayout
       step={step}
-      description="How you pay: your cards and accounts, so each plan item knows where it is charged."
+      description={t("onboarding.methods.description")}
       onNavigate={go}
       busy={busy || later.leaving}
       footer={

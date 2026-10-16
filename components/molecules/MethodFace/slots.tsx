@@ -21,13 +21,13 @@ import type { FaceKind, FaceSlots, FaceText } from "./types";
  * element is a component with its own styles (see ornaments.tsx).
  */
 export function slotsFor(kind: FaceKind, text: FaceText): FaceSlots {
-  const { size, title, untitled, typeLabel, network, last4, currency } = text;
+  const { size, title, untitled, typeLabel, cardKind, network, last4, currency } = text;
   const base = { title, muted: untitled, meta: typeLabel, corner: typeLabel };
 
   switch (kind) {
     case "card": {
       // "Debit card" → "Debit": the card itself only says which kind it is.
-      const kindWord = typeLabel.replace(/ card$/i, "");
+      const kindWord = cardKind ?? typeLabel;
       return {
         ...base,
         meta: kindWord,
@@ -87,10 +87,10 @@ export function slotsFor(kind: FaceKind, text: FaceText): FaceSlots {
 
     case "blank":
       return {
-        title: "New payment method",
+        title: text.blankTitle,
         muted: false,
-        meta: "Choose a type",
-        footer: "Choose a type",
+        meta: text.blankHint,
+        footer: text.blankHint,
         emblem: <BlankRing size={size} />,
       };
   }

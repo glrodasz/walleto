@@ -6,6 +6,9 @@ import { MoreHorizontal } from "../atoms/Icons";
 import { IconDisc } from "./IconDisc";
 import { ProgressBar } from "./ProgressBar";
 import type { Category, Currency, Domain } from "../../types";
+import { useT } from "../../hooks/useT";
+import { CHART_MESSAGES } from "../../messages/charts";
+import { COMMON_MESSAGES } from "../../messages/common";
 
 export interface CategoryRow {
   categoryId: string;
@@ -49,13 +52,15 @@ export function CategoryBreakdown({
   loading,
 }: Props) {
   const color = DOMAIN_COLOR[domain];
+  const t = useT(CHART_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
   return (
     <Card>
       <SectionTitle title={title} href={href} onAction={onViewAll} />
       {loading ? (
-        <p className="empty">Loading…</p>
+        <p className="empty">{tc("state.loading")}</p>
       ) : rows.length === 0 ? (
-        <p className="empty">No data yet</p>
+        <p className="empty">{t("breakdown.empty")}</p>
       ) : (
         <ul className="rows">
           {rows.map((row) => (
@@ -100,6 +105,7 @@ interface RowProps {
 
 function CategoryBreakdownRow({ row, category, domain, currency, color }: RowProps) {
   const { formatAmount } = useMoneyFormat();
+  const t = useT(CHART_MESSAGES);
 
   return (
     <li className="row">
@@ -115,7 +121,7 @@ function CategoryBreakdownRow({ row, category, domain, currency, color }: RowPro
           ratio={Math.max(0, row.percent) / 100}
           color={color}
           height={6}
-          label={`${row.name} share`}
+          label={t("breakdown.share", { name: row.name })}
         />
       </span>
       <span className="pct">{Math.max(0, row.percent).toFixed(0)}%</span>

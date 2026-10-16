@@ -3,6 +3,8 @@ import { ArrowUpRight, Circle, Lightbulb } from "../../../components/atoms/Icons
 import { SummaryCard } from "../../../components/molecules/SummaryCard";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { formatList } from "../../../utils/formatList";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
 import type { Currency } from "../../../types";
 import type { WhatIfImpact } from "../helpers/whatIfImpact";
 
@@ -21,6 +23,7 @@ interface Props {
  */
 export function WhatIfSummary({ impact, currentNet, currency, approximate = false }: Props) {
   const { formatAmount } = useMoneyFormat();
+  const tc = useT(COMMON_MESSAGES);
   const adjustedNet = currentNet + impact.freedMonthly;
   const count = impact.excludedNames.length;
 
@@ -72,7 +75,9 @@ export function WhatIfSummary({ impact, currentNet, currency, approximate = fals
           value: formatAmount(impact.freedAnnual, currency),
         },
       ]}
-      note={count > 0 ? `Cancelling ${formatList(impact.excludedNames)}.` : undefined}
+      note={
+        count > 0 ? `Cancelling ${formatList(impact.excludedNames, tc("list.and"))}.` : undefined
+      }
     />
   );
 }

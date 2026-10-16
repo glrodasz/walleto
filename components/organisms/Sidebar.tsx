@@ -20,16 +20,20 @@ import {
 } from "../atoms/Icons";
 import type { IconProps } from "../atoms/Icons";
 import { LOGOUT_HREF, useLogout } from "../../hooks/useLogout";
+import { useT } from "../../hooks/useT";
+import { NAVIGATION_MESSAGES } from "../../messages/navigation";
+
+type NavKey = keyof (typeof NAVIGATION_MESSAGES)["en"];
 
 interface NavItem {
-  label: string;
+  label: NavKey;
   href: string;
   icon: ComponentType<IconProps>;
   /** Rendered in place but inert — used for sections that are hidden while in progress. */
   disabled?: boolean;
 }
 
-const DASHBOARD: NavItem = { label: "Dashboard", href: "/", icon: Home };
+const DASHBOARD: NavItem = { label: "nav.dashboard", href: "/", icon: Home };
 
 /**
  * Grouped by the question each page answers: what moves every month (cash
@@ -37,45 +41,45 @@ const DASHBOARD: NavItem = { label: "Dashboard", href: "/", icon: Home };
  * balance). Prospect keeps its own group: it simulates the plan rather than
  * reporting it.
  */
-const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
+const NAV_SECTIONS: { title: NavKey; items: NavItem[] }[] = [
   {
-    title: "Cash flow",
+    title: "section.cashFlow",
     items: [
-      { label: "Income", href: "/incomes", icon: ArrowUp },
-      { label: "Expenses", href: "/expenses", icon: ArrowDown },
+      { label: "nav.income", href: "/incomes", icon: ArrowUp },
+      { label: "nav.expenses", href: "/expenses", icon: ArrowDown },
     ],
   },
   {
-    title: "Net worth",
+    title: "section.netWorth",
     items: [
-      { label: "Investments", href: "/investments", icon: TrendingUp },
-      { label: "Savings", href: "/savings", icon: Circle },
-      { label: "Debts", href: "/debts", icon: CreditCard },
+      { label: "nav.investments", href: "/investments", icon: TrendingUp },
+      { label: "nav.savings", href: "/savings", icon: Circle },
+      { label: "nav.debts", href: "/debts", icon: CreditCard },
     ],
   },
   {
-    title: "What-if",
-    items: [{ label: "Prospect", href: "/prospect", icon: Compass }],
+    title: "section.whatIf",
+    items: [{ label: "nav.prospect", href: "/prospect", icon: Compass }],
   },
   {
-    title: "Account",
-    items: [{ label: "Settings", href: "/settings", icon: Settings }],
+    title: "section.account",
+    items: [{ label: "nav.settings", href: "/settings", icon: Settings }],
   },
 ];
 
 /** Four direct tabs; everything else sits one tap away behind "More". */
 const BOTTOM_NAV: NavItem[] = [
-  { label: "Home", href: "/", icon: Home },
-  { label: "Income", href: "/incomes", icon: ArrowUp },
-  { label: "Expenses", href: "/expenses", icon: ArrowDown },
-  { label: "Investments", href: "/investments", icon: TrendingUp },
+  { label: "nav.home", href: "/", icon: Home },
+  { label: "nav.income", href: "/incomes", icon: ArrowUp },
+  { label: "nav.expenses", href: "/expenses", icon: ArrowDown },
+  { label: "nav.investments", href: "/investments", icon: TrendingUp },
 ];
 
 const MORE_NAV: NavItem[] = [
-  { label: "Savings", href: "/savings", icon: Circle },
-  { label: "Debts", href: "/debts", icon: CreditCard },
-  { label: "Prospect", href: "/prospect", icon: Compass },
-  { label: "Settings", href: "/settings", icon: Settings },
+  { label: "nav.savings", href: "/savings", icon: Circle },
+  { label: "nav.debts", href: "/debts", icon: CreditCard },
+  { label: "nav.prospect", href: "/prospect", icon: Compass },
+  { label: "nav.settings", href: "/settings", icon: Settings },
 ];
 
 export function Sidebar() {
@@ -83,8 +87,9 @@ export function Sidebar() {
   const { pathname } = useRouter();
   const { user } = useUser();
   const [moreOpen, setMoreOpen] = useState(false);
+  const t = useT(NAVIGATION_MESSAGES);
 
-  const name = user?.name ?? user?.nickname ?? "Account";
+  const name = user?.name ?? user?.nickname ?? t("account.fallbackName");
   const moreActive = MORE_NAV.some((item) => item.href === pathname);
 
   const navLink = (item: NavItem, size: number) => {
@@ -93,7 +98,7 @@ export function Sidebar() {
       return (
         <span key={item.href} className="nav-item is-disabled" aria-disabled="true">
           <Icon size={size} />
-          <span>{item.label}</span>
+          <span>{t(item.label)}</span>
         </span>
       );
     }
@@ -105,7 +110,7 @@ export function Sidebar() {
         className={`nav-item${pathname === item.href ? " is-active" : ""}`}
       >
         <Icon size={size} />
-        <span>{item.label}</span>
+        <span>{t(item.label)}</span>
       </Link>
     );
   };
@@ -122,11 +127,11 @@ export function Sidebar() {
           <BuildBadge />
         </div>
 
-        <nav className="nav" aria-label="Main navigation">
+        <nav className="nav" aria-label={t("nav.main")}>
           <div className="section">{navLink(DASHBOARD, 18)}</div>
           {NAV_SECTIONS.map((section) => (
             <div className="section" key={section.title}>
-              <span className="section-title">{section.title}</span>
+              <span className="section-title">{t(section.title)}</span>
               {section.items.map((item) => navLink(item, 18))}
             </div>
           ))}
@@ -142,7 +147,7 @@ export function Sidebar() {
           </div>
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a href={LOGOUT_HREF} className="logout" onClick={logout}>
-            Log out
+            {t("account.logOut")}
           </a>
         </div>
       </aside>
@@ -150,7 +155,7 @@ export function Sidebar() {
       {/* ── Mobile bottom nav ────────────────────────── */}
       <nav
         className="glass glass--strong glass--raised walleto-bnav"
-        aria-label="Mobile navigation"
+        aria-label={t("nav.mobile")}
         data-overlay-bottom-bar
       >
         {BOTTOM_NAV.map((item) => {
@@ -163,7 +168,7 @@ export function Sidebar() {
               className={`bnav-item${pathname === item.href ? " is-active" : ""}`}
             >
               <Icon size={22} />
-              <span>{item.label}</span>
+              <span>{t(item.label)}</span>
             </Link>
           );
         })}
@@ -175,11 +180,11 @@ export function Sidebar() {
           onClick={() => setMoreOpen(true)}
         >
           <MoreHorizontal size={22} />
-          <span>More</span>
+          <span>{t("nav.more")}</span>
         </button>
       </nav>
 
-      <Modal open={moreOpen} title="More" onClose={() => setMoreOpen(false)}>
+      <Modal open={moreOpen} title={t("nav.more")} onClose={() => setMoreOpen(false)}>
         <div className="more">
           {MORE_NAV.map((item) => {
             const Icon = item.icon;
@@ -187,7 +192,7 @@ export function Sidebar() {
               return (
                 <span key={item.href} className="more-item is-disabled" aria-disabled="true">
                   <Icon size={20} />
-                  <span>{item.label}</span>
+                  <span>{t(item.label)}</span>
                 </span>
               );
             }
@@ -200,7 +205,7 @@ export function Sidebar() {
                 onClick={() => setMoreOpen(false)}
               >
                 <Icon size={20} />
-                <span>{item.label}</span>
+                <span>{t(item.label)}</span>
               </Link>
             );
           })}
@@ -215,7 +220,7 @@ export function Sidebar() {
             </span>
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
             <a href={LOGOUT_HREF} className="logout" onClick={logout}>
-              Log out
+              {t("account.logOut")}
             </a>
           </div>
         </div>

@@ -18,6 +18,7 @@ import type { CancelableGroups } from "../helpers/rankCancelable";
 import { errorMessage } from "../../../utils/errorMessage";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import type { Category, Currency } from "../../../types";
+import { usePreferences } from "../../../hooks/usePreferences";
 import { EmergencyPanel } from "./EmergencyPanel";
 import { RunwayCard } from "./RunwayCard";
 
@@ -53,6 +54,7 @@ export function EmergencyView({
   const savings = useDomainValue("SAVING", categories, ctx);
   const investments = useDomainValue("INVESTMENT", categories, ctx);
   const { plan, save, error, loading: planLoading } = useEmergencyPlan();
+  const { language } = usePreferences();
 
   const budget = useMemo(() => emergencyBudget(groups), [groups]);
   const income = useMemo(() => planInTarget(plan, ctx), [plan, ctx]);
@@ -63,10 +65,11 @@ export function EmergencyView({
   const runway = runwayMonths(emergency);
 
   const projection = useMemo(
-    () => emergencyProjection(keepEverything, emergency, chartHorizon(runway)),
+    () =>
+      emergencyProjection(keepEverything, emergency, chartHorizon(runway), new Date(), language),
     // The inputs are plain numbers; list them rather than two fresh objects.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [cushion, budget, income, runway]
+    [cushion, budget, income, runway, language]
   );
 
   // Until the saved plan arrives, `plan` is the zero fallback: neither the

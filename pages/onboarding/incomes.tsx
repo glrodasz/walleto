@@ -8,6 +8,8 @@ import { WizardActions } from "../../features/onboarding/components/WizardAction
 import { ContinueLater } from "../../features/onboarding/components/ContinueLater";
 import { useLeaveOnboarding } from "../../features/onboarding/hooks/useLeaveOnboarding";
 import { useUserDoc } from "../../hooks/useUserDoc";
+import { useT } from "../../hooks/useT";
+import { PAGE_MESSAGES } from "../../messages/pages";
 
 const { step, back, next } = stepNav("incomes");
 
@@ -17,13 +19,14 @@ const { step, back, next } = stepNav("incomes");
 // data is still guarded by Firestore rules and the API routes.
 function OnboardingIncomes() {
   const { userDoc } = useUserDoc();
+  const t = useT(PAGE_MESSAGES);
   // New rows start in the currency chosen on the Currencies step; each row can
   // still be switched to its own.
   const state = useRecurrentStep("INCOME", userDoc?.mainCurrency ?? "USD");
 
   const { busy, error, flush, go } = useStepNavigation(async () => {
     await state.save();
-  }, "Could not save your income. Please try again.");
+  }, t("onboarding.incomes.saveFailed"));
   const later = useLeaveOnboarding(flush);
 
   return (
@@ -42,7 +45,7 @@ function OnboardingIncomes() {
       }
     >
       <section className="incomes">
-        <h2 className="heading">What do you earn each month?</h2>
+        <h2 className="heading">{t("onboarding.incomes.heading")}</h2>
         <RecurrentStep state={state} />
       </section>
 

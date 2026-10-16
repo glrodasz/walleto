@@ -5,6 +5,8 @@ import { useMoneyFormat } from "../../hooks/useMoneyFormat";
 import { flatKey } from "../../features/dashboard/helpers/cashFlowSeries";
 import type { CashFlowGroup, GroupedBar } from "../../features/dashboard/helpers/cashFlowSeries";
 import type { Currency } from "../../types";
+import { useT } from "../../hooks/useT";
+import { CHART_MESSAGES } from "../../messages/charts";
 
 // recharts is client-only and heavy, so every piece is loaded on demand.
 const BarChart = dynamic(() => import("recharts").then((m) => m.BarChart), { ssr: false });
@@ -48,6 +50,7 @@ export function GroupedStackedBarsChart({
   tooltip = "shared",
 }: Props) {
   const { formatAmount, formatTick } = useMoneyFormat();
+  const t = useT(CHART_MESSAGES);
   const keys = groups.flatMap((g) => g.series.map((s) => flatKey(g.key, s.key)));
   const hasMoney = data.some((d) => keys.some((k) => Number(d[k]) !== 0));
   const labelOf = (key: string) => {
@@ -61,11 +64,11 @@ export function GroupedStackedBarsChart({
   return (
     <div className="chart-area">
       {!loading && !hasMoney ? (
-        <p className="empty">No activity in this period</p>
+        <p className="empty">{t("chart.empty")}</p>
       ) : (
         <>
           {/* The same numbers, readable without the SVG (and by tests). */}
-          <ul className="sr-only" aria-label="Monthly cash flow">
+          <ul className="sr-only" aria-label={t("chart.monthlyCashFlow")}>
             {data.map((d) => (
               <li key={d.key}>
                 {d.label}:{" "}
@@ -78,7 +81,7 @@ export function GroupedStackedBarsChart({
                       )}`
                   )
                   .join(", ")}
-                {d.isCurrent ? " (in progress)" : ""}
+                {d.isCurrent ? t("chart.inProgress") : ""}
               </li>
             ))}
           </ul>

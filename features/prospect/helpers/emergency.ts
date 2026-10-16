@@ -1,6 +1,6 @@
 import { convert } from "../../../helpers/fx";
 import type { MoneyContext } from "../../../helpers/aggregations";
-import type { EmergencyPlan } from "../../../types";
+import type { EmergencyPlan, Language } from "../../../types";
 import type { FlowPoint } from "../../../helpers/chartData";
 import { formatDate } from "../../../helpers/dates";
 import type { CancelableGroups, RankedItem } from "./rankCancelable";
@@ -113,13 +113,21 @@ export function emergencyProjection(
   keepEverything: RunwayInput,
   emergency: RunwayInput,
   months: number,
-  now: Date = new Date()
+  now: Date = new Date(),
+  language: Language = "en"
 ): FlowPoint[] {
   const a = balanceSeries(keepEverything, months);
   const b = balanceSeries(emergency, months);
   return a.map((value, i) => ({
     label:
-      i === 0 ? "Now" : formatDate(new Date(now.getFullYear(), now.getMonth() + i, 1), "month"),
+      i === 0
+        ? "Now"
+        : formatDate(
+            new Date(now.getFullYear(), now.getMonth() + i, 1),
+            "month",
+            undefined,
+            language
+          ),
     income: value,
     expense: b[i],
   }));

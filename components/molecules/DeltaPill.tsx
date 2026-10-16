@@ -1,4 +1,6 @@
 import { ArrowDown, ArrowUp } from "../atoms/Icons";
+import { useT } from "../../hooks/useT";
+import { UI_MESSAGES } from "../../messages/ui";
 
 interface Props {
   /** Percentage change; the sign decides the arrow. */
@@ -10,13 +12,14 @@ interface Props {
 
 /** "↑ 12%" tinted by whether the move is good for its domain. */
 export function DeltaPill({ pct, upIsGood, label }: Props) {
+  const t = useT(UI_MESSAGES);
   const up = pct > 0;
   const good = up ? upIsGood : !upIsGood;
   const Arrow = up ? ArrowUp : ArrowDown;
   return (
     <span
       className={`pill ${good ? "good" : "bad"}`}
-      aria-label={label ?? `${up ? "Up" : "Down"} ${Math.abs(pct).toFixed(0)}%`}
+      aria-label={label ?? t(up ? "delta.up" : "delta.down", { pct: Math.abs(pct).toFixed(0) })}
     >
       <Arrow size={12} />
       {Math.abs(pct).toFixed(0)}%

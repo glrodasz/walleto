@@ -32,7 +32,7 @@ interface Props {
  * what was repaid, what is still owed — a dash until a balance is recorded.
  */
 export function AccountValueList({ domain, categories, ctx, currency }: Props) {
-  const { formatDate } = useDateFormat();
+  const { formatDate, language } = useDateFormat();
   const { formatAmount, formatPercent, separator } = useMoneyFormat();
   const {
     rows,
@@ -80,7 +80,9 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
                   <span className="name">
                     {r.name}
                     {r.rate && (
-                      <span className="pill">{formatInterestRate(r.rate, separator)}</span>
+                      <span className="pill">
+                        {formatInterestRate(r.rate, separator, language)}
+                      </span>
                     )}
                   </span>
                   <span className="meta">

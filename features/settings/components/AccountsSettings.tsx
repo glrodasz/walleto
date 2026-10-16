@@ -15,6 +15,7 @@ import { useUserDoc } from "../../../hooks/useUserDoc";
 import { ACCOUNT_NOUN, accountLabel, formatInterestRate } from "../../../helpers/accounts";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import { useDecimalInput } from "../../../hooks/useDecimalInput";
+import { usePreferences } from "../../../hooks/usePreferences";
 import { accountDraftOf, readAccountDraft } from "../../../helpers/accountDraft";
 import type { AccountDraft } from "../../../helpers/accountDraft";
 import type { Account, AccountDomain } from "../../../types";
@@ -32,6 +33,7 @@ export function AccountsSettings() {
   const { accounts, loading, error, create, update, remove } = useAccounts(domain);
   const { userDoc } = useUserDoc();
   const decimal = useDecimalInput();
+  const { language } = usePreferences();
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<AccountDraft | null>(null);
@@ -64,7 +66,7 @@ export function AccountsSettings() {
     const id = editingId;
     const d = draft;
     if (!id || !d) return;
-    const read = readAccountDraft(d, decimal.parse, noun);
+    const read = readAccountDraft(d, decimal.parse, domain, language);
     if ("error" in read) return setMessage(read.error);
     setEditingId(null);
     await run(id, () => update(id, read.values), `Couldn't update the ${noun}`);
@@ -123,7 +125,7 @@ export function AccountsSettings() {
                     <span className="meta">
                       {a.currency}
                       {a.interestRate
-                        ? ` · ${formatInterestRate(a.interestRate, decimal.separator)}`
+                        ? ` · ${formatInterestRate(a.interestRate, decimal.separator, language)}`
                         : ""}
                     </span>
                   </span>

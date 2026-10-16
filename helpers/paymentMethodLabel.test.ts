@@ -61,3 +61,17 @@ describe("paymentMethodDescription", () => {
     ).toBe("Wise, Digital wallet");
   });
 });
+
+describe("in Spanish", () => {
+  it("names the type and the last 4 in the reader's language", () => {
+    expect(
+      paymentMethodDescription(
+        { name: "Bancolombia", type: "DEBIT_CARD", network: "Mastercard", last4: "8817" },
+        "es"
+      )
+    ).toBe("Bancolombia, Tarjeta débito, Mastercard, terminada en 8817");
+    expect(paymentMethodOptionLabel({ name: "Efectivo", type: "CASH" }, "es")).toBe(
+      "Efectivo (Efectivo)"
+    );
+  });
+});

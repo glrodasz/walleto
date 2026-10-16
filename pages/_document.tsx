@@ -1,6 +1,8 @@
 import Document, { Html, Head, Main, NextScript } from "next/document";
 import type { DocumentContext, DocumentInitialProps } from "next/document";
 import { requestLanguage } from "../helpers/requestLanguage";
+import { translate } from "../helpers/i18n";
+import { PAGE_MESSAGES } from "../messages/pages";
 import type { Language } from "../types";
 import { buildInfo } from "../helpers/buildInfo";
 
@@ -23,7 +25,7 @@ export default function AppDocument({ language }: Props) {
     <Html lang={language} data-theme="light" data-env={env}>
       <Head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
-        <meta name="description" content="A clear plan today, a freer tomorrow." />
+        <meta name="description" content={translate(PAGE_MESSAGES, language, "meta.description")} />
         <link rel="icon" href={favicon} type="image/svg+xml" />
         {env === "production" && (
           <>

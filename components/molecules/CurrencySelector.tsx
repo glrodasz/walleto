@@ -1,5 +1,7 @@
 import { Select } from "../atoms/Select";
 import { useEnabledCurrencies } from "../../hooks/useEnabledCurrencies";
+import { useT } from "../../hooks/useT";
+import { FIELD_MESSAGES } from "../../messages/fields";
 import type { Currency } from "../../types";
 
 interface Props {
@@ -14,11 +16,12 @@ interface Props {
  */
 export function CurrencySelector({ value, onChange }: Props) {
   const { optionsFor } = useEnabledCurrencies();
+  const t = useT(FIELD_MESSAGES);
 
   return (
     <div className="selector">
       <Select
-        aria-label="Display currency"
+        aria-label={t("currency.display")}
         options={optionsFor(value)}
         value={value}
         onValueChange={(v) => onChange(v as Currency)}

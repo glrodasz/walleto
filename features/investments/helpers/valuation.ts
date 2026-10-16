@@ -10,6 +10,7 @@ import type {
   Category,
   InterestRate,
   InvestmentValuation,
+  Language,
   Transaction,
 } from "../../../types";
 import { valueAt } from "./interest";
@@ -245,7 +246,8 @@ export function valuationSeries(
   months: number,
   now: Date = new Date(),
   rate?: InterestRate,
-  sign: 1 | -1 = 1
+  sign: 1 | -1 = 1,
+  language: Language = "en"
 ): FlowPoint[] {
   const deposits = depositsFor(transactions, selector, ctx);
   const checks = valueChecks(valuations, selector, ctx, sign);
@@ -257,7 +259,11 @@ export function valuationSeries(
     // A debt has no balance before its first check — see `currentValue`.
     const known = sign > 0 || checks.some((c) => c.asOf <= monthEnd);
     const value = known ? sign * valueAt(deposits, checks, rate, monthEnd) : 0;
-    points.push({ label: formatDate(monthStart, "month"), income: invested, expense: value });
+    points.push({
+      label: formatDate(monthStart, "month", undefined, language),
+      income: invested,
+      expense: value,
+    });
   }
   return points;
 }

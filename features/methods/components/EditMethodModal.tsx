@@ -16,6 +16,7 @@ import {
 import { useEnabledCurrencies } from "../../../hooks/useEnabledCurrencies";
 import { errorMessage } from "../../../utils/errorMessage";
 import type { Currency, PaymentMethod } from "../../../types";
+import { usePreferences } from "../../../hooks/usePreferences";
 
 interface Props {
   method: PaymentMethod | null;
@@ -33,6 +34,7 @@ interface Props {
 export function EditMethodModal({ method, onClose }: Props) {
   const { update } = usePaymentMethods();
   const { optionsFor } = useEnabledCurrencies();
+  const { language } = usePreferences();
   const [name, setName] = useState("");
   const [network, setNetwork] = useState("");
   const [last4, setLast4] = useState("");
@@ -111,8 +113,8 @@ export function EditMethodModal({ method, onClose }: Props) {
 
         {showNetwork && (
           <Combobox
-            label={networkFieldLabel(method.type)}
-            fieldLabel={networkFieldLabel(method.type)}
+            label={networkFieldLabel(method.type, language)}
+            fieldLabel={networkFieldLabel(method.type, language)}
             placeholder="Search or type your own"
             suggestions={networkSuggestions ?? []}
             value={network}

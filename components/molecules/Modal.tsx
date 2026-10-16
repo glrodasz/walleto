@@ -3,6 +3,8 @@ import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
 import { Close } from "../atoms/Icons";
 import { OverlayLayerProvider, useOverlayLayer } from "../../hooks/useOverlayLayer";
+import { useT } from "../../hooks/useT";
+import { COMMON_MESSAGES } from "../../messages/common";
 
 interface Props {
   open: boolean;
@@ -12,6 +14,7 @@ interface Props {
 }
 
 export function Modal({ open, title, onClose, children }: Props) {
+  const tc = useT(COMMON_MESSAGES);
   // The layer this modal was opened *from*, so a nested one can outrank the
   // dropdowns the outer modal owns.
   const layer = useOverlayLayer();
@@ -85,7 +88,7 @@ export function Modal({ open, title, onClose, children }: Props) {
             type="button"
             className="glass glass--tap close"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={tc("action.close")}
           >
             <Close size={20} />
           </button>

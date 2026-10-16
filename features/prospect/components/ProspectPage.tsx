@@ -20,6 +20,7 @@ import { useMoneyContext } from "../../../hooks/useMoneyContext";
 import { computeFlow } from "../../../helpers";
 import { errorMessage } from "../../../utils/errorMessage";
 import type { Currency, RecurrentTransaction } from "../../../types";
+import { usePreferences } from "../../../hooks/usePreferences";
 
 const HORIZONS = [
   { key: "6", label: "6 months", months: 6 },
@@ -42,6 +43,7 @@ interface Props {
  */
 export function ProspectPage({ initialMode = "whatif" }: Props) {
   const { ctx, target, fxMissing } = useMoneyContext();
+  const { language } = usePreferences();
   const currency: Currency = target;
 
   const incomeQ = useRecurrentTransactions("INCOME");
@@ -96,8 +98,8 @@ export function ProspectPage({ initialMode = "whatif" }: Props) {
 
   const months = HORIZONS.find((h) => h.key === horizon)?.months ?? HORIZONS[0].months;
   const projection = useMemo(
-    () => buildWhatIfProjection(currentFlow.net, impact.freedMonthly, months),
-    [currentFlow.net, impact.freedMonthly, months]
+    () => buildWhatIfProjection(currentFlow.net, impact.freedMonthly, months, new Date(), language),
+    [currentFlow.net, impact.freedMonthly, months, language]
   );
 
   // "≈" only means something when a conversion actually happened.

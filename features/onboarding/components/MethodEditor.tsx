@@ -6,11 +6,12 @@ import { EditorFooter } from "../../../components/molecules/EditorFooter";
 import {
   CARD_TYPES,
   NETWORK_SUGGESTIONS,
-  PAYMENT_METHOD_TYPE_OPTIONS,
+  paymentMethodTypeOptions,
   networkFieldLabel,
 } from "../../../helpers/paymentMethodOptions";
 import type { MethodRow } from "../hooks/useMethodsStep";
 import type { PaymentMethodType } from "../../../types";
+import { usePreferences } from "../../../hooks/usePreferences";
 
 interface Props {
   id: string;
@@ -41,10 +42,11 @@ export function MethodEditor({
   onDone,
 }: Props) {
   const { type } = row;
+  const { language } = usePreferences();
   const networkSuggestions = type ? NETWORK_SUGGESTIONS[type] : undefined;
   const showLast4 = type ? CARD_TYPES.includes(type) : false;
   const saved = Boolean(row.id);
-  const networkLabel = type ? networkFieldLabel(type) : "";
+  const networkLabel = type ? networkFieldLabel(type, language) : "";
   const aliasProblem = problem && !row.name.trim() ? problem : null;
 
   return (
@@ -54,7 +56,7 @@ export function MethodEditor({
         <Select
           label="Type"
           placeholder="Select a type"
-          options={PAYMENT_METHOD_TYPE_OPTIONS}
+          options={paymentMethodTypeOptions(language)}
           value={type}
           disabled={saved}
           onValueChange={(value) =>

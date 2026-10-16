@@ -6,6 +6,8 @@ import { CategoriesStep } from "../../features/onboarding/components/CategoriesS
 import { WizardActions } from "../../features/onboarding/components/WizardActions";
 import { ContinueLater } from "../../features/onboarding/components/ContinueLater";
 import { useLeaveOnboarding } from "../../features/onboarding/hooks/useLeaveOnboarding";
+import { useT } from "../../hooks/useT";
+import { PAGE_MESSAGES } from "../../messages/pages";
 
 const { step, next } = stepNav("categories");
 
@@ -15,6 +17,7 @@ const { step, next } = stepNav("categories");
 // data is still guarded by Firestore rules and the API routes.
 function OnboardingCategories() {
   const router = useRouter();
+  const t = useT(PAGE_MESSAGES);
   // Categories persist as they're created, so there is nothing to flush.
   const { leave, leaving, error } = useLeaveOnboarding();
   const go = (href: string) => router.push(href);
@@ -22,7 +25,7 @@ function OnboardingCategories() {
   return (
     <OnboardingLayout
       step={step}
-      description="Your plan is sorted by category. Keep the defaults or add your own."
+      description={t("onboarding.categories.description")}
       onNavigate={go}
       busy={leaving}
       footer={

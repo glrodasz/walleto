@@ -67,7 +67,9 @@ export function PreferencesCard() {
             onValueChange={(v) => save({ dateFormat: v as DateFormat })}
           />
         }
-        hint={tr("preferences.example", { value: formatDate(new Date(), "numeric", dateFormat) })}
+        hint={tr("preferences.example", {
+          value: formatDate(new Date(), "numeric", dateFormat, language),
+        })}
       />
       <SettingsRow
         label={tr("preferences.language")}

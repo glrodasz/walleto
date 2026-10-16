@@ -1,4 +1,6 @@
-import { PAYMENT_METHOD_TYPE_LABELS } from "../../../constants";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { METHOD_FACE_MESSAGES } from "../../../messages/methodFace";
 import { FaceLayout } from "./FaceLayout";
 import { slotsFor } from "./slots";
 import type { FaceKind, FaceText, MethodFaceProps } from "./types";
@@ -34,13 +36,18 @@ export function MethodFace({
   size = "compact",
   invalid,
 }: MethodFaceProps) {
+  const t = useT(METHOD_FACE_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
   const kind: FaceKind = type ? KIND[type] : "blank";
   const alias = name.trim();
   const text: FaceText = {
     size,
-    title: alias || "Add an alias",
+    title: alias || t("face.addAlias"),
     untitled: !alias,
-    typeLabel: type ? PAYMENT_METHOD_TYPE_LABELS[type] : "",
+    typeLabel: type ? tc(`methodType.${type}`) : "",
+    cardKind: type === "CREDIT_CARD" || type === "DEBIT_CARD" ? t(`face.card.${type}`) : undefined,
+    blankTitle: t("face.newMethod"),
+    blankHint: t("face.chooseType"),
     network: network?.trim() || undefined,
     last4: last4 || undefined,
     currency,

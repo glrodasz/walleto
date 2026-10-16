@@ -112,7 +112,7 @@ export function RecurrentTransactionModal({
   onOpenItem,
   onClose,
 }: Props) {
-  const { formatDate } = useDateFormat();
+  const { formatDate, language } = useDateFormat();
   const { formatAmount } = useMoneyFormat();
   const decimal = useDecimalInput();
   const config = DOMAIN_CONFIG[domain];
@@ -593,8 +593,8 @@ export function RecurrentTransactionModal({
             label="Direction"
             size="sm"
             options={[
-              { key: "IN", label: directionLabel(accountDomain, "IN") },
-              { key: "OUT", label: directionLabel(accountDomain, "OUT") },
+              { key: "IN", label: directionLabel(accountDomain, "IN", language) },
+              { key: "OUT", label: directionLabel(accountDomain, "OUT", language) },
             ]}
             value={form.direction}
             onChange={(direction) => patch({ direction })}

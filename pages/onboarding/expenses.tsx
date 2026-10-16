@@ -8,6 +8,8 @@ import { WizardActions } from "../../features/onboarding/components/WizardAction
 import { ContinueLater } from "../../features/onboarding/components/ContinueLater";
 import { useLeaveOnboarding } from "../../features/onboarding/hooks/useLeaveOnboarding";
 import { useUserDoc } from "../../hooks/useUserDoc";
+import { useT } from "../../hooks/useT";
+import { PAGE_MESSAGES } from "../../messages/pages";
 
 const { step, back, next } = stepNav("expenses");
 
@@ -17,11 +19,12 @@ const { step, back, next } = stepNav("expenses");
 // data is still guarded by Firestore rules and the API routes.
 function OnboardingExpenses() {
   const { userDoc } = useUserDoc();
+  const t = useT(PAGE_MESSAGES);
   const state = useRecurrentStep("EXPENSE", userDoc?.mainCurrency ?? "USD");
 
   const { busy, error, flush, go } = useStepNavigation(async () => {
     await state.save();
-  }, "Could not save your expenses. Please try again.");
+  }, t("onboarding.expenses.saveFailed"));
   const later = useLeaveOnboarding(flush);
   const pending = busy || later.leaving;
 
@@ -41,7 +44,7 @@ function OnboardingExpenses() {
       }
     >
       <section className="expenses">
-        <h2 className="heading">What do you pay every month?</h2>
+        <h2 className="heading">{t("onboarding.expenses.heading")}</h2>
         <RecurrentStep state={state} showPaymentMethod />
       </section>
 

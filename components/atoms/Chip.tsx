@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import { Close, Plus } from "./Icons";
+import { useT } from "../../hooks/useT";
+import { COMMON_MESSAGES } from "../../messages/common";
 
 interface Props {
   children: ReactNode;
@@ -27,6 +29,7 @@ export function Chip({
   removeLabel,
   title,
 }: Props) {
+  const tc = useT(COMMON_MESSAGES);
   const classes = [
     "glass",
     onClick && !disabled ? "glass--tap" : "",
@@ -64,7 +67,7 @@ export function Chip({
               type="button"
               className="remove"
               onClick={onRemove}
-              aria-label={removeLabel ?? "Remove"}
+              aria-label={removeLabel ?? tc("action.remove")}
             >
               <Close size={14} />
             </button>

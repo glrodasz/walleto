@@ -3,6 +3,7 @@ import { MethodFace, MethodFaceButton } from "../../../components/molecules/Meth
 import { paymentMethodDescription } from "../../../helpers/paymentMethodLabel";
 import { MethodEditor } from "./MethodEditor";
 import type { MethodRow } from "../hooks/useMethodsStep";
+import { usePreferences } from "../../../hooks/usePreferences";
 
 interface Props {
   row: MethodRow;
@@ -35,13 +36,17 @@ export function WalletItem({
   onRemove,
 }: Props) {
   const editorId = useId();
+  const { language } = usePreferences();
   const label = row.type
-    ? paymentMethodDescription({
-        name: row.name.trim() || "Untitled",
-        type: row.type,
-        network: row.network.trim() || undefined,
-        last4: row.last4 || undefined,
-      })
+    ? paymentMethodDescription(
+        {
+          name: row.name.trim() || "Untitled",
+          type: row.type,
+          network: row.network.trim() || undefined,
+          last4: row.last4 || undefined,
+        },
+        language
+      )
     : "New payment method";
 
   return (

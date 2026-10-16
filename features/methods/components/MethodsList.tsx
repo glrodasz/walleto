@@ -6,6 +6,7 @@ import { MethodFaceButton } from "../../../components/molecules/MethodFace";
 import { groupMethodsByType } from "../../../helpers/paymentMethodOptions";
 import { paymentMethodDescription } from "../../../helpers/paymentMethodLabel";
 import type { PaymentMethod } from "../../../types";
+import { usePreferences } from "../../../hooks/usePreferences";
 
 interface Props {
   methods: PaymentMethod[];
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export function MethodsList({ methods, loading, archivingId, onEdit, onArchive }: Props) {
+  const { language } = usePreferences();
   return (
     <Card>
       <SectionTitle title="Saved methods" />
@@ -29,7 +31,7 @@ export function MethodsList({ methods, loading, archivingId, onEdit, onArchive }
         />
       ) : (
         <div className="groups">
-          {groupMethodsByType(methods).map((group) => (
+          {groupMethodsByType(methods, language).map((group) => (
             <section key={group.type} className="group" aria-label={group.label}>
               <h3 className="group-title">
                 {group.label}
@@ -39,7 +41,7 @@ export function MethodsList({ methods, loading, archivingId, onEdit, onArchive }
                 {group.methods.map((m) => (
                   <li key={m.id} className="method">
                     <MethodFaceButton
-                      label={`Edit ${paymentMethodDescription(m)}`}
+                      label={`Edit ${paymentMethodDescription(m, language)}`}
                       onClick={() => onEdit(m)}
                       type={m.type}
                       name={m.name}

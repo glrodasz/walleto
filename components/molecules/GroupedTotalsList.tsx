@@ -2,6 +2,9 @@ import type { ReactNode } from "react";
 import { useMoneyFormat } from "../../hooks/useMoneyFormat";
 import { IconDisc } from "./IconDisc";
 import { ListItem, ListItems } from "./ListItem";
+import { useT } from "../../hooks/useT";
+import { COMMON_MESSAGES } from "../../messages/common";
+import { UI_MESSAGES } from "../../messages/ui";
 import type { Currency } from "../../types";
 
 export interface GroupedTotal {
@@ -42,11 +45,13 @@ export function GroupedTotalsList({
   onSelect,
 }: Props) {
   const { formatAmount } = useMoneyFormat();
+  const t = useT(UI_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
 
   if (loading || groups.length === 0) {
     return (
       <p className="empty">
-        {loading ? "Loading…" : emptyLabel}
+        {loading ? tc("state.loading") : emptyLabel}
         <style jsx>{`
           .empty {
             margin: 0;
@@ -80,11 +85,11 @@ export function GroupedTotalsList({
               g.label
             )
           }
-          meta={`${g.count} transaction${g.count === 1 ? "" : "s"} · ${Math.round(g.share * 100)}%`}
+          meta={t("grouped.transactions", { count: g.count, share: Math.round(g.share * 100) })}
           progress={{
             ratio: g.share,
             color,
-            label: `${g.detail ? `${g.label} (${g.detail})` : g.label} share`,
+            label: t("grouped.share", { label: g.detail ? `${g.label} (${g.detail})` : g.label }),
           }}
           amount={formatAmount(g.total, currency)}
           onClick={onSelect ? () => onSelect(g.key) : undefined}

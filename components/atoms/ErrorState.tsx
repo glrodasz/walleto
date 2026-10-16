@@ -21,11 +21,11 @@ export function extractConsoleUrl(message: string): string | null {
  * includes a one-click console link to fix it, and hiding that behind friendly
  * copy is how an undeployed index turns into a silent empty dashboard.
  */
-export function ErrorState({
-  title = "Couldn't load this data",
-  description = "Something went wrong on our side. Try reloading the page.",
-  error,
-}: Props) {
+import { useT } from "../../hooks/useT";
+import { UI_MESSAGES } from "../../messages/ui";
+
+export function ErrorState({ title, description, error }: Props) {
+  const t = useT(UI_MESSAGES);
   const consoleUrl = error?.message ? extractConsoleUrl(error.message) : null;
 
   return (
@@ -33,14 +33,14 @@ export function ErrorState({
       <span className="icon" aria-hidden="true">
         ⚠
       </span>
-      <span className="title">{title}</span>
-      <span className="desc">{description}</span>
+      <span className="title">{title ?? t("error.title")}</span>
+      <span className="desc">{description ?? t("error.description")}</span>
 
       {error?.message && <code className="detail">{error.message}</code>}
 
       {consoleUrl && (
         <a className="fix" href={consoleUrl} target="_blank" rel="noreferrer">
-          Create the missing index →
+          {t("error.createIndex")}
         </a>
       )}
 

@@ -4,6 +4,10 @@ import { createPortal } from "react-dom";
 import { Calendar, Check, ChevronLeft, ChevronRight } from "../atoms/Icons";
 import { formatDate } from "../../helpers/dates";
 import { useOverlayLayer } from "../../hooks/useOverlayLayer";
+import { usePreferences } from "../../hooks/usePreferences";
+import { useT } from "../../hooks/useT";
+import { COMMON_MESSAGES } from "../../messages/common";
+import { UI_MESSAGES } from "../../messages/ui";
 import type { MonthWindow } from "../../features/domains/helpers/months";
 
 interface Props {
@@ -45,6 +49,9 @@ function stepFor(windows: MonthWindow[], value: string): number {
  * is a picker, so there is no down arrow.
  */
 export function MonthPicker({ value, windows, onChange, onStep }: Props) {
+  const { language } = usePreferences();
+  const t = useT(UI_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
   const index = windows.findIndex((w) => w.key === value);
   const atOldest = index <= 0;
   const atNewest = index === -1 || index === windows.length - 1;
@@ -185,7 +192,7 @@ export function MonthPicker({ value, windows, onChange, onStep }: Props) {
       <button
         type="button"
         className="arrow"
-        aria-label="Previous month"
+        aria-label={t("month.previous")}
         onClick={() => step(-1)}
         disabled={atOldest}
       >
@@ -195,7 +202,7 @@ export function MonthPicker({ value, windows, onChange, onStep }: Props) {
         ref={triggerRef}
         type="button"
         className="month"
-        aria-label={`Month: ${current?.longLabel ?? ""}`}
+        aria-label={t("month.current", { month: current?.longLabel ?? "" })}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? listId : undefined}
@@ -214,13 +221,13 @@ export function MonthPicker({ value, windows, onChange, onStep }: Props) {
           {current?.longLabel ?? ""}
         </span>
         <span className="text short" aria-hidden="true">
-          {current ? formatDate(current.start, "monthYear") : ""}
+          {current ? formatDate(current.start, "monthYear", undefined, language) : ""}
         </span>
       </button>
       <button
         type="button"
         className="arrow"
-        aria-label="Next month"
+        aria-label={t("month.next")}
         onClick={() => step(1)}
         disabled={atNewest}
       >
@@ -239,7 +246,7 @@ export function MonthPicker({ value, windows, onChange, onStep }: Props) {
             }}
             onKeyDown={onMenuKey}
           >
-            <div id={listId} className="options" role="listbox" aria-label="Month">
+            <div id={listId} className="options" role="listbox" aria-label={tc("noun.month")}>
               {visible.map((w) => {
                 const selected = w.key === value;
                 return (
@@ -262,7 +269,7 @@ export function MonthPicker({ value, windows, onChange, onStep }: Props) {
             </div>
             {nextCount !== null && (
               <button type="button" className="more" tabIndex={-1} data-nav="" onClick={showMore}>
-                Show last {nextCount} months
+                {t("month.showLast", { count: nextCount })}
               </button>
             )}
           </div>,

@@ -163,7 +163,7 @@ export function RecurringChecklist({
   onToggleHidden,
   busyId,
 }: Props) {
-  const { formatDate } = useDateFormat();
+  const { formatDate, language } = useDateFormat();
   const { formatAmount, formatNative } = useMoneyFormat();
   const config = DOMAIN_CONFIG[domain];
   const { occurrences, notThisMonth } = useMemo(
@@ -176,7 +176,7 @@ export function RecurringChecklist({
   const details = (item: RecurrentTransaction) => {
     const category = categories.find((c) => c.id === item.categoryId)?.name;
     const method = paymentMethods.find((pm) => pm.id === item.paymentMethodId);
-    return [category, method ? paymentMethodOptionLabel(method) : null]
+    return [category, method ? paymentMethodOptionLabel(method, language) : null]
       .filter(Boolean)
       .map((part) => ` · ${part}`)
       .join("");

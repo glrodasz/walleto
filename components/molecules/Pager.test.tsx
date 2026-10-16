@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { Pager } from "./Pager";
+import { DEFAULT_PREFERENCES, PreferencesContext } from "../../hooks/usePreferences";
 
 describe("Pager", () => {
   it("renders nothing for one page", () => {
@@ -14,5 +15,16 @@ describe("Pager", () => {
     expect(screen.getByRole("button", { name: "Previous" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(onChange).toHaveBeenCalledWith(2);
+  });
+
+  it("speaks Spanish inside a Spanish preference", () => {
+    render(
+      <PreferencesContext.Provider value={{ ...DEFAULT_PREFERENCES, language: "es" }}>
+        <Pager page={2} pageCount={5} onChange={jest.fn()} />
+      </PreferencesContext.Provider>
+    );
+    expect(screen.getByText("Página 2 de 5")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Anterior" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Siguiente" })).toBeInTheDocument();
   });
 });

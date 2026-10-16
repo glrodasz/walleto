@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useT } from "../../hooks/useT";
+import { UI_MESSAGES } from "../../messages/ui";
 
 interface Props {
   title: string;
@@ -14,14 +16,9 @@ interface Props {
   children?: ReactNode;
 }
 
-export function SectionTitle({
-  title,
-  subtitle,
-  href,
-  onAction,
-  actionLabel = "View all",
-  children,
-}: Props) {
+export function SectionTitle({ title, subtitle, href, onAction, actionLabel, children }: Props) {
+  const t = useT(UI_MESSAGES);
+  const action = actionLabel ?? t("section.viewAll");
   return (
     <div className="header">
       <div className="text">
@@ -32,12 +29,12 @@ export function SectionTitle({
         {children}
         {href && (
           <Link href={href} className="action">
-            {actionLabel}
+            {action}
           </Link>
         )}
         {!href && onAction && (
           <button type="button" className="action" onClick={onAction}>
-            {actionLabel}
+            {action}
           </button>
         )}
       </div>

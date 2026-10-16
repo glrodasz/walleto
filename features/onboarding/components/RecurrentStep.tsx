@@ -8,6 +8,7 @@ import { sortByName } from "../../../helpers/paymentMethodOptions";
 import type { Domain } from "../../../types";
 import { CadencePanel } from "./CadencePanel";
 import { RecurrentRowEditor } from "./RecurrentRowEditor";
+import { usePreferences } from "../../../hooks/usePreferences";
 
 interface Props {
   state: ReturnType<typeof useRecurrentStep>;
@@ -24,13 +25,17 @@ const NOUN: Partial<Record<Domain, string>> = { INCOME: "income", EXPENSE: "expe
 export function RecurrentStep({ state, showPaymentMethod = false }: Props) {
   const { domain, rows, addTo, update, removeAt, categories, methods, backfill, setBackfill } =
     state;
+  const { language } = usePreferences();
 
   const categoryOptions = categories
     .filter((c) => !c.parentId)
     .map((c) => ({ value: c.id!, label: c.name }));
 
   const methodOptions = showPaymentMethod
-    ? sortByName(methods).map((m) => ({ value: m.id!, label: paymentMethodOptionLabel(m) }))
+    ? sortByName(methods).map((m) => ({
+        value: m.id!,
+        label: paymentMethodOptionLabel(m, language),
+      }))
     : undefined;
 
   const noun = NOUN[domain] ?? "item";
