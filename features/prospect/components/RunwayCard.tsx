@@ -6,6 +6,7 @@ import type { BadgeTone } from "../../../components/atoms/Badge";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { useDateFormat } from "../../../hooks/usePreferences";
 import { RUNWAY_CAP_MONTHS } from "../helpers/emergency";
+import { formatRunway } from "../helpers/runwayDuration";
 import type { EmergencyBudget } from "../helpers/emergency";
 import type { Currency } from "../../../types";
 
@@ -74,9 +75,7 @@ export function RunwayCard({
       : new Date(now.getFullYear(), now.getMonth() + Math.floor(runway), now.getDate());
 
   const figure =
-    runway === null
-      ? `${RUNWAY_CAP_MONTHS / 12}+ years`
-      : `${formatNumber(runway, 1)} ${runway === 1 ? "month" : "months"}`;
+    runway === null ? `${RUNWAY_CAP_MONTHS / 12}+ years` : formatRunway(runway, formatNumber);
 
   const sub =
     runway === null
