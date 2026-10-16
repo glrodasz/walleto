@@ -13,6 +13,8 @@ import {
 } from "../atoms/Icons";
 import type { IconProps } from "../atoms/Icons";
 import { IconDisc } from "./IconDisc";
+import { useT } from "../../hooks/useT";
+import { CHART_MESSAGES } from "../../messages/charts";
 
 export interface StatRow {
   name: string;
@@ -58,10 +60,11 @@ export function StatCard({
   byCurrency,
 }: Props) {
   const Icon = ICON[domain];
+  const t = useT(CHART_MESSAGES);
   return (
     <Card tint={domain}>
       <div className="head">
-        <Link href={href} className="stat-head" aria-label={`Open ${title}`}>
+        <Link href={href} className="stat-head" aria-label={t("stat.open", { title })}>
           <IconDisc domain={domain} size={42}>
             <Icon size={18} />
           </IconDisc>
@@ -88,7 +91,7 @@ export function StatCard({
       )}
 
       {byCurrency && byCurrency.length > 1 && (
-        <span className="currencies" aria-label="By currency">
+        <span className="currencies" aria-label={t("stat.byCurrency")}>
           {byCurrency.map((c, i) => (
             <span key={c.currency}>
               {i > 0 && <span className="sep"> · </span>}

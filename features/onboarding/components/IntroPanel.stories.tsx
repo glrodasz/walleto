@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
 import { IntroPanel } from "./IntroPanel";
 import type { IntroSlideId } from "../data/introSlides";
-import { INTRO_SLIDES } from "../data/introSlides";
+import { INTRO_SLIDE_IDS } from "../data/introSlides";
 import { boxed } from "../../../stories/decorators";
 import { DESKTOP, MOBILE } from "../../../stories/templates";
 
@@ -18,7 +18,7 @@ const meta = {
   globals: DESKTOP,
   args: { id: "planner" },
   argTypes: {
-    id: { control: "radio", options: Object.keys(INTRO_SLIDES) as IntroSlideId[] },
+    id: { control: "radio", options: [...INTRO_SLIDE_IDS] as IntroSlideId[] },
   },
 } satisfies Meta<typeof IntroPanel>;
 

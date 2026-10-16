@@ -3,6 +3,9 @@ import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { DateBadge } from "../../../components/molecules/DateBadge";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { DASHBOARD_MESSAGES } from "../messages";
 
 interface Props {
   items: RecurrentTransaction[];
@@ -20,13 +23,15 @@ function nextDate(ts: RecurrentTransaction["nextOccurrence"]): Date | null {
 
 /** What the plan charges next, soonest first, each with its category. */
 export function UpcomingPayments({ items, categories, displayCurrency, loading }: Props) {
+  const t = useT(DASHBOARD_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
   return (
     <Card>
-      <SectionTitle title="Coming up in your plan" href="/expenses" />
+      <SectionTitle title={t("upcoming.title")} href="/expenses" />
       {loading ? (
-        <p className="empty">Loading…</p>
+        <p className="empty">{tc("state.loading")}</p>
       ) : items.length === 0 ? (
-        <p className="empty">Nothing else coming up in your plan</p>
+        <p className="empty">{t("upcoming.empty")}</p>
       ) : (
         <ul className="list">
           {items.map((item) => (

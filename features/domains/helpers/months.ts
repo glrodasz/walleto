@@ -6,9 +6,13 @@ import { formatRelativeDay } from "../../../helpers/formatRelativeDay";
 import { formatDate, monthKey } from "../../../helpers/dates";
 import { paymentMethodLabel } from "../../../helpers/paymentMethodLabel";
 import type { GroupedTotal } from "../../../components/molecules/GroupedTotalsList";
-import { DEFAULT_MONTH_PERIOD, PAYMENT_METHOD_TYPE_LABELS } from "../../../constants";
+import { DEFAULT_MONTH_PERIOD } from "../../../constants";
+import { translate } from "../../../helpers/i18n";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { DOMAIN_MESSAGES } from "../messages";
 import type {
   Currency,
+  Language,
   PaymentMethod,
   RecurrentTransaction,
   Tag,
@@ -37,7 +41,8 @@ export { monthKey };
  */
 export function monthWindows(
   count: number = DEFAULT_MONTH_PERIOD,
-  now: Date = new Date()
+  now: Date = new Date(),
+  language: Language = "en"
 ): MonthWindow[] {
   const windows: MonthWindow[] = [];
   for (let n = count - 1; n >= 0; n--) {
@@ -47,8 +52,8 @@ export function monthWindows(
       key: monthKey(start),
       start,
       end,
-      label: formatDate(start, "month"),
-      longLabel: formatDate(start, "monthLong"),
+      label: formatDate(start, "month", undefined, language),
+      longLabel: formatDate(start, "monthLong", undefined, language),
       isCurrent: n === 0,
     });
   }
@@ -277,7 +282,8 @@ export interface DayGroup {
 export function groupByDay(
   transactions: Transaction[],
   ctx: MoneyContext,
-  now: Date = new Date()
+  now: Date = new Date(),
+  language: Language = "en"
 ): DayGroup[] {
   const groups = new Map<string, DayGroup>();
   const sorted = [...transactions].sort(
@@ -288,7 +294,7 @@ export function groupByDay(
     const key = `${monthKey(date)}-${String(date.getDate()).padStart(2, "0")}`;
     let group = groups.get(key);
     if (!group) {
-      group = { key, label: formatRelativeDay(date, now), total: 0, rows: [] };
+      group = { key, label: formatRelativeDay(date, now, undefined, language), total: 0, rows: [] };
       groups.set(key, group);
     }
     group.total += convertedAmount(t, ctx);
@@ -358,7 +364,8 @@ function toGroupedTotals(buckets: Map<string, Bucket>, whole: number): GroupedTo
 export function groupByTag(
   transactions: Transaction[],
   tags: Pick<Tag, "id" | "name">[],
-  ctx: MoneyContext
+  ctx: MoneyContext,
+  language: Language = "en"
 ): GroupedTotal[] {
   const names = new Map(tags.map((t) => [t.id ?? "", t.name]));
   const buckets = new Map<string, { label: string; total: number; count: number }>();
@@ -368,7 +375,11 @@ export function groupByTag(
     whole += Math.max(0, value);
     const keys = (t.tags ?? []).filter((id) => names.has(id));
     for (const key of keys.length > 0 ? keys : [NO_TAG]) {
-      const b = buckets.get(key) ?? { label: names.get(key) ?? "No tag", total: 0, count: 0 };
+      const b = buckets.get(key) ?? {
+        label: names.get(key) ?? translate(DOMAIN_MESSAGES, language, "group.noTag"),
+        total: 0,
+        count: 0,
+      };
       b.total += value;
       b.count += 1;
       buckets.set(key, b);
@@ -381,8 +392,8 @@ export function groupByTag(
  * What sits beside a method's name: its network, then its type — "Autogiro ·
  * Bank transfer" — so two methods at the same bank read apart.
  */
-function methodDetail(method: PaymentMethod): string {
-  const type = PAYMENT_METHOD_TYPE_LABELS[method.type];
+function methodDetail(method: PaymentMethod, language: Language): string {
+  const type = translate(COMMON_MESSAGES, language, `methodType.${method.type}`);
   return method.network && method.network !== method.name ? `${method.network} · ${type}` : type;
 }
 
@@ -390,7 +401,8 @@ function methodDetail(method: PaymentMethod): string {
 export function groupByMethod(
   transactions: Transaction[],
   methods: PaymentMethod[],
-  ctx: MoneyContext
+  ctx: MoneyContext,
+  language: Language = "en"
 ): GroupedTotal[] {
   const byId = new Map(methods.map((m) => [m.id ?? "", m]));
   const buckets = new Map<string, Bucket>();
@@ -401,8 +413,10 @@ export function groupByMethod(
     const method = t.paymentMethodId ? byId.get(t.paymentMethodId) : undefined;
     const key = method && t.paymentMethodId ? t.paymentMethodId : NO_METHOD_KEY;
     const b = buckets.get(key) ?? {
-      label: method ? paymentMethodLabel(method) : "No method",
-      detail: method ? methodDetail(method) : undefined,
+      label: method
+        ? paymentMethodLabel(method)
+        : translate(DOMAIN_MESSAGES, language, "group.noMethod"),
+      detail: method ? methodDetail(method, language) : undefined,
       total: 0,
       count: 0,
     };

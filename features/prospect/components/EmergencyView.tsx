@@ -18,6 +18,9 @@ import type { CancelableGroups } from "../helpers/rankCancelable";
 import { errorMessage } from "../../../utils/errorMessage";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import type { Category, Currency } from "../../../types";
+import { usePreferences } from "../../../hooks/usePreferences";
+import { useT } from "../../../hooks/useT";
+import { PROSPECT_MESSAGES } from "../messages";
 import { EmergencyPanel } from "./EmergencyPanel";
 import { RunwayCard } from "./RunwayCard";
 
@@ -53,6 +56,8 @@ export function EmergencyView({
   const savings = useDomainValue("SAVING", categories, ctx);
   const investments = useDomainValue("INVESTMENT", categories, ctx);
   const { plan, save, error, loading: planLoading } = useEmergencyPlan();
+  const { language } = usePreferences();
+  const t = useT(PROSPECT_MESSAGES);
 
   const budget = useMemo(() => emergencyBudget(groups), [groups]);
   const income = useMemo(() => planInTarget(plan, ctx), [plan, ctx]);
@@ -63,10 +68,11 @@ export function EmergencyView({
   const runway = runwayMonths(emergency);
 
   const projection = useMemo(
-    () => emergencyProjection(keepEverything, emergency, chartHorizon(runway)),
+    () =>
+      emergencyProjection(keepEverything, emergency, chartHorizon(runway), new Date(), language),
     // The inputs are plain numbers; list them rather than two fresh objects.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [cushion, budget, income, runway]
+    [cushion, budget, income, runway, language]
   );
 
   // Until the saved plan arrives, `plan` is the zero fallback: neither the
@@ -79,8 +85,8 @@ export function EmergencyView({
     <div className="view">
       {valueError ? (
         <ErrorState
-          title="Couldn't read your savings"
-          description="The runway needs today's balances, so it isn't shown rather than counted from zero."
+          title={t("emergency.readError.title")}
+          description={t("emergency.readError.description")}
           error={valueError}
         />
       ) : (
@@ -100,13 +106,13 @@ export function EmergencyView({
           />
 
           <Card>
-            <SectionTitle title="Cushion over time" />
+            <SectionTitle title={t("emergency.chart.title")} />
             <FlowChart
               data={projection}
               currency={currency}
               loading={busy}
-              labelA="Keeping everything"
-              labelB="Emergency mode"
+              labelA={t("emergency.chart.keep")}
+              labelB={t("mode.emergency")}
               colorA="var(--fg-2)"
               colorB="var(--accent-hot)"
             />
@@ -122,7 +128,7 @@ export function EmergencyView({
               it, and an edit on the fallback would overwrite the real one. */}
           {planLoading ? (
             <Card>
-              <SectionTitle title="Emergency income" />
+              <SectionTitle title={t("panel.title")} />
               <Skeleton.Box width="100%" height={120} />
             </Card>
           ) : (
@@ -131,7 +137,7 @@ export function EmergencyView({
               onSave={save}
               investments={investments.value}
               currency={currency}
-              error={error ? errorMessage(error, "Couldn't save your emergency income.") : null}
+              error={error ? errorMessage(error, t("emergency.saveError")) : null}
             />
           )}
         </div>

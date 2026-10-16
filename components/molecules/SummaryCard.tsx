@@ -5,6 +5,8 @@ import type { BadgeTone } from "../atoms/Badge";
 import type { IconProps } from "../atoms/Icons";
 import { IconDisc } from "./IconDisc";
 import type { Domain } from "../../types";
+import { useT } from "../../hooks/useT";
+import { CHART_MESSAGES } from "../../messages/charts";
 
 export interface SummaryStat {
   key: string;
@@ -36,6 +38,7 @@ interface Props {
  * two figures line up.
  */
 export function SummaryCard({ title, badge, figure, sub, stats = [], note }: Props) {
+  const t = useT(CHART_MESSAGES);
   return (
     <Card>
       <div className="summary">
@@ -55,7 +58,7 @@ export function SummaryCard({ title, badge, figure, sub, stats = [], note }: Pro
             <ul
               className="grid"
               style={{ "--cols": stats.length } as React.CSSProperties}
-              aria-label={`${title} breakdown`}
+              aria-label={t("summary.breakdown", { title })}
             >
               {stats.map(({ key, label, domain, Icon, value }) => (
                 <li key={key} className="stat">

@@ -1,11 +1,11 @@
-import type { Frequency } from "../../../types";
+import { translate } from "../../../helpers/i18n";
+import type { Domain, Frequency, Language } from "../../../types";
+import { ONBOARDING_MESSAGES } from "../messages";
 
 export type CadenceSectionId = "monthly" | "yearly" | "other" | "oneTime";
 
 export interface CadenceSection {
   id: CadenceSectionId;
-  title: string;
-  hint: string;
   /** Which frequencies land in this section. */
   frequencies: readonly Frequency[];
   /** The frequency a row added from this section starts with. */
@@ -17,8 +17,6 @@ export interface CadenceSection {
    * others sit apart under "Less often" so an add aimed at it can't land in one.
    */
   primary: boolean;
-  /** The add chip's label, naming the cadence: "Add a monthly expense". */
-  addLabel: (noun: string, more: boolean) => string;
 }
 
 /**
@@ -29,43 +27,31 @@ export interface CadenceSection {
 export const CADENCE_SECTIONS: readonly CadenceSection[] = [
   {
     id: "monthly",
-    title: "Every month",
-    hint: "Salary, rent, subscriptions — anything that lands every month.",
     frequencies: ["MONTHLY"],
     defaultFrequency: "MONTHLY",
     recurring: true,
     primary: true,
-    addLabel: (noun, more) => `Add ${more ? "another" : "a"} monthly ${noun}`,
   },
   {
     id: "yearly",
-    title: "Once a year",
-    hint: "Annual plans, insurance renewals, taxes.",
     frequencies: ["YEARLY"],
     defaultFrequency: "YEARLY",
     recurring: true,
     primary: false,
-    addLabel: (noun, more) => `Add ${more ? "another" : "a"} yearly ${noun}`,
   },
   {
     id: "other",
-    title: "Other cadence",
-    hint: "Weekly, twice a month or quarterly.",
     frequencies: ["WEEKLY", "BIWEEKLY", "QUARTERLY"],
     defaultFrequency: "QUARTERLY",
     recurring: true,
     primary: false,
-    addLabel: (noun, more) => `Add ${more ? "another" : "an"} ${noun} on another cadence`,
   },
   {
     id: "oneTime",
-    title: "One-time",
-    hint: "A single payment on a specific date.",
     frequencies: ["ONE_TIME"],
     defaultFrequency: "ONE_TIME",
     recurring: false,
     primary: false,
-    addLabel: (noun, more) => `Add ${more ? "another" : "a"} one-time ${noun}`,
   },
 ];
 
@@ -73,4 +59,25 @@ export function sectionFor(frequency: Frequency): CadenceSection {
   const section = CADENCE_SECTIONS.find((s) => s.frequencies.includes(frequency));
   // Every Frequency is listed above; this is only for the type system.
   return section ?? CADENCE_SECTIONS[2];
+}
+
+export const cadenceTitle = (id: CadenceSectionId, language: Language = "en") =>
+  translate(ONBOARDING_MESSAGES, language, `cadence.${id}.title`);
+
+export const cadenceHint = (id: CadenceSectionId, language: Language = "en") =>
+  translate(ONBOARDING_MESSAGES, language, `cadence.${id}.hint`);
+
+/**
+ * The add chip's label, naming the cadence and what it adds: "Add a monthly
+ * expense", "Add another yearly income". One sentence per combination, so
+ * Spanish keeps its own word order and gender.
+ */
+export function cadenceAddLabel(
+  id: CadenceSectionId,
+  domain: Domain,
+  more: boolean,
+  language: Language = "en"
+): string {
+  const kind = domain === "INCOME" || domain === "EXPENSE" ? domain : "OTHER";
+  return translate(ONBOARDING_MESSAGES, language, `add.${id}.${kind}.${more ? "more" : "first"}`);
 }

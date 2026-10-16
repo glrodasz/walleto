@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { useRouter } from "next/router";
 import { monthKey, monthWindows } from "../features/domains/helpers/months";
 import type { MonthWindow } from "../features/domains/helpers/months";
+import type { Language } from "../types";
+import { usePreferences } from "./usePreferences";
 
 export const MONTH_QUERY = "month";
 const KEY_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -14,9 +16,9 @@ export function isMonthKey(value: unknown): value is string {
 }
 
 /** The window for one month key, with `isCurrent` judged against `now`. */
-export function windowForKey(key: string, now: Date): MonthWindow {
+export function windowForKey(key: string, now: Date, language: Language = "en"): MonthWindow {
   const [y, m] = key.split("-").map(Number);
-  const [w] = monthWindows(1, new Date(y, m - 1, 1));
+  const [w] = monthWindows(1, new Date(y, m - 1, 1), language);
   return { ...w, isCurrent: key === monthKey(now) };
 }
 
@@ -50,14 +52,14 @@ function clampKey(key: string, currentKey: string, oldest: string): string {
   return key < oldest ? oldest : key;
 }
 
-function defaultValue(now: Date): SelectedMonth {
+function defaultValue(now: Date, language: Language): SelectedMonth {
   const currentKey = monthKey(now);
   return {
     now,
     currentKey,
     selectedKey: currentKey,
-    window: windowForKey(currentKey, now),
-    pickerWindows: monthWindows(PICKER_MONTHS, now),
+    window: windowForKey(currentKey, now, language),
+    pickerWindows: monthWindows(PICKER_MONTHS, now, language),
     select: () => {},
     step: () => {},
   };
@@ -73,6 +75,8 @@ const SelectedMonthContext = createContext<SelectedMonth | null>(null);
  */
 export function MonthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  // Month labels follow the language, so PreferencesProvider sits above this one (pages/_app.tsx).
+  const { language } = usePreferences();
   const now = useMemo(() => new Date(), []);
   const currentKey = monthKey(now);
   const oldest = useMemo(() => oldestKey(now), [now]);
@@ -143,12 +147,12 @@ export function MonthProvider({ children }: { children: ReactNode }) {
       now,
       currentKey,
       selectedKey,
-      window: windowForKey(selectedKey, now),
-      pickerWindows: monthWindows(PICKER_MONTHS, now),
+      window: windowForKey(selectedKey, now, language),
+      pickerWindows: monthWindows(PICKER_MONTHS, now, language),
       select,
       step,
     }),
-    [now, currentKey, selectedKey, select, step]
+    [now, currentKey, selectedKey, select, step, language]
   );
 
   return <SelectedMonthContext.Provider value={value}>{children}</SelectedMonthContext.Provider>;
@@ -157,6 +161,7 @@ export function MonthProvider({ children }: { children: ReactNode }) {
 /** Without a provider (tests, isolated renders) the current month is selected and fixed. */
 export function useSelectedMonth(): SelectedMonth {
   const ctx = useContext(SelectedMonthContext);
-  const fallback = useMemo(() => defaultValue(new Date()), []);
+  const { language } = usePreferences();
+  const fallback = useMemo(() => defaultValue(new Date(), language), [language]);
   return ctx ?? fallback;
 }

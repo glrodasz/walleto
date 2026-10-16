@@ -11,14 +11,18 @@ import {
   CreditCard,
 } from "../../../components/atoms/Icons";
 import suggestionsByDomain from "../data/categorySuggestions.json";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { UI_MESSAGES } from "../../../messages/ui";
 import type { Category, Domain } from "../../../types";
+import { ONBOARDING_MESSAGES } from "../messages";
 
-const SECTIONS: { domain: Domain; label: string; Icon: typeof TrendingUp }[] = [
-  { domain: "INCOME", label: "Income", Icon: TrendingUp },
-  { domain: "EXPENSE", label: "Expenses", Icon: TrendingDown },
-  { domain: "INVESTMENT", label: "Investments", Icon: Briefcase },
-  { domain: "SAVING", label: "Savings", Icon: Lifebuoy },
-  { domain: "DEBT", label: "Debts", Icon: CreditCard },
+const SECTIONS: { domain: Domain; Icon: typeof TrendingUp }[] = [
+  { domain: "INCOME", Icon: TrendingUp },
+  { domain: "EXPENSE", Icon: TrendingDown },
+  { domain: "INVESTMENT", Icon: Briefcase },
+  { domain: "SAVING", Icon: Lifebuoy },
+  { domain: "DEBT", Icon: CreditCard },
 ];
 
 type Section = (typeof SECTIONS)[number];
@@ -32,7 +36,10 @@ interface SectionProps extends Section {
   remove: ReturnType<typeof useCategories>["remove"];
 }
 
-function CategorySection({ domain, label, Icon, roots, loading, create, remove }: SectionProps) {
+function CategorySection({ domain, Icon, roots, loading, create, remove }: SectionProps) {
+  const t = useT(ONBOARDING_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
+  const tu = useT(UI_MESSAGES);
   const [adding, setAdding] = useState(false);
 
   // Don't suggest what the user already has.
@@ -54,7 +61,7 @@ function CategorySection({ domain, label, Icon, roots, loading, create, remove }
     <section className="section">
       <h2 className="heading">
         <Icon size={18} />
-        {label}
+        {tc(`domain.${domain}`)}
       </h2>
 
       <div className="chips" aria-busy={loading || undefined}>
@@ -67,7 +74,7 @@ function CategorySection({ domain, label, Icon, roots, loading, create, remove }
           <Chip
             key={cat.id}
             onRemove={() => cat.id && remove(cat.id).catch(console.error)}
-            removeLabel={`Remove ${cat.name}`}
+            removeLabel={tc("action.removeItem", { name: cat.name })}
           >
             {cat.name}
           </Chip>
@@ -76,15 +83,15 @@ function CategorySection({ domain, label, Icon, roots, loading, create, remove }
         {adding ? (
           <Combobox
             autoFocus
-            label={`New ${label} category`}
-            placeholder="Search or create"
+            label={t(`categories.new.${domain}`)}
+            placeholder={tu("combobox.placeholder")}
             suggestions={suggestions}
             onSelect={commit}
             onCancel={() => setAdding(false)}
           />
         ) : loading ? null : (
           <Chip variant="add" onClick={() => setAdding(true)}>
-            Add category
+            {t("categories.add")}
           </Chip>
         )}
       </div>
@@ -140,8 +147,9 @@ export function CategoriesStep() {
   // One listener for all five sections: a brand-new user used to wait on five
   // separate queries, each painting its section whenever it happened to land.
   const { categories, loading, error, create, remove } = useCategories();
+  const t = useT(ONBOARDING_MESSAGES);
 
-  if (error) return <ErrorState title="Couldn't load your categories" error={error} />;
+  if (error) return <ErrorState title={t("categories.loadFailed")} error={error} />;
 
   // Only top-level categories belong in this step; subcategories come later.
   const rootsFor = (domain: Domain) => categories.filter((c) => c.domain === domain && !c.parentId);

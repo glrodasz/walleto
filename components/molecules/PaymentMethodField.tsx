@@ -10,11 +10,15 @@ import {
   CARD_TYPES,
   NETWORK_SUGGESTIONS,
   last4Error,
-  PAYMENT_METHOD_TYPE_OPTIONS,
   networkFieldLabel,
+  paymentMethodTypeOptions,
   sortByName,
 } from "../../helpers/paymentMethodOptions";
 import { errorMessage } from "../../utils/errorMessage";
+import { usePreferences } from "../../hooks/usePreferences";
+import { useT } from "../../hooks/useT";
+import { COMMON_MESSAGES } from "../../messages/common";
+import { FIELD_MESSAGES } from "../../messages/fields";
 import type { PaymentMethodInput } from "../../schemas";
 import type { PaymentMethod, PaymentMethodType } from "../../types";
 
@@ -54,6 +58,9 @@ export function PaymentMethodField({
   allowNone = true,
   disabled,
 }: Props) {
+  const { language } = usePreferences();
+  const t = useT(FIELD_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [busy, setBusy] = useState(false);
@@ -61,7 +68,7 @@ export function PaymentMethodField({
 
   const options = sortByName(methods).map((m) => ({
     value: m.id!,
-    label: paymentMethodOptionLabel(m),
+    label: paymentMethodOptionLabel(m, language),
   }));
   const suggestions = draft.type ? NETWORK_SUGGESTIONS[draft.type] : undefined;
   const showNetwork = Boolean(suggestions);
@@ -74,9 +81,9 @@ export function PaymentMethodField({
   };
 
   const save = async () => {
-    if (!draft.type) return onError?.("Pick a method type");
-    if (!draft.name.trim()) return onError?.("Give the method a name");
-    const last4Problem = showLast4 ? last4Error(draft.last4) : null;
+    if (!draft.type) return onError?.(t("method.pickType"));
+    if (!draft.name.trim()) return onError?.(t("method.nameRequired"));
+    const last4Problem = showLast4 ? last4Error(draft.last4, language) : null;
     if (last4Problem) {
       setAttempted(true);
       return onError?.(last4Problem);
@@ -93,7 +100,7 @@ export function PaymentMethodField({
       cancel();
     } catch (err) {
       console.error("Failed to create payment method:", err);
-      onError?.(errorMessage(err, "Couldn't create the payment method"));
+      onError?.(errorMessage(err, t("method.createFailed")));
     } finally {
       setBusy(false);
     }
@@ -101,11 +108,11 @@ export function PaymentMethodField({
 
   if (creating) {
     return (
-      <div className="creator" role="group" aria-label="New payment method">
+      <div className="creator" role="group" aria-label={t("method.new")}>
         <Select
-          label="Type"
-          placeholder="Select a type"
-          options={PAYMENT_METHOD_TYPE_OPTIONS}
+          label={t("method.type")}
+          placeholder={t("method.selectType")}
+          options={paymentMethodTypeOptions(language)}
           value={draft.type}
           disabled={busy}
           onValueChange={(v) =>
@@ -114,9 +121,9 @@ export function PaymentMethodField({
         />
         {showNetwork && draft.type && (
           <Combobox
-            label={networkFieldLabel(draft.type)}
-            fieldLabel={networkFieldLabel(draft.type)}
-            placeholder="Search or type your own"
+            label={networkFieldLabel(draft.type, language)}
+            fieldLabel={networkFieldLabel(draft.type, language)}
+            placeholder={t("method.searchOrType")}
             suggestions={suggestions ?? []}
             value={draft.network}
             disabled={busy}
@@ -132,18 +139,18 @@ export function PaymentMethodField({
           />
         )}
         <TextField
-          label="Alias"
-          placeholder="Ex: Chase Sapphire"
+          label={t("method.alias")}
+          placeholder={t("method.aliasPlaceholder")}
           value={draft.name}
           disabled={busy}
           onValueChange={(name) => setDraft((d) => ({ ...d, name }))}
         />
         <div className="creator-actions">
           <Button variant="ghost" size="sm" onClick={cancel} disabled={busy}>
-            Cancel
+            {tc("action.cancel")}
           </Button>
           <Button variant="primary" size="sm" onClick={save} disabled={busy}>
-            {busy ? "Saving…" : "Save method"}
+            {busy ? tc("action.saving") : t("method.save")}
           </Button>
         </div>
 
@@ -170,8 +177,8 @@ export function PaymentMethodField({
   return (
     <div className="method">
       <Select
-        label="Payment method"
-        placeholder={allowNone ? "None" : "Pick a method"}
+        label={tc("noun.paymentMethod")}
+        placeholder={allowNone ? tc("state.none") : t("method.pick")}
         options={options}
         value={value}
         disabled={disabled}
@@ -180,7 +187,7 @@ export function PaymentMethodField({
       {!disabled && (
         <div className="method-add">
           <Chip variant="add" onClick={() => setCreating(true)}>
-            New method
+            {t("method.newShort")}
           </Chip>
         </div>
       )}

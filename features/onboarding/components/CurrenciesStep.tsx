@@ -2,6 +2,8 @@ import { InfoTip } from "../../../components/atoms/InfoTip";
 import { CurrencyToggles } from "../../../components/molecules/CurrencyToggles";
 import { CurrencyPicker } from "./CurrencyPicker";
 import type { useCurrenciesStep } from "../hooks/useCurrenciesStep";
+import { useT } from "../../../hooks/useT";
+import { ONBOARDING_MESSAGES } from "../messages";
 
 interface Props {
   state: ReturnType<typeof useCurrenciesStep>;
@@ -14,6 +16,7 @@ interface Props {
  */
 export function CurrenciesStep({ state }: Props) {
   const { currency, setCurrency, enabled, locked, toggle } = state;
+  const t = useT(ONBOARDING_MESSAGES);
 
   return (
     <div className="step">
@@ -22,16 +25,12 @@ export function CurrenciesStep({ state }: Props) {
       <section className="offered">
         <header className="head">
           <h2 className="heading">
-            Currencies you use
-            <InfoTip label="About turning off a currency" placement="bottom">
-              Amounts already saved in a currency you turn off keep it — it just stops being offered
-              for new ones.
+            {t("currencies.used")}
+            <InfoTip label={t("currencies.turnOffLabel")} placement="bottom">
+              {t("currencies.turnOffTip")}
             </InfoTip>
           </h2>
-          <p className="hint">
-            Turn on every currency you earn or pay in — these are the ones offered when you enter an
-            amount.
-          </p>
+          <p className="hint">{t("currencies.usedHint")}</p>
         </header>
         <CurrencyToggles enabled={enabled} locked={locked} onToggle={toggle} />
       </section>

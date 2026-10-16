@@ -1,6 +1,8 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useOverlayLayer } from "../../hooks/useOverlayLayer";
+import { useT } from "../../hooks/useT";
+import { UI_MESSAGES } from "../../messages/ui";
 import { computeListPosition } from "../../utils/computeListPosition";
 import { computeScrollIntoBand } from "../../utils/computeScrollIntoBand";
 import type { ViewportBox } from "../../utils/computeListPosition";
@@ -92,13 +94,14 @@ export function Combobox({
   suggestions,
   onSelect,
   onCancel,
-  placeholder = "Search or create",
+  placeholder,
   label,
   autoFocus,
   disabled,
   value,
   fieldLabel,
 }: Props) {
+  const t = useT(UI_MESSAGES);
   const isControlled = value !== undefined;
   const [internalDraft, setInternalDraft] = useState("");
   const draft = isControlled ? value : internalDraft;
@@ -263,7 +266,7 @@ export function Combobox({
         aria-autocomplete="list"
         aria-activedescendant={showList ? `${listId}-${highlight}` : undefined}
         aria-label={label}
-        placeholder={placeholder}
+        placeholder={placeholder ?? t("combobox.placeholder")}
         // iOS autocorrect silently rewriting a typed name before it commits is
         // a real way to end up with a category you never asked for.
         autoCorrect="off"
@@ -336,7 +339,7 @@ export function Combobox({
               >
                 {i === createIndex ? (
                   <>
-                    Create <strong>&ldquo;{option}&rdquo;</strong>
+                    {t("combobox.create")} <strong>&ldquo;{option}&rdquo;</strong>
                   </>
                 ) : (
                   option

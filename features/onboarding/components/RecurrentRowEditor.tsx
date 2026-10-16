@@ -2,7 +2,10 @@ import { Select } from "../../../components/atoms/Select";
 import { TextField } from "../../../components/atoms/TextField";
 import { ScheduleFields } from "../../../components/molecules/ScheduleFields";
 import { EditorFooter } from "../../../components/molecules/EditorFooter";
-import { CURRENCY_SYMBOL, FREQUENCY_LABELS } from "../../../constants";
+import { CURRENCY_SYMBOL } from "../../../constants";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { ONBOARDING_MESSAGES } from "../messages";
 import { useEnabledCurrencies } from "../../../hooks/useEnabledCurrencies";
 import { useDecimalInput } from "../../../hooks/useDecimalInput";
 import type { CadenceSection } from "../helpers/cadenceSections";
@@ -39,14 +42,16 @@ export function RecurrentRowEditor({
 }: Props) {
   const { optionsFor } = useEnabledCurrencies();
   const { sanitize } = useDecimalInput();
+  const t = useT(ONBOARDING_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
 
   return (
     <div className="row">
       <div className="fields">
         <div className="field field--category">
           <Select
-            label="Category"
-            placeholder="Main category"
+            label={tc("noun.category")}
+            placeholder={t("row.mainCategory")}
             options={categoryOptions}
             value={row.categoryId}
             onValueChange={(value) => onChange({ categoryId: value })}
@@ -54,15 +59,15 @@ export function RecurrentRowEditor({
         </div>
         <div className="field field--name">
           <TextField
-            label="Name"
-            placeholder="Name"
+            label={tc("noun.name")}
+            placeholder={tc("noun.name")}
             value={row.name}
             onValueChange={(value) => onChange({ name: value })}
           />
         </div>
         <div className="field field--amount">
           <TextField
-            label="Amount"
+            label={tc("noun.amount")}
             placeholder="0"
             inputMode="decimal"
             prefix={CURRENCY_SYMBOL[row.currency]}
@@ -73,7 +78,7 @@ export function RecurrentRowEditor({
         </div>
         <div className="field field--currency">
           <Select
-            label="Currency"
+            label={tc("noun.currency")}
             options={optionsFor(row.currency)}
             value={row.currency}
             onValueChange={(value) => onChange({ currency: value as Currency })}
@@ -82,8 +87,11 @@ export function RecurrentRowEditor({
         <div className="field field--schedule">
           {section.id === "other" && (
             <Select
-              label="Cadence"
-              options={section.frequencies.map((f) => ({ value: f, label: FREQUENCY_LABELS[f] }))}
+              label={t("row.cadence")}
+              options={section.frequencies.map((f) => ({
+                value: f,
+                label: tc(`frequency.${f}`),
+              }))}
               value={row.frequency}
               onValueChange={(v) => onChange({ frequency: v as Frequency })}
             />
@@ -93,8 +101,8 @@ export function RecurrentRowEditor({
         {methodOptions && (
           <div className="field field--method">
             <Select
-              label="Payment method"
-              placeholder="None"
+              label={tc("noun.paymentMethod")}
+              placeholder={tc("state.none")}
               options={methodOptions}
               value={row.paymentMethodId}
               onValueChange={(value) => onChange({ paymentMethodId: value })}
@@ -104,7 +112,12 @@ export function RecurrentRowEditor({
       </div>
 
       {/* Always open, so there's nothing for a "Done" to close. */}
-      <EditorFooter onRemove={onRemove} removeLabel={`Remove ${row.name || "row"}`} />
+      <EditorFooter
+        onRemove={onRemove}
+        removeLabel={
+          row.name ? tc("action.removeItem", { name: row.name }) : t("row.removeUnnamed")
+        }
+      />
 
       <style jsx>{`
         /* A card set into the panel's inset: one step darker, so one row reads

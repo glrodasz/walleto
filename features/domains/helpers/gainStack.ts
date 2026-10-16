@@ -1,5 +1,7 @@
 import type { StackedTotals } from "../../../helpers/stacks";
-import type { Domain } from "../../../types";
+import { translate } from "../../../helpers/i18n";
+import type { Domain, Language } from "../../../types";
+import { DOMAIN_MESSAGES } from "../messages";
 
 /**
  * Cannot collide with a stack key: category mode keys are Firestore ids plus
@@ -10,8 +12,8 @@ export const GAIN_KEY = "__gain";
 export const GAIN_COLOR = "var(--bar-gain)";
 
 /** What a value check's delta is called: a market gain, or on a debt the interest it revealed. */
-export function gainLabel(domain: Domain): string {
-  return domain === "DEBT" ? "Interest" : "Gain";
+export function gainLabel(domain: Domain, language: Language = "en"): string {
+  return translate(DOMAIN_MESSAGES, language, domain === "DEBT" ? "gain.interest" : "gain.gain");
 }
 
 /**

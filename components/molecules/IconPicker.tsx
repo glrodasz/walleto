@@ -1,5 +1,7 @@
 import { ICON_KEYS } from "../../constants";
 import { CATEGORY_ICONS } from "../atoms/CategoryIcon";
+import { useT } from "../../hooks/useT";
+import { FIELD_MESSAGES } from "../../messages/fields";
 import type { IconKey } from "../../types";
 
 interface Props {
@@ -10,9 +12,10 @@ interface Props {
 }
 
 /** The curated icon grid a category can pick from. Radios, so it is keyboardable. */
-export function IconPicker({ value, onChange, label = "Icon", disabled }: Props) {
+export function IconPicker({ value, onChange, label, disabled }: Props) {
+  const t = useT(FIELD_MESSAGES);
   return (
-    <div className="grid" role="radiogroup" aria-label={label}>
+    <div className="grid" role="radiogroup" aria-label={label ?? t("icon.label")}>
       {ICON_KEYS.map((key) => {
         const Icon = CATEGORY_ICONS[key];
         const active = key === value;
@@ -22,8 +25,8 @@ export function IconPicker({ value, onChange, label = "Icon", disabled }: Props)
             type="button"
             role="radio"
             aria-checked={active}
-            aria-label={key}
-            title={key}
+            aria-label={t(`icon.${key}`)}
+            title={t(`icon.${key}`)}
             disabled={disabled}
             className={`cell${active ? " is-active" : ""}`}
             onClick={() => onChange(key)}

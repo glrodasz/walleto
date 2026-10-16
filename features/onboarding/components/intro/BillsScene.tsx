@@ -3,14 +3,22 @@ import { Badge } from "../../../../components/atoms/Badge";
 import { Home } from "../../../../components/atoms/Icons";
 import { SceneBit } from "./SceneBit";
 import { SceneCanvas } from "./SceneCanvas";
+import { useT } from "../../../../hooks/useT";
+import { ONBOARDING_MESSAGES } from "../../messages";
 
-const BILLS = ["Rent", "Utilities", "Gym", "Netflix"];
+const BILLS = [
+  "scene.bill.rent",
+  "scene.bill.utilities",
+  "scene.bill.gym",
+  "scene.bill.netflix",
+] as const;
 
 /**
  * "The bills you remember": bills drop in, then the ones you remember pop up
  * underneath, with room for more.
  */
 export function BillsScene() {
+  const t = useT(ONBOARDING_MESSAGES);
   return (
     <SceneCanvas>
       <div className="at item">
@@ -19,7 +27,7 @@ export function BillsScene() {
             <IconDisc domain="EXPENSE" size={60}>
               <Home size={26} />
             </IconDisc>
-            <span className="caption">Bills</span>
+            <span className="caption">{t("scene.bills")}</span>
           </span>
         </SceneBit>
       </div>
@@ -27,11 +35,11 @@ export function BillsScene() {
       <div className="at chips">
         {BILLS.map((bill, n) => (
           <SceneBit key={bill} i={1 + n} inline>
-            <Badge color="var(--domain-expense)">{bill}</Badge>
+            <Badge color="var(--domain-expense)">{t(bill)}</Badge>
           </SceneBit>
         ))}
         <SceneBit i={1 + BILLS.length} inline>
-          <Badge variant="outline">+ later</Badge>
+          <Badge variant="outline">{t("scene.addLater")}</Badge>
         </SceneBit>
       </div>
 

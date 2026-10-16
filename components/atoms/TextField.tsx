@@ -1,6 +1,8 @@
 import { useId } from "react";
 import type { InputHTMLAttributes, ReactNode } from "react";
 import { InfoTip } from "./InfoTip";
+import { useT } from "../../hooks/useT";
+import { UI_MESSAGES } from "../../messages/ui";
 
 interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, "onChange"> {
   label?: string;
@@ -31,6 +33,7 @@ export function TextField({
   className,
   ...rest
 }: Props) {
+  const t = useT(UI_MESSAGES);
   const generatedId = useId();
   const inputId = id ?? generatedId;
 
@@ -41,7 +44,7 @@ export function TextField({
           <label className="label" htmlFor={inputId}>
             {label}
           </label>
-          {hint && <InfoTip label="More information">{hint}</InfoTip>}
+          {hint && <InfoTip label={t("field.moreInfo")}>{hint}</InfoTip>}
         </div>
       )}
       <div className="control">

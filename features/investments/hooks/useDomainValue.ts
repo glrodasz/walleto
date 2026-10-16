@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useAccounts } from "../../../hooks/useAccounts";
 import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
 import { useAllInvestmentValuations } from "../../../hooks/useInvestmentValuations";
-import { ACCOUNT_NOUN } from "../../../helpers/accounts";
+import { usePreferences } from "../../../hooks/usePreferences";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { INCEPTION, withDomain } from "../helpers/valuation";
 import { domainValueRows, domainValueTotals } from "../helpers/domainValue";
@@ -44,18 +44,10 @@ export function useDomainValue(
 
   const valuations = useMemo(() => withDomain(raw, categories), [raw, categories]);
   const now = useMemo(() => new Date(), []);
+  const { language } = usePreferences();
   const rows = useMemo(
-    () =>
-      domainValueRows(
-        accounts,
-        transactions,
-        valuations,
-        domain,
-        ACCOUNT_NOUN[domain].singular,
-        ctx,
-        now
-      ),
-    [accounts, transactions, valuations, domain, ctx, now]
+    () => domainValueRows(accounts, transactions, valuations, domain, ctx, now, language),
+    [accounts, transactions, valuations, domain, ctx, now, language]
   );
   const totals = useMemo(() => domainValueTotals(rows), [rows]);
 

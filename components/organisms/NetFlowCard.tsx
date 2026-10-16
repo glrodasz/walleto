@@ -3,6 +3,9 @@ import { ArrowDown, ArrowUpRight, Circle, CreditCard, TrendingUp } from "../atom
 import { SummaryCard } from "../molecules/SummaryCard";
 import type { SummaryStat } from "../molecules/SummaryCard";
 import { useMoneyFormat } from "../../hooks/useMoneyFormat";
+import { useT } from "../../hooks/useT";
+import { CHART_MESSAGES } from "../../messages/charts";
+import { COMMON_MESSAGES } from "../../messages/common";
 import type { Currency } from "../../types";
 import type { MoneyFlow } from "../../helpers";
 
@@ -18,12 +21,12 @@ interface Props {
   stats?: (keyof MoneyFlow)[];
 }
 
-const STATS: (Omit<SummaryStat, "value"> & { key: keyof MoneyFlow })[] = [
-  { key: "income", label: "Income", domain: "INCOME", Icon: ArrowUpRight },
-  { key: "expenses", label: "Expenses", domain: "EXPENSE", Icon: ArrowDown },
-  { key: "investments", label: "Investments", domain: "INVESTMENT", Icon: TrendingUp },
-  { key: "savings", label: "Savings", domain: "SAVING", Icon: Circle },
-  { key: "debts", label: "Debts", domain: "DEBT", Icon: CreditCard },
+const STATS: (Omit<SummaryStat, "value" | "label"> & { key: keyof MoneyFlow })[] = [
+  { key: "income", domain: "INCOME", Icon: ArrowUpRight },
+  { key: "expenses", domain: "EXPENSE", Icon: ArrowDown },
+  { key: "investments", domain: "INVESTMENT", Icon: TrendingUp },
+  { key: "savings", domain: "SAVING", Icon: Circle },
+  { key: "debts", domain: "DEBT", Icon: CreditCard },
 ];
 
 /**
@@ -36,16 +39,18 @@ const STATS: (Omit<SummaryStat, "value"> & { key: keyof MoneyFlow })[] = [
  */
 export function NetFlowCard({ flow, currency, approximate = false, stats }: Props) {
   const { formatAmount } = useMoneyFormat();
+  const t = useT(CHART_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
   // The verdict the pill gives: does the plan fit inside what comes in?
   const overCommitted = flow.net < 0;
 
   return (
     <SummaryCard
-      title="Monthly plan"
+      title={t("netFlow.title")}
       badge={
         overCommitted
-          ? { label: "Over-committed", tone: "danger" }
-          : { label: "On plan", tone: "success" }
+          ? { label: t("netFlow.overCommitted"), tone: "danger" }
+          : { label: t("netFlow.onPlan"), tone: "success" }
       }
       figure={
         <Amount
@@ -56,13 +61,10 @@ export function NetFlowCard({ flow, currency, approximate = false, stats }: Prop
           approximate={approximate}
         />
       }
-      sub={
-        overCommitted
-          ? "more planned out than coming in, each month"
-          : "left to allocate each month"
-      }
+      sub={overCommitted ? t("netFlow.overSub") : t("netFlow.leftSub")}
       stats={STATS.filter((s) => !stats || stats.includes(s.key)).map((s) => ({
         ...s,
+        label: tc(`domain.${s.domain}`),
         value: formatAmount(flow[s.key], currency),
       }))}
     />

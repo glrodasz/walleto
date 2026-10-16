@@ -1,5 +1,6 @@
 import { formatDate } from "../../../helpers/dates";
 import type { FlowPoint } from "../../../helpers/chartData";
+import type { Language } from "../../../types";
 
 /**
  * Cumulative cash position over the next `months`, with and without the
@@ -12,13 +13,14 @@ export function buildWhatIfProjection(
   currentMonthlyNet: number,
   freedMonthly: number,
   months: number,
-  now: Date = new Date()
+  now: Date = new Date(),
+  language: Language = "en"
 ): FlowPoint[] {
   const points: FlowPoint[] = [];
   for (let i = 1; i <= months; i++) {
     const date = new Date(now.getFullYear(), now.getMonth() + i, 1);
     points.push({
-      label: formatDate(date, "month"),
+      label: formatDate(date, "month", undefined, language),
       income: currentMonthlyNet * i,
       expense: (currentMonthlyNet + freedMonthly) * i,
     });

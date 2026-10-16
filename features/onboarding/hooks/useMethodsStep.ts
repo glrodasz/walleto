@@ -2,15 +2,13 @@ import { useMemo, useState } from "react";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { useDraftRows } from "../../../hooks/useDraftRows";
 import type { DraftRow } from "../../../hooks/useDraftRows";
-import {
-  CARD_TYPES,
-  LAST4_ERROR,
-  NETWORK_SUGGESTIONS,
-  last4Error,
-} from "../../../helpers/paymentMethodOptions";
+import { CARD_TYPES, NETWORK_SUGGESTIONS, last4Error } from "../../../helpers/paymentMethodOptions";
+import { translate } from "../../../helpers/i18n";
+import { usePreferences } from "../../../hooks/usePreferences";
 import { UserFacingError } from "../../../utils/errorMessage";
 import { saveAll } from "../../../utils/saveAll";
-import type { PaymentMethod, PaymentMethodType } from "../../../types";
+import type { Language, PaymentMethod, PaymentMethodType } from "../../../types";
+import { ONBOARDING_MESSAGES } from "../messages";
 import type { PaymentMethodUpdate } from "../../../schemas";
 
 export interface MethodRow extends DraftRow {
@@ -20,17 +18,20 @@ export interface MethodRow extends DraftRow {
   name: string;
 }
 
-export const ALIAS_ERROR = "Every payment method needs an alias";
+/** The English message, for tests; the UI reads it in the user's language through `rowProblem`. */
+export const ALIAS_ERROR = translate(ONBOARDING_MESSAGES, "en", "methods.aliasRequired");
 
 /**
  * Why a row can't be saved as it stands, or null. A new row without a type
  * or an alias isn't an error — it's skipped, as it always was — but a saved
  * one whose alias was cleared can't be, or the edit would vanish.
  */
-export function rowProblem(row: MethodRow): string | null {
+export function rowProblem(row: MethodRow, language: Language = "en"): string | null {
   if (!row.type) return null;
-  if (!row.name.trim()) return row.id ? ALIAS_ERROR : null;
-  if (CARD_TYPES.includes(row.type) && last4Error(row.last4)) return LAST4_ERROR;
+  if (!row.name.trim()) {
+    return row.id ? translate(ONBOARDING_MESSAGES, language, "methods.aliasRequired") : null;
+  }
+  if (CARD_TYPES.includes(row.type)) return last4Error(row.last4, language);
   return null;
 }
 
@@ -66,6 +67,7 @@ interface Options {
 
 export function useMethodsStep({ hydrate = true }: Options = {}) {
   const { methods, loading, create, update, remove } = usePaymentMethods();
+  const { language } = usePreferences();
 
   const saved = useMemo(
     () =>
@@ -116,7 +118,7 @@ export function useMethodsStep({ hydrate = true }: Options = {}) {
    * doesn't duplicate them.
    */
   const save = async () => {
-    const problem = draft.rows.map(rowProblem).find(Boolean);
+    const problem = draft.rows.map((row) => rowProblem(row, language)).find(Boolean);
     if (problem) {
       setAttempt((n) => n + 1);
       throw new UserFacingError(problem);

@@ -6,6 +6,8 @@ import { categoryIdSet } from "../../../helpers/categoryTree";
 import type { HiddenReason } from "../../../helpers/hidden";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import type { MoneyContext } from "../../../helpers/aggregations";
+import { useT } from "../../../hooks/useT";
+import { DOMAIN_MESSAGES } from "../messages";
 import type {
   Category,
   Currency,
@@ -58,6 +60,7 @@ export function CategoryDrilldown({
   deletingId,
   extras,
 }: Props) {
+  const t = useT(DOMAIN_MESSAGES);
   const children = useMemo(
     () => categories.filter((c) => c.parentId === category.id),
     [categories, category.id]
@@ -72,13 +75,13 @@ export function CategoryDrilldown({
   return (
     <div className="drill">
       <button type="button" className="back" onClick={onBack}>
-        ‹ All categories
+        {t("drill.back")}
       </button>
 
       {children.length > 0 && (
-        <div className="chips" role="group" aria-label="Subcategory">
+        <div className="chips" role="group" aria-label={t("drill.subcategory")}>
           <Chip selected={subId === null} onClick={() => setSubId(null)}>
-            All
+            {t("drill.all")}
           </Chip>
           {children.map((c) => (
             <Chip key={c.id} selected={subId === c.id} onClick={() => setSubId(c.id ?? null)}>

@@ -1,8 +1,14 @@
+import { LABEL_MESSAGES } from "../messages/labels";
+import { translate } from "./i18n";
 import { formatNumber } from "./money";
 import type { DecimalSeparator } from "../utils/decimal";
-import type { AccountDomain, Domain, InterestRate, TransactionDirection } from "../types";
+import type { AccountDomain, Domain, InterestRate, Language, TransactionDirection } from "../types";
 
-/** How the UI names an account in each domain that has them. */
+/**
+ * How the UI names an account in each domain that has them (English only:
+ * feature code still composes sentences with it; translated copy writes
+ * whole sentences per domain instead).
+ */
 export const ACCOUNT_NOUN: Record<AccountDomain, { singular: string; article: string }> = {
   INVESTMENT: { singular: "account", article: "an investment account" },
   SAVING: { singular: "pocket", article: "a savings pocket" },
@@ -18,9 +24,13 @@ export function isAccountDomain(domain: Domain): domain is AccountDomain {
 }
 
 /** "2.5% yearly" / "0.4% monthly", for pills and rows, in the user's separator. */
-export function formatInterestRate(rate: InterestRate, separator: DecimalSeparator = "."): string {
+export function formatInterestRate(
+  rate: InterestRate,
+  separator: DecimalSeparator = ".",
+  language: Language = "en"
+): string {
   const value = formatNumber(rate.value, { maxDecimals: 2, separator });
-  return `${value}% ${rate.period === "YEARLY" ? "yearly" : "monthly"}`;
+  return translate(LABEL_MESSAGES, language, `rate.${rate.period}`, { value });
 }
 
 /** "Avanza - ISK" when the account names its bank or broker, the bare name otherwise. */
@@ -38,7 +48,14 @@ export function sortAccountsByLabel<T extends { name: string; provider?: string 
 }
 
 /** What a one-off row's direction is called on this kind of account. */
-export function directionLabel(domain: AccountDomain, direction: TransactionDirection): string {
-  if (domain === "DEBT") return direction === "OUT" ? "Borrowed" : "Repayment";
-  return direction === "OUT" ? "Withdrawal" : "Deposit";
+export function directionLabel(
+  domain: AccountDomain,
+  direction: TransactionDirection,
+  language: Language = "en"
+): string {
+  const key =
+    domain === "DEBT"
+      ? (`direction.DEBT.${direction}` as const)
+      : (`direction.${direction}` as const);
+  return translate(LABEL_MESSAGES, language, key);
 }

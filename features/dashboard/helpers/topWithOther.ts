@@ -1,3 +1,7 @@
+import { translate } from "../../../helpers/i18n";
+import type { Language } from "../../../types";
+import { DASHBOARD_MESSAGES } from "../messages";
+
 export interface CategoryRow {
   categoryId: string;
   name: string;
@@ -9,7 +13,11 @@ export interface CategoryRow {
  * Caps a category breakdown at `limit` rows, folding the remainder into a
  * single "Other" bucket so the bars always account for 100% of the money.
  */
-export function topWithOther(rows: CategoryRow[], limit: number): CategoryRow[] {
+export function topWithOther(
+  rows: CategoryRow[],
+  limit: number,
+  language: Language = "en"
+): CategoryRow[] {
   if (rows.length <= limit) return rows;
 
   const top = rows.slice(0, limit);
@@ -18,7 +26,7 @@ export function topWithOther(rows: CategoryRow[], limit: number): CategoryRow[] 
     ...top,
     {
       categoryId: "__other",
-      name: "Other",
+      name: translate(DASHBOARD_MESSAGES, language, "category.other"),
       amount: rest.reduce((sum, r) => sum + r.amount, 0),
       percent: rest.reduce((sum, r) => sum + r.percent, 0),
     },

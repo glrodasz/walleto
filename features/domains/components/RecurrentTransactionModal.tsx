@@ -31,13 +31,12 @@ import { directionLabel, isAccountDomain } from "../../../helpers/accounts";
 import { isEssential } from "../../../helpers/essential";
 import {
   anchorStartDate,
-  backfillPeriodLabel,
+  backfillMonths,
   isSameSchedule,
   scheduleChoiceFromStartDate,
   toDateInputValue,
 } from "../../../helpers/scheduleAnchor";
-import { DOMAIN_CONFIG } from "../helpers/domainConfig";
-import { CURRENCY_SYMBOL, FREQUENCY_LABELS } from "../../../constants";
+import { CURRENCY_SYMBOL } from "../../../constants";
 import { useEnabledCurrencies } from "../../../hooks/useEnabledCurrencies";
 import { useDecimalInput } from "../../../hooks/useDecimalInput";
 import type {
@@ -49,11 +48,19 @@ import type {
   TransactionDirection,
 } from "../../../types";
 import { useDateFormat } from "../../../hooks/usePreferences";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { DOMAIN_MESSAGES } from "../messages";
+import { SLOT, splitSlot } from "../helpers/slot";
 
-const FREQUENCY_OPTIONS = (Object.keys(FREQUENCY_LABELS) as Frequency[]).map((f) => ({
-  value: f,
-  label: FREQUENCY_LABELS[f],
-}));
+const FREQUENCIES: Frequency[] = [
+  "ONE_TIME",
+  "WEEKLY",
+  "BIWEEKLY",
+  "MONTHLY",
+  "QUARTERLY",
+  "YEARLY",
+];
 
 interface Props {
   domain: Domain;
@@ -112,11 +119,15 @@ export function RecurrentTransactionModal({
   onOpenItem,
   onClose,
 }: Props) {
-  const { formatDate } = useDateFormat();
+  const { formatDate, language } = useDateFormat();
   const { formatAmount } = useMoneyFormat();
   const decimal = useDecimalInput();
-  const config = DOMAIN_CONFIG[domain];
-  const noun = config.noun.replace(/s$/, "");
+  const t = useT(DOMAIN_MESSAGES);
+  const common = useT(COMMON_MESSAGES);
+  const frequencyOptions = useMemo(
+    () => FREQUENCIES.map((f) => ({ value: f, label: common(`frequency.${f}`) })),
+    [common]
+  );
   const { userDoc } = useUserDoc();
   const { optionsFor } = useEnabledCurrencies();
   const empty: FormState = useMemo(
@@ -327,20 +338,20 @@ export function RecurrentTransactionModal({
 
   const submit = async () => {
     const amount = decimal.parse(form.amount) ?? NaN;
-    if (!form.categoryId) return setFormError("Pick a category");
-    if (!form.name.trim()) return setFormError("Give it a name");
-    if (!(amount > 0)) return setFormError("Amount must be greater than zero");
+    if (!form.categoryId) return setFormError(t("modal.error.category"));
+    if (!form.name.trim()) return setFormError(t("modal.error.name"));
+    if (!(amount > 0)) return setFormError(t("modal.error.amount"));
 
     const chargedAmount =
       offersCharged && form.chargedEnabled ? (decimal.parse(form.chargedAmount) ?? NaN) : undefined;
     if (offersCharged && form.chargedEnabled) {
       if (!(chargedAmount! > 0) || !form.chargedCurrency)
-        return setFormError("Fill both charged fields or turn the toggle off");
+        return setFormError(t("modal.error.charged"));
       if (form.chargedCurrency === effectiveCurrency)
-        return setFormError("Charged currency must differ from the item's currency");
+        return setFormError(t("modal.error.chargedCurrency"));
     }
     if (gainPct !== null && !Number.isFinite(gainPct)) {
-      return setFormError("Gain % must be a number (0 means break-even)");
+      return setFormError(t("modal.error.gainPct"));
     }
 
     const schedule = {
@@ -508,36 +519,45 @@ export function RecurrentTransactionModal({
             value: valueFromGain(amount, gainPct),
             costBasis: amount,
             currency: effectiveCurrency,
-            note: `Recorded with ${form.name.trim()}`,
+            note: t("modal.valuationNote", { name: form.name.trim() }),
           }).catch((err) => console.error("valuation failed:", err));
         }
       }
       onClose();
     } catch (err) {
       console.error("Failed to save recurrent transaction:", err);
-      setFormError("Couldn't save — try again");
+      setFormError(t("modal.error.save"));
     } finally {
       setBusy(false);
     }
   };
+
+  const backfill = backfillMonths(form.frequency);
+  const backfillLabel =
+    backfill % 12 === 0
+      ? t("modal.backfillYears", { count: backfill / 12 })
+      : t("modal.backfillMonths", { count: backfill });
+  const [partOfBefore, partOfAfter] = splitSlot(t("modal.partOf", { name: SLOT }));
 
   return (
     <Modal
       open={open}
       title={
         editing
-          ? `Edit ${form.name || noun}`
+          ? form.name
+            ? t("modal.edit", { name: form.name })
+            : t(`modal.editNoun.${domain}`)
           : isRecurring
-            ? `Add ${noun} to your plan`
-            : config.oneOff.title
+            ? t(`plan.add.${domain}`)
+            : t(`oneOff.title.${domain}`)
       }
       onClose={onClose}
     >
       <div className="form">
         {offersDebtToggle && (
           <CheckboxField
-            label="This pays off a debt"
-            hint="Files it under Debts, where the debt, its rate and its balance live. Expenses drops by the instalment; your monthly net does not change."
+            label={t("modal.paysDebt")}
+            hint={t("modal.paysDebtHint")}
             checked={form.paysDebt}
             onChange={togglePaysDebt}
           />
@@ -548,7 +568,7 @@ export function RecurrentTransactionModal({
           value={form.categoryId}
           onChange={(categoryId) => patch({ categoryId })}
           createCategory={(name, icon) => createCategory({ domain: effectiveDomain, name, icon })}
-          newLabel={`New ${DOMAIN_CONFIG[effectiveDomain].title.toLowerCase()} category`}
+          newLabel={t(`modal.newCategory.${effectiveDomain}`)}
           onError={setFormError}
         />
 
@@ -567,34 +587,35 @@ export function RecurrentTransactionModal({
         {parent && (
           <div className="parent">
             <span className="parent-text">
-              Part of the recurring item <strong>{parent.name}</strong> ·{" "}
-              {FREQUENCY_LABELS[parent.frequency]}
+              {partOfBefore}
+              <strong>{parent.name}</strong>
+              {partOfAfter} · {common(`frequency.${parent.frequency}`)}
               {parent.nextOccurrence
-                ? ` · next ${formatDate(parent.nextOccurrence.toDate(), "day")}`
+                ? ` · ${t("plan.next", { date: formatDate(parent.nextOccurrence.toDate(), "day") })}`
                 : ""}
             </span>
             {onOpenItem && (
               <Button variant="ghost" size="sm" onClick={() => onOpenItem(parent)}>
-                Edit the recurring item
+                {t("modal.editItem")}
               </Button>
             )}
           </div>
         )}
 
         <TextField
-          label="Name"
-          placeholder={isRecurring ? "Name" : config.oneOff.placeholder}
+          label={common("noun.name")}
+          placeholder={isRecurring ? common("noun.name") : t(`oneOff.placeholder.${domain}`)}
           value={form.name}
           onValueChange={(v) => patch({ name: v })}
         />
 
         {offersDirection && accountDomain && (
           <SegmentedControl<TransactionDirection>
-            label="Direction"
+            label={t("modal.direction")}
             size="sm"
             options={[
-              { key: "IN", label: directionLabel(accountDomain, "IN") },
-              { key: "OUT", label: directionLabel(accountDomain, "OUT") },
+              { key: "IN", label: directionLabel(accountDomain, "IN", language) },
+              { key: "OUT", label: directionLabel(accountDomain, "OUT", language) },
             ]}
             value={form.direction}
             onChange={(direction) => patch({ direction })}
@@ -603,7 +624,7 @@ export function RecurrentTransactionModal({
 
         <div className="pair">
           <TextField
-            label="Amount"
+            label={common("noun.amount")}
             placeholder="0"
             inputMode="decimal"
             prefix={CURRENCY_SYMBOL[effectiveCurrency]}
@@ -612,7 +633,7 @@ export function RecurrentTransactionModal({
             onValueChange={(v) => patch({ amount: decimal.sanitize(v) })}
           />
           <Select
-            label="Currency"
+            label={common("noun.currency")}
             options={optionsFor(effectiveCurrency)}
             value={effectiveCurrency}
             onValueChange={(v) => patch({ currency: v as Currency })}
@@ -621,8 +642,8 @@ export function RecurrentTransactionModal({
 
         <div className="pair">
           <Select
-            label="Frequency"
-            options={FREQUENCY_OPTIONS}
+            label={common("noun.frequency")}
+            options={frequencyOptions}
             value={form.frequency}
             disabled={Boolean(transaction)}
             onValueChange={(v) => patch({ frequency: v as Frequency })}
@@ -642,8 +663,8 @@ export function RecurrentTransactionModal({
 
         {offersSpread && (
           <CheckboxField
-            label="Reflect it as a monthly amount"
-            hint={`The graph and the plan count ${formatAmount(monthlySlice, effectiveCurrency)} a month, and Activity shows it as a read-only monthly share next to the real payment.`}
+            label={t("modal.spread")}
+            hint={t("modal.spreadHint", { amount: formatAmount(monthlySlice, effectiveCurrency) })}
             checked={form.spreadMonthly}
             onChange={(spreadMonthly) => patch({ spreadMonthly })}
           />
@@ -651,23 +672,19 @@ export function RecurrentTransactionModal({
 
         {offersEssential && (
           <CheckboxField
-            label="Essential"
-            hint="Keep paying it in Prospect’s emergency mode."
+            label={t("modal.essential")}
+            hint={t("modal.essentialHint")}
             tag={
               form.essential === null ? (
                 <InfoTip
-                  label="Guessed from category: why?"
+                  label={t("modal.guessedWhy")}
                   trigger={
                     <Badge variant="outline" caps size="sm" icon={<Info size={10} />}>
-                      Guessed from category
+                      {t("modal.guessed")}
                     </Badge>
                   }
                 >
-                  {essentialChecked
-                    ? "Ticked automatically: items in this category usually keep being paid in an emergency."
-                    : "Left unticked automatically: subscriptions and Variable spending usually stop in an emergency."}{" "}
-                  It comes from the category this item belongs to — tick or untick the box to decide
-                  yourself, and your choice overrides the guess.
+                  {essentialChecked ? t("modal.guessedOn") : t("modal.guessedOff")}
                 </InfoTip>
               ) : undefined
             }
@@ -685,22 +702,22 @@ export function RecurrentTransactionModal({
         />
         {isRecurring && (
           <CheckboxField
-            label="Apply the tags to each payment"
+            label={t("modal.inheritTags")}
             checked={form.inheritTags}
             onChange={(inheritTags) => patch({ inheritTags })}
           />
         )}
 
         <TextArea
-          label="Note (optional)"
-          placeholder="Anything worth remembering about it"
+          label={t("modal.noteLabel")}
+          placeholder={t("modal.notePlaceholder")}
           rows={2}
           value={form.note}
           onValueChange={(v) => patch({ note: v })}
         />
         {isRecurring && (
           <CheckboxField
-            label="Apply the note to each payment"
+            label={t("modal.inheritNote")}
             checked={form.inheritNote}
             onChange={(inheritNote) => patch({ inheritNote })}
           />
@@ -708,8 +725,8 @@ export function RecurrentTransactionModal({
 
         {offersBackfill && (
           <CheckboxField
-            label="Also update the existing payments of this item"
-            hint="Payments you edited by hand get overwritten."
+            label={t("modal.applyToExisting")}
+            hint={t("modal.applyToExistingHint")}
             checked={form.applyToExisting}
             onChange={(applyToExisting) => patch({ applyToExisting })}
           />
@@ -717,8 +734,8 @@ export function RecurrentTransactionModal({
 
         {!item && isRecurring && (
           <CheckboxField
-            label={`Backfill ${backfillPeriodLabel(form.frequency)}`}
-            hint="I’ve been paying this for a while."
+            label={backfillLabel}
+            hint={t("modal.backfillHint")}
             checked={form.backfill}
             onChange={(backfill) => patch({ backfill })}
           />
@@ -727,25 +744,22 @@ export function RecurrentTransactionModal({
         {offersGain && (
           <div className="pair">
             <TextField
-              label="Gain so far % (optional)"
+              label={t("modal.gainPct")}
               placeholder="0"
               inputMode="decimal"
               align="right"
               value={form.gainPct}
               onValueChange={(v) => patch({ gainPct: decimal.sanitize(v, { negative: true }) })}
             />
-            <p className="field-hint">
-              0 = break-even, 100 = doubled. Records a first value check for the account (or the
-              &ldquo;No account&rdquo; bucket); refine it on the Investments page any time.
-            </p>
+            <p className="field-hint">{t("modal.gainPctHint")}</p>
           </div>
         )}
 
         {offersCharged && (
           <>
             <CheckboxField
-              label="My card was charged a different amount"
-              hint="E.g. a $15.49 subscription billed as 62,700 COP. Records the real cost and the exchange rate you actually paid."
+              label={t("modal.charged")}
+              hint={t("modal.chargedHint")}
               checked={form.chargedEnabled}
               onChange={(chargedEnabled) => patch({ chargedEnabled })}
             />
@@ -753,7 +767,7 @@ export function RecurrentTransactionModal({
             {form.chargedEnabled && (
               <div className="pair">
                 <TextField
-                  label="Charged amount"
+                  label={t("modal.chargedAmount")}
                   placeholder="0"
                   inputMode="decimal"
                   align="right"
@@ -761,8 +775,8 @@ export function RecurrentTransactionModal({
                   onValueChange={(v) => patch({ chargedAmount: decimal.sanitize(v) })}
                 />
                 <Select
-                  label="Charged currency"
-                  placeholder="Currency"
+                  label={t("modal.chargedCurrency")}
+                  placeholder={common("noun.currency")}
                   options={optionsFor(form.chargedCurrency).filter(
                     (c) => c.value !== effectiveCurrency
                   )}
@@ -778,10 +792,16 @@ export function RecurrentTransactionModal({
 
         <div className="actions">
           <Button variant="ghost" onClick={onClose} disabled={busy}>
-            Cancel
+            {common("action.cancel")}
           </Button>
           <Button variant="primary" onClick={submit} disabled={busy}>
-            {busy ? "Saving…" : editing ? "Save changes" : isRecurring ? "Add to plan" : "Save"}
+            {busy
+              ? common("action.saving")
+              : editing
+                ? t("modal.saveChanges")
+                : isRecurring
+                  ? t("modal.addToPlan")
+                  : common("action.save")}
           </Button>
         </div>
       </div>

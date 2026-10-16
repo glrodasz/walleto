@@ -19,6 +19,9 @@ import { oneTimePatch, recurrentPatch } from "../helpers/recurrentPatch";
 import { useDecimalInput } from "../../../hooks/useDecimalInput";
 import { saveAll } from "../../../utils/saveAll";
 import { UserFacingError } from "../../../utils/errorMessage";
+import { translate } from "../../../helpers/i18n";
+import { usePreferences } from "../../../hooks/usePreferences";
+import { ONBOARDING_MESSAGES } from "../messages";
 import type { Currency, Domain, Frequency, RecurrentTransactionType } from "../../../types";
 
 export interface RecurrentRow extends DraftRow {
@@ -38,9 +41,11 @@ export interface RecurrentRow extends DraftRow {
   date: string;
 }
 
-/** A saved row can be edited, but not emptied: removing it is the way out. */
-export const SAVED_ROW_ERROR =
-  "Every saved item needs a category, a name and an amount — or remove it.";
+/**
+ * A saved row can be edited, but not emptied: removing it is the way out.
+ * The English message, for tests; `save()` throws it in the user's language.
+ */
+export const SAVED_ROW_ERROR = translate(ONBOARDING_MESSAGES, "en", "recurrent.savedRowError");
 
 /** Sensible default `type` so rows aren't all recorded as OTHER. */
 const DEFAULT_TYPE: Partial<Record<Domain, RecurrentTransactionType>> = {
@@ -57,6 +62,7 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
   const { categories } = useCategories(domain);
   const { methods } = usePaymentMethods();
   const { parse, toInput } = useDecimalInput();
+  const { language } = usePreferences();
   const [backfill, setBackfill] = useState(true);
   // One-time rows are ledger entries that are never re-read: what each one
   // looked like when it saved is what an edit is compared against.
@@ -146,7 +152,9 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
     if (
       draft.rows.some((row) => row.id && !(row.categoryId && row.name.trim() && amountOf(row) > 0))
     ) {
-      throw new UserFacingError(SAVED_ROW_ERROR);
+      throw new UserFacingError(
+        translate(ONBOARDING_MESSAGES, language, "recurrent.savedRowError")
+      );
     }
 
     const [created, patched] = await Promise.allSettled([

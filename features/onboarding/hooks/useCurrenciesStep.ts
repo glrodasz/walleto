@@ -2,7 +2,9 @@ import { useMemo, useState } from "react";
 import { useUserDoc } from "../../../hooks/useUserDoc";
 import { enabledCurrencies, toggleCurrency } from "../../../helpers/currencies";
 import { currenciesPatch } from "../helpers/currenciesPatch";
+import { useT } from "../../../hooks/useT";
 import type { Currency } from "../../../types";
+import { ONBOARDING_MESSAGES } from "../messages";
 
 /**
  * The Currencies step: your currency (the whole catalog, since there is no
@@ -11,6 +13,7 @@ import type { Currency } from "../../../types";
  */
 export function useCurrenciesStep() {
   const { userDoc, update } = useUserDoc();
+  const t = useT(ONBOARDING_MESSAGES);
   // null = still following what the user doc says.
   const [picked, setPicked] = useState<Currency | null>(null);
   const [chosen, setChosen] = useState<Currency[] | null>(null);
@@ -22,7 +25,7 @@ export function useCurrenciesStep() {
   );
 
   /** Your currency is always offered: the pickers start every new amount in it. */
-  const locked = (c: Currency) => (c === currency ? "Your currency is always available." : null);
+  const locked = (c: Currency) => (c === currency ? t("currencies.locked") : null);
 
   const toggle = (c: Currency) => {
     if (locked(c)) return;

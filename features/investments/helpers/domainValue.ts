@@ -14,8 +14,11 @@ import type {
   AccountDomain,
   InterestRate,
   InvestmentValuation,
+  Language,
   Transaction,
 } from "../../../types";
+import { translate } from "../../../helpers/i18n";
+import { INVESTMENT_MESSAGES } from "../messages";
 
 export interface AccountValueRow {
   key: string;
@@ -50,10 +53,10 @@ export function domainValueRows(
   transactions: Transaction[],
   valuations: InvestmentValuation[],
   domain: AccountDomain,
-  /** "account" / "pocket" — names the bucket row. */
-  noun: string,
   ctx: MoneyContext,
-  now: Date
+  now: Date,
+  /** Names the bucket row ("No account" / "Sin cuenta"). */
+  language: Language = "en"
 ): AccountValueRow[] {
   const sign = positionSign(domain);
   const build = (
@@ -85,7 +88,12 @@ export function domainValueRows(
     .filter((a) => a.id)
     .map((a) => build({ accountId: a.id! }, a.name, a.provider, a.interestRate));
 
-  const bucket = build({ domain }, sign < 0 ? "Unassigned" : `No ${noun}`, undefined, undefined);
+  const bucketName = translate(
+    INVESTMENT_MESSAGES,
+    language,
+    sign < 0 ? "bucket.unassigned" : `bucket.${domain}`
+  );
+  const bucket = build({ domain }, bucketName, undefined, undefined);
   // Net of withdrawals, so "anything at all" rather than "more than nothing".
   const unassigned = bucket.invested !== 0 || bucket.latest ? [bucket] : [];
 

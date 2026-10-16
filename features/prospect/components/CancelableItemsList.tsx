@@ -2,6 +2,9 @@ import { Card } from "../../../components/atoms/Card";
 import { Chip } from "../../../components/atoms/Chip";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { PROSPECT_MESSAGES } from "../messages";
 import { topNonEssentialIds } from "../helpers/rankCancelable";
 import type { CancelableGroups } from "../helpers/rankCancelable";
 import { CancelableSection } from "./CancelableSection";
@@ -42,6 +45,8 @@ export function CancelableItemsList({
   loading,
 }: Props) {
   const { formatAmount } = useMoneyFormat();
+  const t = useT(PROSPECT_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
   const emergency = mode === "emergency";
   const empty =
     groups.nonEssential.length +
@@ -62,58 +67,54 @@ export function CancelableItemsList({
 
   return (
     <Card>
-      <SectionTitle title={emergency ? "What emergency mode pauses" : "What could you cancel?"} />
-      <p className="hint">
-        {emergency
-          ? "Non-essential spending and every investment or saving contribution stop; essentials and debt payments keep going. Mark an expense as essential to keep it."
-          : "Non-essential spending comes first, priciest at the top. Check anything to see how it changes your monthly net."}
-      </p>
+      <SectionTitle title={emergency ? t("list.title.emergency") : t("list.title.whatif")} />
+      <p className="hint">{emergency ? t("list.hint.emergency") : t("list.hint.whatif")}</p>
 
       {!emergency && topOptions.length > 0 && (
-        <div className="chips" role="group" aria-label="Quick picks">
+        <div className="chips" role="group" aria-label={t("list.quickPicks")}>
           {topOptions.map((n) => (
             <Chip
               key={n}
               selected={isTop(n)}
               onClick={() => onSelect(topNonEssentialIds(groups, n))}
             >
-              Cancel top {n} · {formatAmount(freedBy(n), currency)}/mo
+              {t("list.cancelTop", { count: n, amount: formatAmount(freedBy(n), currency) })}
             </Chip>
           ))}
-          {excludedIds.size > 0 && <Chip onClick={() => onSelect([])}>Clear</Chip>}
+          {excludedIds.size > 0 && <Chip onClick={() => onSelect([])}>{tc("action.clear")}</Chip>}
         </div>
       )}
 
       {loading ? (
-        <p className="empty">Loading…</p>
+        <p className="empty">{tc("state.loading")}</p>
       ) : empty ? (
-        <p className="empty">No expenses, contributions or repayments in your plan yet.</p>
+        <p className="empty">{t("list.empty")}</p>
       ) : (
         <div className="sections">
           <CancelableSection
-            title="Non-essential"
+            title={t("group.nonEssential")}
             rows={groups.nonEssential}
-            emptyText="Nothing marked non-essential. Subscriptions are guessed as non-essential; mark anything else from its menu."
+            emptyText={t("group.nonEssential.empty")}
             isChecked={(id) => (emergency ? true : excludedIds.has(id))}
             onToggle={emergency ? undefined : onToggle}
             {...shared}
           />
           <CancelableSection
-            title="Essential"
+            title={t("group.essential")}
             rows={groups.essential}
             isChecked={(id) => !emergency && excludedIds.has(id)}
             onToggle={emergency ? undefined : onToggle}
             {...shared}
           />
           <CancelableSection
-            title="Investing & saving"
+            title={t("group.contributions")}
             rows={groups.contributions}
             isChecked={(id) => (emergency ? true : excludedIds.has(id))}
             onToggle={emergency ? undefined : onToggle}
             {...shared}
           />
           <CancelableSection
-            title="Debt payments"
+            title={t("group.debts")}
             rows={groups.debts}
             isChecked={(id) => !emergency && excludedIds.has(id)}
             onToggle={emergency ? undefined : onToggle}

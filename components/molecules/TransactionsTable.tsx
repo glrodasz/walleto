@@ -16,11 +16,14 @@ import { isSyntheticRow } from "../../features/domains/helpers/spread";
 import type { HiddenReason } from "../../helpers/hidden";
 import type { TransactionFilters } from "../../features/domains/helpers/transactionFilters";
 import { useDateFormat } from "../../hooks/usePreferences";
+import { useT } from "../../hooks/useT";
+import { CHART_MESSAGES } from "../../messages/charts";
+import { COMMON_MESSAGES } from "../../messages/common";
+import { TRANSACTION_MESSAGES } from "../../messages/transactions";
 import { paymentMethodLabel, paymentMethodOptionLabel } from "../../helpers/paymentMethodLabel";
 import { tagNames } from "../../helpers/tags";
 import { directionLabel, isAccountDomain } from "../../helpers/accounts";
 import { toDate } from "../../helpers/chartData";
-import { FREQUENCY_LABELS } from "../../constants";
 import type { MoneyContext } from "../../helpers/aggregations";
 import type {
   Category,
@@ -103,6 +106,10 @@ export function TransactionsTable({
   onFiltersChange,
   limit = 60,
 }: Props) {
+  const { language } = useDateFormat();
+  const tr = useT(TRANSACTION_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
+  const tch = useT(CHART_MESSAGES);
   const filter = useTransactionFilters({
     rows,
     categories,
@@ -130,8 +137,8 @@ export function TransactionsTable({
           <div className="search">
             <TextField
               icon={<Search size={16} />}
-              aria-label="Search transactions"
-              placeholder="Search transactions…"
+              aria-label={tr("search.label")}
+              placeholder={tr("search.placeholder")}
               value={filter.filters.search}
               onValueChange={(v) => filter.set("search", v)}
             />
@@ -146,7 +153,7 @@ export function TransactionsTable({
             onClick={() => setFiltersOpen((open) => !open)}
           >
             <Sliders size={16} />
-            Filters
+            {tr("filters.toggle")}
             {filter.narrowCount > 0 && <span className="count">{filter.narrowCount}</span>}
           </button>
         </div>
@@ -163,9 +170,9 @@ export function TransactionsTable({
         >
           {showCategoryFilter && (
             <Select
-              aria-label="Category filter"
+              aria-label={tr("filters.category")}
               options={[
-                { value: "", label: "All categories" },
+                { value: "", label: tr("filters.allCategories") },
                 ...roots.map((c) => ({ value: c.id!, label: c.name })),
               ]}
               value={filter.filters.categoryId}
@@ -174,19 +181,22 @@ export function TransactionsTable({
           )}
           {showMethod && (
             <Select
-              aria-label="Method filter"
+              aria-label={tr("filters.method")}
               options={[
-                { value: "", label: "All methods" },
-                ...methods.map((m) => ({ value: m.id!, label: paymentMethodOptionLabel(m) })),
-                { value: NO_METHOD, label: "No method" },
+                { value: "", label: tr("filters.allMethods") },
+                ...methods.map((m) => ({
+                  value: m.id!,
+                  label: paymentMethodOptionLabel(m, language),
+                })),
+                { value: NO_METHOD, label: tr("filters.noMethod") },
               ]}
               value={filter.filters.paymentMethodId}
               onValueChange={(v) => filter.set("paymentMethodId", v)}
             />
           )}
           <Select
-            aria-label="Sort"
-            options={SORT_OPTIONS}
+            aria-label={tr("filters.sort")}
+            options={SORT_KEYS.map((value) => ({ value, label: tr(`sort.${value}`) }))}
             value={`${filter.filters.sort.by}-${filter.filters.sort.dir}`}
             onValueChange={(v) => filter.set("sort", parseSort(v))}
           />
@@ -194,17 +204,15 @@ export function TransactionsTable({
 
         {filter.active && (
           <button type="button" className="clear" onClick={filter.reset}>
-            Clear
+            {tc("action.clear")}
           </button>
         )}
       </div>
 
       {loading ? (
-        <p className="empty">Loading…</p>
+        <p className="empty">{tc("state.loading")}</p>
       ) : shown.length === 0 ? (
-        <p className="empty">
-          {rows.length === 0 ? "No activity in this period" : "Nothing matches these filters"}
-        </p>
+        <p className="empty">{rows.length === 0 ? tch("chart.empty") : tr("filters.noMatch")}</p>
       ) : (
         <ListItems>
           {shown.map((t) => (
@@ -228,7 +236,7 @@ export function TransactionsTable({
         </ListItems>
       )}
 
-      {hidden > 0 && <p className="more">and {hidden} more in this period</p>}
+      {hidden > 0 && <p className="more">{tr("more", { count: hidden })}</p>}
 
       <style jsx>{`
         /* Two rows: the search owns the first, the filters share the second. */
@@ -330,12 +338,7 @@ export function TransactionsTable({
   );
 }
 
-const SORT_OPTIONS = [
-  { value: "date-desc", label: "Newest first" },
-  { value: "date-asc", label: "Oldest first" },
-  { value: "amount-desc", label: "Largest amount" },
-  { value: "amount-asc", label: "Smallest amount" },
-];
+const SORT_KEYS = ["date-desc", "date-asc", "amount-desc", "amount-asc"] as const;
 
 /** "amount-asc" back into the filter state's { by, dir }. */
 function parseSort(value: string): TransactionFilters["sort"] {
@@ -375,8 +378,11 @@ function TransactionListRow({
   onDelete,
   deleting,
 }: RowProps) {
-  const { formatDate } = useDateFormat();
+  const { formatDate, language } = useDateFormat();
   const { formatNative } = useMoneyFormat();
+  const tr = useT(TRANSACTION_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
+  const cadence = item ? tc(`frequency.${item.frequency}`) : "";
   // A "reflected monthly" share is not a payment: it is the month's slice of
   // a yearly (quarterly…) item, derived from it and edited only through it.
   const share = isSyntheticRow(t);
@@ -387,20 +393,23 @@ function TransactionListRow({
   // the item's cadence today would mislabel it.
   const origin = share
     ? item
-      ? `${formatNative(item.amount, item.currency, displayCurrency)} ${FREQUENCY_LABELS[item.frequency].toLowerCase()}, reflected monthly`
-      : "reflected monthly"
+      ? tr("origin.shareOf", {
+          amount: formatNative(item.amount, item.currency, displayCurrency),
+          cadence: cadence.toLocaleLowerCase(),
+        })
+      : tr("origin.share")
     : !t.recurrentTransactionId
-      ? "one-off"
+      ? tr("origin.oneOff")
       : !item
-        ? "recurring"
+        ? tr("origin.recurring")
         : date < startOfDay(toDate(item.startDate))
-          ? `recurring · earlier schedule${item.name !== t.name ? ` · ${item.name}` : ""}`
-          : `recurring · ${FREQUENCY_LABELS[item.frequency]}${item.name !== t.name ? ` · ${item.name}` : ""}`;
+          ? `${tr("origin.earlier")}${item.name !== t.name ? ` · ${item.name}` : ""}`
+          : `${tr("origin.cadence", { cadence })}${item.name !== t.name ? ` · ${item.name}` : ""}`;
 
   // Money that left the account: the amount reads negative and the row says
   // why ("Withdrawal", or "Borrowed" on a debt).
   const out = t.direction === "OUT";
-  const outLabel = out && isAccountDomain(domain) ? directionLabel(domain, "OUT") : null;
+  const outLabel = out && isAccountDomain(domain) ? directionLabel(domain, "OUT", language) : null;
   const signed = (value: number) => (out ? -value : value);
 
   // One string, not one span per fact: the row reads as a sentence, and the
@@ -429,7 +438,7 @@ function TransactionListRow({
           <>
             {share && (
               <Badge variant="outline" tone="info" caps icon={<Repeat size={12} />}>
-                Monthly share
+                {tr("badge.monthlyShare")}
               </Badge>
             )}
             {outLabel && (
@@ -445,7 +454,7 @@ function TransactionListRow({
                 caps
                 icon={reason === "chart" ? <Chart size={12} /> : <Home size={12} />}
               >
-                Hidden
+                {tc("state.hidden")}
               </Badge>
             ))}
             {labels.map((l) => (
@@ -462,19 +471,25 @@ function TransactionListRow({
       amount={formatNative(signed(t.amount), t.currency, displayCurrency)}
       amountMeta={
         t.chargedAmount !== undefined && t.chargedCurrency
-          ? `charged ${formatNative(signed(t.chargedAmount), t.chargedCurrency, displayCurrency)}`
+          ? tr("charged", {
+              amount: formatNative(signed(t.chargedAmount), t.chargedCurrency, displayCurrency),
+            })
           : undefined
       }
       onClick={share && item && onOpenItem ? () => onOpenItem(item) : undefined}
-      aria-label={share ? `${t.name}: monthly share, edit ${item?.name ?? "the item"}` : undefined}
+      aria-label={
+        share
+          ? tr("shareLabel", { name: t.name, item: item?.name ?? tr("shareLabel.theItem") })
+          : undefined
+      }
       trailing={
         share ? undefined : (
           <KebabMenu
-            aria-label={`Actions for ${t.name}`}
+            aria-label={tc("action.actionsFor", { name: t.name })}
             actions={[
-              ...(onEdit ? [{ label: "Edit", onSelect: () => onEdit(t) }] : []),
+              ...(onEdit ? [{ label: tc("action.edit"), onSelect: () => onEdit(t) }] : []),
               {
-                label: deleting ? "Deleting…" : "Delete",
+                label: deleting ? tr("deleting") : tc("action.delete"),
                 onSelect: () => t.id && onDelete(t.id),
                 danger: true,
                 disabled: deleting,

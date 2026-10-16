@@ -14,10 +14,12 @@ import {
 } from "../../../hooks/useInvestmentValuations";
 import { toDateInputValue } from "../../../helpers/scheduleAnchor";
 import { convert } from "../../../helpers/fx";
-import { ACCOUNT_NOUN } from "../../../helpers/accounts";
 import { gainFromValue, valueFromGain } from "../helpers/valuation";
 import type { ValueSelector } from "../helpers/valuation";
 import { CURRENCY_SYMBOL } from "../../../constants";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { INVESTMENT_MESSAGES } from "../messages";
 import type { AccountDomain, Category, Currency, InvestmentValuation } from "../../../types";
 
 interface Props {
@@ -66,6 +68,8 @@ export function ValuationModal({
   onClose,
 }: Props) {
   const { formatAmount, decimals } = useMoneyFormat();
+  const t = useT(INVESTMENT_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
   const { sanitize, parse, toInput, toPrefill } = useDecimalInput();
   const { ctx, fxMissing } = useMoneyContext();
   const { optionsFor } = useEnabledCurrencies();
@@ -150,9 +154,9 @@ export function ValuationModal({
     // when the value says so too.
     const pct = valueOnly ? 0 : (parse(gain) ?? gainFromValue(basis, v) ?? 0);
     if (!(v >= 0) || !Number.isFinite(pct)) {
-      return setError(owes ? "Enter the balance owed" : "Enter a value or a gain %");
+      return setError(t(owes ? "modal.error.balance" : "modal.error.value"));
     }
-    if (!date) return setError("Pick a date");
+    if (!date) return setError(t("modal.error.date"));
 
     setBusy(true);
     setError(null);
@@ -185,7 +189,7 @@ export function ValuationModal({
       onClose();
     } catch (err) {
       console.error("Failed to save valuation:", err);
-      setError("Couldn't save — try again");
+      setError(t("modal.error.save"));
     } finally {
       setBusy(false);
     }
@@ -194,27 +198,28 @@ export function ValuationModal({
   return (
     <Modal
       open={open}
-      title={
+      title={t(
         owes
           ? valuation
-            ? `Edit balance — ${name}`
-            : `Balance — ${name}`
+            ? "modal.title.editBalance"
+            : "modal.title.balance"
           : valuation
-            ? `Edit valuation — ${name}`
-            : `Value ${name}`
-      }
+            ? "modal.title.editValue"
+            : "modal.title.value",
+        { name }
+      )}
       onClose={onClose}
     >
       <div className="form">
         <p className="basis">
-          {owes ? "Repaid" : "Invested"} so far:{" "}
+          {t(owes ? "modal.repaidSoFar" : "modal.investedSoFar")}{" "}
           <strong>{formatAmount(basis, checkCurrency)}</strong>
         </p>
 
         <div className="pair">
-          <TextField label="As of" type="date" value={date} onValueChange={setDate} />
+          <TextField label={t("modal.asOf")} type="date" value={date} onValueChange={setDate} />
           <Select
-            label="Currency"
+            label={tc("noun.currency")}
             options={optionsFor(checkCurrency)}
             value={checkCurrency}
             /* Without rates a switch would convert 1:1 — a made-up basis. */
@@ -226,7 +231,7 @@ export function ValuationModal({
         {valueOnly ? (
           <>
             <TextField
-              label={owes ? "Balance owed" : "Current value"}
+              label={t(owes ? "modal.balanceOwed" : "modal.currentValue")}
               inputMode="decimal"
               prefix={CURRENCY_SYMBOL[checkCurrency]}
               align="right"
@@ -236,9 +241,7 @@ export function ValuationModal({
             />
             {!owes && (
               <p className="hint">
-                {basis === 0
-                  ? `Nothing has been paid into this ${ACCOUNT_NOUN[domain].singular} yet, so there is no gain % to work out — just what it's worth.`
-                  : "Nothing is net invested after withdrawals, so there is no gain % to type — just what the position is worth."}
+                {basis === 0 ? t(`modal.nothingPaidIn.${domain}`) : t("modal.nothingNet")}
               </p>
             )}
           </>
@@ -246,7 +249,7 @@ export function ValuationModal({
           <>
             <div className="pair">
               <TextField
-                label="Gain %"
+                label={t("modal.gainPct")}
                 inputMode="decimal"
                 align="right"
                 placeholder="0"
@@ -254,7 +257,7 @@ export function ValuationModal({
                 onValueChange={onGainChange}
               />
               <TextField
-                label="Current value"
+                label={t("modal.currentValue")}
                 inputMode="decimal"
                 prefix={CURRENCY_SYMBOL[checkCurrency]}
                 align="right"
@@ -263,20 +266,18 @@ export function ValuationModal({
                 onValueChange={onValueChange}
               />
             </div>
-            <p className="hint">
-              Type either one — the other follows. Override the value if your broker says otherwise.
-            </p>
+            <p className="hint">{t("modal.eitherOne")}</p>
           </>
         )}
 
         {categories && (
           <>
             <Select
-              label="Category"
+              label={tc("noun.category")}
               /* An explicit empty option rather than the placeholder, which is
                  disabled: a gain filed by mistake has to be unfilable. */
               options={[
-                { value: "", label: "No category" },
+                { value: "", label: t("modal.noCategory") },
                 ...categories
                   .filter((c) => !c.parentId && c.id)
                   .map((c) => ({ value: c.id!, label: c.name })),
@@ -285,16 +286,14 @@ export function ValuationModal({
               onValueChange={setCategoryId}
             />
             <p className="hint">
-              {owes
-                ? "Where the interest & charges this balance reveals belong in the month's breakdown. A debt can hold several categories and only you know which one moved."
-                : "Where this gain belongs in the month's breakdown. An account can hold several holdings and only you know which one moved."}
+              {owes ? t("modal.categoryHint.debt") : t("modal.categoryHint.asset")}
             </p>
           </>
         )}
 
         <TextField
-          label="Note (optional)"
-          placeholder="e.g. Q2 statement"
+          label={t("modal.note")}
+          placeholder={t("modal.notePlaceholder")}
           value={note}
           onValueChange={setNote}
         />
@@ -303,10 +302,10 @@ export function ValuationModal({
 
         <div className="actions">
           <Button variant="ghost" onClick={onClose} disabled={busy}>
-            Cancel
+            {tc("action.cancel")}
           </Button>
           <Button variant="primary" onClick={submit} disabled={busy}>
-            {busy ? "Saving…" : valuation ? "Save changes" : "Record"}
+            {busy ? tc("action.saving") : valuation ? t("modal.saveChanges") : t("modal.record")}
           </Button>
         </div>
       </div>

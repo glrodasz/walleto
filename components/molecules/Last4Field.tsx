@@ -1,6 +1,9 @@
 import { useId, useState } from "react";
 import { TextField } from "../atoms/TextField";
 import { last4Error } from "../../helpers/paymentMethodOptions";
+import { usePreferences } from "../../hooks/usePreferences";
+import { useT } from "../../hooks/useT";
+import { FIELD_MESSAGES } from "../../messages/fields";
 
 interface Props {
   value: string;
@@ -18,23 +21,25 @@ interface Props {
  */
 export function Last4Field({ value, onChange, disabled, showError }: Props) {
   const noteId = useId();
+  const { language } = usePreferences();
+  const t = useT(FIELD_MESSAGES);
   const [blurred, setBlurred] = useState(false);
-  const error = blurred || showError ? last4Error(value) : null;
+  const error = blurred || showError ? last4Error(value, language) : null;
 
   return (
     <div className="last4">
       <TextField
-        label="Last 4 digits (optional)"
+        label={t("last4.label")}
         name="last4"
         autoComplete="off"
-        placeholder="e.g. 4242"
+        placeholder={t("last4.placeholder")}
         inputMode="numeric"
         maxLength={4}
         value={value}
         disabled={disabled}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? noteId : undefined}
-        hint="From the card number, not the security code."
+        hint={t("last4.hint")}
         onBlur={() => setBlurred(true)}
         onValueChange={(v) => onChange(v.replace(/\D/g, "").slice(0, 4))}
       />

@@ -33,3 +33,21 @@ describe("formatDate", () => {
     expect(formatDate(d, "day")).toBe("Sep 6");
   });
 });
+
+describe("formatDate in Spanish", () => {
+  it("names months in Spanish, day-first", () => {
+    expect(formatDate(d, "day", "MDY", "es")).toBe("6 sept");
+    expect(formatDate(d, "dayYear", "DMY", "es")).toBe("6 sept 2026");
+  });
+
+  it("capitalizes standalone month labels", () => {
+    expect(formatDate(d, "month", "MDY", "es")).toBe("Sept");
+    expect(formatDate(d, "monthYear", "MDY", "es")).toBe("Sept 2026");
+    expect(formatDate(d, "monthLong", "MDY", "es")).toBe("Septiembre de 2026");
+  });
+
+  it("keeps numeric and ISO dates on the preference", () => {
+    expect(formatDate(d, "numeric", "DMY", "es")).toBe("06/09/2026");
+    expect(formatDate(d, "day", "YMD", "es")).toBe("2026-09-06");
+  });
+});

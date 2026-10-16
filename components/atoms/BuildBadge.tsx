@@ -1,6 +1,8 @@
 import { Badge } from "./Badge";
 import type { BadgeTone } from "./Badge";
 import { buildInfo } from "../../helpers/buildInfo";
+import { useT } from "../../hooks/useT";
+import { UI_MESSAGES } from "../../messages/ui";
 import type { BuildEnv } from "../../helpers/buildInfo";
 
 const TONE: Record<BuildEnv, BadgeTone> = {
@@ -16,6 +18,7 @@ const TONE: Record<BuildEnv, BadgeTone> = {
  */
 export function BuildBadge() {
   const { env, label, shortSha, commitUrl } = buildInfo();
+  const t = useT(UI_MESSAGES);
   const badge = (
     <Badge variant="outline" tone={TONE[env]} caps>
       {label}
@@ -30,8 +33,8 @@ export function BuildBadge() {
       href={commitUrl}
       target="_blank"
       rel="noopener noreferrer"
-      title={`${shortSha} — view commit on GitHub`}
-      aria-label={`Staging build ${shortSha} — view commit on GitHub`}
+      title={t("build.viewCommit", { sha: shortSha })}
+      aria-label={t("build.stagingCommit", { sha: shortSha })}
     >
       {badge}
       <style jsx>{`

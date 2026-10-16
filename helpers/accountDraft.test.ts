@@ -37,21 +37,21 @@ describe("accountDraft", () => {
   });
 
   it("requires a name", () => {
-    expect(readAccountDraft({ ...emptyAccountDraft("SEK"), name: "  " }, parse, "pocket")).toEqual({
+    expect(readAccountDraft({ ...emptyAccountDraft("SEK"), name: "  " }, parse, "SAVING")).toEqual({
       error: "Give the pocket a name",
     });
   });
 
   it("rejects a rate outside 0–100", () => {
     const draft = { ...emptyAccountDraft("SEK"), name: "Buffer", rate: "120" };
-    expect(readAccountDraft(draft, parse, "pocket")).toEqual({
+    expect(readAccountDraft(draft, parse, "SAVING")).toEqual({
       error: "Interest rate must be between 0 and 100",
     });
   });
 
   it("reads empty optionals as null and trims", () => {
     const draft = { ...emptyAccountDraft("USD"), name: " ISK ", provider: " " };
-    expect(readAccountDraft(draft, parse, "account")).toEqual({
+    expect(readAccountDraft(draft, parse, "INVESTMENT")).toEqual({
       values: { name: "ISK", provider: null, currency: "USD", interestRate: null },
     });
   });
@@ -64,13 +64,25 @@ describe("accountDraft", () => {
       rate: "2,85",
       period: "MONTHLY" as const,
     };
-    expect(readAccountDraft(draft, parse, "pocket")).toEqual({
+    expect(readAccountDraft(draft, parse, "SAVING")).toEqual({
       values: {
         name: "Buffer",
         provider: "SEB",
         currency: "SEK",
         interestRate: { value: 2.85, period: "MONTHLY" },
       },
+    });
+  });
+});
+
+describe("accountDraft in Spanish", () => {
+  it("names the thing with its own gender", () => {
+    const empty = { ...emptyAccountDraft("COP"), name: "" };
+    expect(readAccountDraft(empty, parse, "SAVING", "es")).toEqual({
+      error: "Ponle un nombre al bolsillo",
+    });
+    expect(readAccountDraft(empty, parse, "DEBT", "es")).toEqual({
+      error: "Ponle un nombre a la deuda",
     });
   });
 });

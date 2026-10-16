@@ -1,7 +1,7 @@
 import { convertedAmount } from "./aggregations";
 import { formatDate } from "./dates";
 import type { MoneyContext, MoneyFields } from "./aggregations";
-import type { DateFormat, Domain, WeekStart } from "../types";
+import type { DateFormat, Domain, Language, WeekStart } from "../types";
 
 export type ChartBucket = "day" | "week" | "month";
 
@@ -50,8 +50,13 @@ export function nextBucketStart(date: Date, bucket: ChartBucket): Date {
   return d;
 }
 
-export function bucketLabel(date: Date, bucket: ChartBucket, format?: DateFormat): string {
-  return formatDate(date, bucket === "month" ? "month" : "day", format);
+export function bucketLabel(
+  date: Date,
+  bucket: ChartBucket,
+  format?: DateFormat,
+  language: Language = "en"
+): string {
+  return formatDate(date, bucket === "month" ? "month" : "day", format, language);
 }
 
 /**
@@ -75,6 +80,7 @@ export function toFlowSeries(
     cumulative?: boolean;
     weekStart?: WeekStart;
     dateFormat?: DateFormat;
+    language?: Language;
   }
 ): FlowPoint[] {
   const to = opts.to ?? new Date();
@@ -87,7 +93,7 @@ export function toFlowSeries(
     cursor = nextBucketStart(cursor, opts.bucket)
   ) {
     points.set(cursor.getTime(), {
-      label: bucketLabel(cursor, opts.bucket, opts.dateFormat),
+      label: bucketLabel(cursor, opts.bucket, opts.dateFormat, opts.language),
       income: 0,
       expense: 0,
     });

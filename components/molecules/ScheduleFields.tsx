@@ -1,7 +1,11 @@
 import { formatDate } from "../../helpers/dates";
+import { usePreferences } from "../../hooks/usePreferences";
+import { useT } from "../../hooks/useT";
+import { COMMON_MESSAGES } from "../../messages/common";
+import { FIELD_MESSAGES } from "../../messages/fields";
 import { Select } from "../atoms/Select";
 import { TextField } from "../atoms/TextField";
-import type { Frequency } from "../../types";
+import type { Frequency, Language } from "../../types";
 
 export interface ScheduleValue {
   /** MONTHLY / QUARTERLY / YEARLY / BIWEEKLY: (first) payment day, 1–31. */
@@ -26,10 +30,11 @@ const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => ({
   label: String(i + 1),
 }));
 
-const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
-  value: String(i),
-  label: formatDate(new Date(2026, i, 1), "month"),
-}));
+const monthOptions = (language: Language) =>
+  Array.from({ length: 12 }, (_, i) => ({
+    value: String(i),
+    label: formatDate(new Date(2026, i, 1), "month", undefined, language),
+  }));
 
 /**
  * The date control a frequency actually needs — nothing more. Monthly items
@@ -40,11 +45,15 @@ const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
  * result to helpers/scheduleAnchor.
  */
 export function ScheduleFields({ frequency, value, onChange, disabled }: Props) {
+  const { language } = usePreferences();
+  const t = useT(FIELD_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
+  const MONTH_OPTIONS = monthOptions(language);
   switch (frequency) {
     case "MONTHLY":
       return (
         <Select
-          label="Payment day"
+          label={t("schedule.paymentDay")}
           options={DAY_OPTIONS}
           value={String(value.dayOfMonth)}
           disabled={disabled}
@@ -55,14 +64,14 @@ export function ScheduleFields({ frequency, value, onChange, disabled }: Props) 
       return (
         <>
           <Select
-            label="First payment day"
+            label={t("schedule.firstPaymentDay")}
             options={DAY_OPTIONS}
             value={String(value.dayOfMonth)}
             disabled={disabled}
             onValueChange={(v) => onChange({ dayOfMonth: Number(v) })}
           />
           <Select
-            label="Second payment day"
+            label={t("schedule.secondPaymentDay")}
             options={DAY_OPTIONS}
             value={String(value.secondDayOfMonth)}
             disabled={disabled}
@@ -74,14 +83,14 @@ export function ScheduleFields({ frequency, value, onChange, disabled }: Props) 
       return (
         <>
           <Select
-            label="First month"
+            label={t("schedule.firstMonth")}
             options={MONTH_OPTIONS}
             value={String(value.month)}
             disabled={disabled}
             onValueChange={(v) => onChange({ month: Number(v) })}
           />
           <Select
-            label="Payment day"
+            label={t("schedule.paymentDay")}
             options={DAY_OPTIONS}
             value={String(value.dayOfMonth)}
             disabled={disabled}
@@ -93,14 +102,14 @@ export function ScheduleFields({ frequency, value, onChange, disabled }: Props) 
       return (
         <>
           <Select
-            label="Month"
+            label={tc("noun.month")}
             options={MONTH_OPTIONS}
             value={String(value.month)}
             disabled={disabled}
             onValueChange={(v) => onChange({ month: Number(v) })}
           />
           <Select
-            label="Day"
+            label={t("schedule.day")}
             options={DAY_OPTIONS}
             value={String(value.dayOfMonth)}
             disabled={disabled}
@@ -111,7 +120,7 @@ export function ScheduleFields({ frequency, value, onChange, disabled }: Props) 
     case "WEEKLY":
       return (
         <TextField
-          label="Starts on"
+          label={t("schedule.startsOn")}
           type="date"
           value={value.date}
           disabled={disabled}
@@ -121,7 +130,7 @@ export function ScheduleFields({ frequency, value, onChange, disabled }: Props) 
     case "ONE_TIME":
       return (
         <TextField
-          label="Date"
+          label={tc("noun.date")}
           type="date"
           value={value.date}
           disabled={disabled}

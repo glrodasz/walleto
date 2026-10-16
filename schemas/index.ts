@@ -307,7 +307,7 @@ export const ThemePreferenceSchema = z.enum(["light", "dark", "system"]);
 export const DateFormatSchema = z.enum(["MDY", "DMY", "YMD"]);
 /** 0 = Sunday, 1 = Monday, as in Date#getDay(). */
 export const WeekStartSchema = z.union([z.literal(0), z.literal(1)]);
-export const LanguageSchema = z.enum(["en"]);
+export const LanguageSchema = z.enum(["en", "es"]);
 /** "." writes 1,234.56; "," writes 1.234,56. */
 export const DecimalSeparatorSchema = z.enum([".", ","]);
 /** Fraction digits shown, 0–4. */

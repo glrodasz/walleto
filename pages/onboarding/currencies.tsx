@@ -7,6 +7,8 @@ import { useStepNavigation } from "../../features/onboarding/hooks/useStepNaviga
 import { WizardActions } from "../../features/onboarding/components/WizardActions";
 import { ContinueLater } from "../../features/onboarding/components/ContinueLater";
 import { useLeaveOnboarding } from "../../features/onboarding/hooks/useLeaveOnboarding";
+import { useT } from "../../hooks/useT";
+import { PAGE_MESSAGES } from "../../messages/pages";
 
 const { step, back, next } = stepNav("currencies");
 
@@ -15,10 +17,11 @@ const { step, back, next } = stepNav("currencies");
 // before the next step could render. Static pages switch instantly, and the
 // data is still guarded by Firestore rules and the API routes.
 function OnboardingCurrencies() {
+  const t = useT(PAGE_MESSAGES);
   const state = useCurrenciesStep();
   const { busy, error, flush, go } = useStepNavigation(
     state.save,
-    "Could not save your currencies. Please try again."
+    t("onboarding.currencies.saveFailed")
   );
   const later = useLeaveOnboarding(flush);
 

@@ -24,3 +24,12 @@ describe("formatRunway", () => {
     expect(formatRunway(23.8, fmt)).toBe("2 years");
   });
 });
+
+describe("formatRunway in Spanish", () => {
+  it("pluralises months and years and joins them with y", () => {
+    expect(formatRunway(1, fmt, "es")).toBe("1 mes");
+    expect(formatRunway(4.5, fmt, "es")).toBe("4.5 meses");
+    expect(formatRunway(13, fmt, "es")).toBe("1 año y 1 mes");
+    expect(formatRunway(62, fmt, "es")).toBe("5 años y 2 meses");
+  });
+});

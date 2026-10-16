@@ -1,5 +1,8 @@
 import { Heart, Info } from "../../../components/atoms/Icons";
 import { t } from "../../../helpers/i18n";
+import { usePreferences } from "../../../hooks/usePreferences";
+import { useT } from "../../../hooks/useT";
+import { SETTINGS_MESSAGES } from "../messages";
 import { SettingsCard } from "./SettingsCard";
 import { SettingsRow } from "./SettingsRow";
 
@@ -8,21 +11,33 @@ export function AboutCard() {
   const version = process.env.NEXT_PUBLIC_APP_VERSION ?? "dev";
   const support = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
   const feedback = process.env.NEXT_PUBLIC_FEEDBACK_URL;
+  const { language } = usePreferences();
+  const tr = useT(SETTINGS_MESSAGES);
   return (
-    <SettingsCard title={t("settings.about.title")} icon={Info}>
-      <SettingsRow label="Version" value={version} />
+    <SettingsCard title={t("settings.about.title", language)} icon={Info}>
+      <SettingsRow label={tr("about.version")} value={version} />
       <SettingsRow
-        label="Built with"
+        label={tr("about.builtWith")}
         value={
           <span className="built">
-            <Heart size={13} /> for a more intentional financial life.
+            <Heart size={13} /> {tr("about.builtFor")}
           </span>
         }
       />
       {support && (
-        <SettingsRow label="Help & support" value="Get in touch" href={`mailto:${support}`} />
+        <SettingsRow
+          label={tr("about.support")}
+          value={tr("about.supportValue")}
+          href={`mailto:${support}`}
+        />
       )}
-      {feedback && <SettingsRow label="Feedback" value="Share your thoughts" href={feedback} />}
+      {feedback && (
+        <SettingsRow
+          label={tr("about.feedback")}
+          value={tr("about.feedbackValue")}
+          href={feedback}
+        />
+      )}
       <style jsx>{`
         .built {
           display: inline-flex;

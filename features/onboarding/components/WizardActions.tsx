@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { Button } from "../../../components/atoms/Button";
 import { ArrowLeft, ArrowRight } from "../../../components/atoms/Icons";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
 
 interface Props {
   onBack?: () => void;
@@ -12,7 +14,8 @@ interface Props {
   leading?: ReactNode;
 }
 
-export function WizardActions({ onBack, onNext, nextLabel = "Next", busy, error, leading }: Props) {
+export function WizardActions({ onBack, onNext, nextLabel, busy, error, leading }: Props) {
+  const tc = useT(COMMON_MESSAGES);
   return (
     <div className="actions">
       {error && (
@@ -26,11 +29,11 @@ export function WizardActions({ onBack, onNext, nextLabel = "Next", busy, error,
           {onBack && (
             <Button variant="ghost" onClick={onBack} disabled={busy}>
               <ArrowLeft size={16} />
-              Back
+              {tc("action.back")}
             </Button>
           )}
           <Button variant="primary" onClick={onNext} disabled={busy}>
-            {busy ? "Saving…" : nextLabel}
+            {busy ? tc("action.saving") : (nextLabel ?? tc("action.next"))}
             {!busy && <ArrowRight size={16} />}
           </Button>
         </div>

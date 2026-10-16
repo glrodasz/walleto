@@ -2,6 +2,9 @@ import { Select } from "../atoms/Select";
 import { TextField } from "../atoms/TextField";
 import { useEnabledCurrencies } from "../../hooks/useEnabledCurrencies";
 import { useDecimalInput } from "../../hooks/useDecimalInput";
+import { useT } from "../../hooks/useT";
+import { COMMON_MESSAGES } from "../../messages/common";
+import { FIELD_MESSAGES } from "../../messages/fields";
 import type { AccountDraft } from "../../helpers/accountDraft";
 import type { AccountDomain, Currency, InterestPeriod } from "../../types";
 
@@ -12,16 +15,7 @@ interface Props {
   autoFocus?: boolean;
 }
 
-const PERIOD_OPTIONS: { value: InterestPeriod; label: string }[] = [
-  { value: "YEARLY", label: "Yearly" },
-  { value: "MONTHLY", label: "Monthly" },
-];
-
-const NAME_PLACEHOLDER: Record<AccountDomain, string> = {
-  INVESTMENT: "Broker account",
-  SAVING: "Emergency fund",
-  DEBT: "Credit card",
-};
+const PERIODS: InterestPeriod[] = ["YEARLY", "MONTHLY"];
 
 /**
  * The fields of an account / pocket / debt — name, bank or broker (the lender,
@@ -31,44 +25,46 @@ const NAME_PLACEHOLDER: Record<AccountDomain, string> = {
 export function AccountFormFields({ domain, draft, onChange, autoFocus }: Props) {
   const { optionsFor } = useEnabledCurrencies();
   const { sanitize } = useDecimalInput();
+  const t = useT(FIELD_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
   const set = (patch: Partial<AccountDraft>) => onChange({ ...draft, ...patch });
 
   return (
     <div className="fields">
       <div className="pair">
         <TextField
-          label="Name"
-          placeholder={NAME_PLACEHOLDER[domain]}
+          label={tc("noun.name")}
+          placeholder={t(`account.placeholder.${domain}`)}
           autoFocus={autoFocus}
           value={draft.name}
           onValueChange={(v) => set({ name: v })}
         />
         <TextField
-          label={domain === "DEBT" ? "Lender" : "Bank or broker"}
-          placeholder="Optional"
+          label={domain === "DEBT" ? t("account.lender") : t("account.provider")}
+          placeholder={tc("state.optional")}
           value={draft.provider}
           onValueChange={(v) => set({ provider: v })}
         />
       </div>
       <div className="pair">
         <Select
-          label="Currency"
+          label={tc("noun.currency")}
           options={optionsFor(draft.currency)}
           value={draft.currency}
           onValueChange={(v) => set({ currency: v as Currency })}
         />
         <div className="pair">
           <TextField
-            label="Interest rate %"
-            placeholder="None"
+            label={t("account.interestRate")}
+            placeholder={tc("state.none")}
             inputMode="decimal"
             align="right"
             value={draft.rate}
             onValueChange={(v) => set({ rate: sanitize(v) })}
           />
           <Select
-            label="Period"
-            options={PERIOD_OPTIONS}
+            label={t("account.period")}
+            options={PERIODS.map((p) => ({ value: p, label: t(`account.period.${p}`) }))}
             value={draft.period}
             onValueChange={(v) => set({ period: v as InterestPeriod })}
           />

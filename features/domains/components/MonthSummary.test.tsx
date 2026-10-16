@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { MonthSummary } from "./MonthSummary";
 import { monthWindows } from "../helpers/months";
+import { DEFAULT_PREFERENCES, PreferencesContext } from "../../../hooks/usePreferences";
 
 const now = new Date(2026, 8, 6, 15);
 const [aug, sep] = monthWindows(2, now);
@@ -135,5 +136,33 @@ describe("MonthSummary", () => {
   it("calls a balance that came in low a reduction", () => {
     render(debts(40));
     expect(screen.getByText("$1,000.00 repaid · $40.00 reduced")).toBeInTheDocument();
+  });
+
+  it("speaks Spanish, keeping the percentage in its own span", () => {
+    const [agoEs, sepEs] = monthWindows(2, now, "es");
+    render(
+      <PreferencesContext.Provider value={{ ...DEFAULT_PREFERENCES, language: "es" }}>
+        <MonthSummary
+          domain="DEBT"
+          window={sepEs}
+          realized={900}
+          expected={1_200}
+          delta={{ current: 900, previous: 800, deltaPct: 12.5, previousKey: agoEs.key }}
+          previousLabel={agoEs.longLabel}
+          currency="USD"
+          contributed={1_000}
+          gain={-100}
+        />
+      </PreferencesContext.Provider>
+    );
+    expect(screen.getByText("Abonado hasta ahora")).toBeInTheDocument();
+    expect(screen.getByText("Esperado este mes")).toBeInTheDocument();
+    expect(screen.getByText("75%")).toBeInTheDocument();
+    expect(screen.getByText("75%").parentElement).toHaveTextContent("75% abonado");
+    expect(screen.getByText("Faltan $300.00")).toBeInTheDocument();
+    expect(
+      screen.getByText("$1,000.00 abonado · $100.00 de intereses y cargos")
+    ).toBeInTheDocument();
+    expect(screen.getByText(`Frente a $800.00 en ${agoEs.longLabel}`)).toBeInTheDocument();
   });
 });

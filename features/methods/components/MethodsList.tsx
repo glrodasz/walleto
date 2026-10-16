@@ -6,6 +6,10 @@ import { MethodFaceButton } from "../../../components/molecules/MethodFace";
 import { groupMethodsByType } from "../../../helpers/paymentMethodOptions";
 import { paymentMethodDescription } from "../../../helpers/paymentMethodLabel";
 import type { PaymentMethod } from "../../../types";
+import { usePreferences } from "../../../hooks/usePreferences";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { METHOD_MESSAGES } from "../messages";
 
 interface Props {
   methods: PaymentMethod[];
@@ -16,20 +20,20 @@ interface Props {
 }
 
 export function MethodsList({ methods, loading, archivingId, onEdit, onArchive }: Props) {
+  const { language } = usePreferences();
+  const t = useT(METHOD_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
   return (
     <Card>
-      <SectionTitle title="Saved methods" />
+      <SectionTitle title={t("list.title")} />
 
       {loading ? (
-        <p className="empty">Loading…</p>
+        <p className="empty">{tc("state.loading")}</p>
       ) : methods.length === 0 ? (
-        <EmptyState
-          title="No payment methods yet"
-          description="Add one above to link it to your incomes and expenses."
-        />
+        <EmptyState title={t("list.emptyTitle")} description={t("list.emptyDescription")} />
       ) : (
         <div className="groups">
-          {groupMethodsByType(methods).map((group) => (
+          {groupMethodsByType(methods, language).map((group) => (
             <section key={group.type} className="group" aria-label={group.label}>
               <h3 className="group-title">
                 {group.label}
@@ -39,7 +43,7 @@ export function MethodsList({ methods, loading, archivingId, onEdit, onArchive }
                 {group.methods.map((m) => (
                   <li key={m.id} className="method">
                     <MethodFaceButton
-                      label={`Edit ${paymentMethodDescription(m)}`}
+                      label={t("list.edit", { name: paymentMethodDescription(m, language) })}
                       onClick={() => onEdit(m)}
                       type={m.type}
                       name={m.name}
@@ -49,14 +53,17 @@ export function MethodsList({ methods, loading, archivingId, onEdit, onArchive }
                     />
                     <div className="caption">
                       <span className="muted">
-                        {m.defaultCurrency ? `Default ${m.defaultCurrency}` : "No default currency"}
+                        {m.defaultCurrency
+                          ? t("list.defaultCurrency", { currency: m.defaultCurrency })
+                          : t("list.noDefaultCurrency")}
                       </span>
                       <KebabMenu
-                        aria-label={`Actions for ${m.name}`}
+                        aria-label={tc("action.actionsFor", { name: m.name })}
                         actions={[
-                          { label: "Edit", onSelect: () => onEdit(m) },
+                          { label: tc("action.edit"), onSelect: () => onEdit(m) },
                           {
-                            label: archivingId === m.id ? "Archiving…" : "Archive",
+                            label:
+                              archivingId === m.id ? t("list.archiving") : tc("action.archive"),
                             onSelect: () => m.id && onArchive(m.id),
                             danger: true,
                             disabled: archivingId === m.id,

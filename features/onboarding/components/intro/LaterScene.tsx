@@ -2,12 +2,15 @@ import { IconDisc } from "../../../../components/molecules/IconDisc";
 import { Check, Settings } from "../../../../components/atoms/Icons";
 import { SceneBit } from "./SceneBit";
 import { SceneCanvas } from "./SceneCanvas";
+import { useT } from "../../../../hooks/useT";
+import { ONBOARDING_MESSAGES } from "../../messages";
 
 /**
  * "No rush": the settings gear turns in beside a short checklist. Two rows
  * get ticked; the third stays an open slot for later.
  */
 export function LaterScene() {
+  const t = useT(ONBOARDING_MESSAGES);
   return (
     <SceneCanvas>
       <div className="at gear">
@@ -56,7 +59,7 @@ export function LaterScene() {
         <SceneBit i={3} motion="rise">
           <span className="pill pill--later">
             <span className="tick tick--open" />
-            <span className="later">Later</span>
+            <span className="later">{t("scene.later")}</span>
           </span>
         </SceneBit>
       </div>

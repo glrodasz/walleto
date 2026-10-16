@@ -47,7 +47,8 @@ helpers/stacks.ts                 monthTotalsBy / monthTotalsByCategory — stac
 helpers/categoryTree.ts           categoryIdSet / rootIdMap — fold children into their root category
 helpers/categoryIcons.ts          defaultIconFor(name, domain) / iconFor(category) — default icon when there's no pick
 helpers/money.ts                  formatAmount / formatCompact / formatNative — how an amount is written (and how it's masked)
-helpers/i18n.ts                   t(key, language) — catalog ("en" only) for the Settings strings
+helpers/i18n.ts                   languages (en, es), INTL_LOCALE, defineMessages / translate (plurals via
+                                  Intl.PluralRules); which language comes from i18n/locale.ts — see §3.7
 helpers/recurrence.ts             next occurrence by Frequency
 helpers/seedDefaultCategories.ts  default categories
 ```
@@ -72,8 +73,9 @@ features/
                 (≥1200px) the left column is that screen's slide (`IntroPanel`: scene, label, h2 title and body;
                 sticky) and the right column is the step; below that, a single column with the slide's text on top,
                 no scene and no glass (`.card` becomes `display: contents`), so the form stays close. The pairing
-                lives in `data/steps.ts` (`ONBOARDING_STEPS`: label, href, icon, accent, `tint`, `intro`, `summary`), the
-                copy in `data/introSlides` (`INTRO_SLIDES`, a Record by id), and `stepNav(id)` gives the number,
+                lives in `data/steps.ts` (`ONBOARDING_STEPS`: href, icon, accent, `tint`, `intro`; the words come from
+                `stepLabel(id, language)` / `stepSummary(id, language)`), the copy in `features/onboarding/messages.ts`
+                (`introSlide(id, language)` in `data/introSlides`), and `stepNav(id)` gives the number,
                 Back and Next: no page writes them by hand. Before step 1 comes the welcome (`/onboarding`,
                 IntroPage): `planner` on the left (the only slide that keeps its scene when stacked: there's no form
                 under it) and "What we'll set up" on the right (`SetupOverview`, one `ListItem` per step with its
@@ -445,6 +447,41 @@ The app is a **planner**, not an expense tracker: it answers "what's my plan, is
 - **Worth** — where the owner stands today: accounts and pockets minus debts. NetWorthCard, Worth / Owed view.
 
 "Recurring" is only a cadence adjective, never the name of a screen or a figure. Verbs follow the same rule: an item is **added to the plan** ("Add … to your plan"), a one-off is **logged** ("Log a one-off …"), a position is **updated** ("Update current value / balance"). The "+" offers the plan first. Internal names (`transactions`, `recurrentTransactions`, `RecurringChecklist`) don't change: they belong to the model, not the UI.
+
+### 3.7 Language (important)
+
+The interface speaks English and Spanish. **Every visible string goes through a catalog**: nothing user-facing
+is written inline in a component, a helper or a `constants.ts` map.
+
+- **Which language**: the saved choice (the `locale` cookie) → the browser's languages (Accept-Language on the
+  server, `navigator.languages` in the browser; q-sorted, first language we speak) → English. `i18n/locale.ts` is
+  the localization skill's core minus its URL scheme: there are **no `/es` URLs** on purpose — every screen is behind
+  a login and nothing is shared by link, so the language belongs to the device, not the page. `_app` and
+  `_document` resolve it in `getInitialProps` (`requestLocale`), so the first paint and `<html lang>` are already
+  right; that costs the static pages (wizard, privacy) their static optimisation, which is the trade.
+- **The toggle** is `components/molecules/LanguageToggle`: the target's endonym ("Español" / "English"), `lang` and an
+  `aria-label` in the target language. A tap goes through `useSetLanguage()`, which writes the cookie
+  (`i18n/persistLocale`) and re-renders in place. It lives in Settings › Preferences next to the theme — not in the
+  header. `users.language` is not read: the choice is per device, like the theme's first paint.
+- **Catalogs** are built with `defineMessages(en, es)`: English is the type source, so a key missing in Spanish
+  fails `tsc`. They live next to their consumers, like any other module: `messages/common.ts` (actions, the five
+  domains, cadences, method types, counts — what two or more areas say the same way), `messages/<area>.ts` for
+  shared components, `features/<name>/messages.ts` for a feature. A component reads one with
+  `const t = useT(CATALOG)`; code outside React (helpers that build labels) takes a `language` parameter and calls
+  `translate(CATALOG, language, key, params)` — it never reads the context.
+- **Whole sentences**, interpolated: `"Add a {cadence} expense"` doesn't survive Spanish word order and gender;
+  write one key per sentence (`"add.MONTHLY": "Agregar un gasto mensual"`). Counts are plural messages
+  (`{ one: "{count} mes", other: "{count} meses" }`), never `n === 1 ? … : …s`. Lists go through
+  `formatList(items, t("list.and"))`.
+- **Dates** go through `formatDate(…, language)` / `useDateFormat()`: in Spanish month names come from Intl,
+  day-first ("6 sept"), and standalone month labels are capitalised ("Sept 2026"). Amounts are unchanged: the
+  user's decimal separator preference (§3.1) already decides how a number is written.
+- **Never translated**: currency codes, and anything the user typed or that was seeded as their data (item,
+  category, tag, account and method names).
+- **Spanish voice**: "tú", neutral Latin-American Spanish, sentence case. The three nouns of §3.6 are
+  Plan / Actividad / Patrimonio; "Medio de pago" for payment method, "Etiqueta" for tag, "Bolsillo" for pocket.
+- Storybook has a **Language** toolbar next to Theme; tests render without a provider, so they read English.
+  `i18n/locale.test.ts` carries the skill's precedence table: extend it when a locale is added.
 
 ## 7. Deferred on purpose
 

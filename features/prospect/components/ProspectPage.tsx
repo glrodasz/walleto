@@ -20,10 +20,14 @@ import { useMoneyContext } from "../../../hooks/useMoneyContext";
 import { computeFlow } from "../../../helpers";
 import { errorMessage } from "../../../utils/errorMessage";
 import type { Currency, RecurrentTransaction } from "../../../types";
+import { usePreferences } from "../../../hooks/usePreferences";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { PROSPECT_MESSAGES } from "../messages";
 
 const HORIZONS = [
-  { key: "6", label: "6 months", months: 6 },
-  { key: "12", label: "12 months", months: 12 },
+  { key: "6", months: 6 },
+  { key: "12", months: 12 },
 ];
 
 /** The dashboard's rule: an item hidden from it is out of every plan number. */
@@ -42,6 +46,9 @@ interface Props {
  */
 export function ProspectPage({ initialMode = "whatif" }: Props) {
   const { ctx, target, fxMissing } = useMoneyContext();
+  const { language } = usePreferences();
+  const t = useT(PROSPECT_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
   const currency: Currency = target;
 
   const incomeQ = useRecurrentTransactions("INCOME");
@@ -96,8 +103,8 @@ export function ProspectPage({ initialMode = "whatif" }: Props) {
 
   const months = HORIZONS.find((h) => h.key === horizon)?.months ?? HORIZONS[0].months;
   const projection = useMemo(
-    () => buildWhatIfProjection(currentFlow.net, impact.freedMonthly, months),
-    [currentFlow.net, impact.freedMonthly, months]
+    () => buildWhatIfProjection(currentFlow.net, impact.freedMonthly, months, new Date(), language),
+    [currentFlow.net, impact.freedMonthly, months, language]
   );
 
   // "≈" only means something when a conversion actually happened.
@@ -110,7 +117,7 @@ export function ProspectPage({ initialMode = "whatif" }: Props) {
     try {
       await expenseQ.update(item.id, { essential });
     } catch (err) {
-      setSaveError(errorMessage(err, `Couldn't update ${item.name}.`));
+      setSaveError(errorMessage(err, t("save.updateFailed", { name: item.name })));
     }
   };
 
@@ -130,12 +137,8 @@ export function ProspectPage({ initialMode = "whatif" }: Props) {
 
   return (
     <PageLayout
-      title="Prospect"
-      subtitle={
-        mode === "emergency"
-          ? "If your income stopped today, how long would you last?"
-          : "What could you cut, and what would it change?"
-      }
+      title={t("page.title")}
+      subtitle={mode === "emergency" ? t("page.subtitle.emergency") : t("page.subtitle.whatif")}
       hideMonth
     >
       <div className="modebar">
@@ -144,12 +147,9 @@ export function ProspectPage({ initialMode = "whatif" }: Props) {
 
       {error && <ErrorState error={error} />}
       {hasForeign && fxMissing && (
-        <ErrorState
-          title="Exchange rates unavailable"
-          description="Totals mix currencies without conversion right now. They'll correct themselves when rates load again."
-        />
+        <ErrorState title={t("fx.title")} description={t("fx.description")} />
       )}
-      {saveError && <ErrorState title="Couldn't save" description={saveError} />}
+      {saveError && <ErrorState title={t("save.title")} description={saveError} />}
 
       {mode === "emergency" ? (
         <EmergencyView
@@ -172,20 +172,23 @@ export function ProspectPage({ initialMode = "whatif" }: Props) {
 
           <Card>
             <div className="chart-head">
-              <SectionTitle title="Projected net" />
+              <SectionTitle title={t("projection.title")} />
               <TabStrip
-                tabs={HORIZONS}
+                tabs={HORIZONS.map((h) => ({
+                  key: h.key,
+                  label: tc("count.months", { count: h.months }),
+                }))}
                 value={horizon}
                 onChange={setHorizon}
-                label="Projection horizon"
+                label={t("projection.horizon")}
               />
             </div>
             <FlowChart
               data={projection}
               currency={currency}
               loading={loading}
-              labelA="As planned"
-              labelB="If cancelled"
+              labelA={t("projection.asPlanned")}
+              labelB={t("projection.ifCancelled")}
               colorA="var(--fg-2)"
               colorB="var(--positive)"
             />

@@ -8,6 +8,8 @@ import type { MoneyContext } from "../../../helpers/aggregations";
 import { subscriptionCosts } from "../helpers/subscriptionCosts";
 import type { Category, Currency, RecurrentTransaction } from "../../../types";
 import { useDateFormat } from "../../../hooks/usePreferences";
+import { useT } from "../../../hooks/useT";
+import { INSIGHTS_MESSAGES } from "../messages";
 
 interface Props {
   /** All of the domain's active recurrent items — the predicate does its own filtering. */
@@ -24,6 +26,7 @@ interface Props {
  * abroad shows the rate actually paid rather than today's market rate.
  */
 export function SubscriptionInsights({ items, categories, ctx, currency }: Props) {
+  const t = useT(INSIGHTS_MESSAGES);
   const { formatDate } = useDateFormat();
   const { formatAmount, formatNumber, formatPercent } = useMoneyFormat();
   // Only mounted on the Subscriptions tab, so this listener is scoped to when
@@ -39,20 +42,20 @@ export function SubscriptionInsights({ items, categories, ctx, currency }: Props
 
   return (
     <Card accentColor="var(--domain-expense)">
-      <SectionTitle title="Subscription costs" />
+      <SectionTitle title={t("title")} />
 
       <div className="totals">
         <div>
-          <span className="label">Monthly</span>
+          <span className="label">{t("monthly")}</span>
           <Amount value={summary.totalMonthly} currency={currency} size="md" />
         </div>
         <div>
-          <span className="label">Annualized</span>
+          <span className="label">{t("annualized")}</span>
           <Amount value={summary.totalAnnualized} currency={currency} size="md" />
         </div>
         {summary.percentOfIncome !== null && (
           <div>
-            <span className="label">Of income</span>
+            <span className="label">{t("ofIncome")}</span>
             <span className="percent">{formatPercent(summary.percentOfIncome)}</span>
           </div>
         )}
@@ -64,13 +67,16 @@ export function SubscriptionInsights({ items, categories, ctx, currency }: Props
             <span className="name">{sub.name}</span>
             <span className="figures">
               <span className="cost">
-                {formatAmount(sub.monthlyAmount, currency)}/mo · ≈{" "}
-                {formatAmount(sub.annualizedAmount, currency)}/yr
+                {t("cost", {
+                  monthly: formatAmount(sub.monthlyAmount, currency),
+                  yearly: formatAmount(sub.annualizedAmount, currency),
+                })}
               </span>
               <span className="meta">
-                {sub.nextOccurrence && `Next ${formatDate(sub.nextOccurrence, "day")}`}
+                {sub.nextOccurrence && t("next", { date: formatDate(sub.nextOccurrence, "day") })}
                 {sub.nextOccurrence && sub.impliedRate !== null && " · "}
-                {sub.impliedRate !== null && `≈${formatNumber(sub.impliedRate, 2, 2)} implied rate`}
+                {sub.impliedRate !== null &&
+                  t("impliedRate", { rate: formatNumber(sub.impliedRate, 2, 2) })}
               </span>
             </span>
           </li>

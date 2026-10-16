@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { Close, Lightbulb } from "../../../components/atoms/Icons";
 import { useLocalPreference } from "../../../hooks/useLocalPreference";
+import { useT } from "../../../hooks/useT";
+import { DASHBOARD_MESSAGES } from "../messages";
 
 interface Props {
   /** Stable id: once dismissed, this tip stays dismissed in this browser. */
@@ -10,6 +12,7 @@ interface Props {
 
 /** A one-line hint at the top of the page, dismissable for good. */
 export function TipBanner({ id, children }: Props) {
+  const t = useT(DASHBOARD_MESSAGES);
   const [dismissed, setDismissed] = useLocalPreference(`walleto:tip:${id}`, false);
   if (dismissed) return null;
   return (
@@ -18,12 +21,12 @@ export function TipBanner({ id, children }: Props) {
         <Lightbulb size={16} />
       </span>
       <p className="text">
-        <strong>Tip:</strong> {children}
+        <strong>{t("tip.label")}</strong> {children}
       </p>
       <button
         type="button"
         className="close"
-        aria-label="Dismiss tip"
+        aria-label={t("tip.dismiss")}
         onClick={() => setDismissed(true)}
       >
         <Close size={16} />

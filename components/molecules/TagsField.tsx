@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Chip } from "../atoms/Chip";
 import { Combobox } from "../atoms/Combobox";
 import { tagKey, tagNames } from "../../helpers/tags";
+import { useT } from "../../hooks/useT";
+import { COMMON_MESSAGES } from "../../messages/common";
+import { FIELD_MESSAGES } from "../../messages/fields";
 import type { Tag } from "../../types";
 
 interface Props {
@@ -23,6 +26,8 @@ interface Props {
  * created on the spot.
  */
 export function TagsField({ tags, value, onChange, createTag, onError, disabled }: Props) {
+  const t = useT(FIELD_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
   const [adding, setAdding] = useState(false);
   const selected = tagNames(value, tags);
   const suggestions = tags.filter((t) => t.id && !value.includes(t.id)).map((t) => t.name);
@@ -41,7 +46,7 @@ export function TagsField({ tags, value, onChange, createTag, onError, disabled 
       onChange([...value, id]);
     } catch (err) {
       console.error("Failed to create tag:", err);
-      onError?.(`Couldn't create the tag "${raw.trim()}"`);
+      onError?.(t("tags.createFailed", { name: raw.trim() }));
     }
   };
 
@@ -52,28 +57,28 @@ export function TagsField({ tags, value, onChange, createTag, onError, disabled 
 
   return (
     <div className="tags-field">
-      <span className="label">Tags</span>
+      <span className="label">{tc("noun.tags")}</span>
       <div className="chips">
         {selected.map((name) => (
           <Chip
             key={name}
             onRemove={disabled ? undefined : () => remove(name)}
-            removeLabel={`Remove ${name}`}
+            removeLabel={tc("action.removeItem", { name })}
           >
             {name}
           </Chip>
         ))}
         {!disabled && !adding && (
           <Chip variant="add" onClick={() => setAdding(true)}>
-            Add tag
+            {t("tags.add")}
           </Chip>
         )}
       </div>
       {adding && (
         <Combobox
           autoFocus
-          label="New tag"
-          placeholder="Type a tag"
+          label={t("tags.new")}
+          placeholder={t("tags.typeTag")}
           suggestions={suggestions}
           onSelect={pick}
           onCancel={() => setAdding(false)}

@@ -9,6 +9,9 @@ import { EditMethodModal } from "../../methods/components/EditMethodModal";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { errorMessage } from "../../../utils/errorMessage";
 import type { PaymentMethod } from "../../../types";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { SETTINGS_MESSAGES } from "../messages";
 
 /**
  * Payment methods, now a Settings section: the wizard's add-a-method rows on
@@ -23,6 +26,8 @@ export function MethodsSettings() {
   const [savedCount, setSavedCount] = useState<number | null>(null);
   const [editing, setEditing] = useState<PaymentMethod | null>(null);
   const [archivingId, setArchivingId] = useState<string | null>(null);
+  const tr = useT(SETTINGS_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
 
   const save = async () => {
     setBusy(true);
@@ -35,7 +40,7 @@ export function MethodsSettings() {
       if (created > 0) draftState.reset();
     } catch (err) {
       console.error("Failed to save payment methods:", err);
-      setError(errorMessage(err, "Couldn't save — try again"));
+      setError(errorMessage(err, tr("methods.saveFailed")));
     } finally {
       setBusy(false);
     }
@@ -55,21 +60,16 @@ export function MethodsSettings() {
   return (
     <>
       <Card>
-        <SectionTitle
-          title="Add a method"
-          subtitle="Cards, bank accounts and wallets you use for incomes and expenses."
-        />
+        <SectionTitle title={tr("methods.add")} subtitle={tr("methods.addHint")} />
         <MethodsStep state={draftState} />
         <div className="actions">
           <Button variant="primary" onClick={save} disabled={busy}>
-            {busy ? "Saving…" : "Save"}
+            {busy ? tc("action.saving") : tc("action.save")}
           </Button>
           {error && <span className="error">{error}</span>}
           {!error && savedCount !== null && (
             <span className="success">
-              {savedCount > 0
-                ? `Saved ${savedCount} new method${savedCount === 1 ? "" : "s"}`
-                : "Up to date"}
+              {savedCount > 0 ? tr("methods.saved", { count: savedCount }) : tr("methods.upToDate")}
             </span>
           )}
         </div>

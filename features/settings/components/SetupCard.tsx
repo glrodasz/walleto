@@ -4,6 +4,9 @@ import { Play, Rocket } from "../../../components/atoms/Icons";
 import { IconDisc } from "../../../components/molecules/IconDisc";
 import { t } from "../../../helpers/i18n";
 import { useUserDoc } from "../../../hooks/useUserDoc";
+import { usePreferences } from "../../../hooks/usePreferences";
+import { useT } from "../../../hooks/useT";
+import { SETTINGS_MESSAGES } from "../messages";
 import { ONBOARDING_INTRO } from "../../onboarding/helpers/routes";
 import { SettingsCard } from "./SettingsCard";
 
@@ -15,6 +18,8 @@ export function SetupCard() {
   const router = useRouter();
   const { update } = useUserDoc();
   const [busy, setBusy] = useState(false);
+  const { language } = usePreferences();
+  const tr = useT(SETTINGS_MESSAGES);
 
   const runSetupAgain = async () => {
     setBusy(true);
@@ -34,15 +39,15 @@ export function SetupCard() {
 
   return (
     <SettingsCard
-      title={t("settings.setup.title")}
-      subtitle={t("settings.setup.subtitle")}
+      title={t("settings.setup.title", language)}
+      subtitle={t("settings.setup.subtitle", language)}
       icon={Rocket}
     >
       <div className="tools">
         <button
           type="button"
           className="tool"
-          aria-label="Run setup again"
+          aria-label={tr("setup.runAgain")}
           onClick={runSetupAgain}
           disabled={busy}
         >
@@ -50,11 +55,8 @@ export function SetupCard() {
             <Play size={16} />
           </IconDisc>
           <span className="text">
-            <span className="title">{busy ? "Starting…" : "Run setup again"}</span>
-            <span className="desc">
-              Start over from the welcome and walk through each step again. Everything you&apos;ve
-              saved stays.
-            </span>
+            <span className="title">{busy ? tr("setup.starting") : tr("setup.runAgain")}</span>
+            <span className="desc">{tr("setup.runAgainHint")}</span>
           </span>
           <span className="chevron" aria-hidden="true">
             ›

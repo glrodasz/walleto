@@ -10,6 +10,8 @@ import { ContinueLater } from "../../features/onboarding/components/ContinueLate
 import { useLeaveOnboarding } from "../../features/onboarding/hooks/useLeaveOnboarding";
 import { useUserDoc } from "../../hooks/useUserDoc";
 import { materializeNow } from "../../hooks/useMaterialize";
+import { useT } from "../../hooks/useT";
+import { PAGE_MESSAGES } from "../../messages/pages";
 
 const { step, back } = stepNav("review");
 
@@ -19,6 +21,7 @@ const { step, back } = stepNav("review");
 // data is still guarded by Firestore rules and the API routes.
 function OnboardingReview() {
   const router = useRouter();
+  const t = useT(PAGE_MESSAGES);
   const { update } = useUserDoc();
   const state = useReviewStep();
   // Nothing is edited here: every step saved on the way in.
@@ -39,7 +42,7 @@ function OnboardingReview() {
       router.push("/");
     } catch (err) {
       console.error("Failed to finish onboarding:", err);
-      setFinishError("Could not finish setup. Please try again.");
+      setFinishError(t("onboarding.review.finishFailed"));
       setFinishing(false);
     }
   };
@@ -47,7 +50,7 @@ function OnboardingReview() {
   return (
     <OnboardingLayout
       step={step}
-      description="Here is your plan as the dashboard will show it. Go back to any step to change it."
+      description={t("onboarding.review.description")}
       onNavigate={go}
       busy={pending}
       footer={
@@ -55,7 +58,7 @@ function OnboardingReview() {
           leading={<ContinueLater step={step} onClick={later.leave} busy={pending} />}
           onBack={back ? () => go(back) : undefined}
           onNext={complete}
-          nextLabel="Finish"
+          nextLabel={t("onboarding.review.finish")}
           busy={pending}
           error={finishError ?? later.error}
         />

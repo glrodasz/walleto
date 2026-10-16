@@ -2,7 +2,9 @@ import { useMemo } from "react";
 import { useAccounts } from "../../../hooks/useAccounts";
 import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
 import { useAllInvestmentValuations } from "../../../hooks/useInvestmentValuations";
-import { ACCOUNT_NOUN, accountLabel } from "../../../helpers/accounts";
+import { accountLabel } from "../../../helpers/accounts";
+import { useT } from "../../../hooks/useT";
+import { INVESTMENT_MESSAGES } from "../messages";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import { INCEPTION, withDomain } from "../helpers/valuation";
@@ -32,7 +34,7 @@ export function AccountValuePanels({ domain, category, categories, ctx, currency
     [rawValuations, categories]
   );
   const accent = DOMAIN_CONFIG[domain].accent;
-  const noun = ACCOUNT_NOUN[domain].singular;
+  const t = useT(INVESTMENT_MESSAGES);
 
   const linked = useMemo(() => {
     const ids = new Set<string>();
@@ -58,7 +60,7 @@ export function AccountValuePanels({ domain, category, categories, ctx, currency
     accent,
   };
   if (linked.length === 0) {
-    return <InvestmentValuePanel selector={{ domain }} title={`No ${noun}`} {...shared} />;
+    return <InvestmentValuePanel selector={{ domain }} title={t(`bucket.${domain}`)} {...shared} />;
   }
   return (
     <>

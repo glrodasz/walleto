@@ -31,6 +31,9 @@ import type {
   Transaction,
 } from "../../../types";
 import { useDateFormat } from "../../../hooks/usePreferences";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { INVESTMENT_MESSAGES } from "../messages";
 
 interface Props {
   /** Decides the sign of the maths and the words: a debt shows repaid / owed / interest. */
@@ -78,8 +81,10 @@ export function InvestmentValuePanel({
   currency,
   accent = "var(--domain-investment)",
 }: Props) {
-  const { formatDate } = useDateFormat();
+  const { formatDate, language } = useDateFormat();
   const { formatAmount, formatPercent, separator } = useMoneyFormat();
+  const t = useT(INVESTMENT_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
   const owes = domain === "DEBT";
   const sign = positionSign(domain);
   const valuations = useMemo(
@@ -121,17 +126,34 @@ export function InvestmentValuePanel({
   );
 
   const series = useMemo(
-    () => valuationSeries(transactions, valuations, selector, ctx, CHART_MONTHS, now, rate, sign),
-    [transactions, valuations, selector, ctx, now, rate, sign]
+    () =>
+      valuationSeries(
+        transactions,
+        valuations,
+        selector,
+        ctx,
+        CHART_MONTHS,
+        now,
+        rate,
+        sign,
+        language
+      ),
+    [transactions, valuations, selector, ctx, now, rate, sign, language]
   );
 
+  const rateLabel = rate ? formatInterestRate(rate, separator, language) : null;
   const valueMeta = latest
-    ? `checked ${formatDate(latest.asOf.toDate(), "dayYear")}${rate ? `, ${formatInterestRate(rate, separator)} since` : ""}`
+    ? rateLabel
+      ? t("panel.checkedRate", {
+          date: formatDate(latest.asOf.toDate(), "dayYear"),
+          rate: rateLabel,
+        })
+      : t("panel.checked", { date: formatDate(latest.asOf.toDate(), "dayYear") })
     : owes
-      ? "no balance check yet"
-      : rate
-        ? `estimated at ${formatInterestRate(rate, separator)}`
-        : "no value check yet";
+      ? t("panel.noBalanceCheck")
+      : rateLabel
+        ? t("panel.estimatedAt", { rate: rateLabel })
+        : t("panel.noValueCheck");
 
   const del = async (id: string) => {
     setDeletingId(id);
@@ -148,19 +170,21 @@ export function InvestmentValuePanel({
     <>
       <Card accentColor={accent}>
         <div className="head">
-          <SectionTitle title={`${title} — ${owes ? "balance" : "value"}`} />
+          <SectionTitle
+            title={t(owes ? "panel.title.balance" : "panel.title.value", { name: title })}
+          />
           <Button variant="primary" size="sm" onClick={() => setModal({ open: true })}>
-            {owes ? "Update balance" : "Update value"}
+            {t(owes ? "update.balance" : "update.value")}
           </Button>
         </div>
 
         <div className="figures">
           <div>
-            <span className="label">{owes ? "Repaid" : "Invested"}</span>
+            <span className="label">{t(owes ? "panel.repaid" : "panel.invested")}</span>
             <Amount value={invested} currency={currency} size="md" />
           </div>
           <div>
-            <span className="label">{owes ? "Owed" : "Current value"}</span>
+            <span className="label">{t(owes ? "panel.owed" : "panel.currentValue")}</span>
             {owes && !latest ? (
               <span className="dash">—</span>
             ) : (
@@ -176,19 +200,19 @@ export function InvestmentValuePanel({
           {owes ? (
             interest !== null && (
               <div>
-                <span className="label">Interest</span>
+                <span className="label">{t("panel.interest")}</span>
                 <Amount
                   value={interest}
                   currency={currency}
                   size="md"
                   approximate={Boolean(rate)}
                 />
-                <span className="meta">since the first balance</span>
+                <span className="meta">{t("panel.sinceFirstBalance")}</span>
               </div>
             )
           ) : (
             <div>
-              <span className="label">Gain</span>
+              <span className="label">{t("panel.gain")}</span>
               <Amount value={gain} currency={currency} size="md" colorize />
               {gainPct !== null && (
                 <span className={`meta ${gain >= 0 ? "up" : "down"}`}>
@@ -204,8 +228,8 @@ export function InvestmentValuePanel({
           data={series}
           currency={currency}
           loading={Boolean(loading)}
-          labelA={owes ? "Repaid" : "Invested"}
-          labelB={owes ? "Owed" : "Value"}
+          labelA={t(owes ? "panel.repaid" : "panel.invested")}
+          labelB={t(owes ? "panel.owed" : "panel.value")}
           colorA="var(--fg-2)"
           colorB={accent}
           height={200}
@@ -220,18 +244,23 @@ export function InvestmentValuePanel({
                   <span className="row-value">{formatAmount(v.value, v.currency)}</span>
                   {!owes && (
                     <span className={`row-pct ${v.gainPct >= 0 ? "up" : "down"}`}>
-                      {v.gainPct >= 0 ? "+" : ""}
-                      {formatPercent(v.gainPct)} on {formatAmount(v.costBasis, v.currency)}
+                      {t("panel.gainOn", {
+                        pct: `${v.gainPct >= 0 ? "+" : ""}${formatPercent(v.gainPct)}`,
+                        amount: formatAmount(v.costBasis, v.currency),
+                      })}
                     </span>
                   )}
                   {v.note && <span className="row-note">{v.note}</span>}
                 </span>
                 <KebabMenu
-                  aria-label={`Actions for valuation ${formatDate(v.asOf.toDate(), "dayYear")}`}
+                  aria-label={t("panel.actions", { date: formatDate(v.asOf.toDate(), "dayYear") })}
                   actions={[
-                    { label: "Edit", onSelect: () => setModal({ open: true, editing: v }) },
                     {
-                      label: deletingId === v.id ? "Deleting…" : "Delete",
+                      label: tc("action.edit"),
+                      onSelect: () => setModal({ open: true, editing: v }),
+                    },
+                    {
+                      label: deletingId === v.id ? t("panel.deleting") : tc("action.delete"),
                       onSelect: () => v.id && del(v.id),
                       danger: true,
                       disabled: deletingId === v.id,

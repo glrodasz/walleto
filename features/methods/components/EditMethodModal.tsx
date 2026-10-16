@@ -16,6 +16,11 @@ import {
 import { useEnabledCurrencies } from "../../../hooks/useEnabledCurrencies";
 import { errorMessage } from "../../../utils/errorMessage";
 import type { Currency, PaymentMethod } from "../../../types";
+import { usePreferences } from "../../../hooks/usePreferences";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { FIELD_MESSAGES } from "../../../messages/fields";
+import { METHOD_MESSAGES } from "../messages";
 
 interface Props {
   method: PaymentMethod | null;
@@ -33,6 +38,10 @@ interface Props {
 export function EditMethodModal({ method, onClose }: Props) {
   const { update } = usePaymentMethods();
   const { optionsFor } = useEnabledCurrencies();
+  const { language } = usePreferences();
+  const t = useT(METHOD_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
+  const tf = useT(FIELD_MESSAGES);
   const [name, setName] = useState("");
   const [network, setNetwork] = useState("");
   const [last4, setLast4] = useState("");
@@ -58,7 +67,7 @@ export function EditMethodModal({ method, onClose }: Props) {
   const showLast4 = CARD_TYPES.includes(method.type);
 
   const submit = async () => {
-    if (!name.trim()) return setError("Give it a name");
+    if (!name.trim()) return setError(t("edit.nameRequired"));
     if (showLast4 && last4Error(last4)) {
       setAttempted(true);
       return setError(null);
@@ -81,14 +90,14 @@ export function EditMethodModal({ method, onClose }: Props) {
       onClose();
     } catch (err) {
       console.error("Failed to update payment method:", err);
-      setError(errorMessage(err, "Couldn't save — try again"));
+      setError(errorMessage(err, t("edit.saveFailed")));
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <Modal open title={`Edit ${method.name}`} onClose={onClose}>
+    <Modal open title={t("edit.title", { name: method.name })} onClose={onClose}>
       <div className="form">
         {/* The object itself, updating as the fields change. */}
         <div className="preview">
@@ -103,17 +112,17 @@ export function EditMethodModal({ method, onClose }: Props) {
         </div>
 
         <TextField
-          label="Alias"
-          placeholder="Ex: Chase Sapphire"
+          label={tf("method.alias")}
+          placeholder={tf("method.aliasPlaceholder")}
           value={name}
           onValueChange={setName}
         />
 
         {showNetwork && (
           <Combobox
-            label={networkFieldLabel(method.type)}
-            fieldLabel={networkFieldLabel(method.type)}
-            placeholder="Search or type your own"
+            label={networkFieldLabel(method.type, language)}
+            fieldLabel={networkFieldLabel(method.type, language)}
+            placeholder={tf("method.searchOrType")}
             suggestions={networkSuggestions ?? []}
             value={network}
             onSelect={setNetwork}
@@ -123,8 +132,8 @@ export function EditMethodModal({ method, onClose }: Props) {
         {showLast4 && <Last4Field value={last4} showError={attempted} onChange={setLast4} />}
 
         <Select
-          label="Default currency"
-          placeholder="None"
+          label={t("edit.defaultCurrency")}
+          placeholder={tc("state.none")}
           options={optionsFor(defaultCurrency)}
           value={defaultCurrency}
           onValueChange={(v) => setDefaultCurrency(v as Currency)}
@@ -134,10 +143,10 @@ export function EditMethodModal({ method, onClose }: Props) {
 
         <div className="actions">
           <Button variant="ghost" onClick={onClose} disabled={busy}>
-            Cancel
+            {tc("action.cancel")}
           </Button>
           <Button variant="primary" onClick={submit} disabled={busy}>
-            {busy ? "Saving…" : "Save changes"}
+            {busy ? tc("action.saving") : t("edit.saveChanges")}
           </Button>
         </div>
       </div>

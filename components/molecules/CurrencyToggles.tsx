@@ -1,5 +1,7 @@
 import { Chip } from "../atoms/Chip";
 import { CURRENCIES, CURRENCY_SYMBOL } from "../../constants";
+import { useT } from "../../hooks/useT";
+import { FIELD_MESSAGES } from "../../messages/fields";
 import type { Currency } from "../../types";
 
 interface Props {
@@ -13,9 +15,10 @@ interface Props {
 
 /** The catalog as on/off chips: which currencies every picker offers. */
 export function CurrencyToggles({ enabled, locked, onToggle, disabled = false }: Props) {
+  const t = useT(FIELD_MESSAGES);
   return (
     <div className="toggles">
-      <div className="chips" role="group" aria-label="Available currencies">
+      <div className="chips" role="group" aria-label={t("currency.available")}>
         {CURRENCIES.map((c) => {
           const reason = locked(c);
           return (

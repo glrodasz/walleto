@@ -1,4 +1,5 @@
-import type { DateFormat } from "../types";
+import { INTL_LOCALE } from "./i18n";
+import type { DateFormat, Language } from "../types";
 
 /**
  * Every date the interface prints goes through here, so the user's
@@ -10,6 +11,11 @@ import type { DateFormat } from "../types";
  *   monthYear  "Sep 2026" (format-independent)
  *   monthLong  "September 2026" (format-independent)
  *   numeric    "09/06/2026" · "06/09/2026" · "2026-09-06"
+ *
+ * In Spanish, month names come from Intl ("sept", "septiembre de 2026") and a
+ * named-month day is always day-first ("6 sept"), whatever the preference;
+ * numeric and ISO dates still follow it. Standalone month labels start with a
+ * capital ("Sept 2026"), since they head columns and pickers.
  */
 export type DateStyle = "day" | "dayYear" | "month" | "monthYear" | "monthLong" | "numeric";
 
@@ -34,14 +40,21 @@ const OPTIONS: Record<DateStyle, Intl.DateTimeFormatOptions> = {
 
 const cache = new Map<string, Intl.DateTimeFormat>();
 
-function formatter(style: DateStyle, format: DateFormat): Intl.DateTimeFormat {
-  const key = `${style}:${format}`;
+function formatter(style: DateStyle, locale: string): Intl.DateTimeFormat {
+  const key = `${style}:${locale}`;
   let f = cache.get(key);
   if (!f) {
-    f = new Intl.DateTimeFormat(LOCALE[format], OPTIONS[style]);
+    f = new Intl.DateTimeFormat(locale, OPTIONS[style]);
     cache.set(key, f);
   }
   return f;
+}
+
+const capitalize = (text: string) => text.charAt(0).toLocaleUpperCase() + text.slice(1);
+
+/** "sept" — Intl's abbreviation without the trailing period some locales add. */
+function shortMonth(date: Date, locale: string): string {
+  return formatter("month", locale).format(date).replace(/\.$/, "");
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -54,22 +67,36 @@ export function monthKey(date: Date): string {
 export function formatDate(
   date: Date,
   style: DateStyle,
-  format: DateFormat = DEFAULT_DATE_FORMAT
+  format: DateFormat = DEFAULT_DATE_FORMAT,
+  language: Language = "en"
 ): string {
+  if (language !== "en") return formatDateIn(date, style, format, INTL_LOCALE[language]);
   // Month labels never depend on the preference (and en-GB would say "Sept").
   if (style === "month" || style === "monthYear" || style === "monthLong") {
-    return formatter(style, "MDY").format(date);
+    return formatter(style, LOCALE.MDY).format(date);
   }
   // ISO days are written by hand: locales disagree on separators.
-  if (format === "YMD") {
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-  }
+  if (format === "YMD") return isoDay(date);
   // Day-first keeps the US month abbreviation ("6 Sep", not "6 Sept").
   if (format === "DMY" && style !== "numeric") {
-    const month = formatter("month", "MDY").format(date);
+    const month = formatter("month", LOCALE.MDY).format(date);
     return style === "day"
       ? `${date.getDate()} ${month}`
       : `${date.getDate()} ${month} ${date.getFullYear()}`;
   }
-  return formatter(style, format).format(date);
+  return formatter(style, LOCALE[format]).format(date);
+}
+
+const isoDay = (date: Date) =>
+  `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+
+/** Every language but English: Intl's month names, day-first. */
+function formatDateIn(date: Date, style: DateStyle, format: DateFormat, locale: string): string {
+  if (style === "month") return capitalize(shortMonth(date, locale));
+  if (style === "monthYear") return capitalize(`${shortMonth(date, locale)} ${date.getFullYear()}`);
+  if (style === "monthLong") return capitalize(formatter("monthLong", locale).format(date));
+  if (format === "YMD") return isoDay(date);
+  if (style === "numeric") return formatter("numeric", LOCALE[format]).format(date);
+  const dayMonth = `${date.getDate()} ${shortMonth(date, locale)}`;
+  return style === "day" ? dayMonth : `${dayMonth} ${date.getFullYear()}`;
 }

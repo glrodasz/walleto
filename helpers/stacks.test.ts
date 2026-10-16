@@ -89,6 +89,15 @@ describe("monthTotalsByCategory", () => {
       color: "var(--tint-income-6)",
     });
   });
+
+  it("names Other and unknown slices in the reader's language", () => {
+    const rows = ["a", "b", "c", "d", "e", "f", "g"].map((k, i) =>
+      row(new Date(2026, 8, 1), 100 - i, k)
+    );
+    const out = monthTotalsByCategory(rows, [], ctx, windows, { domain: "INCOME", language: "es" });
+    expect(out.series[0].label).toBe("Desconocida");
+    expect(out.series[5].label).toBe("Otros");
+  });
 });
 
 describe("domainTint", () => {

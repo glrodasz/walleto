@@ -5,6 +5,9 @@ import type { SummaryStat } from "../../../components/molecules/SummaryCard";
 import type { BadgeTone } from "../../../components/atoms/Badge";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { useDateFormat } from "../../../hooks/usePreferences";
+import { useT } from "../../../hooks/useT";
+import type { Translator } from "../../../helpers/i18n";
+import { PROSPECT_MESSAGES } from "../messages";
 import { RUNWAY_CAP_MONTHS } from "../helpers/emergency";
 import { formatRunway } from "../helpers/runwayDuration";
 import type { EmergencyBudget } from "../helpers/emergency";
@@ -28,11 +31,14 @@ interface Props {
 }
 
 /** Three months is a crisis, six the usual advice. */
-function verdict(runway: number | null): { label: string; tone: BadgeTone } {
-  if (runway === null) return { label: "Covered", tone: "success" };
-  if (runway < 3) return { label: "Critical", tone: "danger" };
-  if (runway < 6) return { label: "Tight", tone: "warning" };
-  return { label: "Solid", tone: "success" };
+function verdict(
+  runway: number | null,
+  t: Translator<(typeof PROSPECT_MESSAGES)["en"]>
+): { label: string; tone: BadgeTone } {
+  if (runway === null) return { label: t("runway.covered"), tone: "success" };
+  if (runway < 3) return { label: t("runway.critical"), tone: "danger" };
+  if (runway < 6) return { label: t("runway.tight"), tone: "warning" };
+  return { label: t("runway.solid"), tone: "success" };
 }
 
 /**
@@ -54,14 +60,15 @@ export function RunwayCard({
   approximate = false,
 }: Props) {
   const { formatAmount, formatNumber } = useMoneyFormat();
-  const { formatDate } = useDateFormat();
-  const title = "Emergency runway";
+  const { formatDate, language } = useDateFormat();
+  const t = useT(PROSPECT_MESSAGES);
+  const title = t("runway.title");
 
   if (loading) {
     return (
       <SummaryCard
         title={title}
-        badge={{ label: "Emergency", tone: "danger" }}
+        badge={{ label: t("runway.badge"), tone: "danger" }}
         figure={<Skeleton.Box width={180} height={36} />}
       />
     );
@@ -75,42 +82,45 @@ export function RunwayCard({
       : new Date(now.getFullYear(), now.getMonth() + Math.floor(runway), now.getDate());
 
   const figure =
-    runway === null ? `${RUNWAY_CAP_MONTHS / 12}+ years` : formatRunway(runway, formatNumber);
+    runway === null
+      ? t("runway.cap", { count: RUNWAY_CAP_MONTHS / 12 })
+      : formatRunway(runway, formatNumber, language);
 
   const sub =
     runway === null
       ? budget.burnMonthly > 0
-        ? "your cushion outlasts the simulation"
-        : "nothing essential left to pay"
+        ? t("runway.outlasts")
+        : t("runway.nothingToPay")
       : runway === 0
-        ? "nothing set aside to cover the essentials"
-        : `of essentials covered — until about ${formatDate(until!, "monthYear")}`;
+        ? t("runway.nothingSaved")
+        : t("runway.until", { date: formatDate(until!, "monthYear") });
 
   const stats: SummaryStat[] = [
     {
       key: "cushion",
-      label: "Cushion",
+      label: t("runway.cushion"),
       domain: "SAVING",
       Icon: Circle,
       value: formatAmount(cushion, currency),
     },
     {
       key: "burn",
-      label: "Essentials / month",
+      label: t("runway.burn"),
       domain: "EXPENSE",
       Icon: ArrowDown,
       value: formatAmount(budget.burnMonthly, currency),
     },
     {
       key: "benefit",
-      label: benefitMonths > 0 ? `Benefit × ${benefitMonths} mo` : "Benefit",
+      label:
+        benefitMonths > 0 ? t("runway.benefitFor", { count: benefitMonths }) : t("runway.benefit"),
       domain: "INCOME",
       Icon: ArrowUpRight,
       value: benefitMonthly > 0 && benefitMonths > 0 ? formatAmount(benefitMonthly, currency) : "—",
     },
     {
       key: "paused",
-      label: "Paused / month",
+      label: t("runway.paused"),
       domain: "INVESTMENT",
       Icon: TrendingUp,
       value: formatAmount(budget.pausedSpending + budget.pausedContributions, currency),
@@ -118,16 +128,23 @@ export function RunwayCard({
   ];
 
   const parts = [
-    `${formatAmount(savings, currency)} savings`,
-    includeInvestments ? `${formatAmount(investments, currency)} investments` : null,
-    severance > 0 ? `${formatAmount(severance, currency)} severance` : null,
+    t("runway.part.savings", { amount: formatAmount(savings, currency) }),
+    includeInvestments
+      ? t("runway.part.investments", { amount: formatAmount(investments, currency) })
+      : null,
+    severance > 0
+      ? t("runway.part.severance", { amount: formatAmount(severance, currency) })
+      : null,
   ].filter(Boolean);
-  const note = `Cushion: ${parts.join(" + ")}. Regular income stops; debt payments (${formatAmount(budget.debtMonthly, currency)}/mo) continue.`;
+  const note = t("runway.note", {
+    parts: parts.join(" + "),
+    amount: formatAmount(budget.debtMonthly, currency),
+  });
 
   return (
     <SummaryCard
       title={title}
-      badge={verdict(runway)}
+      badge={verdict(runway, t)}
       figure={
         <RunwayFigure
           text={figure}

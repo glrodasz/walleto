@@ -1,21 +1,18 @@
 import { CURRENCY_COLORS } from "../../../constants";
+import { translate } from "../../../helpers/i18n";
+import { COMMON_MESSAGES } from "../../../messages/common";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { domainAccent, monthTotalsBy, monthTotalsByCategory } from "../../../helpers/stacks";
 import type { StackSeries, StackedTotals } from "../../../helpers/stacks";
 import type { MonthWindow } from "../../domains/helpers/months";
-import type { Category, Currency, Domain, Transaction } from "../../../types";
+import type { Category, Currency, Domain, Language, Transaction } from "../../../types";
 
 export type CashFlowGroupBy = "domain" | "category" | "currency";
 
 export const CASH_FLOW_DOMAINS: Domain[] = ["INCOME", "EXPENSE", "INVESTMENT", "SAVING", "DEBT"];
 
-const DOMAIN_LABEL: Record<Domain, string> = {
-  INCOME: "Income",
-  EXPENSE: "Expenses",
-  INVESTMENT: "Investments",
-  SAVING: "Savings",
-  DEBT: "Debts",
-};
+const domainLabel = (domain: Domain, language: Language = "en") =>
+  translate(COMMON_MESSAGES, language, `domain.${domain}`);
 
 /** One bar per month per group; each bar is a stack of the group's series. */
 export interface CashFlowGroup {
@@ -45,7 +42,7 @@ export function cashFlowSeries(
   categories: Category[],
   ctx: MoneyContext,
   windows: MonthWindow[],
-  opts: { groupBy: CashFlowGroupBy; top?: number }
+  opts: { groupBy: CashFlowGroupBy; top?: number; language?: Language }
 ): { data: GroupedBar[]; groups: CashFlowGroup[] } {
   const stacks: Record<Domain, StackedTotals> = {} as Record<Domain, StackedTotals>;
 
@@ -55,6 +52,7 @@ export function cashFlowSeries(
       stacks[domain] = monthTotalsByCategory(rows, categories, ctx, windows, {
         domain,
         top: opts.top ?? 5,
+        language: opts.language,
       });
     } else if (opts.groupBy === "currency") {
       const byCurrency = monthTotalsBy(rows, ctx, windows, (t) => t.currency, {
@@ -71,13 +69,13 @@ export function cashFlowSeries(
       };
     } else {
       stacks[domain] = monthTotalsBy(rows, ctx, windows, () => "total", {
-        label: () => DOMAIN_LABEL[domain],
+        label: () => domainLabel(domain, opts.language),
         color: () => domainAccent(domain),
       });
       // A domain with no rows at all still needs its one series so the bar exists.
       if (stacks[domain].series.length === 0) {
         stacks[domain].series = [
-          { key: "total", label: DOMAIN_LABEL[domain], color: domainAccent(domain) },
+          { key: "total", label: domainLabel(domain, opts.language), color: domainAccent(domain) },
         ];
         for (const w of windows) stacks[domain].totals[w.key] = { total: 0 };
       }
@@ -86,7 +84,7 @@ export function cashFlowSeries(
 
   const groups: CashFlowGroup[] = CASH_FLOW_DOMAINS.map((domain) => ({
     key: domain,
-    label: DOMAIN_LABEL[domain],
+    label: domainLabel(domain, opts.language),
     color: domainAccent(domain),
     series: stacks[domain].series,
   }));

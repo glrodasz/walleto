@@ -3,7 +3,9 @@ import type { MoneyContext, MoneyFields } from "./aggregations";
 import { rootIdMap, rootIdOf } from "./categoryTree";
 import { monthKey } from "./dates";
 import { toDate } from "./chartData";
-import type { Category, Domain } from "../types";
+import { LABEL_MESSAGES } from "../messages/labels";
+import { translate } from "./i18n";
+import type { Category, Domain, Language } from "../types";
 
 export interface StackSeries {
   key: string;
@@ -20,6 +22,7 @@ export interface StackedTotals {
 }
 
 export const OTHER_KEY = "__other";
+/** English; `monthTotalsBy` writes it in `opts.language`. */
 export const OTHER_LABEL = "Other";
 
 export interface StackRow extends MoneyFields {
@@ -33,6 +36,8 @@ interface StackOptions {
   /** Colour by rank (0 = largest). */
   color: (index: number) => string;
   otherColor?: string;
+  /** The language of the "Other" series' label. */
+  language?: Language;
 }
 
 /**
@@ -74,7 +79,7 @@ export function monthTotalsBy<T extends StackRow>(
   if (folded.size > 0) {
     series.push({
       key: OTHER_KEY,
-      label: OTHER_LABEL,
+      label: translate(LABEL_MESSAGES, opts.language ?? "en", "stack.other"),
       color: opts.otherColor ?? opts.color(kept.length),
     });
   }
@@ -110,14 +115,16 @@ export function monthTotalsByCategory<T extends StackRow & { categoryId: string 
   categories: Category[],
   ctx: MoneyContext,
   windows: { key: string }[],
-  opts: { domain: Domain; top?: number }
+  opts: { domain: Domain; top?: number; language?: Language }
 ): StackedTotals {
+  const language = opts.language ?? "en";
   const roots = rootIdMap(categories);
   const names = new Map(categories.map((c) => [c.id ?? "", c.name]));
   return monthTotalsBy(rows, ctx, windows, (row) => rootIdOf(row.categoryId, roots), {
     top: opts.top ?? 5,
-    label: (key) => names.get(key) ?? "Unknown",
+    label: (key) => names.get(key) ?? translate(LABEL_MESSAGES, language, "stack.unknown"),
     color: (i) => domainTint(opts.domain, i),
     otherColor: domainTint(opts.domain, TINT_STEPS - 1),
+    language,
   });
 }

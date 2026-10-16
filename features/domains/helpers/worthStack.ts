@@ -3,6 +3,7 @@ import type { StackedTotals } from "../../../helpers/stacks";
 import type { GainRow } from "../../investments/helpers/valuationGains";
 import { monthWindows, monthsApart } from "./months";
 import type { MonthWindow } from "./months";
+import type { Language } from "../../../types";
 
 /**
  * What the bars of an account domain measure: what each category is worth at
@@ -23,10 +24,15 @@ export function parseChartMeasure(raw: string): ChartMeasure {
  * first and never fewer than `min` — the span a running total has to walk so
  * the first bar on the chart already carries everything before it.
  */
-export function historyWindows(dates: Date[], now: Date, min: number): MonthWindow[] {
+export function historyWindows(
+  dates: Date[],
+  now: Date,
+  min: number,
+  language: Language = "en"
+): MonthWindow[] {
   const earliest = dates.reduce<Date | null>((a, d) => (!a || d < a ? d : a), null);
   const span = earliest ? monthsApart(earliest, now) + 1 : 0;
-  return monthWindows(Math.max(span, min), now);
+  return monthWindows(Math.max(span, min), now, language);
 }
 
 /**

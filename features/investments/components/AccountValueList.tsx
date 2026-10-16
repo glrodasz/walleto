@@ -4,7 +4,10 @@ import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { Button } from "../../../components/atoms/Button";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { ErrorState } from "../../../components/atoms/ErrorState";
-import { ACCOUNT_NOUN, formatInterestRate } from "../../../helpers/accounts";
+import { formatInterestRate } from "../../../helpers/accounts";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { INVESTMENT_MESSAGES } from "../messages";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import { useDomainValue } from "../hooks/useDomainValue";
@@ -32,7 +35,7 @@ interface Props {
  * what was repaid, what is still owed — a dash until a balance is recorded.
  */
 export function AccountValueList({ domain, categories, ctx, currency }: Props) {
-  const { formatDate } = useDateFormat();
+  const { formatDate, language } = useDateFormat();
   const { formatAmount, formatPercent, separator } = useMoneyFormat();
   const {
     rows,
@@ -43,30 +46,37 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
   } = useDomainValue(domain, categories, ctx);
   const [selected, setSelected] = useState<string | null>(null);
   const [recording, setRecording] = useState<AccountValueRow | null>(null);
-  const noun = ACCOUNT_NOUN[domain].singular;
+  const t = useT(INVESTMENT_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
   const accent = DOMAIN_CONFIG[domain].accent;
   const owes = domain === "DEBT";
-  const entry = owes ? "repayment" : domain === "SAVING" ? "deposit" : "contribution";
 
   const open = rows.find((r) => r.key === selected) ?? null;
   // Prefills the value form: most accounts hold one category, so the common
   // case costs no thought.
   const suggestFor = (row: AccountValueRow) =>
     dominantCategoryId(transactions, row.selector, categories, ctx);
+  const meta = (row: AccountValueRow) =>
+    [
+      row.sub,
+      t(owes ? "list.repaid" : "list.in", { amount: formatAmount(row.invested, currency) }),
+      row.latest
+        ? t("status.checked", { date: formatDate(row.latest.asOf.toDate(), "day") })
+        : t(owes ? "status.noBalance" : row.rate ? "status.estimated" : "status.noCheck"),
+    ]
+      .filter(Boolean)
+      .join(" · ");
 
   return (
     <>
       <Card accentColor={accent}>
-        <SectionTitle title={owes ? "Balances" : "Value"} />
+        <SectionTitle title={t(owes ? "list.title.balances" : "list.title.value")} />
         {error && <ErrorState error={error} />}
 
         {busy ? (
-          <p className="empty">Loading…</p>
+          <p className="empty">{tc("state.loading")}</p>
         ) : rows.length === 0 ? (
-          <p className="empty">
-            Nothing here yet — file a {entry} under a {noun} to track its{" "}
-            {owes ? "balance" : "value"}
-          </p>
+          <p className="empty">{t(`list.empty.${domain}`)}</p>
         ) : (
           <ul className="list">
             {rows.map((r) => (
@@ -80,20 +90,12 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
                   <span className="name">
                     {r.name}
                     {r.rate && (
-                      <span className="pill">{formatInterestRate(r.rate, separator)}</span>
+                      <span className="pill">
+                        {formatInterestRate(r.rate, separator, language)}
+                      </span>
                     )}
                   </span>
-                  <span className="meta">
-                    {r.sub ? `${r.sub} · ` : ""}
-                    {owes ? "Repaid (net)" : "In"} {formatAmount(r.invested, currency)}
-                    {r.latest
-                      ? ` · checked ${formatDate(r.latest.asOf.toDate(), "day")}`
-                      : owes
-                        ? " · no balance yet"
-                        : r.rate
-                          ? " · estimated"
-                          : " · no value check yet"}
-                  </span>
+                  <span className="meta">{meta(r)}</span>
                 </button>
                 <span className="right">
                   <span className="amount">
@@ -107,7 +109,7 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
                   )}
                 </span>
                 <Button size="sm" onClick={() => setRecording(r)}>
-                  {owes ? "Update balance" : "Update value"}
+                  {t(owes ? "update.balance" : "update.value")}
                 </Button>
               </li>
             ))}

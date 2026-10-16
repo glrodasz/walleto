@@ -2,6 +2,8 @@ import { ErrorState } from "../../../components/atoms/ErrorState";
 import { NetFlowCard } from "../../../components/organisms/NetFlowCard";
 import type { useReviewStep } from "../hooks/useReviewStep";
 import { PlanPreviewList } from "./PlanPreviewList";
+import { useT } from "../../../hooks/useT";
+import { ONBOARDING_MESSAGES } from "../messages";
 
 interface Props {
   state: ReturnType<typeof useReviewStep>;
@@ -15,9 +17,10 @@ interface Props {
  */
 export function ReviewStep({ state, onEdit }: Props) {
   const { loading, error, flow, ctx, currency, approximate, groups } = state;
+  const t = useT(ONBOARDING_MESSAGES);
 
-  if (error) return <ErrorState title="Couldn't load your plan" error={error} />;
-  if (loading) return <p className="loading">Loading your plan…</p>;
+  if (error) return <ErrorState title={t("review.loadFailed")} error={error} />;
+  if (loading) return <p className="loading">{t("review.loading")}</p>;
 
   return (
     <div className="review">

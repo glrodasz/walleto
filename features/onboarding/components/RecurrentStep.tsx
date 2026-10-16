@@ -5,16 +5,16 @@ import { CADENCE_SECTIONS } from "../helpers/cadenceSections";
 import type { CadenceSection } from "../helpers/cadenceSections";
 import { paymentMethodOptionLabel } from "../../../helpers/paymentMethodLabel";
 import { sortByName } from "../../../helpers/paymentMethodOptions";
-import type { Domain } from "../../../types";
 import { CadencePanel } from "./CadencePanel";
 import { RecurrentRowEditor } from "./RecurrentRowEditor";
+import { usePreferences } from "../../../hooks/usePreferences";
+import { useT } from "../../../hooks/useT";
+import { ONBOARDING_MESSAGES } from "../messages";
 
 interface Props {
   state: ReturnType<typeof useRecurrentStep>;
   showPaymentMethod?: boolean;
 }
-
-const NOUN: Partial<Record<Domain, string>> = { INCOME: "income", EXPENSE: "expense" };
 
 /**
  * The Income / Expenses step: monthly first and largest, everything else
@@ -24,16 +24,20 @@ const NOUN: Partial<Record<Domain, string>> = { INCOME: "income", EXPENSE: "expe
 export function RecurrentStep({ state, showPaymentMethod = false }: Props) {
   const { domain, rows, addTo, update, removeAt, categories, methods, backfill, setBackfill } =
     state;
+  const { language } = usePreferences();
+  const t = useT(ONBOARDING_MESSAGES);
 
   const categoryOptions = categories
     .filter((c) => !c.parentId)
     .map((c) => ({ value: c.id!, label: c.name }));
 
   const methodOptions = showPaymentMethod
-    ? sortByName(methods).map((m) => ({ value: m.id!, label: paymentMethodOptionLabel(m) }))
+    ? sortByName(methods).map((m) => ({
+        value: m.id!,
+        label: paymentMethodOptionLabel(m, language),
+      }))
     : undefined;
 
-  const noun = NOUN[domain] ?? "item";
   const rowsIn = (section: CadenceSection) =>
     rows.filter((r) => section.frequencies.includes(r.frequency));
   const primary = CADENCE_SECTIONS.filter((s) => s.primary);
@@ -46,8 +50,8 @@ export function RecurrentStep({ state, showPaymentMethod = false }: Props) {
     >
       <div className="backfill">
         <CheckboxField
-          label="Backfill the history of recurring items"
-          hint="The last 6 months, or longer for quarterly (1 year) and yearly (2 years) items, so your charts and totals have history from day one."
+          label={t("recurrent.backfill")}
+          hint={t("recurrent.backfillHint")}
           checked={backfill}
           onChange={setBackfill}
         />
@@ -57,7 +61,7 @@ export function RecurrentStep({ state, showPaymentMethod = false }: Props) {
         <CadencePanel
           key={section.id}
           section={section}
-          noun={noun}
+          domain={domain}
           count={rowsIn(section).length}
           onAdd={() => addTo(section.defaultFrequency)}
         >
@@ -76,12 +80,12 @@ export function RecurrentStep({ state, showPaymentMethod = false }: Props) {
       ))}
 
       <div className="secondary">
-        <h3 className="secondary-title">Less often</h3>
+        <h3 className="secondary-title">{t("recurrent.lessOften")}</h3>
         {secondary.map((section) => (
           <CadencePanel
             key={section.id}
             section={section}
-            noun={noun}
+            domain={domain}
             count={rowsIn(section).length}
             onAdd={() => addTo(section.defaultFrequency)}
           >

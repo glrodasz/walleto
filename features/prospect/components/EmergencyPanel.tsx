@@ -7,7 +7,10 @@ import { TextField } from "../../../components/atoms/TextField";
 import { useDecimalInput } from "../../../hooks/useDecimalInput";
 import { useEnabledCurrencies } from "../../../hooks/useEnabledCurrencies";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
+import { useT } from "../../../hooks/useT";
 import { CURRENCY_SYMBOL } from "../../../constants";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { PROSPECT_MESSAGES } from "../messages";
 import type { Currency, EmergencyPlan } from "../../../types";
 
 interface Props {
@@ -55,6 +58,8 @@ function useCommittedNumber(value: number, commit: (n: number) => void, integer 
 export function EmergencyPanel({ plan, onSave, investments, currency, error }: Props) {
   const { optionsFor } = useEnabledCurrencies();
   const { formatAmount } = useMoneyFormat();
+  const t = useT(PROSPECT_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
   const benefit = useCommittedNumber(plan.benefitMonthly, (n) => onSave({ benefitMonthly: n }));
   const months = useCommittedNumber(plan.benefitMonths, (n) => onSave({ benefitMonths: n }), true);
   const severance = useCommittedNumber(plan.severance, (n) => onSave({ severance: n }));
@@ -62,15 +67,12 @@ export function EmergencyPanel({ plan, onSave, investments, currency, error }: P
 
   return (
     <Card>
-      <SectionTitle title="Emergency income" />
-      <p className="hint">
-        If your regular income stops, what would still come in? Unemployment insurance, a severance
-        package — leave them empty if there&rsquo;s none.
-      </p>
+      <SectionTitle title={t("panel.title")} />
+      <p className="hint">{t("panel.hint")}</p>
 
       <div className="fields">
         <TextField
-          label="Benefit per month"
+          label={t("panel.benefit")}
           placeholder="0"
           inputMode="decimal"
           prefix={symbol}
@@ -78,15 +80,15 @@ export function EmergencyPanel({ plan, onSave, investments, currency, error }: P
           {...benefit}
         />
         <TextField
-          label="For how many months"
-          hint={`Up to ${MAX_MONTHS}. The benefit stops after this; the runway keeps counting.`}
+          label={t("panel.months")}
+          hint={t("panel.monthsHint", { max: MAX_MONTHS })}
           placeholder="0"
           inputMode="numeric"
           align="right"
           {...months}
         />
         <TextField
-          label="Severance (one-off)"
+          label={t("panel.severance")}
           placeholder="0"
           inputMode="decimal"
           prefix={symbol}
@@ -94,7 +96,7 @@ export function EmergencyPanel({ plan, onSave, investments, currency, error }: P
           {...severance}
         />
         <Select
-          label="Currency"
+          label={tc("noun.currency")}
           options={optionsFor(plan.currency)}
           value={plan.currency}
           onValueChange={(v) => onSave({ currency: v as Currency })}
@@ -103,8 +105,8 @@ export function EmergencyPanel({ plan, onSave, investments, currency, error }: P
 
       <div className="toggle">
         <CheckboxField
-          label="Also count my investments as cash"
-          hint={`${formatAmount(investments, currency)} today, if sold.`}
+          label={t("panel.investments")}
+          hint={t("panel.investmentsHint", { amount: formatAmount(investments, currency) })}
           checked={plan.includeInvestments}
           onChange={(includeInvestments) => onSave({ includeInvestments })}
         />

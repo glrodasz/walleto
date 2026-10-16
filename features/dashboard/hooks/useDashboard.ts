@@ -5,13 +5,16 @@ import { useUpcomingItems } from "./useUpcomingItems";
 import { useCategories } from "../../../hooks/useCategories";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
 import { useSelectedMonth } from "../../../hooks/useSelectedMonth";
+import { usePreferences } from "../../../hooks/usePreferences";
 import { groupByCategory, computeMoM, computeFlow, shareByCurrency } from "../../../helpers";
 import type { MoneyContext } from "../../../helpers";
 import { hiddenItemIds, withoutHidden } from "../../../helpers/hidden";
 import { monthWindows } from "../../domains/helpers/months";
 import { cashFlowSeries } from "../helpers/cashFlowSeries";
 import type { CashFlowGroupBy } from "../helpers/cashFlowSeries";
-import type { Domain, Transaction } from "../../../types";
+import type { Domain, Language, Transaction } from "../../../types";
+import { translate } from "../../../helpers/i18n";
+import { DASHBOARD_MESSAGES } from "../messages";
 
 interface Options {
   /** Months on the cash-flow chart, ending with the current one. */
@@ -22,14 +25,17 @@ interface Options {
 function buildCategoryList(
   items: ReturnType<typeof useRecurrentTransactions>["items"],
   categories: ReturnType<typeof useCategories>["categories"],
-  ctx: MoneyContext
+  ctx: MoneyContext,
+  language: Language
 ) {
   const grouped = groupByCategory(items, ctx);
   const total = Object.values(grouped).reduce((a, b) => a + b, 0);
   return Object.entries(grouped)
     .map(([categoryId, amount]) => ({
       categoryId,
-      name: categories.find((c) => c.id === categoryId)?.name ?? "Unknown",
+      name:
+        categories.find((c) => c.id === categoryId)?.name ??
+        translate(DASHBOARD_MESSAGES, language, "category.unknown"),
       amount,
       percent: total === 0 ? 0 : (amount / total) * 100,
     }))
@@ -63,7 +69,8 @@ export function useDashboard({ period, groupBy }: Options) {
 
   // The chart's months always end with the current one; the selected month
   // is highlighted, and the query reaches back far enough to include it.
-  const windows = useMemo(() => monthWindows(period, now), [period, now]);
+  const { language } = usePreferences();
+  const windows = useMemo(() => monthWindows(period, now, language), [period, now, language]);
   const chartStart = useMemo(
     () => (window.start < windows[0].start ? window.start : windows[0].start),
     [window.start, windows]
@@ -154,24 +161,24 @@ export function useDashboard({ period, groupBy }: Options) {
   );
 
   const expensesByCategory = useMemo(
-    () => buildCategoryList(expenses, categories, ctx),
-    [expenses, categories, ctx]
+    () => buildCategoryList(expenses, categories, ctx, language),
+    [expenses, categories, ctx, language]
   );
   const incomesByCategory = useMemo(
-    () => buildCategoryList(incomes, categories, ctx),
-    [incomes, categories, ctx]
+    () => buildCategoryList(incomes, categories, ctx, language),
+    [incomes, categories, ctx, language]
   );
   const investmentsByCategory = useMemo(
-    () => buildCategoryList(investments, categories, ctx),
-    [investments, categories, ctx]
+    () => buildCategoryList(investments, categories, ctx, language),
+    [investments, categories, ctx, language]
   );
   const savingsByCategory = useMemo(
-    () => buildCategoryList(savings, categories, ctx),
-    [savings, categories, ctx]
+    () => buildCategoryList(savings, categories, ctx, language),
+    [savings, categories, ctx, language]
   );
   const debtsByCategory = useMemo(
-    () => buildCategoryList(debts, categories, ctx),
-    [debts, categories, ctx]
+    () => buildCategoryList(debts, categories, ctx, language),
+    [debts, categories, ctx, language]
   );
 
   const currencyMix = useMemo(
@@ -191,8 +198,8 @@ export function useDashboard({ period, groupBy }: Options) {
   );
 
   const cashFlow = useMemo(
-    () => cashFlowSeries(txByDomain, categories, ctx, windows, { groupBy, top: 5 }),
-    [txByDomain, categories, ctx, windows, groupBy]
+    () => cashFlowSeries(txByDomain, categories, ctx, windows, { groupBy, top: 5, language }),
+    [txByDomain, categories, ctx, windows, groupBy, language]
   );
 
   return {

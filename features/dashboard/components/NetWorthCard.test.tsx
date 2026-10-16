@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { NetWorthCard } from "./NetWorthCard";
 import type { NetWorth } from "../helpers/netWorth";
+import { DEFAULT_PREFERENCES, PreferencesContext } from "../../../hooks/usePreferences";
 
 const worth = (over: Partial<NetWorth> = {}): NetWorth => ({
   investments: 10_000,
@@ -36,5 +37,21 @@ describe("NetWorthCard", () => {
     render(<NetWorthCard worth={worth({ empty: true })} currency="USD" />);
     expect(screen.getByText(/to see where you stand/)).toBeInTheDocument();
     expect(screen.queryByText("Owed on debts")).not.toBeInTheDocument();
+  });
+
+  it("speaks Spanish inside a Spanish preference", () => {
+    render(
+      <PreferencesContext.Provider value={{ ...DEFAULT_PREFERENCES, language: "es" }}>
+        <NetWorthCard
+          worth={worth({ estimated: true, lastCheckedAt: new Date(2026, 8, 6) })}
+          currency="USD"
+        />
+      </PreferencesContext.Provider>
+    );
+    expect(screen.getByText("Patrimonio")).toBeInTheDocument();
+    expect(screen.getByText("Adeudado")).toBeInTheDocument();
+    expect(
+      screen.getByText("Lo que tienes menos lo que debes · revisado el 6 sept · en parte estimado")
+    ).toBeInTheDocument();
   });
 });

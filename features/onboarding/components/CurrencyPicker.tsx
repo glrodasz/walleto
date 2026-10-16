@@ -1,6 +1,8 @@
 import { Chip } from "../../../components/atoms/Chip";
 import { SELECTABLE_CURRENCIES } from "../../../constants";
+import { useT } from "../../../hooks/useT";
 import type { Currency } from "../../../types";
+import { ONBOARDING_MESSAGES } from "../messages";
 
 interface Props {
   value: Currency;
@@ -8,16 +10,14 @@ interface Props {
 }
 
 export function CurrencyPicker({ value, onChange }: Props) {
+  const t = useT(ONBOARDING_MESSAGES);
   return (
     <section className="picker">
       <header className="head">
-        <h2 className="heading">Your currency</h2>
-        <p className="hint">
-          Totals are shown in it and new entries start in it. The switcher in the header shows
-          totals in another currency anytime.
-        </p>
+        <h2 className="heading">{t("currencies.yours")}</h2>
+        <p className="hint">{t("currencies.yoursHint")}</p>
       </header>
-      <div className="chips" role="group" aria-label="Your currency">
+      <div className="chips" role="group" aria-label={t("currencies.yours")}>
         {SELECTABLE_CURRENCIES.map((c) => (
           <Chip key={c.value} selected={c.value === value} onClick={() => onChange(c.value)}>
             {c.label}
