@@ -12,13 +12,16 @@ import { AccountFormFields } from "../../../components/molecules/AccountFormFiel
 import { ErrorState } from "../../../components/atoms/ErrorState";
 import { useAccounts } from "../../../hooks/useAccounts";
 import { useUserDoc } from "../../../hooks/useUserDoc";
-import { ACCOUNT_NOUN, accountLabel, formatInterestRate } from "../../../helpers/accounts";
+import { accountLabel, formatInterestRate } from "../../../helpers/accounts";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import { useDecimalInput } from "../../../hooks/useDecimalInput";
 import { usePreferences } from "../../../hooks/usePreferences";
 import { accountDraftOf, readAccountDraft } from "../../../helpers/accountDraft";
 import type { AccountDraft } from "../../../helpers/accountDraft";
 import type { Account, AccountDomain } from "../../../types";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { SETTINGS_MESSAGES } from "../messages";
 
 const DOMAINS: AccountDomain[] = ["INVESTMENT", "SAVING", "DEBT"];
 const PAGE_SIZE = 25;
@@ -40,7 +43,8 @@ export function AccountsSettings() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const noun = ACCOUNT_NOUN[domain].singular;
+  const tr = useT(SETTINGS_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
   const paged = paginate(accounts, page, PAGE_SIZE);
 
   const run = async (id: string, action: () => Promise<void>, failure: string) => {
@@ -69,17 +73,17 @@ export function AccountsSettings() {
     const read = readAccountDraft(d, decimal.parse, domain, language);
     if ("error" in read) return setMessage(read.error);
     setEditingId(null);
-    await run(id, () => update(id, read.values), `Couldn't update the ${noun}`);
+    await run(id, () => update(id, read.values), tr(`accounts.updateFailed.${domain}`));
   };
 
   return (
     <Card>
-      <SectionTitle title="Accounts & debts" />
+      <SectionTitle title={tr("section.accounts")} />
       <TabStrip
-        label="Domain"
+        label={tr("domainTabs")}
         tabs={DOMAINS.map((d) => ({
           key: d,
-          label: DOMAIN_CONFIG[d].title,
+          label: tc(`domain.${d}`),
           accent: DOMAIN_CONFIG[d].accent,
         }))}
         value={domain}
@@ -95,7 +99,7 @@ export function AccountsSettings() {
       {error && <ErrorState error={error} />}
 
       {loading ? (
-        <p className="hint">Loading…</p>
+        <p className="hint">{tc("state.loading")}</p>
       ) : (
         <ul className="list">
           {paged.rows.map((a) => (
@@ -111,10 +115,10 @@ export function AccountsSettings() {
                   <AccountFormFields domain={domain} draft={draft} onChange={setDraft} autoFocus />
                   <div className="actions">
                     <Button variant="ghost" size="sm" onClick={() => setEditingId(null)}>
-                      Cancel
+                      {tc("action.cancel")}
                     </Button>
                     <Button type="submit" variant="primary" size="sm">
-                      Save
+                      {tc("action.save")}
                     </Button>
                   </div>
                 </form>
@@ -130,13 +134,14 @@ export function AccountsSettings() {
                     </span>
                   </span>
                   <KebabMenu
-                    aria-label={`Actions for ${a.name}`}
+                    aria-label={tc("action.actionsFor", { name: a.name })}
                     actions={[
-                      { label: "Edit", onSelect: () => startEdit(a) },
+                      { label: tc("action.edit"), onSelect: () => startEdit(a) },
                       {
-                        label: busyId === a.id ? "Archiving…" : "Archive",
+                        label: busyId === a.id ? tr("action.archiving") : tc("action.archive"),
                         onSelect: () =>
-                          a.id && run(a.id, () => remove(a.id!), `Couldn't archive the ${noun}`),
+                          a.id &&
+                          run(a.id, () => remove(a.id!), tr(`accounts.archiveFailed.${domain}`)),
                         danger: true,
                         disabled: busyId === a.id,
                       },
@@ -146,7 +151,7 @@ export function AccountsSettings() {
               )}
             </li>
           ))}
-          {accounts.length === 0 && <li className="hint">No {noun}s yet</li>}
+          {accounts.length === 0 && <li className="hint">{tr(`accounts.empty.${domain}`)}</li>}
         </ul>
       )}
 
@@ -172,7 +177,7 @@ export function AccountsSettings() {
               setMessage(null);
             }}
           >
-            Add {noun}
+            {tr(`accounts.add.${domain}`)}
           </Chip>
         )}
       </div>

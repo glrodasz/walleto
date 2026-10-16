@@ -1,5 +1,8 @@
 import { Shield } from "../../../components/atoms/Icons";
 import { t } from "../../../helpers/i18n";
+import { usePreferences } from "../../../hooks/usePreferences";
+import { useT } from "../../../hooks/useT";
+import { SETTINGS_MESSAGES } from "../messages";
 import { SettingsCard } from "./SettingsCard";
 import { SettingsRow } from "./SettingsRow";
 
@@ -9,17 +12,19 @@ import { SettingsRow } from "./SettingsRow";
  */
 export function PrivacyCard() {
   const support = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
+  const { language } = usePreferences();
+  const tr = useT(SETTINGS_MESSAGES);
   return (
     <SettingsCard
-      title={t("settings.privacy.title")}
-      subtitle={t("settings.privacy.subtitle")}
+      title={t("settings.privacy.title", language)}
+      subtitle={t("settings.privacy.subtitle", language)}
       icon={Shield}
     >
-      <SettingsRow label="Data storage" value="All data is securely stored in the cloud." />
-      <SettingsRow label="Data export" value="Coming soon." />
+      <SettingsRow label={tr("privacy.storage")} value={tr("privacy.storageValue")} />
+      <SettingsRow label={tr("privacy.export")} value={tr("privacy.exportValue")} />
       <SettingsRow
-        label="Account deletion"
-        value={support ? "Write to us and we will delete everything." : "Contact support."}
+        label={tr("privacy.deletion")}
+        value={support ? tr("privacy.deletionWrite") : tr("privacy.deletionContact")}
         href={support ? `mailto:${support}?subject=Delete%20my%20Walleto%20account` : undefined}
       />
     </SettingsCard>

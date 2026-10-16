@@ -5,6 +5,10 @@ import { t } from "../../../helpers/i18n";
 import { SettingsCard } from "./SettingsCard";
 import { SettingsRow } from "./SettingsRow";
 import { LOGOUT_HREF, useLogout } from "../../../hooks/useLogout";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { usePreferences } from "../../../hooks/usePreferences";
+import { useT } from "../../../hooks/useT";
+import { SETTINGS_MESSAGES } from "../messages";
 
 /**
  * Where the identity is managed. Auth0 owns name, password and second
@@ -15,38 +19,41 @@ export function AccountCard() {
   const { user } = useUser();
   const logout = useLogout();
   const accountUrl = process.env.NEXT_PUBLIC_AUTH0_ACCOUNT_URL;
+  const { language } = usePreferences();
+  const tr = useT(SETTINGS_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
 
   return (
     <SettingsCard
-      title={t("settings.account.title")}
-      subtitle={t("settings.account.subtitle")}
+      title={t("settings.account.title", language)}
+      subtitle={t("settings.account.subtitle", language)}
       icon={User}
       action={
         accountUrl ? (
           <a href={accountUrl} target="_blank" rel="noreferrer" className="edit">
             <Button variant="secondary" size="sm">
-              Edit profile
+              {tr("account.editProfile")}
             </Button>
           </a>
         ) : undefined
       }
     >
-      <SettingsRow label="Name" value={user?.name ?? "—"} />
-      <SettingsRow label="Email" value={user?.email ?? "—"} />
+      <SettingsRow label={tc("noun.name")} value={user?.name ?? "—"} />
+      <SettingsRow label={tr("account.email")} value={user?.email ?? "—"} />
       <SettingsRow
-        label="Password"
+        label={tr("account.password")}
         value="••••••••"
-        hint={accountUrl ? undefined : "Managed by your sign-in provider."}
+        hint={accountUrl ? undefined : tr("account.managedHint")}
         href={accountUrl}
       />
       <SettingsRow
-        label="Two-factor authentication"
-        value="Managed by your sign-in provider"
+        label={tr("account.twoFactor")}
+        value={tr("account.managed")}
         href={accountUrl}
       />
       {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
       <a href={LOGOUT_HREF} className="logout" onClick={logout}>
-        Log out
+        {tr("account.logOut")}
       </a>
       <style jsx>{`
         .logout {

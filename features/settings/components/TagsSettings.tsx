@@ -11,6 +11,9 @@ import { paginate } from "../../../utils/paginate";
 import { ErrorState } from "../../../components/atoms/ErrorState";
 import { useTags } from "../../../hooks/useTags";
 import { tagKey } from "../../../helpers/tags";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { SETTINGS_MESSAGES } from "../messages";
 
 /**
  * The user's tags: rename (case is kept, whitespace dropped), archive, add.
@@ -28,6 +31,8 @@ export function TagsSettings() {
   const [adding, setAdding] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const tr = useT(SETTINGS_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
 
   const run = async (id: string, action: () => Promise<void>, failure: string) => {
     setBusyId(id);
@@ -50,8 +55,8 @@ export function TagsSettings() {
     setEditingId(null);
     if (current && current.name === name) return;
     const clash = tags.find((t) => t.id !== id && t.key === tagKey(name));
-    if (clash) return setMessage(`You already have a tag called "${clash.name}"`);
-    await run(id, () => update(id, { name }), "Couldn't rename the tag");
+    if (clash) return setMessage(tr("tags.clash", { name: clash.name }));
+    await run(id, () => update(id, { name }), tr("tags.renameFailed"));
   };
 
   const add = async (raw: string) => {
@@ -59,18 +64,18 @@ export function TagsSettings() {
     const key = tagKey(raw);
     if (!key) return;
     if (tags.some((t) => t.key === key)) return;
-    await run("new", async () => void (await create(raw)), "Couldn't add the tag");
+    await run("new", async () => void (await create(raw)), tr("tags.addFailed"));
   };
 
   return (
     <Card>
-      <SectionTitle title="Tags" />
-      <p className="hint">Labels for any payment or recurring item. Spaces are dropped.</p>
+      <SectionTitle title={tc("noun.tags")} />
+      <p className="hint">{tr("tags.hint")}</p>
 
       {error && <ErrorState error={error} />}
 
       {loading ? (
-        <p className="hint">Loading…</p>
+        <p className="hint">{tc("state.loading")}</p>
       ) : (
         <ul className="list">
           {paged.rows.map((t) => (
@@ -84,35 +89,35 @@ export function TagsSettings() {
                   }}
                 >
                   <TextField
-                    aria-label="Tag name"
+                    aria-label={tr("tags.name")}
                     value={draft}
                     autoFocus
                     onValueChange={setDraft}
                   />
                   <Button variant="ghost" size="sm" onClick={() => setEditingId(null)}>
-                    Cancel
+                    {tc("action.cancel")}
                   </Button>
                   <Button type="submit" variant="primary" size="sm">
-                    Save
+                    {tc("action.save")}
                   </Button>
                 </form>
               ) : (
                 <>
                   <span className="name">{t.name}</span>
                   <KebabMenu
-                    aria-label={`Actions for ${t.name}`}
+                    aria-label={tc("action.actionsFor", { name: t.name })}
                     actions={[
                       {
-                        label: "Rename",
+                        label: tc("action.rename"),
                         onSelect: () => {
                           setEditingId(t.id!);
                           setDraft(t.name);
                         },
                       },
                       {
-                        label: busyId === t.id ? "Archiving…" : "Archive",
+                        label: busyId === t.id ? tr("action.archiving") : tc("action.archive"),
                         onSelect: () =>
-                          t.id && run(t.id, () => remove(t.id!), "Couldn't archive the tag"),
+                          t.id && run(t.id, () => remove(t.id!), tr("tags.archiveFailed")),
                         danger: true,
                         disabled: busyId === t.id,
                       },
@@ -122,7 +127,7 @@ export function TagsSettings() {
               )}
             </li>
           ))}
-          {tags.length === 0 && <li className="hint">No tags yet</li>}
+          {tags.length === 0 && <li className="hint">{tr("tags.empty")}</li>}
         </ul>
       )}
 
@@ -132,15 +137,15 @@ export function TagsSettings() {
         {adding ? (
           <Combobox
             autoFocus
-            label="New tag"
-            placeholder="Type a name"
+            label={tr("tags.new")}
+            placeholder={tr("typeName")}
             suggestions={[]}
             onSelect={add}
             onCancel={() => setAdding(false)}
           />
         ) : (
           <Chip variant="add" onClick={() => setAdding(true)}>
-            Add tag
+            {tr("tags.add")}
           </Chip>
         )}
       </div>

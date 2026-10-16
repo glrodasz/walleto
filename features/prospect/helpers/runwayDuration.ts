@@ -1,4 +1,7 @@
-const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? "" : "s"}`;
+import { translate } from "../../../helpers/i18n";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import type { Language } from "../../../types";
+import { PROSPECT_MESSAGES } from "../messages";
 
 /**
  * How long the runway reads: months up to a year ("4.5 months"), years and
@@ -7,14 +10,25 @@ const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? "" : "s"}`;
  */
 export function formatRunway(
   months: number,
-  formatNumber: (n: number, decimals?: number) => string
+  formatNumber: (n: number, decimals?: number) => string,
+  language: Language = "en"
 ): string {
-  if (months <= 12) return `${formatNumber(months, 1)} ${months === 1 ? "month" : "months"}`;
+  if (months <= 12) {
+    return translate(PROSPECT_MESSAGES, language, "runway.months", {
+      count: months,
+      value: formatNumber(months, 1),
+    });
+  }
   let years = Math.floor(months / 12);
   let rest = Math.round(months - years * 12);
   if (rest === 12) {
     years += 1;
     rest = 0;
   }
-  return rest === 0 ? plural(years, "year") : `${plural(years, "year")} ${plural(rest, "month")}`;
+  const yearsText = translate(COMMON_MESSAGES, language, "count.years", { count: years });
+  if (rest === 0) return yearsText;
+  return translate(PROSPECT_MESSAGES, language, "runway.yearsAndMonths", {
+    years: yearsText,
+    months: translate(COMMON_MESSAGES, language, "count.months", { count: rest }),
+  });
 }

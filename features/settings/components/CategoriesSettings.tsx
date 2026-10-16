@@ -19,6 +19,9 @@ import { useCategories } from "../../../hooks/useCategories";
 import suggestions from "../../onboarding/data/categorySuggestions.json";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import type { Domain, IconKey } from "../../../types";
+import { useT } from "../../../hooks/useT";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { SETTINGS_MESSAGES } from "../messages";
 
 interface EditDraft {
   id: string;
@@ -44,6 +47,8 @@ export function CategoriesSettings() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const tr = useT(SETTINGS_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
 
   const roots = categories.filter((c) => !c.parentId);
   const paged = paginate(roots, page, PAGE_SIZE);
@@ -68,7 +73,7 @@ export function CategoriesSettings() {
   const saveEdit = async () => {
     if (!editing) return;
     const name = editing.name.trim();
-    if (!name) return setMessage("Give it a name");
+    if (!name) return setMessage(tr("categories.nameRequired"));
     const current = roots.find((c) => c.id === editing.id);
     setSavingEdit(true);
     setMessage(null);
@@ -79,7 +84,7 @@ export function CategoriesSettings() {
       setEditing(null);
     } catch (err) {
       console.error("Couldn't save the category", err);
-      setMessage("Couldn't save the category");
+      setMessage(tr("categories.saveFailed"));
     } finally {
       setSavingEdit(false);
     }
@@ -88,21 +93,17 @@ export function CategoriesSettings() {
     const name = raw.trim();
     setAdding(false);
     if (!name || taken.has(name.toLowerCase())) return;
-    await run(
-      "new",
-      async () => void (await create({ domain, name })),
-      "Couldn't add the category"
-    );
+    await run("new", async () => void (await create({ domain, name })), tr("categories.addFailed"));
   };
 
   return (
     <Card>
-      <SectionTitle title="Categories" />
+      <SectionTitle title={tc("noun.categories")} />
       <TabStrip
-        label="Domain"
+        label={tr("domainTabs")}
         tabs={DOMAINS.map((d) => ({
           key: d,
-          label: DOMAIN_CONFIG[d].title,
+          label: tc(`domain.${d}`),
           accent: DOMAIN_CONFIG[d].accent,
         }))}
         value={domain}
@@ -118,7 +119,7 @@ export function CategoriesSettings() {
       {error && <ErrorState error={error} />}
 
       {loading ? (
-        <p className="hint">Loading…</p>
+        <p className="hint">{tc("state.loading")}</p>
       ) : (
         <ul className="list">
           {paged.rows.map((c) => (
@@ -127,18 +128,18 @@ export function CategoriesSettings() {
                 <CategoryIcon category={c} size={15} />
               </IconDisc>
               <span className="name">{c.name}</span>
-              {c.isDefault && <span className="default">default</span>}
+              {c.isDefault && <span className="default">{tr("categories.default")}</span>}
               <KebabMenu
-                aria-label={`Actions for ${c.name}`}
+                aria-label={tc("action.actionsFor", { name: c.name })}
                 actions={[
                   {
-                    label: "Edit",
+                    label: tc("action.edit"),
                     onSelect: () => c.id && startEdit(c.id, c.name, iconFor(c)),
                   },
                   {
-                    label: busyId === c.id ? "Archiving…" : "Archive",
+                    label: busyId === c.id ? tr("action.archiving") : tc("action.archive"),
                     onSelect: () =>
-                      c.id && run(c.id, () => remove(c.id!), "Couldn't archive the category"),
+                      c.id && run(c.id, () => remove(c.id!), tr("categories.archiveFailed")),
                     danger: true,
                     disabled: busyId === c.id,
                   },
@@ -146,7 +147,7 @@ export function CategoriesSettings() {
               />
             </li>
           ))}
-          {roots.length === 0 && <li className="hint">No categories yet</li>}
+          {roots.length === 0 && <li className="hint">{tr("categories.empty")}</li>}
         </ul>
       )}
 
@@ -156,15 +157,15 @@ export function CategoriesSettings() {
         {adding ? (
           <Combobox
             autoFocus
-            label={`New ${DOMAIN_CONFIG[domain].title.toLowerCase()} category`}
-            placeholder="Type a name"
+            label={tr(`categories.new.${domain}`)}
+            placeholder={tr("typeName")}
             suggestions={available}
             onSelect={add}
             onCancel={() => setAdding(false)}
           />
         ) : (
           <Chip variant="add" onClick={() => setAdding(true)}>
-            Add category
+            {tr("categories.add")}
           </Chip>
         )}
       </div>
@@ -175,19 +176,19 @@ export function CategoriesSettings() {
         </p>
       )}
 
-      <Modal open={editing !== null} title="Edit category" onClose={() => setEditing(null)}>
+      <Modal open={editing !== null} title={tr("categories.edit")} onClose={() => setEditing(null)}>
         {editing && (
           <div className="edit">
             <TextField
-              label="Name"
+              label={tc("noun.name")}
               value={editing.name}
               autoFocus
               onValueChange={(name) => setEditing((d) => d && { ...d, name })}
             />
             <div className="edit-icons">
-              <span className="edit-icons-label">Icon</span>
+              <span className="edit-icons-label">{tr("categories.icon")}</span>
               <IconPicker
-                label="Icon"
+                label={tr("categories.icon")}
                 value={editing.icon}
                 onChange={(icon) => setEditing((d) => d && { ...d, icon })}
               />
@@ -199,10 +200,10 @@ export function CategoriesSettings() {
             )}
             <div className="edit-actions">
               <Button variant="ghost" onClick={() => setEditing(null)} disabled={savingEdit}>
-                Cancel
+                {tc("action.cancel")}
               </Button>
               <Button variant="primary" onClick={saveEdit} disabled={savingEdit}>
-                {savingEdit ? "Saving…" : "Save"}
+                {savingEdit ? tc("action.saving") : tc("action.save")}
               </Button>
             </div>
           </div>

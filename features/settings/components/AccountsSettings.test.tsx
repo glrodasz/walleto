@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AccountsSettings } from "./AccountsSettings";
+import { DEFAULT_PREFERENCES, PreferencesContext } from "../../../hooks/usePreferences";
 
 const create = jest.fn().mockResolvedValue("new1");
 const update = jest.fn().mockResolvedValue(undefined);
@@ -117,5 +118,19 @@ describe("AccountsSettings — creating", () => {
     for (const label of ["Name", "Lender", "Currency", "Interest rate %", "Period"]) {
       expect(screen.getByLabelText(label)).toBeInTheDocument();
     }
+  });
+});
+
+describe("AccountsSettings in Spanish", () => {
+  it("names each domain's nouns with their own gender", () => {
+    render(
+      <PreferencesContext.Provider value={{ ...DEFAULT_PREFERENCES, language: "es" }}>
+        <AccountsSettings />
+      </PreferencesContext.Provider>
+    );
+    expect(screen.getByText("Cuentas y deudas")).toBeInTheDocument();
+    expect(screen.getByText("Agregar cuenta")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Ahorros" }));
+    expect(screen.getByText("Agregar bolsillo")).toBeInTheDocument();
   });
 });

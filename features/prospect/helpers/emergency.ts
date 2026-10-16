@@ -3,6 +3,8 @@ import type { MoneyContext } from "../../../helpers/aggregations";
 import type { EmergencyPlan, Language } from "../../../types";
 import type { FlowPoint } from "../../../helpers/chartData";
 import { formatDate } from "../../../helpers/dates";
+import { translate } from "../../../helpers/i18n";
+import { COMMON_MESSAGES } from "../../../messages/common";
 import type { CancelableGroups, RankedItem } from "./rankCancelable";
 
 /** How far the simulation looks before calling a runway "10+ years". */
@@ -121,7 +123,7 @@ export function emergencyProjection(
   return a.map((value, i) => ({
     label:
       i === 0
-        ? "Now"
+        ? translate(COMMON_MESSAGES, language, "noun.now")
         : formatDate(
             new Date(now.getFullYear(), now.getMonth() + i, 1),
             "month",

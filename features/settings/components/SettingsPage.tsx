@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { PageLayout } from "../../../components/organisms/PageLayout";
 import { TabStrip } from "../../../components/atoms/TabStrip";
+import { t } from "../../../helpers/i18n";
+import { COMMON_MESSAGES } from "../../../messages/common";
+import { usePreferences } from "../../../hooks/usePreferences";
+import { useT } from "../../../hooks/useT";
+import { SETTINGS_MESSAGES } from "../messages";
 import { AccountCard } from "./AccountCard";
 import { CurrencyCard } from "./CurrencyCard";
 import { PreferencesCard } from "./PreferencesCard";
@@ -13,19 +18,24 @@ import { MethodsSettings } from "./MethodsSettings";
 import { AccountsSettings } from "./AccountsSettings";
 
 type Section = "general" | "categories" | "tags" | "methods" | "accounts";
-const SECTIONS: { key: Section; label: string }[] = [
-  { key: "general", label: "General" },
-  { key: "categories", label: "Categories" },
-  { key: "tags", label: "Tags" },
-  { key: "methods", label: "Payment methods" },
-  { key: "accounts", label: "Accounts & debts" },
-];
-const isSection = (s: string): s is Section => SECTIONS.some((x) => x.key === s);
+const SECTIONS: Section[] = ["general", "categories", "tags", "methods", "accounts"];
+const isSection = (s: string): s is Section => (SECTIONS as string[]).includes(s);
 
 export function SettingsPage() {
   // The section lives in the URL hash (#tags) so a reload or a link lands
   // on it; only the active section mounts, so its listeners run while shown.
   const [section, setSection] = useState<Section>("general");
+  const { language } = usePreferences();
+  const tr = useT(SETTINGS_MESSAGES);
+  const tc = useT(COMMON_MESSAGES);
+  const labels: Record<Section, string> = {
+    general: t("settings.general.title", language),
+    categories: tc("noun.categories"),
+    tags: tc("noun.tags"),
+    methods: tc("noun.paymentMethods"),
+    accounts: tr("section.accounts"),
+  };
+  const tabs = SECTIONS.map((key) => ({ key, label: labels[key] }));
   useEffect(() => {
     const fromHash = window.location.hash.slice(1);
     if (isSection(fromHash)) setSection(fromHash);
@@ -38,12 +48,8 @@ export function SettingsPage() {
   };
 
   return (
-    <PageLayout
-      title="Settings"
-      subtitle="Manage your preferences, categories, tags, and accounts."
-      hideMonth
-    >
-      <TabStrip label="Section" tabs={SECTIONS} value={section} onChange={selectSection} />
+    <PageLayout title={tr("page.title")} subtitle={tr("page.subtitle")} hideMonth>
+      <TabStrip label={tr("page.sections")} tabs={tabs} value={section} onChange={selectSection} />
 
       {section === "general" && (
         <div className="general">

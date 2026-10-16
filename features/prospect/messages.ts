@@ -1,0 +1,197 @@
+import { defineMessages } from "../../helpers/i18n";
+
+/**
+ * Prospect copy: the what-if simulator and emergency mode. Shared words
+ * (cadences, domains, "Clear", "Loading…", month/year counts) come from
+ * messages/common.
+ */
+export const PROSPECT_MESSAGES = defineMessages(
+  {
+    "page.title": "Prospect",
+    "page.subtitle.emergency": "If your income stopped today, how long would you last?",
+    "page.subtitle.whatif": "What could you cut, and what would it change?",
+    "fx.title": "Exchange rates unavailable",
+    "fx.description":
+      "Totals mix currencies without conversion right now. They'll correct themselves when rates load again.",
+    "save.title": "Couldn't save",
+    "save.updateFailed": "Couldn't update {name}.",
+    "projection.title": "Projected net",
+    "projection.horizon": "Projection horizon",
+    "projection.asPlanned": "As planned",
+    "projection.ifCancelled": "If cancelled",
+
+    "mode.emergency": "Emergency mode",
+
+    "list.title.emergency": "What emergency mode pauses",
+    "list.title.whatif": "What could you cancel?",
+    "list.hint.emergency":
+      "Non-essential spending and every investment or saving contribution stop; essentials and debt payments keep going. Mark an expense as essential to keep it.",
+    "list.hint.whatif":
+      "Non-essential spending comes first, priciest at the top. Check anything to see how it changes your monthly net.",
+    "list.quickPicks": "Quick picks",
+    "list.cancelTop": {
+      one: "Cancel top {count} · {amount}/mo",
+      other: "Cancel top {count} · {amount}/mo",
+    },
+    "list.empty": "No expenses, contributions or repayments in your plan yet.",
+    "group.nonEssential": "Non-essential",
+    "group.nonEssential.empty":
+      "Nothing marked non-essential. Subscriptions are guessed as non-essential; mark anything else from its menu.",
+    "group.essential": "Essential",
+    "group.contributions": "Investing & saving",
+    "group.debts": "Debt payments",
+    "row.perMonth": "{amount}/mo",
+    "row.guessed": "Guessed",
+    "row.simulate": "Simulate cancelling: {name}",
+    "row.paused": "Paused: {name}",
+    "row.markNonEssential": "Mark as non-essential",
+    "row.markEssential": "Mark as essential",
+
+    "summary.overCommitted": "Over-committed",
+    "summary.cancelled": { one: "{count} cancelled", other: "{count} cancelled" },
+    "summary.asPlanned": "As planned",
+    "summary.titleCancelled": "Net if cancelled",
+    "summary.title": "Monthly net",
+    "summary.subCancelled": "left each month, {amount} more than today",
+    "summary.sub": "left each month — check items to simulate cancelling them",
+    "summary.netToday": "Net today",
+    "summary.freedMonth": "Freed / month",
+    "summary.freedYear": "Freed / year",
+    "summary.note": "Cancelling {names}.",
+
+    "emergency.readError.title": "Couldn't read your savings",
+    "emergency.readError.description":
+      "The runway needs today's balances, so it isn't shown rather than counted from zero.",
+    "emergency.chart.title": "Cushion over time",
+    "emergency.chart.keep": "Keeping everything",
+    "emergency.saveError": "Couldn't save your emergency income.",
+
+    "panel.title": "Emergency income",
+    "panel.hint":
+      "If your regular income stops, what would still come in? Unemployment insurance, a severance package — leave them empty if there’s none.",
+    "panel.benefit": "Benefit per month",
+    "panel.months": "For how many months",
+    "panel.monthsHint": "Up to {max}. The benefit stops after this; the runway keeps counting.",
+    "panel.severance": "Severance (one-off)",
+    "panel.investments": "Also count my investments as cash",
+    "panel.investmentsHint": "{amount} today, if sold.",
+
+    "runway.title": "Emergency runway",
+    "runway.badge": "Emergency",
+    "runway.covered": "Covered",
+    "runway.critical": "Critical",
+    "runway.tight": "Tight",
+    "runway.solid": "Solid",
+    "runway.cap": { one: "{count}+ year", other: "{count}+ years" },
+    "runway.months": { one: "{value} month", other: "{value} months" },
+    "runway.yearsAndMonths": "{years} {months}",
+    "runway.outlasts": "your cushion outlasts the simulation",
+    "runway.nothingToPay": "nothing essential left to pay",
+    "runway.nothingSaved": "nothing set aside to cover the essentials",
+    "runway.until": "of essentials covered — until about {date}",
+    "runway.cushion": "Cushion",
+    "runway.burn": "Essentials / month",
+    "runway.benefitFor": { one: "Benefit × {count} mo", other: "Benefit × {count} mo" },
+    "runway.benefit": "Benefit",
+    "runway.paused": "Paused / month",
+    "runway.part.savings": "{amount} savings",
+    "runway.part.investments": "{amount} investments",
+    "runway.part.severance": "{amount} severance",
+    "runway.note": "Cushion: {parts}. Regular income stops; debt payments ({amount}/mo) continue.",
+  },
+  {
+    "page.title": "Simulador",
+    "page.subtitle.emergency":
+      "Si tus ingresos se detuvieran hoy, ¿cuánto te durarían tus ahorros?",
+    "page.subtitle.whatif": "¿Qué podrías recortar y qué cambiaría?",
+    "fx.title": "Tasas de cambio no disponibles",
+    "fx.description":
+      "Por ahora los totales mezclan monedas sin convertir. Se corregirán cuando vuelvan a cargar las tasas.",
+    "save.title": "No se pudo guardar",
+    "save.updateFailed": "No se pudo actualizar {name}.",
+    "projection.title": "Neto proyectado",
+    "projection.horizon": "Horizonte de la proyección",
+    "projection.asPlanned": "Según el plan",
+    "projection.ifCancelled": "Si cancelas",
+
+    "mode.emergency": "Modo emergencia",
+
+    "list.title.emergency": "Qué pausa el modo emergencia",
+    "list.title.whatif": "¿Qué podrías cancelar?",
+    "list.hint.emergency":
+      "Se detienen los gastos no esenciales y todos los aportes a inversiones y ahorros; lo esencial y los pagos de deudas siguen. Marca un gasto como esencial para mantenerlo.",
+    "list.hint.whatif":
+      "Primero los gastos no esenciales, los más caros arriba. Marca cualquiera para ver cómo cambia tu neto mensual.",
+    "list.quickPicks": "Selección rápida",
+    "list.cancelTop": {
+      one: "Cancelar el más caro · {amount}/mes",
+      other: "Cancelar los {count} más caros · {amount}/mes",
+    },
+    "list.empty": "Todavía no hay gastos, aportes ni pagos de deudas en tu plan.",
+    "group.nonEssential": "No esenciales",
+    "group.nonEssential.empty":
+      "No hay nada marcado como no esencial. Las suscripciones se suponen no esenciales; marca lo demás desde su menú.",
+    "group.essential": "Esenciales",
+    "group.contributions": "Inversión y ahorro",
+    "group.debts": "Pagos de deudas",
+    "row.perMonth": "{amount}/mes",
+    "row.guessed": "Estimado",
+    "row.simulate": "Simular la cancelación: {name}",
+    "row.paused": "En pausa: {name}",
+    "row.markNonEssential": "Marcar como no esencial",
+    "row.markEssential": "Marcar como esencial",
+
+    "summary.overCommitted": "Sobrecomprometido",
+    "summary.cancelled": { one: "{count} cancelado", other: "{count} cancelados" },
+    "summary.asPlanned": "Según el plan",
+    "summary.titleCancelled": "Neto si cancelas",
+    "summary.title": "Neto mensual",
+    "summary.subCancelled": "libres cada mes, {amount} más que hoy",
+    "summary.sub": "libres cada mes; marca elementos para simular su cancelación",
+    "summary.netToday": "Neto hoy",
+    "summary.freedMonth": "Liberado / mes",
+    "summary.freedYear": "Liberado / año",
+    "summary.note": "Si cancelas {names}.",
+
+    "emergency.readError.title": "No se pudieron leer tus ahorros",
+    "emergency.readError.description":
+      "El colchón necesita los saldos de hoy, así que no se muestra en lugar de contarse desde cero.",
+    "emergency.chart.title": "Tu colchón en el tiempo",
+    "emergency.chart.keep": "Manteniendo todo",
+    "emergency.saveError": "No se pudieron guardar tus ingresos de emergencia.",
+
+    "panel.title": "Ingresos de emergencia",
+    "panel.hint":
+      "Si tus ingresos regulares se detienen, ¿qué seguiría entrando? Un seguro de desempleo, una indemnización: déjalos vacíos si no tienes.",
+    "panel.benefit": "Subsidio por mes",
+    "panel.months": "Durante cuántos meses",
+    "panel.monthsHint": "Hasta {max}. Después el subsidio se detiene; el colchón sigue contando.",
+    "panel.severance": "Indemnización (única)",
+    "panel.investments": "Contar también mis inversiones como efectivo",
+    "panel.investmentsHint": "{amount} hoy, si las vendes.",
+
+    "runway.title": "Colchón de emergencia",
+    "runway.badge": "Emergencia",
+    "runway.covered": "Cubierto",
+    "runway.critical": "Crítico",
+    "runway.tight": "Justo",
+    "runway.solid": "Sólido",
+    "runway.cap": { one: "{count}+ año", other: "{count}+ años" },
+    "runway.months": { one: "{value} mes", other: "{value} meses" },
+    "runway.yearsAndMonths": "{years} y {months}",
+    "runway.outlasts": "tu colchón dura más que la simulación",
+    "runway.nothingToPay": "no queda nada esencial por pagar",
+    "runway.nothingSaved": "no tienes nada ahorrado para cubrir lo esencial",
+    "runway.until": "de lo esencial cubierto, hasta cerca de {date}",
+    "runway.cushion": "Colchón",
+    "runway.burn": "Esenciales / mes",
+    "runway.benefitFor": { one: "Subsidio × {count} mes", other: "Subsidio × {count} meses" },
+    "runway.benefit": "Subsidio",
+    "runway.paused": "En pausa / mes",
+    "runway.part.savings": "{amount} de ahorros",
+    "runway.part.investments": "{amount} de inversiones",
+    "runway.part.severance": "{amount} de indemnización",
+    "runway.note":
+      "Colchón: {parts}. Los ingresos regulares se detienen; los pagos de deudas ({amount}/mes) continúan.",
+  }
+);

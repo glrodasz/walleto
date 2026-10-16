@@ -6,6 +6,9 @@ import { t } from "../../../helpers/i18n";
 import { useEnabledCurrencies } from "../../../hooks/useEnabledCurrencies";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
 import { useUserDoc } from "../../../hooks/useUserDoc";
+import { usePreferences } from "../../../hooks/usePreferences";
+import { useT } from "../../../hooks/useT";
+import { SETTINGS_MESSAGES } from "../messages";
 import type { Currency } from "../../../types";
 import { CurrencyToggles } from "../../../components/molecules/CurrencyToggles";
 import { SettingsCard } from "./SettingsCard";
@@ -23,6 +26,8 @@ export function CurrencyCard() {
   const { target } = useMoneyContext();
   const { currencies, optionsFor, setEnabledCurrencies } = useEnabledCurrencies();
   const [saving, setSaving] = useState(false);
+  const { language } = usePreferences();
+  const tr = useT(SETTINGS_MESSAGES);
 
   const save = async (run: () => Promise<void>, what: string) => {
     setSaving(true);
@@ -45,8 +50,8 @@ export function CurrencyCard() {
    * convert into would leave the header's switcher pointing at nothing.
    */
   const lockedReason = (currency: Currency) => {
-    if (currency === userDoc?.mainCurrency) return "Your currency is always available.";
-    if (currency === target) return "Totals are shown in it right now.";
+    if (currency === userDoc?.mainCurrency) return tr("currency.lockedMain");
+    if (currency === target) return tr("currency.lockedTarget");
     return null;
   };
 
@@ -58,26 +63,26 @@ export function CurrencyCard() {
 
   return (
     <SettingsCard
-      title={t("settings.currency.title")}
-      subtitle={t("settings.currency.subtitle")}
+      title={t("settings.currency.title", language)}
+      subtitle={t("settings.currency.subtitle", language)}
       icon={Coins}
     >
       <SettingsRow
-        label="Your currency"
+        label={tr("currency.yours")}
         control={
           <Select
-            aria-label="Your currency"
+            aria-label={tr("currency.yours")}
             options={optionsFor(userDoc?.mainCurrency)}
             value={userDoc?.mainCurrency ?? ""}
             disabled={saving || !userDoc}
             onValueChange={changeCurrency}
           />
         }
-        hint="New entries start in it and totals are shown in it. The switcher in the header changes how totals are shown at any time."
+        hint={tr("currency.yoursHint")}
       />
       <SettingsRow
-        label="Available currencies"
-        hint="Amounts already saved in a currency you turn off keep it — it just stops being offered for new ones."
+        label={tr("currency.available")}
+        hint={tr("currency.availableHint")}
         fill
         control={
           <CurrencyToggles

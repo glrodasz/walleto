@@ -1,4 +1,6 @@
 import { Lifebuoy } from "../../../components/atoms/Icons";
+import { useT } from "../../../hooks/useT";
+import { PROSPECT_MESSAGES } from "../messages";
 
 export type ProspectMode = "whatif" | "emergency";
 
@@ -9,6 +11,7 @@ interface Props {
 
 /** The "Emergency mode" switch: off is the what-if simulator, on is the runway. */
 export function ProspectModeToggle({ mode, onChange }: Props) {
+  const t = useT(PROSPECT_MESSAGES);
   const on = mode === "emergency";
   return (
     <button
@@ -19,7 +22,7 @@ export function ProspectModeToggle({ mode, onChange }: Props) {
       onClick={() => onChange(on ? "whatif" : "emergency")}
     >
       <Lifebuoy size={16} />
-      <span className="label">Emergency mode</span>
+      <span className="label">{t("mode.emergency")}</span>
       <span className="track" aria-hidden="true">
         <span className="thumb" />
       </span>

@@ -6,6 +6,7 @@ import { formatList } from "../../../utils/formatList";
 import { useT } from "../../../hooks/useT";
 import { COMMON_MESSAGES } from "../../../messages/common";
 import type { Currency } from "../../../types";
+import { PROSPECT_MESSAGES } from "../messages";
 import type { WhatIfImpact } from "../helpers/whatIfImpact";
 
 interface Props {
@@ -24,19 +25,20 @@ interface Props {
 export function WhatIfSummary({ impact, currentNet, currency, approximate = false }: Props) {
   const { formatAmount } = useMoneyFormat();
   const tc = useT(COMMON_MESSAGES);
+  const t = useT(PROSPECT_MESSAGES);
   const adjustedNet = currentNet + impact.freedMonthly;
   const count = impact.excludedNames.length;
 
   const badge =
     adjustedNet < 0
-      ? { label: "Over-committed", tone: "danger" as const }
+      ? { label: t("summary.overCommitted"), tone: "danger" as const }
       : count > 0
-        ? { label: `${count} cancelled`, tone: "info" as const }
-        : { label: "As planned", tone: "neutral" as const };
+        ? { label: t("summary.cancelled", { count }), tone: "info" as const }
+        : { label: t("summary.asPlanned"), tone: "neutral" as const };
 
   return (
     <SummaryCard
-      title={count > 0 ? "Net if cancelled" : "Monthly net"}
+      title={count > 0 ? t("summary.titleCancelled") : t("summary.title")}
       badge={badge}
       figure={
         <Amount
@@ -49,34 +51,36 @@ export function WhatIfSummary({ impact, currentNet, currency, approximate = fals
       }
       sub={
         count > 0
-          ? `left each month, ${formatAmount(impact.freedMonthly, currency)} more than today`
-          : "left each month — check items to simulate cancelling them"
+          ? t("summary.subCancelled", { amount: formatAmount(impact.freedMonthly, currency) })
+          : t("summary.sub")
       }
       stats={[
         {
           key: "today",
-          label: "Net today",
+          label: t("summary.netToday"),
           domain: "INCOME",
           Icon: ArrowUpRight,
           value: formatAmount(currentNet, currency),
         },
         {
           key: "month",
-          label: "Freed / month",
+          label: t("summary.freedMonth"),
           domain: "SAVING",
           Icon: Circle,
           value: formatAmount(impact.freedMonthly, currency),
         },
         {
           key: "year",
-          label: "Freed / year",
+          label: t("summary.freedYear"),
           domain: "INVESTMENT",
           Icon: Lightbulb,
           value: formatAmount(impact.freedAnnual, currency),
         },
       ]}
       note={
-        count > 0 ? `Cancelling ${formatList(impact.excludedNames, tc("list.and"))}.` : undefined
+        count > 0
+          ? t("summary.note", { names: formatList(impact.excludedNames, tc("list.and")) })
+          : undefined
       }
     />
   );
