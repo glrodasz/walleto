@@ -5,7 +5,7 @@ const collectionMock = jest.fn();
 const getAllMock = jest.fn();
 const batchUpdateMock = jest.fn();
 const batchCommitMock = jest.fn().mockResolvedValue(undefined);
-let linkedRows: { ref: string }[] = [];
+let linkedRows: { ref: string; id?: string; data?: () => Record<string, unknown> }[] = [];
 
 jest.mock("../../../lib/auth0", () => ({
   __esModule: true,
@@ -269,6 +269,38 @@ describe("PATCH /api/recurrent-transactions/[id] — inheritance and backfill", 
     await handler(req({ name: "Renamed", applyToExisting: true }), res);
     expect(batchUpdateMock).not.toHaveBeenCalled();
     expect(res.json).toHaveBeenCalledWith({ id: "rt1", updated: 0 });
+  });
+});
+
+describe("PATCH /api/recurrent-transactions/[id] — schedule change", () => {
+  beforeEach(() => {
+    linkedRows = [];
+  });
+
+  const row = (id: string, status = "PAID") => ({ ref: id, id, data: () => ({ status }) });
+
+  it("skips the old schedule's rows from the new start on and keeps the history", async () => {
+    linkedRows = [
+      row("rt1_2026-08-09"),
+      row("rt1_2026-09-09"),
+      row("rt1_2026-09-27"),
+      row("rt1_2026-10-09"),
+      row("rt1_2026-11-09", "SKIPPED"),
+    ];
+    wireDoc({});
+    const res = mockRes();
+    await handler(patchReq({ frequency: "YEARLY", startDate: "2026-09-27T10:00:00.000Z" }), res);
+    expect(batchUpdateMock).toHaveBeenCalledTimes(1);
+    expect(batchUpdateMock).toHaveBeenCalledWith("rt1_2026-10-09", { status: "SKIPPED" });
+    expect(res.json).toHaveBeenCalledWith({ id: "rt1", updated: 0, skipped: 1 });
+  });
+
+  it("leaves the payments alone when the schedule did not change", async () => {
+    linkedRows = [row("rt1_2026-10-09")];
+    wireDoc({});
+    const res = mockRes();
+    await handler(patchReq({ amount: 399 }), res);
+    expect(batchUpdateMock).not.toHaveBeenCalled();
   });
 });
 

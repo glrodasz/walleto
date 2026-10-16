@@ -71,7 +71,7 @@ import { useLocalPreference } from "../../../hooks/useLocalPreference";
 import { deleteTransaction } from "../../../hooks/useTransactions";
 import { toDate } from "../../../helpers/chartData";
 import { hiddenCategoryIds, hiddenItemIds, hiddenRowReasons } from "../../../helpers/hidden";
-import { spreadItemIds, spreadTransactions } from "../helpers/spread";
+import { isSyntheticRow, spreadItemIds, spreadTransactions } from "../helpers/spread";
 import type { TransactionFilters } from "../helpers/transactionFilters";
 import type { Category, Currency, Domain, RecurrentTransaction, Transaction } from "../../../types";
 
@@ -271,6 +271,12 @@ export function DomainPage({ domain }: Props) {
     () => planRows.filter(inWindow),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [planRows, window]
+  );
+  // The ledger plus this month's share of each "reflected monthly" item: a
+  // read-only line that says what the plan counts, next to the real payment.
+  const activityRows = useMemo(
+    () => [...monthTransactions, ...monthPlanRows.filter(isSyntheticRow)],
+    [monthTransactions, monthPlanRows]
   );
   const realized = totals[window.key] ?? 0;
   const contributed = txTotals[window.key] ?? 0;
@@ -618,7 +624,7 @@ export function DomainPage({ domain }: Props) {
       <TransactionsTable
         title="Activity"
         subtitle={`What actually happened in ${window.longLabel}, planned or not.`}
-        rows={monthTransactions}
+        rows={activityRows}
         domain={domain}
         categories={categories}
         methods={methods}
@@ -628,6 +634,7 @@ export function DomainPage({ domain }: Props) {
         ctx={ctx}
         loading={txLoading}
         onEdit={setEditingTx}
+        onOpenItem={openEdit}
         hiddenReasons={hiddenReasons}
         onDelete={deleteTx}
         deletingId={deletingTxId}

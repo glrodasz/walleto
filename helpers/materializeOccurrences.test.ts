@@ -2,6 +2,7 @@ import {
   materializeOccurrences,
   occurrenceId,
   occurrenceToTransaction,
+  staleOccurrenceIds,
 } from "./materializeOccurrences";
 import type { RecurrentTransaction, Timestamp } from "../types";
 
@@ -181,5 +182,31 @@ describe("occurrenceToTransaction", () => {
     expect(doc).not.toHaveProperty("chargedCurrency");
     expect(doc).not.toHaveProperty("paymentMethodId");
     expect(doc).not.toHaveProperty("accountId");
+  });
+});
+
+describe("staleOccurrenceIds", () => {
+  // Bear: monthly on the 9th, switched to yearly on Sep 27.
+  const yearly = {
+    id: "bear",
+    frequency: "YEARLY" as const,
+    startDate: ts("2026-09-27T10:00:00.000Z"),
+  };
+  const now = new Date("2026-10-16T12:00:00.000Z");
+
+  it("flags the old schedule's rows from the new start on", () => {
+    const rows = ["bear_2026-08-09", "bear_2026-09-09", "bear_2026-09-27", "bear_2026-10-09"];
+    expect(staleOccurrenceIds(yearly, rows, now)).toEqual(["bear_2026-10-09"]);
+  });
+
+  it("keeps history before the new start and rows with other ids", () => {
+    expect(
+      staleOccurrenceIds(yearly, ["bear_2026-09-09", "manual-row", "other_2026-10-09"], now)
+    ).toEqual([]);
+  });
+
+  it("keeps every row that is still an occurrence", () => {
+    const monthly = { ...yearly, frequency: "MONTHLY" as const };
+    expect(staleOccurrenceIds(monthly, ["bear_2026-09-27", "bear_2026-10-27"], now)).toEqual([]);
   });
 });

@@ -70,3 +70,38 @@ export function occurrenceToTransaction(item: RecurrentTransaction, occurredAt: 
     occurredAt,
   };
 }
+
+/** The calendar day an occurrence id names: `{itemId}_2026-09-27` → "2026-09-27". */
+function occurrenceDay(itemId: string, rowId: string): string | null {
+  const prefix = `${itemId}_`;
+  if (!rowId.startsWith(prefix)) return null;
+  const day = rowId.slice(prefix.length);
+  return /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : null;
+}
+
+/**
+ * After a schedule change, the item's rows written by the old schedule on or
+ * after the new start are not payments of the new one (a monthly row on the
+ * 9th once the item is yearly on the 27th). Rows before the new start are
+ * history and stay. Only deterministic occurrence ids are considered: a row
+ * with any other id was not written by the schedule.
+ */
+export function staleOccurrenceIds(
+  item: ScheduleFields & { id: string },
+  rowIds: string[],
+  now: Date = new Date()
+): string[] {
+  const startDay = item.startDate.toDate().toISOString().slice(0, 10);
+  const candidates = rowIds.filter((rowId) => {
+    const day = occurrenceDay(item.id, rowId);
+    return day !== null && day >= startDay;
+  });
+  if (candidates.length === 0) return [];
+
+  const lastDay = candidates
+    .map((rowId) => occurrenceDay(item.id, rowId)!)
+    .reduce((a, b) => (a > b ? a : b));
+  const to = new Date(Math.max(now.getTime(), new Date(`${lastDay}T23:59:59.999Z`).getTime()));
+  const valid = new Set(materializeOccurrences(item, item.startDate.toDate(), to).map((o) => o.id));
+  return candidates.filter((rowId) => !valid.has(rowId));
+}

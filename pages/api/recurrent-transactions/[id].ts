@@ -3,6 +3,7 @@ import auth0 from "../../../lib/auth0";
 import admin from "../../../firebase/admin";
 import { RecurrentTransactionUpdateSchema } from "../../../schemas";
 import { nextOccurrenceFrom } from "../../../helpers/recurrence";
+import { staleOccurrenceIds } from "../../../helpers/materializeOccurrences";
 
 import "../../../firebase/admin";
 
@@ -123,8 +124,10 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
 
     // A schedule change moves the next occurrence.
     let occurrencePatch: Record<string, unknown> = {};
-    if (frequency !== undefined || startDate !== undefined || secondDayOfMonth !== undefined) {
-      const nextStart = startDate ? new Date(startDate) : existing.startDate.toDate();
+    const scheduleChanged =
+      frequency !== undefined || startDate !== undefined || secondDayOfMonth !== undefined;
+    const nextStart: Date = startDate ? new Date(startDate) : existing.startDate.toDate();
+    if (scheduleChanged) {
       const next = nextOccurrenceFrom(nextStart, frequency ?? existing.frequency, undefined, {
         secondDayOfMonth:
           secondDayOfMonth === undefined
@@ -185,7 +188,46 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       updated = rows.docs.length;
     }
 
-    return res.status(200).json({ id, updated });
+    // A new schedule leaves the old one's rows from the new start on (a
+    // monthly row on the 9th once the item is yearly on the 27th): they read
+    // as duplicates, so they are skipped. Earlier rows are history and stay.
+    let skipped = 0;
+    if (scheduleChanged) {
+      const rows = await db
+        .collection("transactions")
+        .where("userId", "==", userId)
+        .where("recurrentTransactionId", "==", id)
+        .get();
+      const live = rows.docs.filter((d) => d.data()?.status !== "SKIPPED");
+      const stale = new Set(
+        staleOccurrenceIds(
+          {
+            id,
+            frequency: frequency ?? existing.frequency,
+            startDate: {
+              seconds: Math.floor(nextStart.getTime() / 1000),
+              nanoseconds: 0,
+              toDate: () => nextStart,
+            },
+            secondDayOfMonth:
+              secondDayOfMonth === undefined
+                ? existing.secondDayOfMonth
+                : (secondDayOfMonth ?? undefined),
+          },
+          live.map((d) => d.id)
+        )
+      );
+      const toSkip = live.filter((d) => stale.has(d.id));
+      for (let i = 0; i < toSkip.length; i += BATCH_LIMIT) {
+        const batch = db.batch();
+        for (const d of toSkip.slice(i, i + BATCH_LIMIT))
+          batch.update(d.ref, { status: "SKIPPED" });
+        await batch.commit();
+      }
+      skipped = toSkip.length;
+    }
+
+    return res.status(200).json({ id, updated, ...(skipped ? { skipped } : {}) });
   }
 
   if (req.method === "DELETE") {

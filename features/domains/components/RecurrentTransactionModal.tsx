@@ -643,7 +643,7 @@ export function RecurrentTransactionModal({
         {offersSpread && (
           <CheckboxField
             label="Reflect it as a monthly amount"
-            hint={`The graph and the plan count ${formatAmount(monthlySlice, effectiveCurrency)} a month; the real payment stays in the list.`}
+            hint={`The graph and the plan count ${formatAmount(monthlySlice, effectiveCurrency)} a month, and Activity shows it as a read-only monthly share next to the real payment.`}
             checked={form.spreadMonthly}
             onChange={(spreadMonthly) => patch({ spreadMonthly })}
           />
