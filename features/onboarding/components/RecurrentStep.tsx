@@ -5,7 +5,6 @@ import { CADENCE_SECTIONS } from "../helpers/cadenceSections";
 import type { CadenceSection } from "../helpers/cadenceSections";
 import { paymentMethodOptionLabel } from "../../../helpers/paymentMethodLabel";
 import { sortByName } from "../../../helpers/paymentMethodOptions";
-import { BACKFILL_MONTHS } from "../../../helpers/scheduleAnchor";
 import type { Domain } from "../../../types";
 import { CadencePanel } from "./CadencePanel";
 import { RecurrentRowEditor } from "./RecurrentRowEditor";
@@ -47,8 +46,8 @@ export function RecurrentStep({ state, showPaymentMethod = false }: Props) {
     >
       <div className="backfill">
         <CheckboxField
-          label={`Backfill recurring items for the last ${BACKFILL_MONTHS} months`}
-          hint="So your charts and totals have history from day one."
+          label="Backfill the history of recurring items"
+          hint="The last 6 months, or longer for quarterly (1 year) and yearly (2 years) items, so your charts and totals have history from day one."
           checked={backfill}
           onChange={setBackfill}
         />

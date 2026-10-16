@@ -1,6 +1,8 @@
 import {
   BACKFILL_MONTHS,
   anchorStartDate,
+  backfillMonths,
+  backfillPeriodLabel,
   isSameSchedule,
   scheduleChoiceFromStartDate,
   toDateInputValue,
@@ -71,17 +73,17 @@ describe("anchorStartDate", () => {
       expect(toDateInputValue(d)).toBe("2026-11-19");
     });
 
-    it("backfill means the most recent anniversary already happened", () => {
+    it("backfills two years: the most recent anniversary and the one before", () => {
       // Nov 19 is still ahead of Sept 15, so the last one was in 2025.
       const future = anchorStartDate(
         { frequency: "YEARLY", month: 10, dayOfMonth: 19, backfill: true },
         NOW
       );
-      expect(toDateInputValue(future)).toBe("2025-11-19");
+      expect(toDateInputValue(future)).toBe("2024-11-19");
 
-      // Jan 1 already passed this year, so it stays in 2026.
+      // Jan 1 already passed this year, so the last one was in 2026.
       const past = anchorStartDate({ frequency: "YEARLY", backfill: true }, NOW);
-      expect(toDateInputValue(past)).toBe("2026-01-01");
+      expect(toDateInputValue(past)).toBe("2025-01-01");
     });
   });
 
@@ -127,17 +129,33 @@ describe("anchorStartDate", () => {
       ).toBe("2026-06-30");
     });
 
-    it("backfills six months back while keeping the cycle", () => {
+    it("backfills a year back while keeping the cycle", () => {
       const d = anchorStartDate(
         { frequency: "QUARTERLY", month: 0, dayOfMonth: 15, backfill: true },
         NOW
       );
-      expect(toDateInputValue(d)).toBe("2026-01-15");
+      expect(toDateInputValue(d)).toBe("2025-07-15");
     });
 
     it("falls back to the current month without a first month", () => {
       expect(toDateInputValue(anchorStartDate({ frequency: "QUARTERLY" }, NOW))).toBe("2026-09-01");
     });
+  });
+});
+
+describe("backfillMonths / backfillPeriodLabel", () => {
+  it("grows the window with the gap between payments", () => {
+    expect(backfillMonths("WEEKLY")).toBe(BACKFILL_MONTHS);
+    expect(backfillMonths("BIWEEKLY")).toBe(BACKFILL_MONTHS);
+    expect(backfillMonths("MONTHLY")).toBe(BACKFILL_MONTHS);
+    expect(backfillMonths("QUARTERLY")).toBe(12);
+    expect(backfillMonths("YEARLY")).toBe(24);
+  });
+
+  it("names the window the way the checkbox says it", () => {
+    expect(backfillPeriodLabel("MONTHLY")).toBe("the last 6 months");
+    expect(backfillPeriodLabel("QUARTERLY")).toBe("the last year");
+    expect(backfillPeriodLabel("YEARLY")).toBe("the last 2 years");
   });
 });
 

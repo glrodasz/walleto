@@ -1,7 +1,31 @@
 import type { Frequency } from "../types";
 
-/** How far back "backfill my history" reaches. Shared with the materializer. */
+/** How far back "backfill my history" reaches for monthly (and more frequent) items. */
 export const BACKFILL_MONTHS = 6;
+
+/**
+ * How far back a backfill reaches for each cadence: six months of a yearly
+ * item would be one payment at most, so the window grows with the gap
+ * between payments. Shared with the materializer, which writes that window.
+ */
+export function backfillMonths(frequency: Frequency): number {
+  switch (frequency) {
+    case "YEARLY":
+      return 24;
+    case "QUARTERLY":
+      return 12;
+    default:
+      return BACKFILL_MONTHS;
+  }
+}
+
+/** The backfill window in words: "the last 6 months", "the last year", "the last 2 years". */
+export function backfillPeriodLabel(frequency: Frequency): string {
+  const months = backfillMonths(frequency);
+  if (months % 12 !== 0) return `the last ${months} months`;
+  const years = months / 12;
+  return years === 1 ? "the last year" : `the last ${years} years`;
+}
 
 export interface ScheduleChoice {
   frequency: Frequency;
@@ -15,8 +39,7 @@ export interface ScheduleChoice {
   date?: string;
   /**
    * "I've been paying this for a while": anchor the schedule far enough back
-   * that the materializer generates BACKFILL_MONTHS of history. For yearly
-   * items it means the most recent anniversary already happened.
+   * that the materializer generates `backfillMonths(frequency)` of history.
    */
   backfill?: boolean;
 }
@@ -52,7 +75,7 @@ function localNoon(year: number, month: number, day: number): Date {
 export function anchorStartDate(choice: ScheduleChoice, now: Date = new Date()): Date {
   const today = localNoon(now.getFullYear(), now.getMonth(), now.getDate());
   const day = choice.dayOfMonth ?? 1;
-  const monthsBack = choice.backfill ? BACKFILL_MONTHS : 0;
+  const monthsBack = choice.backfill ? backfillMonths(choice.frequency) : 0;
 
   switch (choice.frequency) {
     case "ONE_TIME":
@@ -61,7 +84,7 @@ export function anchorStartDate(choice: ScheduleChoice, now: Date = new Date()):
     case "WEEKLY": {
       const base = parseDateInput(choice.date, today);
       return choice.backfill
-        ? localNoon(base.getFullYear(), base.getMonth() - BACKFILL_MONTHS, base.getDate())
+        ? localNoon(base.getFullYear(), base.getMonth() - monthsBack, base.getDate())
         : base;
     }
 
@@ -79,16 +102,17 @@ export function anchorStartDate(choice: ScheduleChoice, now: Date = new Date()):
       let year = now.getFullYear();
       let month = now.getMonth() - ((now.getMonth() - choice.month + 12) % 3);
       if (localNoon(year, month, day) > today) month -= 3;
-      const anchor = localNoon(year, month - monthsBack, day);
-      year = anchor.getFullYear();
-      return anchor;
+      return localNoon(year, month - monthsBack, day);
     }
 
     case "YEARLY": {
       const month = choice.month ?? 0;
       const thisYear = localNoon(now.getFullYear(), month, day);
       if (!choice.backfill) return thisYear;
-      return thisYear <= today ? thisYear : localNoon(now.getFullYear() - 1, month, day);
+      // The most recent anniversary that already happened, then one more per
+      // extra year of the window: two years back means two payments.
+      const latest = thisYear <= today ? now.getFullYear() : now.getFullYear() - 1;
+      return localNoon(latest - (monthsBack / 12 - 1), month, day);
     }
   }
 }
