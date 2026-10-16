@@ -2,8 +2,10 @@ import "../styles/globals.css";
 import ErrorBoundary from "../components/ErrorBoundary";
 import { UserProvider } from "@auth0/nextjs-auth0/client";
 import { Inter, JetBrains_Mono } from "next/font/google";
-import type { AppProps } from "next/app";
-import { DEFAULT_LOCALE, isLocale } from "../i18n/locale";
+import App from "next/app";
+import type { AppContext, AppProps } from "next/app";
+import { requestLocale } from "../i18n/locale";
+import type { Language } from "../types";
 import { ThemeProvider } from "../hooks/useTheme";
 import { MonthProvider } from "../hooks/useSelectedMonth";
 import { PreferencesProvider } from "../hooks/PreferencesProvider";
@@ -22,9 +24,9 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-function MyApp({ Component, pageProps, router }: AppProps) {
-  // The URL decides the language: Next strips the /es prefix into router.locale.
-  const language = isLocale(router.locale) ? router.locale : DEFAULT_LOCALE;
+type Props = AppProps & { language: Language };
+
+function MyApp({ Component, pageProps, language }: Props) {
   return (
     <UserProvider>
       <UserDocProvider>
@@ -48,5 +50,13 @@ function MyApp({ Component, pageProps, router }: AppProps) {
     </UserProvider>
   );
 }
+
+// The language is decided before the first byte (the `locale` cookie, else
+// Accept-Language), so a Spanish reader never sees an English first paint.
+// On a client-side navigation it re-reads the cookie and navigator.languages.
+MyApp.getInitialProps = async (context: AppContext) => {
+  const props = await App.getInitialProps(context);
+  return { ...props, language: requestLocale(context.ctx.req) };
+};
 
 export default MyApp;

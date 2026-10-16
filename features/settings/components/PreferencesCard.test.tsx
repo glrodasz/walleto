@@ -7,9 +7,6 @@ const setPreference = jest.fn().mockResolvedValue(undefined);
 jest.mock("../../../hooks/useUserDoc", () => ({
   useUserDoc: () => ({ userDoc: { mainCurrency: "USD" }, update }),
 }));
-jest.mock("next/router", () => ({
-  useRouter: () => ({ locale: "en", asPath: "/settings#general" }),
-}));
 jest.mock("../../../hooks/useTheme", () => ({
   useTheme: () => ({ preference: "system", resolved: "light", setPreference }),
 }));
@@ -33,10 +30,9 @@ describe("PreferencesCard", () => {
     await waitFor(() => expect(update).toHaveBeenCalledWith({ weekStart: 0 }));
   });
 
-  it("offers Spanish as a link to this page's counterpart", () => {
+  it("offers Spanish next to the theme", () => {
     render(<PreferencesCard />);
-    const toggle = screen.getByRole("link", { name: "Cambiar a español" });
-    expect(toggle).toHaveAttribute("href", "/es/settings#general");
+    expect(screen.getByRole("button", { name: "Cambiar a español" })).toHaveTextContent("Español");
   });
 
   it("saves the decimal separator and the decimals shown, with a live example", async () => {

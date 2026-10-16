@@ -96,17 +96,6 @@ describe("withOnboardingGuard", () => {
     });
   });
 
-  it("keeps a Spanish reader under /es", async () => {
-    getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
-    getMock.mockResolvedValue({
-      data: () => ({ onboardingCompleted: false, onboardingIntroSeen: true }),
-    });
-    const spanish = { locale: "es" } as GetServerSidePropsContext;
-    await expect(withOnboardingGuard()(spanish)).resolves.toEqual({
-      redirect: { destination: `/es${ONBOARDING_ENTRY}`, permanent: false },
-    });
-  });
-
   it("does not lock the user out when Firestore is unreachable", async () => {
     getSessionMock.mockResolvedValue({ user: { sub: "user1" } });
     getMock.mockRejectedValue(new Error("unavailable"));

@@ -4,10 +4,9 @@ import type { Language } from "../types";
 /**
  * Interface language.
  *
- *   which       the URL: English unprefixed, Spanish under /es (i18n/locale.ts,
- *               the core shared with middleware.ts). An unprefixed first visit
- *               is redirected by the `locale` cookie, else the browser's
- *               languages; the toggle in Settings › Preferences sets the cookie
+ *   which       the `locale` cookie (the toggle in Settings › Preferences),
+ *               else the browser's languages, else English — i18n/locale.ts,
+ *               resolved on the server by _app / _document
  *   messages    one catalog per area, built with `defineMessages`: English is
  *               the type source, so a key missing in Spanish fails `tsc`
  *   formatting  dates through helpers/dates (language-aware), plurals through

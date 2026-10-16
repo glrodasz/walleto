@@ -48,7 +48,7 @@ helpers/categoryTree.ts           categoryIdSet / rootIdMap — fold children in
 helpers/categoryIcons.ts          defaultIconFor(name, domain) / iconFor(category) — default icon when there's no pick
 helpers/money.ts                  formatAmount / formatCompact / formatNative — how an amount is written (and how it's masked)
 helpers/i18n.ts                   languages (en, es), INTL_LOCALE, defineMessages / translate (plurals via
-                                  Intl.PluralRules); see §3.7
+                                  Intl.PluralRules); which language comes from i18n/locale.ts — see §3.7
 helpers/recurrence.ts             next occurrence by Frequency
 helpers/seedDefaultCategories.ts  default categories
 ```
@@ -453,22 +453,16 @@ The app is a **planner**, not an expense tracker: it answers "what's my plan, is
 The interface speaks English and Spanish. **Every visible string goes through a catalog**: nothing user-facing
 is written inline in a component, a helper or a `constants.ts` map.
 
-- **Which language: the URL.** English is unprefixed, Spanish lives under `/es/…` (`/es/expenses?month=…`).
-  `i18n/locale.ts` is the core (copied from the localization skill — change only its config block):
-  `pageLocale`, `localizePath`, `switchLocalePath`, `resolveLocaleRedirect`, the `locale` cookie. Next's own i18n
-  routing (`next.config.js`, detection off) renders the prefixes, so `<Link>`, `router.push` and
-  `router.replace` stay in the current language on their own and `_app` reads it from `router.locale`.
-- **Detection only decides where an unprefixed visit lands**: `middleware.ts` sends it with a **307**
-  (`Cache-Control: private, no-store`, `Vary: Cookie, Accept-Language`) by the `locale` cookie, else
-  Accept-Language (q-sorted, first language we speak), else stays in English. A prefixed URL is never redirected.
-  Exempt: `/api` (Auth0 included), `/_next`, `/storybook`, files. Never add a second detector.
-- **The toggle** is `components/molecules/LanguageToggle`: a real link to this page's counterpart, labelled with
-  the target's endonym ("Español" / "English"), `lang` + `hreflang`, `aria-label` in the target language, and it
-  writes the cookie on click (`i18n/persistLocale`). It lives in Settings › Preferences next to the theme — not in
-  the header nav. `users.language` is no longer read.
-- **Server redirects aren't locale-aware**: a `getServerSideProps` `redirect.destination` goes through
-  `localizePath(dest, ctx.locale)` (see `withOnboardingGuard`, `pages/methods.tsx`), and so does any hand-built URL
-  (`window.location`, `<a href>`). Never write `"/es"` by hand outside `i18n/locale.ts`.
+- **Which language**: the saved choice (the `locale` cookie) → the browser's languages (Accept-Language on the
+  server, `navigator.languages` in the browser; q-sorted, first language we speak) → English. `i18n/locale.ts` is
+  the localization skill's core minus its URL scheme: there are **no `/es` URLs** on purpose — every screen is behind
+  a login and nothing is shared by link, so the language belongs to the device, not the page. `_app` and
+  `_document` resolve it in `getInitialProps` (`requestLocale`), so the first paint and `<html lang>` are already
+  right; that costs the static pages (wizard, privacy) their static optimisation, which is the trade.
+- **The toggle** is `components/molecules/LanguageToggle`: the target's endonym ("Español" / "English"), `lang` and an
+  `aria-label` in the target language. A tap goes through `useSetLanguage()`, which writes the cookie
+  (`i18n/persistLocale`) and re-renders in place. It lives in Settings › Preferences next to the theme — not in the
+  header. `users.language` is not read: the choice is per device, like the theme's first paint.
 - **Catalogs** are built with `defineMessages(en, es)`: English is the type source, so a key missing in Spanish
   fails `tsc`. They live next to their consumers, like any other module: `messages/common.ts` (actions, the five
   domains, cadences, method types, counts — what two or more areas say the same way), `messages/<area>.ts` for
@@ -487,7 +481,7 @@ is written inline in a component, a helper or a `constants.ts` map.
 - **Spanish voice**: "tú", neutral Latin-American Spanish, sentence case. The three nouns of §3.6 are
   Plan / Actividad / Patrimonio; "Medio de pago" for payment method, "Etiqueta" for tag, "Bolsillo" for pocket.
 - Storybook has a **Language** toolbar next to Theme; tests render without a provider, so they read English.
-  `i18n/locale.test.ts` carries the skill's truth table: extend it when a locale or an exempt path is added.
+  `i18n/locale.test.ts` carries the skill's precedence table: extend it when a locale is added.
 
 ## 7. Deferred on purpose
 

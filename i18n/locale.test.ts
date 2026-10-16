@@ -1,59 +1,22 @@
 import {
-  alternateLinks,
-  localizePath,
   negotiateLocale,
   parseAcceptLanguage,
   readCookie,
-  resolveLocaleRedirect,
-  switchLocalePath,
+  requestLocale,
+  resolveLocale,
 } from "./locale";
 
-describe("resolveLocaleRedirect — the shared truth table", () => {
+describe("resolveLocale — the skill's truth table, without URLs", () => {
   it.each([
-    ["/", null, "es-ES", "/es"],
-    ["/about", null, "sv, es;q=0.8", "/es/about"],
-    ["/", null, "en-US, es", null],
-    ["/", "es", "en-US", "/es"],
-    ["/", "en", "es-ES", null],
-    ["/es/about", "en", "en", null],
-    ["/api/subscribe", "es", "es", null],
-    ["/apis", null, "es", "/es/apis"],
-    ["/", "garbage", "es", "/es"],
-    // This app's exemptions: Auth0 callbacks, Next assets, Storybook.
-    ["/api/auth/callback", null, "es", null],
-    ["/storybook/index.html", null, "es", null],
-    ["/settings", null, "es-CO", "/es/settings"],
-  ])("%s · cookie %s · %s → %s", (pathname, savedLocale, header, expected) => {
-    expect(
-      resolveLocaleRedirect({
-        pathname,
-        savedLocale,
-        languages: parseAcceptLanguage(header),
-      })
-    ).toBe(expected);
-  });
-});
-
-describe("paths", () => {
-  it("round-trips between locales", () => {
-    expect(localizePath("/es", "en")).toBe("/");
-    expect(localizePath("/", "es")).toBe("/es");
-    expect(localizePath("/settings", "es")).toBe("/es/settings");
-    expect(switchLocalePath("/es/about", "en")).toBe("/about");
-    expect(switchLocalePath("/about", "es")).toBe("/es/about");
-  });
-
-  it("honours alternates and falls back to the locale home", () => {
-    expect(switchLocalePath("/x", "es", { en: "/x", es: "/es/y" })).toBe("/es/y");
-    expect(switchLocalePath("/x", "es", { en: "/x" })).toBe("/es");
-  });
-
-  it("lists alternates with x-default", () => {
-    expect(alternateLinks("/settings", "https://a.test").map((l) => l.hreflang)).toEqual([
-      "en",
-      "es",
-      "x-default",
-    ]);
+    [null, "es-ES", "es"],
+    [null, "sv, es;q=0.8", "es"],
+    [null, "en-US, es", "en"],
+    ["es", "en-US", "es"],
+    ["en", "es-ES", "en"],
+    ["garbage", "es", "es"],
+    [null, "", "en"],
+  ])("cookie %s · %s → %s", (savedLocale, header, expected) => {
+    expect(resolveLocale({ savedLocale, languages: parseAcceptLanguage(header) })).toBe(expected);
   });
 });
 
@@ -73,5 +36,20 @@ describe("negotiation", () => {
   it("reads a cookie by name", () => {
     expect(readCookie("a=1; locale=es; b=2", "locale")).toBe("es");
     expect(readCookie("xlocale=es", "locale")).toBeNull();
+  });
+});
+
+describe("requestLocale", () => {
+  it("resolves a request from its headers", () => {
+    expect(requestLocale({ headers: { "accept-language": "es-CO,es;q=0.9" } })).toBe("es");
+    expect(requestLocale({ headers: { cookie: "locale=en", "accept-language": "es-CO" } })).toBe(
+      "en"
+    );
+  });
+
+  it("reads the browser on a client-side navigation", () => {
+    document.cookie = "locale=es; path=/";
+    expect(requestLocale()).toBe("es");
+    document.cookie = "locale=; path=/; max-age=0";
   });
 });

@@ -1,7 +1,6 @@
 import type { GetServerSideProps } from "next";
 import auth0 from "../../../lib/auth0";
 import admin from "../../../firebase/admin";
-import { DEFAULT_LOCALE, isLocale, localizePath } from "../../../i18n/locale";
 import { ONBOARDING_ENTRY, ONBOARDING_INTRO } from "./routes";
 
 export { ONBOARDING_ENTRY, ONBOARDING_INTRO };
@@ -59,12 +58,9 @@ export function withOnboardingGuard(): GetServerSideProps {
         return { props: {} };
       }
 
-      // A server redirect isn't locale-aware on its own: keep a Spanish
-      // reader under /es instead of bouncing through the middleware.
-      const locale = isLocale(ctx.locale) ? ctx.locale : DEFAULT_LOCALE;
       return {
         redirect: {
-          destination: localizePath(introSeen ? ONBOARDING_ENTRY : ONBOARDING_INTRO, locale),
+          destination: introSeen ? ONBOARDING_ENTRY : ONBOARDING_INTRO,
           permanent: false,
         },
       };

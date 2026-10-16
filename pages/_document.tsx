@@ -1,6 +1,7 @@
-import { Html, Head, Main, NextScript } from "next/document";
-import type { DocumentProps } from "next/document";
-import { DEFAULT_LOCALE, isLocale } from "../i18n/locale";
+import Document, { Html, Head, Main, NextScript } from "next/document";
+import type { DocumentContext, DocumentInitialProps } from "next/document";
+import { requestLocale } from "../i18n/locale";
+import type { Language } from "../types";
 import { translate } from "../helpers/i18n";
 import { PAGE_MESSAGES } from "../messages/pages";
 import { buildInfo } from "../helpers/buildInfo";
@@ -13,9 +14,9 @@ import { buildInfo } from "../helpers/buildInfo";
  */
 const THEME_BOOT = `(function(){try{var p=localStorage.getItem("walleto:theme")||"system";var d=p==="dark"||(p==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light"}catch(e){}})()`;
 
-export default function AppDocument({ locale }: DocumentProps) {
-  // The URL's locale (Next's i18n routing), so <html lang> matches the text.
-  const language = isLocale(locale) ? locale : DEFAULT_LOCALE;
+type Props = DocumentInitialProps & { language: Language };
+
+export default function AppDocument({ language }: Props) {
   // data-env recolours the accent per build (styles/globals.css); the favicon
   // follows. The .ico and touch icon are blue rasters, so only production
   // links them — elsewhere a browser could prefer them over the tinted SVG.
@@ -40,3 +41,9 @@ export default function AppDocument({ locale }: DocumentProps) {
     </Html>
   );
 }
+
+// Same resolution as pages/_app.tsx, so <html lang> matches the text.
+AppDocument.getInitialProps = async (ctx: DocumentContext): Promise<Props> => {
+  const initialProps = await Document.getInitialProps(ctx);
+  return { ...initialProps, language: requestLocale(ctx.req) };
+};

@@ -34,6 +34,17 @@ export function usePreferences(): Preferences {
   return useContext(PreferencesContext);
 }
 
+/**
+ * Switches the interface language on this device: saves the `locale` cookie
+ * (what the server renders with next time) and re-renders in place. Without
+ * a provider it does nothing.
+ */
+export const SetLanguageContext = createContext<(language: Language) => void>(() => {});
+
+export function useSetLanguage(): (language: Language) => void {
+  return useContext(SetLanguageContext);
+}
+
 /** `formatDate` bound to the user's date format and language. */
 export function useDateFormat() {
   const { dateFormat, language } = usePreferences();

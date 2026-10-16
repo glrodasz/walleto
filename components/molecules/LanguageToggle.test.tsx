@@ -1,36 +1,36 @@
+import { useState } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { LanguageToggle } from "./LanguageToggle";
+import {
+  DEFAULT_PREFERENCES,
+  PreferencesContext,
+  SetLanguageContext,
+} from "../../hooks/usePreferences";
+import type { Language } from "../../types";
 
-let router = { locale: "en", asPath: "/expenses?month=2026-09#activity" };
-jest.mock("next/router", () => ({ useRouter: () => router }));
-
-afterEach(() => {
-  document.cookie = "locale=; path=/; max-age=0";
-});
+function Harness({ initial }: { initial: Language }) {
+  const [language, setLanguage] = useState<Language>(initial);
+  return (
+    <SetLanguageContext.Provider value={setLanguage}>
+      <PreferencesContext.Provider value={{ ...DEFAULT_PREFERENCES, language }}>
+        <LanguageToggle />
+      </PreferencesContext.Provider>
+    </SetLanguageContext.Provider>
+  );
+}
 
 describe("LanguageToggle", () => {
-  it("links an English page to its Spanish counterpart, keeping query and hash", () => {
-    router = { locale: "en", asPath: "/expenses?month=2026-09#activity" };
-    render(<LanguageToggle />);
-    const link = screen.getByRole("link", { name: "Cambiar a español" });
-    expect(link).toHaveAttribute("href", "/es/expenses?month=2026-09#activity");
-    expect(link).toHaveAttribute("hreflang", "es");
-    expect(link).toHaveAttribute("lang", "es");
-    expect(link).toHaveTextContent("Español");
+  it("offers Spanish in Spanish while reading English", () => {
+    render(<Harness initial="en" />);
+    const toggle = screen.getByRole("button", { name: "Cambiar a español" });
+    expect(toggle).toHaveAttribute("lang", "es");
+    expect(toggle).toHaveTextContent("Español");
   });
 
-  it("links a Spanish page back to English", () => {
-    router = { locale: "es", asPath: "/?month=2026-09" };
-    render(<LanguageToggle />);
-    const link = screen.getByRole("link", { name: "Switch to English" });
-    expect(link).toHaveAttribute("href", "/?month=2026-09");
-    expect(link).toHaveTextContent("English");
-  });
-
-  it("remembers the choice on click", () => {
-    router = { locale: "en", asPath: "/settings" };
-    render(<LanguageToggle />);
-    fireEvent.click(screen.getByRole("link", { name: "Cambiar a español" }));
-    expect(document.cookie).toContain("locale=es");
+  it("switches and then offers English back", () => {
+    render(<Harness initial="en" />);
+    fireEvent.click(screen.getByRole("button", { name: "Cambiar a español" }));
+    const back = screen.getByRole("button", { name: "Switch to English" });
+    expect(back).toHaveTextContent("English");
   });
 });

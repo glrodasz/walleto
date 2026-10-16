@@ -1,3 +1,15 @@
+/**
+ * Which language the interface speaks — the localization skill's core
+ * (precedence, negotiation, the `locale` cookie) without its URL scheme:
+ * every screen is behind a login and nothing is shared by link, so there are
+ * no /es URLs. The language belongs to the device's saved choice instead.
+ *
+ *   saved choice (`locale` cookie) → browser languages → English
+ *
+ * Pure functions, no DOM: the same file runs on the server (_app, _document)
+ * and in the browser.
+ */
+
 // ── App config ─────────────────────────────────────────────────────────────
 export const LOCALES = ["en", "es"] as const;
 export type Locale = (typeof LOCALES)[number];
@@ -5,58 +17,16 @@ export const DEFAULT_LOCALE: Locale = "en";
 export const LOCALE_COOKIE = "locale";
 /** Registrable domain shared by sibling apps; undefined = host-only cookie. */
 export const COOKIE_DOMAIN: string | undefined = undefined;
-/**
- * Never auto-redirected (segment-boundary match). The API and Auth0's
- * callbacks, Next's own assets and the static Storybook build aren't pages.
- */
-export const EXEMPT_PATHS = ["/api", "/_next", "/storybook"];
 
 export const LANGUAGE_NAMES: Record<Locale, string> = { en: "English", es: "Español" };
-export const OG_LOCALES: Record<Locale, string> = { en: "en_US", es: "es_ES" };
-
-/** Every URL that exists for one piece of content, current page included. */
-export type Alternates = Partial<Record<Locale, string>>;
 
 // ── Core ───────────────────────────────────────────────────────────────────
 export function isLocale(value: unknown): value is Locale {
   return typeof value === "string" && (LOCALES as readonly string[]).includes(value);
 }
 
-/** The non-default locale prefix of a path, or null when unprefixed. */
-export function localePrefix(pathname: string): Locale | null {
-  const segment = pathname.split("/")[1];
-  return segment !== DEFAULT_LOCALE && isLocale(segment) ? segment : null;
-}
-
-/** The locale a URL renders in. */
-export function pageLocale(pathname: string): Locale {
-  return localePrefix(pathname) ?? DEFAULT_LOCALE;
-}
-
-export function stripLocale(pathname: string): string {
-  const prefix = localePrefix(pathname);
-  return prefix ? pathname.slice(prefix.length + 1) || "/" : pathname;
-}
-
-/** Build every internal link through this. */
-export function localizePath(pathname: string, locale: Locale): string {
-  const bare = stripLocale(pathname);
-  if (locale === DEFAULT_LOCALE) return bare;
-  return bare === "/" ? `/${locale}` : `/${locale}${bare}`;
-}
-
-/** Counterpart URL for the toggle. Pages with per-language slugs pass `alternates`. */
-export function switchLocalePath(
-  pathname: string,
-  target: Locale,
-  alternates?: Alternates
-): string {
-  if (alternates) return alternates[target] ?? localizePath("/", target);
-  return localizePath(pathname, target);
-}
-
 /** Accept-Language → tags ordered by q (stable); q=0 and '*' dropped. */
-export function parseAcceptLanguage(header: string | null): string[] {
+export function parseAcceptLanguage(header: string | null | undefined): string[] {
   if (!header) return [];
   return header
     .split(",")
@@ -79,24 +49,16 @@ export function negotiateLocale(languages: readonly string[]): Locale {
   return DEFAULT_LOCALE;
 }
 
-function isExempt(pathname: string): boolean {
-  return EXEMPT_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
-}
-
-/** Where to send a request, or null to render it as-is. */
-export function resolveLocaleRedirect(input: {
-  pathname: string;
+/** The saved choice wins; an unknown cookie value is ignored, not trusted. */
+export function resolveLocale(input: {
   savedLocale: string | null;
   languages: readonly string[];
-}): string | null {
-  const { pathname, savedLocale, languages } = input;
-  if (localePrefix(pathname) || isExempt(pathname)) return null;
-  const target = isLocale(savedLocale) ? savedLocale : negotiateLocale(languages);
-  return target === DEFAULT_LOCALE ? null : localizePath(pathname, target);
+}): Locale {
+  return isLocale(input.savedLocale) ? input.savedLocale : negotiateLocale(input.languages);
 }
 
 /** Parses both a Cookie request header and document.cookie. */
-export function readCookie(cookies: string | null, name: string): string | null {
+export function readCookie(cookies: string | null | undefined, name: string): string | null {
   for (const part of cookies?.split(";") ?? []) {
     const [key, ...rest] = part.trim().split("=");
     if (key === name) return decodeURIComponent(rest.join("="));
@@ -104,12 +66,25 @@ export function readCookie(cookies: string | null, name: string): string | null 
   return null;
 }
 
-/** The <link rel="alternate" hreflang> set, x-default included. */
-export function alternateLinks(pathname: string, origin: string, alternates?: Alternates) {
-  const links = LOCALES.flatMap((locale) => {
-    const path = alternates ? alternates[locale] : localizePath(pathname, locale);
-    return path ? [{ hreflang: locale as string, href: new URL(path, origin).href }] : [];
+interface RequestLike {
+  headers: { cookie?: string; "accept-language"?: string };
+}
+
+/**
+ * A request's language (server render), or — without one, on a client-side
+ * navigation — the same resolution from `document.cookie` and
+ * `navigator.languages`.
+ */
+export function requestLocale(req?: RequestLike): Locale {
+  if (req) {
+    return resolveLocale({
+      savedLocale: readCookie(req.headers.cookie, LOCALE_COOKIE),
+      languages: parseAcceptLanguage(req.headers["accept-language"]),
+    });
+  }
+  if (typeof document === "undefined") return DEFAULT_LOCALE;
+  return resolveLocale({
+    savedLocale: readCookie(document.cookie, LOCALE_COOKIE),
+    languages: navigator.languages ?? [navigator.language],
   });
-  const fallback = links.find((link) => link.hreflang === DEFAULT_LOCALE);
-  return fallback ? [...links, { hreflang: "x-default", href: fallback.href }] : links;
 }
