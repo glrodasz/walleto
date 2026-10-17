@@ -29,6 +29,8 @@ interface NavItem {
   label: NavKey;
   href: string;
   icon: ComponentType<IconProps>;
+  /** What the bottom bar prints when the label doesn't fit its tab; the full label stays as the link's name. */
+  short?: NavKey;
   /** Rendered in place but inert — used for sections that are hidden while in progress. */
   disabled?: boolean;
 }
@@ -72,7 +74,12 @@ const BOTTOM_NAV: NavItem[] = [
   { label: "nav.home", href: "/", icon: Home },
   { label: "nav.income", href: "/incomes", icon: ArrowUp },
   { label: "nav.expenses", href: "/expenses", icon: ArrowDown },
-  { label: "nav.investments", href: "/investments", icon: TrendingUp },
+  {
+    label: "nav.investments",
+    short: "nav.investments.short",
+    href: "/investments",
+    icon: TrendingUp,
+  },
 ];
 
 const MORE_NAV: NavItem[] = [
@@ -166,9 +173,10 @@ export function Sidebar() {
               href={item.href}
               aria-current={pathname === item.href ? "page" : undefined}
               className={`bnav-item${pathname === item.href ? " is-active" : ""}`}
+              aria-label={item.short ? t(item.label) : undefined}
             >
               <Icon size={22} />
-              <span>{t(item.label)}</span>
+              <span>{t(item.short ?? item.label)}</span>
             </Link>
           );
         })}
