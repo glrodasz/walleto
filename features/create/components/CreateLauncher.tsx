@@ -215,9 +215,19 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
           border-color: var(--line-strong);
         }
 
+        /* Phone: Expense and Income share the first row in halves, the three
+           account domains the second in thirds (6 columns: 3+3, then 2+2+2). */
         @media (max-width: 480px) {
           .domains {
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(6, 1fr);
+          }
+
+          .domain {
+            grid-column: span 2;
+          }
+
+          .domain:nth-child(-n + 2) {
+            grid-column: span 3;
           }
         }
 
