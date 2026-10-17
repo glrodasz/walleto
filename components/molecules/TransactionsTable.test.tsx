@@ -204,6 +204,27 @@ describe("TransactionsTable", () => {
     expect(screen.getByText(/charged -SEK 4,600/)).toBeInTheDocument();
   });
 
+  it("converts a row in another currency and keeps the original underneath", () => {
+    const rates = { ...IDENTITY_RATES, rates: { ...IDENTITY_RATES.rates, COP: 4000 } };
+    render(
+      <TransactionsTable
+        {...base}
+        ctx={{ rates, target: "USD" }}
+        onDelete={jest.fn()}
+        rows={[
+          tx("cop", "Apartment", new Date(2026, 8, 6, 9), { amount: 400_000, currency: "COP" }),
+          tx("usd", "Coffee", new Date(2026, 8, 5, 9)),
+        ]}
+      />
+    );
+    const [cop, usd] = bodyRows();
+    expect(within(cop).getByText("$100.00")).toBeInTheDocument();
+    expect(within(cop).getByText("COP 400,000")).toBeInTheDocument();
+    // Same currency as the totals: one figure, nothing repeated under it.
+    expect(within(usd).getByText("$10.00")).toBeInTheDocument();
+    expect(within(usd).queryByText(/COP|USD/)).toBeNull();
+  });
+
   it("labels a row paid before the item's current schedule as such", () => {
     const bear = {
       id: "bear",

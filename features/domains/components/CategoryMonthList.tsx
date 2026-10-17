@@ -9,7 +9,7 @@ import { Badge } from "../../../components/atoms/Badge";
 import { ArrowRight, Chart, MoreHorizontal } from "../../../components/atoms/Icons";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
 import { ListItem, ListItems } from "../../../components/molecules/ListItem";
-import { convertedAmount } from "../../../helpers/aggregations";
+import { convertedAmount, rowSign } from "../../../helpers/aggregations";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { plannedOccurrences } from "../helpers/months";
 import { isSyntheticRow } from "../helpers/spread";
@@ -65,6 +65,23 @@ export interface CategoryMonthRow {
   planned: number;
   /** The part of `total` that came from value checks, not from transactions. */
   gain: number;
+  /**
+   * What the rows add up to in the currency they were recorded in, when they
+   * all share one that is not the reading currency — the small figure under
+   * the converted total. Absent for mixed currencies or a filed gain, which
+   * has no currency of its own.
+   */
+  original?: { amount: number; currency: Currency };
+}
+
+/** The rows' own sum when they share one currency other than `target`. */
+function originalTotal(
+  rows: Transaction[],
+  target: Currency
+): { amount: number; currency: Currency } | undefined {
+  const currency = rows[0]?.currency;
+  if (!currency || currency === target || rows.some((t) => t.currency !== currency)) return;
+  return { amount: rows.reduce((sum, t) => sum + rowSign(t) * t.amount, 0), currency };
 }
 
 // Kept here for existing importers; the tree helpers now live with the other
@@ -105,6 +122,7 @@ export function categoryMonthRows(
         share: 0,
         planned: plannedHere,
         gain,
+        original: gain === 0 ? originalTotal(mine, ctx.target) : undefined,
       };
     });
   // Shares are of what came in: a category that netted out below zero
@@ -138,7 +156,7 @@ export function CategoryMonthList({
   onSelect,
   onToggleHidden,
 }: Props) {
-  const { formatAmount } = useMoneyFormat();
+  const { formatAmount, formatNative } = useMoneyFormat();
   const { language } = usePreferences();
   const t = useT(DOMAIN_MESSAGES);
   const common = useT(COMMON_MESSAGES);
@@ -204,6 +222,11 @@ export function CategoryMonthList({
                     : undefined
                 }
                 amount={formatAmount(r.total, currency)}
+                amountMeta={
+                  r.original
+                    ? formatNative(r.original.amount, r.original.currency, currency)
+                    : undefined
+                }
                 onClick={() => r.category.id && onSelect(r.category.id)}
                 trailing={
                   <span className="actions">

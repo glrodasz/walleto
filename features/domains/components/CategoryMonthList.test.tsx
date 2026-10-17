@@ -234,4 +234,30 @@ describe("CategoryMonthList — gains from value checks", () => {
     expect(screen.getByText("From value checks that name no category")).toBeInTheDocument();
     expect(screen.getByText("$640.00")).toBeInTheDocument();
   });
+
+  it("shows a category's own-currency total under the converted one", () => {
+    const rates = { ...IDENTITY_RATES, rates: { ...IDENTITY_RATES.rates, COP: 4000 } };
+    const cop = (id: string, categoryId: string, amount: number): Transaction => ({
+      ...tx(id, categoryId, amount),
+      currency: "COP",
+    });
+    render(
+      <CategoryMonthList
+        domain="EXPENSE"
+        categories={categories}
+        transactions={[cop("a", "food", 400_000), cop("b", "home", 40_000), tx("c", "rent", 5)]}
+        items={[]}
+        ctx={{ rates, target: "USD" }}
+        currency="USD"
+        window={sep}
+        now={now}
+        onSelect={jest.fn()}
+      />
+    );
+    expect(screen.getByText("$100.00")).toBeInTheDocument();
+    expect(screen.getByText("COP 400,000")).toBeInTheDocument();
+    // Household mixes COP and USD: no single original to show.
+    expect(screen.getByText("$15.00")).toBeInTheDocument();
+    expect(screen.queryByText("COP 40,000")).toBeNull();
+  });
 });

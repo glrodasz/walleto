@@ -14,6 +14,7 @@ import { COMMON_MESSAGES } from "../../../messages/common";
 import { FIELD_MESSAGES } from "../../../messages/fields";
 import { INVESTMENT_MESSAGES } from "../messages";
 import type { MoneyContext } from "../../../helpers/aggregations";
+import { convert } from "../../../helpers/fx";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import { useDomainValue } from "../hooks/useDomainValue";
 import { dominantCategoryId } from "../helpers/valuation";
@@ -43,7 +44,7 @@ interface Props {
  */
 export function AccountValueList({ domain, categories, ctx, currency }: Props) {
   const { formatDate, language } = useDateFormat();
-  const { formatAmount, formatPercent, separator } = useMoneyFormat();
+  const { formatAmount, formatNative, formatPercent, separator } = useMoneyFormat();
   const {
     rows,
     accounts,
@@ -68,6 +69,16 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
   // case costs no thought.
   const suggestFor = (row: AccountValueRow) =>
     dominantCategoryId(transactions, row.selector, categories, ctx);
+  // An account kept in another currency: the converted value reads big, its
+  // own currency's figure small underneath — never twice the same number.
+  const original = (row: AccountValueRow) =>
+    row.currency && row.currency !== ctx.target && !(owes && !row.latest)
+      ? formatNative(
+          convert(row.value, ctx.target, row.currency, ctx.rates),
+          row.currency,
+          currency
+        )
+      : null;
   const meta = (row: AccountValueRow) =>
     [
       row.sub,
@@ -113,6 +124,7 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
                   <span className="amount">
                     {owes && !r.latest ? "—" : formatAmount(r.value, currency)}
                   </span>
+                  {original(r) && <span className="original">{original(r)}</span>}
                   {r.gainPct !== null && (
                     <span className={`gain ${r.value - r.invested >= 0 ? "up" : "down"}`}>
                       {r.value - r.invested >= 0 ? "+" : ""}
@@ -291,6 +303,13 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
           font-size: 0.9rem;
           font-weight: 600;
           color: var(--fg-0);
+        }
+
+        .original {
+          font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
+          font-variant-numeric: tabular-nums;
+          font-size: 0.72rem;
+          color: var(--fg-2);
         }
 
         .gain {
