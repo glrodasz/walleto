@@ -577,7 +577,7 @@ export function DomainPage({ domain }: Props) {
   const scopeToggle = accountDomain ? (
     <SegmentedControl
       label={t("controls.figuresShow")}
-      size="sm"
+      size="xs"
       options={[
         { key: "month", label: t("controls.month") },
         { key: "total", label: t("controls.total") },

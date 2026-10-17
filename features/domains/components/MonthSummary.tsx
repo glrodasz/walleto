@@ -93,12 +93,14 @@ export function MonthSummary({
 
   return (
     <Card>
-      {toolbar && <div className="toolbar">{toolbar}</div>}
       <div className="summary">
         <div className="panel plan">
-          <span className="label">
-            {window.isCurrent ? t("summary.expected") : t("summary.monthTotal")}
-          </span>
+          <div className="head">
+            <span className="label">
+              {window.isCurrent ? t("summary.expected") : t("summary.monthTotal")}
+            </span>
+            {toolbar}
+          </div>
           <span className="figure">
             <Amount value={expected} currency={currency} size="lg" approximate={approximate} />
           </span>
@@ -148,10 +150,15 @@ export function MonthSummary({
       </div>
 
       <style jsx>{`
-        .toolbar {
+        .head {
           display: flex;
-          justify-content: flex-end;
-          margin-bottom: 12px;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          flex-wrap: wrap;
+          /* The toggle is taller than the caps label: let it overhang so the
+             label stays level with the other panel's. */
+          margin: -6px 0;
         }
 
         .summary {
