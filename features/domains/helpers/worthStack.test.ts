@@ -3,10 +3,15 @@ import {
   gainsByWindow,
   historyWindows,
   parseChartMeasure,
+  parseSummaryScope,
   runningTotals,
   unfiledGainUntil,
+  worthLedger,
+  worthUntil,
 } from "./worthStack";
 import type { GainRow } from "../../investments/helpers/valuationGains";
+import { IDENTITY_RATES } from "../../../helpers/fx";
+import type { Currency, Transaction } from "../../../types";
 
 const gain = (at: string, value: number, categoryId: string | null = null): GainRow => ({
   selector: "acc:a",
@@ -94,5 +99,73 @@ describe("gains by window and by date", () => {
     expect(gainsByCategoryUntil(rows, end)).toEqual({ stocks: 30 });
     expect(unfiledGainUntil(rows, end)).toBe(0);
     expect(unfiledGainUntil(rows, new Date(2026, 9, 1))).toBe(7);
+  });
+});
+
+describe("parseSummaryScope", () => {
+  it("defaults to the month for anything but a stored total", () => {
+    expect(parseSummaryScope('"total"')).toBe("total");
+    expect(parseSummaryScope('"month"')).toBe("month");
+    expect(parseSummaryScope("not json")).toBe("month");
+  });
+});
+
+describe("worthLedger / worthUntil", () => {
+  const ctx = { rates: IDENTITY_RATES, target: "USD" as Currency };
+  const row = (amount: number, date: Date, overrides: Partial<Transaction> = {}): Transaction => ({
+    userId: "u1",
+    domain: "DEBT",
+    categoryId: "cards",
+    accountId: "visa",
+    name: "Card payment",
+    amount,
+    currency: "USD",
+    occurredAt: { seconds: 0, nanoseconds: 0, toDate: () => date },
+    status: "PAID",
+    ...overrides,
+  });
+  const check = (at: Date, value: number, categoryId: string | null = "cards"): GainRow => ({
+    selector: "acc:visa",
+    at,
+    gain: value,
+    currency: "USD",
+    categoryId,
+  });
+
+  it("keeps every row of an asset", () => {
+    const rows = [row(100, new Date(2026, 0, 1), { domain: "SAVING" })];
+    expect(worthLedger(rows, [], "SAVING")).toBe(rows);
+  });
+
+  it("builds a debt's worth from its first balance on, and drops a debt nobody checked", () => {
+    const rows = [
+      row(300, new Date(2025, 11, 1)), // before the first balance: already in it
+      row(500, new Date(2026, 1, 1)),
+      row(500, new Date(2026, 2, 1)),
+      row(900, new Date(2026, 2, 1), { accountId: "car" }), // no balance ever recorded
+    ];
+    // 5,000 owed on Jan 1 (anchored), 1,100 of interest revealed on Apr 1.
+    const gains = [check(new Date(2026, 0, 1), -5000), check(new Date(2026, 3, 1), -1100)];
+    const ledger = worthLedger(rows, gains, "DEBT");
+    expect(ledger.map((t) => t.amount)).toEqual([500, 500]);
+
+    expect(worthUntil(ledger, gains, new Date(2026, 0, 1), ctx)).toBe(0);
+    expect(worthUntil(ledger, gains, new Date(2026, 2, 15), ctx)).toBe(-4000);
+    expect(worthUntil(ledger, gains, new Date(2026, 4, 1), ctx)).toBe(-5100);
+  });
+
+  it("leaves hidden categories out, rows and filed gains alike", () => {
+    const rows = [
+      row(100, new Date(2026, 0, 5), { domain: "INVESTMENT", categoryId: "stocks" }),
+      row(40, new Date(2026, 0, 5), { domain: "INVESTMENT", categoryId: "crypto" }),
+    ];
+    const gains = [
+      check(new Date(2026, 0, 20), 10, "stocks"),
+      check(new Date(2026, 0, 20), 5, "crypto"),
+      check(new Date(2026, 0, 20), 1, null),
+    ];
+    const end = new Date(2026, 1, 1);
+    expect(worthUntil(rows, gains, end, ctx)).toBe(156);
+    expect(worthUntil(rows, gains, end, ctx, new Set(["crypto"]))).toBe(111);
   });
 });

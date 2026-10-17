@@ -74,14 +74,17 @@ export interface GainRow {
  * comes in higher than "previous balance − repayments since" reports the
  * interest it accrued as a negative gain. Its first check reports nothing:
  * it establishes the principal, and the borrowing was never a transaction
- * to measure it against.
+ * to measure it against. With `anchorDebt` that first check reports the whole
+ * balance instead (as `−value`), so a running sum of the chain's later
+ * repayments and gains lands on what is owed — the debt's worth.
  */
 export function valuationGainRows(
   valuations: InvestmentValuation[],
   transactions: Transaction[],
   domain: AccountDomain,
   categories: Category[],
-  ctx: MoneyContext
+  ctx: MoneyContext,
+  { anchorDebt = false }: { anchorDebt?: boolean } = {}
 ): GainRow[] {
   const mine = withDomain(valuations, categories)
     .filter((v) => v.domain === domain)
@@ -111,7 +114,8 @@ export function valuationGainRows(
       .filter((d) => (prev ? d.at > prev.asOf : true) && d.at <= at)
       .reduce((sum, d) => sum + d.amount, 0);
     const value = sign * convert(v.value, v.currency, ctx.target, ctx.rates);
-    const gain = !prev && sign < 0 ? 0 : value - ((prev?.value ?? 0) + since);
+    const gain =
+      !prev && sign < 0 ? (anchorDebt ? value : 0) : value - ((prev?.value ?? 0) + since);
     previous.set(key, { value, asOf: at });
     return {
       id: v.id,

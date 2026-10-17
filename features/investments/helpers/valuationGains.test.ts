@@ -182,6 +182,20 @@ describe("valuationGainRows on a debt", () => {
     expect(800 + gains).toBeCloseTo(5000 - 4450, 6);
   });
 
+  it("with anchorDebt the first check carries the whole balance, owed as a negative", () => {
+    const rows = valuationGainRows(
+      [balance(5000, new Date(2026, 0, 1)), balance(5100, new Date(2026, 3, 1))],
+      [repay(500, new Date(2026, 1, 1)), repay(500, new Date(2026, 2, 1))],
+      "DEBT",
+      cards,
+      ctx,
+      { anchorDebt: true }
+    );
+    expect(rows.map((r) => r.gain)).toEqual([-5000, -1100]);
+    // Repayments after the anchor + Σ gains = what is owed now, signed.
+    expect(1000 + rows.reduce((s, r) => s + r.gain, 0)).toBe(-5100);
+  });
+
   it("dresses the interest as a debt-domain ledger row and skips the zero anchor", () => {
     const rows = valuationGainRows(
       [balance(5000, new Date(2026, 0, 1)), balance(5100, new Date(2026, 3, 1))],

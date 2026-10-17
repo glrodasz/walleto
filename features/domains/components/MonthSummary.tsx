@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Card } from "../../../components/atoms/Card";
 import { Amount } from "../../../components/atoms/Amount";
 import { DeltaPill } from "../../../components/molecules/DeltaPill";
@@ -32,6 +33,8 @@ interface Props {
   gain?: number;
   /** Account domains: what left the accounts this month, as a positive figure. */
   withdrawn?: number;
+  /** Account domains: the Month / Total switch, top right. */
+  toolbar?: ReactNode;
 }
 
 /**
@@ -51,6 +54,7 @@ export function MonthSummary({
   contributed,
   gain,
   withdrawn = 0,
+  toolbar,
 }: Props) {
   const { formatAmount } = useMoneyFormat();
   const t = useT(DOMAIN_MESSAGES);
@@ -89,6 +93,7 @@ export function MonthSummary({
 
   return (
     <Card>
+      {toolbar && <div className="toolbar">{toolbar}</div>}
       <div className="summary">
         <div className="panel plan">
           <span className="label">
@@ -143,6 +148,12 @@ export function MonthSummary({
       </div>
 
       <style jsx>{`
+        .toolbar {
+          display: flex;
+          justify-content: flex-end;
+          margin-bottom: 12px;
+        }
+
         .summary {
           display: grid;
           grid-template-columns: 1fr 1fr;

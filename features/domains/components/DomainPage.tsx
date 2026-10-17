@@ -15,6 +15,8 @@ import { TransactionsTable } from "../../../components/molecules/TransactionsTab
 import { CURRENCY_COLORS, DEFAULT_MONTH_PERIOD, parseMonthPeriod } from "../../../constants";
 import type { MonthPeriod } from "../../../constants";
 import { MonthSummary } from "./MonthSummary";
+import { WorthSummary } from "./WorthSummary";
+import { SegmentedControl } from "../../../components/molecules/SegmentedControl";
 import { ChartControls } from "./ChartControls";
 import type { StackMode } from "./ChartControls";
 import { DEFAULT_DOMAIN_VIEW, ViewTabs, parseDomainView } from "./ViewTabs";
@@ -38,13 +40,16 @@ import {
   gainsByWindow,
   historyWindows,
   parseChartMeasure,
+  parseSummaryScope,
   runningTotals,
   unfiledGainUntil,
+  worthLedger,
+  worthUntil,
 } from "../helpers/worthStack";
-import type { ChartMeasure } from "../helpers/worthStack";
+import type { ChartMeasure, SummaryScope } from "../helpers/worthStack";
 import { isAccountDomain } from "../../../helpers/accounts";
 import { convertedAmount } from "../../../helpers/aggregations";
-import { INCEPTION } from "../../investments/helpers/valuation";
+import { INCEPTION, positionSign } from "../../investments/helpers/valuation";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import {
   expectedForMonth,
@@ -124,6 +129,14 @@ export function DomainPage({ domain }: Props) {
     parseChartMeasure
   );
   const showWorth = offersWorth && measure === "worth";
+  // The summary and the Categories view of an account domain can speak about
+  // the month's flow or about where the domain stands at its end (the total).
+  const [scope, setScope] = useLocalPreference<SummaryScope>(
+    `walleto:summary:${domain}:scope`,
+    "month",
+    parseSummaryScope
+  );
+  const showTotal = Boolean(accountDomain) && scope === "total";
 
   // The bars draw `period` months ending with the current one. The figures
   // reach back as far as the header picker does, because the page has to
@@ -226,14 +239,11 @@ export function DomainPage({ domain }: Props) {
   // account really holds — so it counts toward the month, on top of what was
   // paid in. Contributions and gain are kept apart so the summary can say
   // which is which.
-  const { gains, rows: gainRows } = useDomainGains(
-    accountDomain,
-    transactions,
-    !txLoading,
-    categories,
-    ctx,
-    windows
-  );
+  const {
+    gains,
+    rows: gainRows,
+    worthRows,
+  } = useDomainGains(accountDomain, transactions, !txLoading, categories, ctx, windows);
   // A gain names the category the owner filed it under, so it can travel the
   // same paths a contribution does — one ranking, one "Other" cap, one set of
   // shares. What nobody filed stays a segment of its own.
@@ -527,6 +537,56 @@ export function DomainPage({ domain }: Props) {
     domain,
     language,
   ]);
+  // The total: everything held (or owed) at the end of the month — the same
+  // running sum as the worth bars, with hidden categories leaving it unless
+  // "Show hidden" is on. A debt counts from its first balance check on.
+  const ledger = useMemo(
+    () => (showTotal ? worthLedger(transactions, worthRows, domain) : []),
+    [showTotal, transactions, worthRows, domain]
+  );
+  const totalSign = accountDomain ? positionSign(accountDomain) : 1;
+  const totalHidden = showHidden ? undefined : hiddenCategories;
+  const worthNow = useMemo(
+    () => (showTotal ? totalSign * worthUntil(ledger, worthRows, window.end, ctx, totalHidden) : 0),
+    [showTotal, totalSign, ledger, worthRows, window.end, ctx, totalHidden]
+  );
+  const worthBefore = useMemo(
+    () =>
+      showTotal ? totalSign * worthUntil(ledger, worthRows, window.start, ctx, totalHidden) : 0,
+    [showTotal, totalSign, ledger, worthRows, window.start, ctx, totalHidden]
+  );
+  const ledgerUntilEnd = useMemo(
+    () => ledger.filter((t) => toDate(t.occurredAt) < window.end),
+    [ledger, window.end]
+  );
+  const worthGainsByCategory = useMemo(
+    () => gainsByCategoryUntil(worthRows, window.end),
+    [worthRows, window.end]
+  );
+  const worthUnfiled = useMemo(
+    () => unfiledGainUntil(worthRows, window.end),
+    [worthRows, window.end]
+  );
+  const hasForeignEver = useMemo(
+    () =>
+      showTotal &&
+      (ledgerUntilEnd.some((t) => t.currency !== currency) ||
+        worthRows.some((r) => r.at < window.end && r.currency !== currency)),
+    [showTotal, ledgerUntilEnd, worthRows, window.end, currency]
+  );
+  const scopeToggle = accountDomain ? (
+    <SegmentedControl
+      label={t("controls.figuresShow")}
+      size="sm"
+      options={[
+        { key: "month", label: t("controls.month") },
+        { key: "total", label: t("controls.total") },
+      ]}
+      value={scope}
+      onChange={setScope}
+    />
+  ) : undefined;
+
   const byTag = useMemo(
     () => groupByTag(monthTransactions, tags, ctx, language),
     [monthTransactions, tags, ctx, language]
@@ -629,9 +689,11 @@ export function DomainPage({ domain }: Props) {
         <CategoryMonthList
           domain={domain}
           categories={categories}
-          transactions={monthPlanRows}
-          gains={monthGainsByCategory}
-          unfiledGain={monthUnfiledGain}
+          transactions={showTotal ? ledgerUntilEnd : monthPlanRows}
+          gains={showTotal ? worthGainsByCategory : monthGainsByCategory}
+          unfiledGain={showTotal ? worthUnfiled : monthUnfiledGain}
+          scope={showTotal ? "total" : "month"}
+          toolbar={scopeToggle}
           items={planItems}
           ctx={ctx}
           currency={currency}
@@ -732,19 +794,34 @@ export function DomainPage({ domain }: Props) {
     >
       {error && <ErrorState error={error} />}
 
-      <MonthSummary
-        domain={domain}
-        window={window}
-        realized={realized}
-        expected={expected}
-        delta={delta}
-        previousLabel={previousWindow?.longLabel ?? null}
-        currency={currency}
-        approximate={hasForeign}
-        contributed={accountDomain ? contributed : undefined}
-        gain={accountDomain ? monthGain : undefined}
-        withdrawn={accountDomain ? monthWithdrawn : undefined}
-      />
+      {showTotal && accountDomain ? (
+        <WorthSummary
+          domain={accountDomain}
+          window={window}
+          worth={worthNow}
+          previous={worthBefore}
+          previousLabel={previousWindow?.longLabel ?? null}
+          currency={currency}
+          approximate={hasForeignEver}
+          hiddenLeftOut={anythingHidden && !showHidden}
+          toolbar={scopeToggle}
+        />
+      ) : (
+        <MonthSummary
+          toolbar={scopeToggle}
+          domain={domain}
+          window={window}
+          realized={realized}
+          expected={expected}
+          delta={delta}
+          previousLabel={previousWindow?.longLabel ?? null}
+          currency={currency}
+          approximate={hasForeign}
+          contributed={accountDomain ? contributed : undefined}
+          gain={accountDomain ? monthGain : undefined}
+          withdrawn={accountDomain ? monthWithdrawn : undefined}
+        />
+      )}
 
       <div className="charts">
         <Card>

@@ -56,6 +56,24 @@ export const DebtsBalanceView: Story = {
   beforeEach: withHash("value"),
 };
 
+/** "Total": the summary and the Categories view say what the savings hold at the month's end. */
+const totalScope = (domain: string, hash: string) => () => {
+  localStorage.setItem(`walleto:summary:${domain}:scope`, JSON.stringify("total"));
+  withHash(hash)();
+  return () => localStorage.removeItem(`walleto:summary:${domain}:scope`);
+};
+export const SavingsTotal: Story = {
+  args: { domain: "SAVING" },
+  parameters: at("/savings"),
+  beforeEach: totalScope("SAVING", "categories"),
+};
+/** A debt's total is what it still owes, counted from its first balance check. */
+export const DebtsTotal: Story = {
+  args: { domain: "DEBT" },
+  parameters: at("/debts"),
+  beforeEach: totalScope("DEBT", "categories"),
+};
+
 export const Loading: Story = {
   parameters: at("/expenses"),
   beforeEach: () => {

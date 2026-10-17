@@ -127,7 +127,12 @@ features/
                 bars stacked by category or currency (ChartControls; in Investments and Savings the bars and Top
                 categories show **Worth** by default — each category's end-of-month balance, the running sum from
                 inception of its rows and filed gains (`helpers/worthStack`) — with "Activity" (the month's flow) one
-                tap away; Debts stays on activity; MonthSummary and the Categories view are always the month's flow;
+                tap away; Debts stays on activity; MonthSummary and the Categories view show the month's flow, and in the three
+                account domains a small "Month | Total" switch (`SummaryScope`, per-domain preference) turns both into
+                the total at the month's end — `WorthSummary` plus the Categories rows from inception, hidden-from-chart
+                categories left out of the figure unless "Show hidden" is on; a debt's total is what it still owes,
+                counted from its first balance check (`worthLedger` + `valuationGainRows(…, { anchorDebt: true })`), and
+                a debt nobody checked adds nothing;
                 the charts only display — the month
                 is set by the header picker, which is why the list of months the page computes is longer
                 than the one the bars draw), Top categories, and the views
