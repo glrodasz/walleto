@@ -1,5 +1,5 @@
 import { anchorStartDate, isSameSchedule } from "../../../helpers/scheduleAnchor";
-import type { RecurrentTransactionUpdate, TransactionUpdate } from "../../../schemas";
+import type { RecurrentTransactionUpdate } from "../../../schemas";
 import type { RecurrentTransaction, RecurrentTransactionType } from "../../../types";
 import type { RecurrentRow } from "../hooks/useRecurrentStep";
 
@@ -47,29 +47,5 @@ export function recurrentPatch(
     else if (item.secondDayOfMonth !== undefined) patch.secondDayOfMonth = null;
   }
 
-  return Object.keys(patch).length ? patch : null;
-}
-
-/**
- * The same for a one-time row, which is a ledger entry: compared against the
- * row as it was when it saved, since it is never re-read from Firestore.
- */
-export function oneTimePatch(
-  row: RecurrentRow,
-  before: RecurrentRow,
-  { amount, beforeAmount }: { amount: number; beforeAmount: number }
-): TransactionUpdate | null {
-  const patch: TransactionUpdate = {};
-  const name = row.name.trim();
-  if (name !== before.name.trim()) patch.name = name;
-  if (amount !== beforeAmount) patch.amount = amount;
-  if (row.currency !== before.currency) patch.currency = row.currency;
-  if (row.categoryId !== before.categoryId) patch.categoryId = row.categoryId;
-  if (row.paymentMethodId !== before.paymentMethodId) {
-    patch.paymentMethodId = row.paymentMethodId || null;
-  }
-  if (row.date !== before.date) {
-    patch.occurredAt = anchorStartDate({ frequency: "ONE_TIME", date: row.date }).toISOString();
-  }
   return Object.keys(patch).length ? patch : null;
 }

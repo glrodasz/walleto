@@ -1,4 +1,4 @@
-import { oneTimePatch, recurrentPatch } from "./recurrentPatch";
+import { recurrentPatch } from "./recurrentPatch";
 import type { RecurrentRow } from "../hooks/useRecurrentStep";
 import type { RecurrentTransaction } from "../../../types";
 
@@ -86,33 +86,5 @@ describe("recurrentPatch", () => {
       frequency: "WEEKLY",
       secondDayOfMonth: null,
     });
-  });
-});
-
-describe("oneTimePatch", () => {
-  const before = row({ id: "tx1", frequency: "ONE_TIME", date: "2026-03-10" });
-  const amounts = { amount: 2_500_000, beforeAmount: 2_500_000 };
-
-  it("is null when nothing changed", () => {
-    expect(oneTimePatch(before, before, amounts)).toBeNull();
-  });
-
-  it("moves the date as occurredAt", () => {
-    const patch = oneTimePatch({ ...before, date: "2026-03-12" }, before, amounts);
-    expect(Object.keys(patch ?? {})).toEqual(["occurredAt"]);
-    expect(new Date(patch!.occurredAt!).getDate()).toBe(12);
-  });
-
-  it("sends a new amount and a cleared method", () => {
-    expect(
-      oneTimePatch(
-        { ...before, paymentMethodId: "" },
-        { ...before, paymentMethodId: "pm1" },
-        {
-          amount: 90,
-          beforeAmount: 80,
-        }
-      )
-    ).toEqual({ amount: 90, paymentMethodId: null });
   });
 });
