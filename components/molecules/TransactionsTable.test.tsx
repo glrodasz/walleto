@@ -225,6 +225,60 @@ describe("TransactionsTable", () => {
     expect(within(usd).queryByText(/COP|USD/)).toBeNull();
   });
 
+  it("reads an unconfirmed variable expense as its band, converted when foreign", () => {
+    const rates = { ...IDENTITY_RATES, rates: { ...IDENTITY_RATES.rates, COP: 4000 } };
+    render(
+      <TransactionsTable
+        {...base}
+        ctx={{ rates, target: "USD" }}
+        onDelete={jest.fn()}
+        rows={[
+          tx("usd", "Groceries", new Date(2026, 8, 6, 9), { amount: 600, amountFloor: 400 }),
+          tx("cop", "Market", new Date(2026, 8, 5, 9), {
+            amount: 800_000,
+            amountFloor: 400_000,
+            currency: "COP",
+          }),
+        ]}
+      />
+    );
+    const [usd, cop] = bodyRows();
+    expect(within(usd).getByText("$400.00 –")).toBeInTheDocument();
+    expect(within(usd).getByText("$600.00")).toBeInTheDocument();
+    expect(within(cop).getByText("$100.00 –")).toBeInTheDocument();
+    expect(within(cop).getByText("$200.00")).toBeInTheDocument();
+    expect(within(cop).getByText("COP 400,000 –")).toBeInTheDocument();
+    expect(within(cop).getByText("COP 800,000")).toBeInTheDocument();
+  });
+
+  it("marks a pending variable row and offers to confirm or keep it", () => {
+    const onConfirm = jest.fn();
+    const onKeepVariable = jest.fn();
+    const groceries = tx("g", "Groceries", new Date(2026, 8, 6, 9), {
+      amount: 600,
+      amountFloor: 400,
+    });
+    render(
+      <TransactionsTable
+        {...base}
+        onDelete={jest.fn()}
+        rows={[groceries, tx("b", "Bread", new Date(2026, 8, 5, 9))]}
+        isPending={(row) => row.id === "g"}
+        onConfirm={onConfirm}
+        onKeepVariable={onKeepVariable}
+      />
+    );
+    const [pending, fixed] = bodyRows();
+    expect(within(pending).getByText("To confirm")).toBeInTheDocument();
+    expect(within(fixed).queryByText("To confirm")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Actions for Groceries" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Confirm amount" }));
+    expect(onConfirm).toHaveBeenCalledWith(groceries);
+    fireEvent.click(screen.getByRole("button", { name: "Actions for Groceries" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Keep it variable" }));
+    expect(onKeepVariable).toHaveBeenCalledWith(groceries);
+  });
+
   it("labels a row paid before the item's current schedule as such", () => {
     const bear = {
       id: "bear",

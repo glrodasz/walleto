@@ -30,6 +30,14 @@ describe("PreferencesCard", () => {
     await waitFor(() => expect(update).toHaveBeenCalledWith({ weekStart: 0 }));
   });
 
+  it("confirms variable expenses by default and saves turning it off", async () => {
+    render(<PreferencesCard />);
+    const group = screen.getByRole("radiogroup", { name: "Confirm variable expenses" });
+    expect(group.querySelector('[aria-checked="true"]')).toHaveTextContent("On");
+    fireEvent.click(screen.getByRole("radio", { name: "Off" }));
+    await waitFor(() => expect(update).toHaveBeenCalledWith({ confirmVariableExpenses: false }));
+  });
+
   it("offers Spanish next to the theme", () => {
     render(<PreferencesCard />);
     expect(screen.getByRole("button", { name: "Cambiar a español" })).toHaveTextContent("Español");

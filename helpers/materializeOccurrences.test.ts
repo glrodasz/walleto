@@ -163,6 +163,13 @@ describe("occurrenceToTransaction", () => {
     });
   });
 
+  it("copies a variable item's band so the row stays an estimate until confirmed", () => {
+    const at = new Date("2026-03-15T12:00:00.000Z");
+    const doc = occurrenceToTransaction(item({ amount: 600, amountFloor: 400 }), at);
+    expect(doc).toEqual(expect.objectContaining({ amount: 600, amountFloor: 400 }));
+    expect(occurrenceToTransaction(item(), at)).not.toHaveProperty("amountFloor");
+  });
+
   it("copies tags and note only when the item says its payments inherit them", () => {
     const at = new Date("2026-03-15T12:00:00.000Z");
     const inherit = occurrenceToTransaction(

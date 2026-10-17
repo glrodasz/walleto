@@ -1,10 +1,12 @@
 import { useMemo } from "react";
+import type { ReactNode } from "react";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { Badge } from "../../../components/atoms/Badge";
 import { Home } from "../../../components/atoms/Icons";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
+import { RangeAmount } from "../../../components/atoms/RangeAmount";
 import { ListItem, ListItems } from "../../../components/molecules/ListItem";
 import type { KebabAction } from "../../../components/molecules/KebabMenu";
 import { sumMonthly } from "../../../helpers/aggregations";
@@ -73,7 +75,7 @@ const GROUPS: OccurrenceStatus[] = ["overdue", "due", "paid"];
 interface RowProps {
   name: string;
   meta: string;
-  amount: string;
+  amount: ReactNode;
   status?: OccurrenceStatus;
   accent: string;
   actions: KebabAction[];
@@ -165,6 +167,16 @@ export function RecurringChecklist({
 }: Props) {
   const { formatDate, language } = useDateFormat();
   const { formatAmount, formatNative } = useMoneyFormat();
+  // A variable item reads as its band, "€400 – €600".
+  const itemAmount = (item: RecurrentTransaction) =>
+    item.amountFloor !== undefined ? (
+      <RangeAmount
+        from={formatNative(item.amountFloor, item.currency, currency)}
+        to={formatNative(item.amount, item.currency, currency)}
+      />
+    ) : (
+      formatNative(item.amount, item.currency, currency)
+    );
   const t = useT(DOMAIN_MESSAGES);
   const common = useT(COMMON_MESSAGES);
   const config = DOMAIN_CONFIG[domain];
@@ -221,7 +233,7 @@ export function RecurringChecklist({
                         hidden={Boolean(o.item.hiddenFromDashboard)}
                         labels={tagNames(o.item.tags, tags)}
                         note={o.item.note}
-                        amount={formatNative(o.item.amount, o.item.currency, currency)}
+                        amount={itemAmount(o.item)}
                         status={o.status}
                         accent={config.accent}
                         actions={[
@@ -264,7 +276,7 @@ export function RecurringChecklist({
                         ? ` · ${t("plan.next", { date: formatDate(item.nextOccurrence.toDate(), "day") })}`
                         : ""
                     }`}
-                    amount={formatNative(item.amount, item.currency, currency)}
+                    amount={itemAmount(item)}
                     accent={config.accent}
                     hidden={Boolean(item.hiddenFromDashboard)}
                     labels={tagNames(item.tags, tags)}

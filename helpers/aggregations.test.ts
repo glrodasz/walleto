@@ -2,6 +2,7 @@ import {
   computeFlow,
   computeMoM,
   convertedAmount,
+  convertedBand,
   groupByCategory,
   shareByCurrency,
   sumMonthly,
@@ -61,6 +62,19 @@ const makeTransaction = (
 });
 
 describe("convertedAmount", () => {
+  it("counts a variable expense at the end of its band the scenario picks", () => {
+    const groceries = { ...makeItem("MONTHLY", 600, "cat1"), amountFloor: 400 };
+    expect(convertedAmount(groceries, USD)).toBe(600);
+    expect(convertedAmount(groceries, { ...USD, scenario: "floor" })).toBe(400);
+    expect(convertedAmount(groceries, { ...USD, scenario: "average" })).toBe(500);
+    expect(sumMonthly([groceries], { ...USD, scenario: "floor" })).toBe(400);
+    expect(convertedBand(groceries, { ...USD, scenario: "average" })).toEqual({
+      floor: 400,
+      top: 600,
+    });
+    expect(convertedBand(makeItem("MONTHLY", 15, "cat1"), USD)).toBeNull();
+  });
+
   it("converts a foreign-currency amount into the target", () => {
     const item = makeItem("MONTHLY", 4000, "cat1", "COP");
     expect(convertedAmount(item, USD_REAL)).toBeCloseTo(1);

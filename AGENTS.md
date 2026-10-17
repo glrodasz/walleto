@@ -41,6 +41,8 @@ helpers/paymentMethodOptions.ts   method types, network/provider suggestions, CA
 helpers/accounts.ts               isAccountDomain (INVESTMENT | SAVING | DEBT), ACCOUNT_NOUN (account / pocket / debt), accountLabel, formatInterestRate
 helpers/tags.ts                   normaliseTagName / tagKey (no spaces; lowercase key), tagNames (ids → names)
 helpers/hidden.ts                 which ledger rows are hidden, and from where (dashboard / domain chart; via their recurring item or their category)
+helpers/variable.ts               variable expenses: scenarioAmount (floor / average / top of a band), bandError, cycleEnd /
+                                  isPendingConfirmation — see §3.8
 helpers/essential.ts              isSubscription / isEssential (the item's `essential` flag, or the guess) / essentialIsGuessed
 helpers/dates.ts                  formatDate(date, style, format) — every visible date goes through here (user preference); monthKey
 helpers/stacks.ts                 monthTotalsBy / monthTotalsByCategory — stacked monthly totals (top N + "Other"), per-domain tints
@@ -487,6 +489,18 @@ is written inline in a component, a helper or a `constants.ts` map.
   Plan / Actividad / Patrimonio; "Medio de pago" for payment method, "Etiqueta" for tag, "Bolsillo" for pocket.
 - Storybook has a **Language** toolbar next to Theme; tests render without a provider, so they read English.
   `i18n/locale.test.ts` carries the skill's precedence table: extend it when a locale is added.
+
+### 3.8 Variable expenses
+
+An expense whose amount is a band (Groceries, €400–600) stores `amount` as the **top** and `amountFloor` as the
+bottom (EXPENSE only, floor < top, never with a charged pair: `bandError`). Anything that reads `amount` alone
+therefore sees the worst case. `convertedAmount` resolves the band through `ctx.scenario` (`users.scenario`:
+`"floor" | "average" | "top"`, per account, unset = `"top"`; `useMoneyContext` fills it), so every total follows
+the Best / Average / Worst choice without knowing bands exist. The materializer copies the floor onto each
+occurrence; the row stays an estimate until the owner **confirms** it (`PATCH { amount, amountFloor: null }`, the
+route stamps `confirmedAt`; `occurredAt` never moves) or marks it `keepVariable`. A row is asked for once its
+cycle ends (`cycleEnd`: the item's next occurrence, or month end for a one-off), unless
+`users.confirmVariableExpenses === false`. A confirmed amount outside the band is allowed.
 
 ## 7. Deferred on purpose
 

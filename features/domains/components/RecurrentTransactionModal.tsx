@@ -81,7 +81,11 @@ interface FormState extends ScheduleValue {
   /** INVESTMENT / SAVING / DEBT only. */
   accountId: string;
   name: string;
+  /** The top of the band when `variable`. */
   amount: string;
+  /** EXPENSE only: the amount is a band from `amountFloor` to `amount`. */
+  variable: boolean;
+  amountFloor: string;
   currency: Currency | "";
   frequency: Frequency;
   paymentMethodId: string;
@@ -136,6 +140,8 @@ export function RecurrentTransactionModal({
       accountId: "",
       name: "",
       amount: "",
+      variable: false,
+      amountFloor: "",
       currency: "",
       frequency: initialFrequency,
       paymentMethodId: "",
@@ -193,6 +199,9 @@ export function RecurrentTransactionModal({
         accountId: transaction.accountId ?? "",
         name: transaction.name,
         amount: decimal.toInput(transaction.amount),
+        variable: transaction.amountFloor !== undefined,
+        amountFloor:
+          transaction.amountFloor !== undefined ? decimal.toInput(transaction.amountFloor) : "",
         currency: transaction.currency,
         frequency: "ONE_TIME",
         paymentMethodId: transaction.paymentMethodId ?? "",
@@ -224,6 +233,8 @@ export function RecurrentTransactionModal({
       accountId: item.accountId ?? "",
       name: item.name,
       amount: decimal.toInput(item.amount),
+      variable: item.amountFloor !== undefined,
+      amountFloor: item.amountFloor !== undefined ? decimal.toInput(item.amountFloor) : "",
       currency: item.currency,
       frequency: item.frequency,
       paymentMethodId: item.paymentMethodId ?? "",
@@ -314,9 +325,13 @@ export function RecurrentTransactionModal({
     isRecurring &&
     ((form.inheritTags && (tagsChanged || !item?.inheritTags)) ||
       (form.inheritNote && (noteChanged || !item?.inheritNote)));
+  // Only expenses vary; a debt repayment is a fixed instalment.
+  const offersVariable = effectiveDomain === "EXPENSE";
+  const variableOn = offersVariable && form.variable;
   // A charged pair is what the card actually did on one payment, so it lives
-  // on ledger rows only: one-off create and transaction edit.
-  const offersCharged = !isRecurring && !item;
+  // on ledger rows only: one-off create and transaction edit. It records a
+  // known amount, so it never sits next to a band.
+  const offersCharged = !isRecurring && !item && !variableOn;
   // A one-off on an account can go either way; a plan only ever puts money in.
   const accountDomain = isAccountDomain(effectiveDomain) ? effectiveDomain : null;
   const offersDirection = accountDomain !== null && !isRecurring;
@@ -341,6 +356,10 @@ export function RecurrentTransactionModal({
     if (!form.categoryId) return setFormError(t("modal.error.category"));
     if (!form.name.trim()) return setFormError(t("modal.error.name"));
     if (!(amount > 0)) return setFormError(t("modal.error.amount"));
+    const amountFloor = variableOn ? (decimal.parse(form.amountFloor) ?? NaN) : undefined;
+    if (amountFloor !== undefined && !(amountFloor > 0 && amountFloor < amount)) {
+      return setFormError(t("modal.error.band"));
+    }
 
     const chargedAmount =
       offersCharged && form.chargedEnabled ? (decimal.parse(form.chargedAmount) ?? NaN) : undefined;
@@ -392,6 +411,14 @@ export function RecurrentTransactionModal({
             : {}),
           ...(name !== transaction.name ? { name } : {}),
           ...(amount !== transaction.amount ? { amount } : {}),
+          // Unticking "Amount varies" on a row confirms it: `amount` is the real one now.
+          ...(amountFloor !== undefined
+            ? amountFloor !== transaction.amountFloor
+              ? { amountFloor }
+              : {}
+            : transaction.amountFloor !== undefined
+              ? { amountFloor: null }
+              : {}),
           ...(effectiveCurrency !== transaction.currency ? { currency: effectiveCurrency } : {}),
           ...(dateChanged ? { occurredAt: startDate.toISOString() } : {}),
           ...(form.paymentMethodId !== methodBefore
@@ -422,6 +449,10 @@ export function RecurrentTransactionModal({
         // Moving to Debts goes first and carries the category and the debt:
         // a PATCH checks both against the item's domain as it stands.
         const converting = offersDebtToggle && form.paysDebt;
+        // A repayment is a fixed instalment, so the band goes before the move.
+        if (converting && item.amountFloor !== undefined) {
+          await update(item.id, { amountFloor: null });
+        }
         if (converting) {
           await convertItem(item.id, {
             domain: "DEBT",
@@ -434,6 +465,11 @@ export function RecurrentTransactionModal({
           ...(hasAccounts && !converting ? { accountId: form.accountId || null } : {}),
           name: form.name.trim(),
           amount,
+          ...(amountFloor !== undefined
+            ? { amountFloor }
+            : item.amountFloor !== undefined && !converting
+              ? { amountFloor: null }
+              : {}),
           currency: effectiveCurrency,
           // Only a real schedule change should move nextOccurrence.
           ...(scheduleChanged
@@ -471,6 +507,7 @@ export function RecurrentTransactionModal({
           ...(form.accountId ? { accountId: form.accountId } : {}),
           name: form.name.trim(),
           amount,
+          ...(amountFloor !== undefined ? { amountFloor } : {}),
           currency: effectiveCurrency,
           occurredAt: startDate.toISOString(),
           status: "PAID",
@@ -490,6 +527,7 @@ export function RecurrentTransactionModal({
           ...(effectiveDomain === "DEBT" ? { type: "LOAN_PAYMENT" as const } : {}),
           name: form.name.trim(),
           amount,
+          ...(amountFloor !== undefined ? { amountFloor } : {}),
           currency: effectiveCurrency,
           frequency: form.frequency,
           ...(form.frequency === "BIWEEKLY" ? { secondDayOfMonth: form.secondDayOfMonth } : {}),
@@ -622,9 +660,20 @@ export function RecurrentTransactionModal({
           />
         )}
 
-        <div className="pair">
+        <div className={variableOn ? "trio" : "pair"}>
+          {variableOn && (
+            <TextField
+              label={t("modal.amountFrom")}
+              placeholder="0"
+              inputMode="decimal"
+              prefix={CURRENCY_SYMBOL[effectiveCurrency]}
+              align="right"
+              value={form.amountFloor}
+              onValueChange={(v) => patch({ amountFloor: decimal.sanitize(v) })}
+            />
+          )}
           <TextField
-            label={common("noun.amount")}
+            label={variableOn ? t("modal.amountUpTo") : common("noun.amount")}
             placeholder="0"
             inputMode="decimal"
             prefix={CURRENCY_SYMBOL[effectiveCurrency]}
@@ -639,6 +688,19 @@ export function RecurrentTransactionModal({
             onValueChange={(v) => patch({ currency: v as Currency })}
           />
         </div>
+
+        {offersVariable && !(offersCharged && form.chargedEnabled) && (
+          <CheckboxField
+            label={t("modal.variable")}
+            hint={
+              transaction?.amountFloor !== undefined
+                ? t("modal.variableHintRow")
+                : t("modal.variableHint")
+            }
+            checked={form.variable}
+            onChange={(variable) => patch({ variable })}
+          />
+        )}
 
         <div className="pair">
           <Select
@@ -819,6 +881,12 @@ export function RecurrentTransactionModal({
           gap: 12px;
         }
 
+        .trio {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 12px;
+        }
+
         .field-hint {
           margin: 24px 0 0;
           font-size: 0.78rem;
@@ -869,6 +937,11 @@ export function RecurrentTransactionModal({
         @media (max-width: 480px) {
           .pair {
             grid-template-columns: 1fr;
+          }
+
+          /* From and Up to stay side by side; the currency drops below. */
+          .trio {
+            grid-template-columns: 1fr 1fr;
           }
 
           .field-hint {

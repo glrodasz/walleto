@@ -30,6 +30,13 @@ export const UI_MESSAGES = defineMessages(
     "privacy.show": "Show amounts",
     "privacy.hide": "Hide amounts",
 
+    "scenario.label": "Variable expenses count at",
+    "scenario.floor": "Best",
+    "scenario.average": "Average",
+    "scenario.top": "Worst",
+    "scenario.about": "About the scenario",
+    "scenario.hint": "Best uses the low end of each range, Worst the high end.",
+
     "delta.up": "Up {pct}%",
     "delta.down": "Down {pct}%",
 
@@ -71,6 +78,13 @@ export const UI_MESSAGES = defineMessages(
 
     "privacy.show": "Mostrar montos",
     "privacy.hide": "Ocultar montos",
+
+    "scenario.label": "Los gastos variables cuentan en",
+    "scenario.floor": "Mejor",
+    "scenario.average": "Promedio",
+    "scenario.top": "Peor",
+    "scenario.about": "Sobre el escenario",
+    "scenario.hint": "Mejor usa el extremo bajo de cada rango; Peor, el alto.",
 
     "delta.up": "Sube {pct}%",
     "delta.down": "Baja {pct}%",

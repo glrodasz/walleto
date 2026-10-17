@@ -190,6 +190,11 @@ export const DOMAIN_MESSAGES = defineMessages(
     "modal.partOf": "Part of the recurring item {name}",
     "modal.editItem": "Edit the recurring item",
     "modal.direction": "Direction",
+    "modal.variable": "Amount varies",
+    "modal.variableHint": "Plan a range instead of one figure, like groceries between 400 and 600.",
+    "modal.variableHintRow": "Untick it and enter what you really spent to confirm this payment.",
+    "modal.amountFrom": "From",
+    "modal.amountUpTo": "Up to",
     "modal.spread": "Reflect it as a monthly amount",
     "modal.spreadHint":
       "The graph and the plan count {amount} a month, and Activity shows it as a read-only monthly share next to the real payment.",
@@ -227,6 +232,7 @@ export const DOMAIN_MESSAGES = defineMessages(
     "modal.error.category": "Pick a category",
     "modal.error.name": "Give it a name",
     "modal.error.amount": "Amount must be greater than zero",
+    "modal.error.band": "The lower amount must be above zero and below the upper one",
     "modal.error.charged": "Fill both charged fields or turn the toggle off",
     "modal.error.chargedCurrency": "Charged currency must differ from the item's currency",
     "modal.error.gainPct": "Gain % must be a number (0 means break-even)",
@@ -234,6 +240,17 @@ export const DOMAIN_MESSAGES = defineMessages(
     "modal.valuationNote": "Recorded with {name}",
     "modal.saveChanges": "Save changes",
     "modal.addToPlan": "Add to plan",
+
+    "pending.title": "To confirm",
+    "pending.subtitle": "These periods are over. Enter what you really spent, or keep the range.",
+    "pending.confirm": "Confirm amount",
+    "pending.keep": "Keep it variable",
+    "confirm.title": "Confirm {name}",
+    "confirm.amount": "What you really spent",
+    "confirm.planned": "You planned {range} for {period}.",
+    "confirm.save": "Confirm",
+    "confirm.error": "Enter an amount greater than zero",
+    "confirm.failed": "Couldn't confirm {name}",
   },
   {
     "page.subtitle.INCOME": "Lo que esperas ganar cada mes y lo que de verdad llegó.",
@@ -406,6 +423,12 @@ export const DOMAIN_MESSAGES = defineMessages(
     "modal.partOf": "Parte del elemento recurrente {name}",
     "modal.editItem": "Editar el elemento recurrente",
     "modal.direction": "Dirección",
+    "modal.variable": "El monto varía",
+    "modal.variableHint": "Planea un rango en vez de una cifra, como el mercado entre 400 y 600.",
+    "modal.variableHintRow":
+      "Desmárcalo y escribe lo que gastaste de verdad para confirmar este pago.",
+    "modal.amountFrom": "Desde",
+    "modal.amountUpTo": "Hasta",
     "modal.spread": "Reflejarlo como un monto mensual",
     "modal.spreadHint":
       "La gráfica y el plan cuentan {amount} al mes, y Actividad lo muestra como una cuota mensual de solo lectura junto al pago real.",
@@ -443,6 +466,7 @@ export const DOMAIN_MESSAGES = defineMessages(
     "modal.error.category": "Elige una categoría",
     "modal.error.name": "Ponle un nombre",
     "modal.error.amount": "El monto debe ser mayor que cero",
+    "modal.error.band": "El monto menor debe ser mayor que cero y menor que el mayor",
     "modal.error.charged": "Completa los dos campos de cobro o desactiva la opción",
     "modal.error.chargedCurrency": "La moneda cobrada debe ser distinta a la del elemento",
     "modal.error.gainPct": "La ganancia % debe ser un número (0 es sin ganancia)",
@@ -450,5 +474,17 @@ export const DOMAIN_MESSAGES = defineMessages(
     "modal.valuationNote": "Registrado con {name}",
     "modal.saveChanges": "Guardar cambios",
     "modal.addToPlan": "Agregar al plan",
+
+    "pending.title": "Por confirmar",
+    "pending.subtitle":
+      "Estos períodos terminaron. Escribe lo que gastaste de verdad o deja el rango.",
+    "pending.confirm": "Confirmar monto",
+    "pending.keep": "Dejarlo variable",
+    "confirm.title": "Confirmar {name}",
+    "confirm.amount": "Lo que gastaste de verdad",
+    "confirm.planned": "Planeaste {range} para {period}.",
+    "confirm.save": "Confirmar",
+    "confirm.error": "Escribe un monto mayor que cero",
+    "confirm.failed": "No se pudo confirmar {name}",
   }
 );

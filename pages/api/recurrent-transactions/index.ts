@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import auth0 from "../../../lib/auth0";
 import admin from "../../../firebase/admin";
 import { RecurrentTransactionInputSchema } from "../../../schemas";
+import { bandError } from "../../../helpers/variable";
 import { nextOccurrenceFrom } from "../../../helpers/recurrence";
 
 import "../../../firebase/admin";
@@ -41,6 +42,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       accountId,
       name,
       amount,
+      amountFloor,
       currency,
       chargedAmount,
       chargedCurrency,
@@ -57,6 +59,11 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       startDate,
       active,
     } = parsed.data;
+
+    const band = bandError({ domain, amount, amountFloor, chargedAmount });
+    if (band) {
+      return res.status(400).json({ error: band });
+    }
 
     // The category must exist, belong to the caller, and match the domain.
     const catSnap = await db.collection("categories").doc(categoryId).get();
@@ -122,6 +129,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       ...(accountId ? { accountId } : {}),
       name,
       amount,
+      ...(amountFloor !== undefined ? { amountFloor } : {}),
       currency,
       ...(chargedAmount !== undefined ? { chargedAmount } : {}),
       ...(chargedCurrency ? { chargedCurrency } : {}),

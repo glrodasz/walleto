@@ -294,3 +294,32 @@ describe("POST /api/recurrent-transactions — tags and note", () => {
     expect(res.status).toHaveBeenCalledWith(403);
   });
 });
+
+describe("POST /api/recurrent-transactions — variable expenses", () => {
+  const expense = { ...validBody, domain: "EXPENSE", name: "Groceries", amount: 600 };
+  const post = async (body: Record<string, unknown>) => {
+    const res = mockRes();
+    await handler({ method: "POST", query: {}, body } as NextApiRequest, res);
+    return res;
+  };
+
+  beforeEach(() => getSessionMock.mockResolvedValue({ user: { sub: "user1" } }));
+
+  it("stores the band's floor next to its top", async () => {
+    const add = wireCollections({
+      category: { exists: true, data: { userId: "user1", domain: "EXPENSE" } },
+    });
+    expect((await post({ ...expense, amountFloor: 400 })).status).toHaveBeenCalledWith(201);
+    expect(add).toHaveBeenCalledWith(expect.objectContaining({ amount: 600, amountFloor: 400 }));
+  });
+
+  it("rejects a band outside expenses, upside down, or with a charged pair", async () => {
+    wireCollections({});
+    expect((await post({ ...validBody, amountFloor: 4000 })).status).toHaveBeenCalledWith(400);
+    expect((await post({ ...expense, amountFloor: 600 })).status).toHaveBeenCalledWith(400);
+    expect(
+      (await post({ ...expense, amountFloor: 400, chargedAmount: 700, chargedCurrency: "EUR" }))
+        .status
+    ).toHaveBeenCalledWith(400);
+  });
+});

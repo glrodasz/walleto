@@ -614,3 +614,81 @@ describe("RecurrentTransactionModal — essential", () => {
     expect(screen.queryByRole("checkbox", { name: /Essential/ })).toBeNull();
   });
 });
+
+describe("RecurrentTransactionModal — variable amount", () => {
+  const tick = () => fireEvent.click(screen.getByRole("checkbox", { name: /Amount varies/ }));
+
+  it("splits the amount into From / Up to and sends the band on a plan item", async () => {
+    const onClose = jest.fn();
+    render(<RecurrentTransactionModal domain="EXPENSE" open onClose={onClose} />);
+    fill();
+    tick();
+    expect(screen.getByLabelText("Up to")).toHaveValue("2000");
+    fireEvent.change(screen.getByLabelText("From"), { target: { value: "1500" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add to plan" }));
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(createItem).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: 2000, amountFloor: 1500 })
+    );
+  });
+
+  it("refuses a floor at or above the top", async () => {
+    render(<RecurrentTransactionModal domain="EXPENSE" open onClose={jest.fn()} />);
+    fill();
+    tick();
+    fireEvent.change(screen.getByLabelText("From"), { target: { value: "2000" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add to plan" }));
+    expect(await screen.findByText(/lower amount must be above zero/)).toBeInTheDocument();
+    expect(createItem).not.toHaveBeenCalled();
+  });
+
+  it("sends the band on a one-off and hides the charged pair while it's on", async () => {
+    const onClose = jest.fn();
+    render(
+      <RecurrentTransactionModal
+        domain="EXPENSE"
+        open
+        initialFrequency="ONE_TIME"
+        onClose={onClose}
+      />
+    );
+    fill();
+    tick();
+    expect(screen.queryByLabelText(/My card was charged a different amount/)).toBeNull();
+    fireEvent.change(screen.getByLabelText("From"), { target: { value: "1000" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(createTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({ amount: 2000, amountFloor: 1000 })
+    );
+  });
+
+  it("confirms a variable row when it's unticked: the real amount, the band dropped", async () => {
+    const onClose = jest.fn();
+    const row = {
+      id: "t7",
+      userId: "u",
+      domain: "EXPENSE" as const,
+      categoryId: "c1",
+      name: "Groceries",
+      amount: 600,
+      amountFloor: 400,
+      currency: "USD" as const,
+      occurredAt: { seconds: 0, nanoseconds: 0, toDate: () => new Date(2026, 8, 1, 12) },
+      status: "PAID" as const,
+    };
+    render(<RecurrentTransactionModal domain="EXPENSE" open transaction={row} onClose={onClose} />);
+    expect(screen.getByLabelText("From")).toHaveValue("400");
+    tick();
+    fireEvent.change(screen.getByLabelText("Amount"), { target: { value: "452.3" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(updateTransaction).toHaveBeenCalledWith("t7", { amount: 452.3, amountFloor: null });
+  });
+
+  it("is not offered outside expenses", () => {
+    render(<RecurrentTransactionModal domain="INCOME" open onClose={jest.fn()} />);
+    expect(screen.queryByRole("checkbox", { name: /Amount varies/ })).toBeNull();
+  });
+});

@@ -45,6 +45,8 @@ export type DateFormat = "MDY" | "DMY" | "YMD";
 /** 0 = Sunday, 1 = Monday, as in Date#getDay(). */
 export type WeekStart = 0 | 1;
 export type Language = "en" | "es";
+/** Which end of a variable expense's band totals count: best, middle or worst case. */
+export type Scenario = "floor" | "average" | "top";
 export type { DecimalSeparator, Decimals } from "../utils/decimal";
 
 export interface User {
@@ -68,6 +70,10 @@ export interface User {
   decimals?: Decimals;
   /** Prospect's emergency mode: what still comes in if the regular income stops. */
   emergencyPlan?: EmergencyPlan;
+  /** How variable expenses count in every total; unset = "top" (worst case). */
+  scenario?: Scenario;
+  /** Ask for the real amount of variable expenses; unset = true. */
+  confirmVariableExpenses?: boolean;
   createdAt: Timestamp;
 }
 
@@ -168,6 +174,8 @@ export interface RecurrentTransaction {
   name: string;
   amount: number;
   currency: Currency;
+  /** EXPENSE only: the amount varies between this and `amount` (the top); see helpers/variable. */
+  amountFloor?: number;
   chargedAmount?: number;
   chargedCurrency?: Currency;
   /** Tag ids (see `Tag`). */
@@ -215,6 +223,12 @@ export interface Transaction {
   name: string;
   amount: number;
   currency: Currency;
+  /** Copied from a variable item: the row's band until its real amount is confirmed. */
+  amountFloor?: number;
+  /** "Keep it variable": the band is the answer, so it's never asked for. */
+  keepVariable?: boolean;
+  /** When the real amount replaced the band; `occurredAt` never moves. */
+  confirmedAt?: Timestamp;
   chargedAmount?: number;
   chargedCurrency?: Currency;
   /** Tag ids (see `Tag`). */

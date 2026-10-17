@@ -25,6 +25,7 @@ import type { DomainView } from "./ViewTabs";
 import { CategoryMonthList, categoryMonthRows } from "./CategoryMonthList";
 import { CategoryDrilldown } from "./CategoryDrilldown";
 import { RecurringChecklist } from "./RecurringChecklist";
+import { PendingConfirmations } from "./PendingConfirmations";
 import { SubscriptionInsights } from "../../insights/components/SubscriptionInsights";
 import { AccountValuePanels } from "../../investments/components/AccountValuePanels";
 import { AccountValueList } from "../../investments/components/AccountValueList";
@@ -74,7 +75,9 @@ import { useMoneyContext } from "../../../hooks/useMoneyContext";
 import { useSelectedMonth } from "../../../hooks/useSelectedMonth";
 import { useLocalPreference } from "../../../hooks/useLocalPreference";
 import { usePreferences } from "../../../hooks/usePreferences";
-import { deleteTransaction } from "../../../hooks/useTransactions";
+import { deleteTransaction, updateTransaction } from "../../../hooks/useTransactions";
+import { useUserDoc } from "../../../hooks/useUserDoc";
+import { pendingConfirmations } from "../../../helpers/variable";
 import { toDate } from "../../../helpers/chartData";
 import { hiddenCategoryIds, hiddenItemIds, hiddenRowReasons } from "../../../helpers/hidden";
 import { isSyntheticRow, spreadItemIds, spreadTransactions } from "../helpers/spread";
@@ -88,6 +91,9 @@ import { DOMAIN_MESSAGES } from "../messages";
 // (categories, methods, tags…) also only start then.
 const RecurrentTransactionModal = dynamic(() =>
   import("./RecurrentTransactionModal").then((m) => m.RecurrentTransactionModal)
+);
+const ConfirmAmountModal = dynamic(() =>
+  import("./ConfirmAmountModal").then((m) => m.ConfirmAmountModal)
 );
 
 interface Props {
@@ -164,6 +170,7 @@ export function DomainPage({ domain }: Props) {
   const [busyItemId, setBusyItemId] = useState<string | null>(null);
   const [deletingTxId, setDeletingTxId] = useState<string | null>(null);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+  const [confirmingTx, setConfirmingTx] = useState<Transaction | null>(null);
 
   // The active view lives in the URL hash so a link can point at it.
   useEffect(() => {
@@ -622,6 +629,25 @@ export function DomainPage({ domain }: Props) {
     updateCategory(category.id, { hiddenFromChart: !category.hiddenFromChart }).catch((err) =>
       console.error("Failed to update category:", err)
     );
+  // Variable expenses whose period is over and still read as a range. Only
+  // expenses carry bands; Settings can turn the asking off altogether.
+  const { userDoc } = useUserDoc();
+  const pending = useMemo(
+    () =>
+      pendingConfirmations(
+        transactions,
+        items,
+        domain === "EXPENSE" && userDoc?.confirmVariableExpenses !== false,
+        now
+      ),
+    [transactions, items, domain, userDoc?.confirmVariableExpenses, now]
+  );
+  const pendingIds = useMemo(() => new Set(pending.map((t) => t.id)), [pending]);
+  const keepVariable = (row: Transaction) =>
+    row.id &&
+    updateTransaction(row.id, { keepVariable: true }).catch((err) =>
+      console.error("Failed to keep the row variable:", err)
+    );
   const deleteTx = async (transactionId: string) => {
     setDeletingTxId(transactionId);
     try {
@@ -722,6 +748,9 @@ export function DomainPage({ domain }: Props) {
         hiddenReasons={hiddenReasons}
         onDelete={deleteTx}
         deletingId={deletingTxId}
+        isPending={(row) => pendingIds.has(row.id)}
+        onConfirm={setConfirmingTx}
+        onKeepVariable={keepVariable}
         showMethod={config.showPaymentMethod}
         initialFilters={preset ?? filterQuery.initial}
         onFiltersChange={filterQuery.write}
@@ -791,6 +820,7 @@ export function DomainPage({ domain }: Props) {
       title={common(`domain.${domain}`)}
       subtitle={t(`page.subtitle.${domain}`)}
       domain={domain}
+      scenario={domain === "EXPENSE"}
     >
       {error && <ErrorState error={error} />}
 
@@ -822,6 +852,14 @@ export function DomainPage({ domain }: Props) {
           withdrawn={accountDomain ? monthWithdrawn : undefined}
         />
       )}
+
+      <PendingConfirmations
+        rows={pending}
+        categories={categories}
+        displayCurrency={currency}
+        onConfirm={setConfirmingTx}
+        onKeepVariable={keepVariable}
+      />
 
       <div className="charts">
         <Card>
@@ -903,6 +941,9 @@ export function DomainPage({ domain }: Props) {
           }}
           onClose={() => setEditingTx(null)}
         />
+      )}
+      {confirmingTx && (
+        <ConfirmAmountModal transaction={confirmingTx} onClose={() => setConfirmingTx(null)} />
       )}
 
       <style jsx>{`

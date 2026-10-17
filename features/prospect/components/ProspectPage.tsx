@@ -140,6 +140,7 @@ export function ProspectPage({ initialMode = "whatif" }: Props) {
       title={t("page.title")}
       subtitle={mode === "emergency" ? t("page.subtitle.emergency") : t("page.subtitle.whatif")}
       hideMonth
+      scenario
     >
       <div className="modebar">
         <ProspectModeToggle mode={mode} onChange={setMode} />

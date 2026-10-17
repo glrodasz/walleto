@@ -35,6 +35,7 @@ export const RecurrentTransactionTypeSchema = z.enum([
 
 export const TransactionDirectionSchema = z.enum(["IN", "OUT"]);
 export const TransactionStatusSchema = z.enum(["PENDING", "PAID", "SKIPPED"]);
+export const ScenarioSchema = z.enum(["floor", "average", "top"]);
 
 /**
  * chargedAmount ⇔ chargedCurrency travel together: both set, both cleared
@@ -164,6 +165,8 @@ export const RecurrentTransactionInputSchema = z
     accountId: z.string().min(1).optional(),
     name: z.string().min(1).max(100).trim(),
     amount: z.number().positive(),
+    /** The bottom of a variable expense's band; `amount` is its top. */
+    amountFloor: z.number().positive().optional(),
     currency: CurrencySchema,
     chargedAmount: z.number().positive().optional(),
     chargedCurrency: CurrencySchema.optional(),
@@ -186,6 +189,8 @@ export const RecurrentTransactionUpdateSchema = z
   .object({
     name: z.string().min(1).max(100).trim().optional(),
     amount: z.number().positive().optional(),
+    // null makes the item a fixed amount again.
+    amountFloor: z.number().positive().nullable().optional(),
     currency: CurrencySchema.optional(),
     // null clears the field (FieldValue.delete() server-side).
     chargedAmount: z.number().positive().nullable().optional(),
@@ -230,6 +235,8 @@ export const TransactionInputSchema = z
     accountId: z.string().min(1).optional(),
     name: z.string().min(1).max(100).trim(),
     amount: z.number().positive(),
+    /** The bottom of a variable expense's band; `amount` is its top. */
+    amountFloor: z.number().positive().optional(),
     currency: CurrencySchema,
     chargedAmount: z.number().positive().optional(),
     chargedCurrency: CurrencySchema.optional(),
@@ -238,6 +245,7 @@ export const TransactionInputSchema = z
     paymentMethodId: z.string().optional(),
     occurredAt: z.iso.datetime(),
     status: TransactionStatusSchema.optional(),
+    keepVariable: z.boolean().optional(),
     /** Account domains only; the route rejects it elsewhere. */
     direction: TransactionDirectionSchema.optional(),
   })
@@ -250,6 +258,9 @@ export const TransactionUpdateSchema = z
     accountId: z.string().min(1).nullable().optional(),
     name: z.string().min(1).max(100).trim().optional(),
     amount: z.number().positive().optional(),
+    // null confirms the row: `amount` is now the real one (the route stamps confirmedAt).
+    amountFloor: z.number().positive().nullable().optional(),
+    keepVariable: z.boolean().optional(),
     currency: CurrencySchema.optional(),
     occurredAt: z.iso.datetime().optional(),
     chargedAmount: z.number().positive().nullable().optional(),
@@ -343,6 +354,8 @@ export const UserUpdateSchema = z
     decimalSeparator: DecimalSeparatorSchema.optional(),
     decimals: DecimalsSchema.optional(),
     emergencyPlan: EmergencyPlanSchema.optional(),
+    scenario: ScenarioSchema.optional(),
+    confirmVariableExpenses: z.boolean().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, {
     message: "At least one field is required",
