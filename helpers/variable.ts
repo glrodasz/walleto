@@ -85,3 +85,36 @@ export function isPendingConfirmation(
   if (!enabled || !isVariable(row) || row.keepVariable || row.status !== "PAID") return false;
   return now >= cycleEnd(row.occurredAt, item);
 }
+
+interface PendingCandidate extends Omit<PendingRow, "occurredAt"> {
+  /** A Firestore Timestamp in the app, a Date in tests. */
+  occurredAt: Date | { toDate(): Date };
+  recurrentTransactionId?: string;
+}
+
+const dateOf = (d: PendingCandidate["occurredAt"]) => (d instanceof Date ? d : d.toDate());
+
+/**
+ * Every row waiting for its real amount, oldest first — the order the owner
+ * would go through receipts. Each row is checked against the schedule of the
+ * item that wrote it, so a yearly item only asks once its year is over.
+ */
+export function pendingConfirmations<T extends PendingCandidate>(
+  rows: T[],
+  items: (Schedule & { id?: string })[],
+  enabled: boolean,
+  now: Date = new Date()
+): T[] {
+  if (!enabled) return [];
+  const byId = new Map(items.filter((i) => i.id).map((i) => [i.id!, i]));
+  return rows
+    .filter((row) =>
+      isPendingConfirmation(
+        { ...row, occurredAt: dateOf(row.occurredAt) },
+        row.recurrentTransactionId ? byId.get(row.recurrentTransactionId) : undefined,
+        enabled,
+        now
+      )
+    )
+    .sort((a, b) => dateOf(a.occurredAt).getTime() - dateOf(b.occurredAt).getTime());
+}

@@ -141,10 +141,10 @@ export const STORY_RECURRENT: RecurrentTransaction[] = [
     domain: "EXPENSE",
     categoryId: "cat-expense-groceries",
     name: "Groceries",
-    amount: 900000,
+    // A variable expense: planned as a range, confirmed once each run is over.
+    amount: 1000000,
+    amountFloor: 700000,
     currency: "COP",
-    chargedAmount: 900000,
-    chargedCurrency: "COP",
     frequency: "BIWEEKLY",
     secondDayOfMonth: 20,
     type: "OTHER",

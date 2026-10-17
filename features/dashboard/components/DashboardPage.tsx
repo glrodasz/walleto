@@ -157,6 +157,7 @@ export function DashboardPage() {
       }
       subtitle={t("subtitle", { month: window.longLabel })}
       hideMonth
+      scenario
     >
       {error && <ErrorState error={error} />}
       {fxUnavailable && <ErrorState title={t("fx.title")} description={t("fx.description")} />}

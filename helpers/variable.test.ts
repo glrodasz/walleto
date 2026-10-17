@@ -1,4 +1,11 @@
-import { bandError, cycleEnd, isPendingConfirmation, isVariable, scenarioAmount } from "./variable";
+import {
+  bandError,
+  cycleEnd,
+  isPendingConfirmation,
+  isVariable,
+  pendingConfirmations,
+  scenarioAmount,
+} from "./variable";
 
 const ts = (d: Date) => ({ seconds: d.getTime() / 1000, nanoseconds: 0, toDate: () => d });
 const groceries = { amount: 600, amountFloor: 400 };
@@ -65,5 +72,33 @@ describe("isPendingConfirmation", () => {
     expect(isPendingConfirmation({ ...row, keepVariable: true }, item, true, later)).toBe(false);
     expect(isPendingConfirmation({ ...row, status: "SKIPPED" }, item, true, later)).toBe(false);
     expect(isPendingConfirmation(row, item, false, later)).toBe(false);
+  });
+});
+
+describe("pendingConfirmations", () => {
+  const item = { id: "g", frequency: "MONTHLY" as const, startDate: ts(new Date(2026, 0, 5)) };
+  const row = (id: string, month: number, extra = {}) => ({
+    id,
+    recurrentTransactionId: "g",
+    occurredAt: ts(new Date(2026, month, 5)),
+    status: "PAID",
+    ...groceries,
+    ...extra,
+  });
+  const now = new Date(2026, 9, 17);
+
+  it("lists the variable rows whose cycle is over, oldest first", () => {
+    const rows = [row("sep", 8), row("aug", 7), row("oct", 9)];
+    expect(pendingConfirmations(rows, [item], true, now).map((r) => r.id)).toEqual(["aug", "sep"]);
+  });
+
+  it("skips confirmed, kept and skipped rows, and everything when turned off", () => {
+    const rows = [
+      row("confirmed", 7, { amountFloor: undefined }),
+      row("kept", 7, { keepVariable: true }),
+      row("skipped", 7, { status: "SKIPPED" }),
+    ];
+    expect(pendingConfirmations(rows, [item], true, now)).toEqual([]);
+    expect(pendingConfirmations([row("aug", 7)], [item], false, now)).toEqual([]);
   });
 });

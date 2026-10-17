@@ -4,6 +4,7 @@ import { SectionTitle } from "../atoms/SectionTitle";
 import { TextField } from "../atoms/TextField";
 import { Select } from "../atoms/Select";
 import { Badge } from "../atoms/Badge";
+import { RangeAmount } from "../atoms/RangeAmount";
 import { CategoryIcon } from "../atoms/CategoryIcon";
 import { Chart, Home, Repeat, Search, Sliders } from "../atoms/Icons";
 import { useMoneyFormat } from "../../hooks/useMoneyFormat";
@@ -62,6 +63,10 @@ interface Props {
   hiddenReasons?: (transaction: Transaction) => HiddenReason[];
   onDelete: (transactionId: string) => void;
   deletingId: string | null;
+  /** A variable row whose period is over and still reads as a range. */
+  isPending?: (transaction: Transaction) => boolean;
+  onConfirm?: (transaction: Transaction) => void;
+  onKeepVariable?: (transaction: Transaction) => void;
   /** Whether the payment method belongs in this domain's rows and filters. */
   showMethod?: boolean;
   /** Hide the category filter (a drilldown already fixed the category). */
@@ -100,6 +105,9 @@ export function TransactionsTable({
   hiddenReasons,
   onDelete,
   deletingId,
+  isPending,
+  onConfirm,
+  onKeepVariable,
   showMethod = true,
   showCategoryFilter = true,
   initialFilters,
@@ -233,6 +241,9 @@ export function TransactionsTable({
               onOpenItem={onOpenItem}
               onDelete={onDelete}
               deleting={deletingId === t.id}
+              pending={isPending?.(t) ?? false}
+              onConfirm={onConfirm}
+              onKeepVariable={onKeepVariable}
             />
           ))}
         </ListItems>
@@ -363,6 +374,9 @@ interface RowProps {
   onOpenItem?: (item: RecurrentTransaction) => void;
   onDelete: (transactionId: string) => void;
   deleting: boolean;
+  pending: boolean;
+  onConfirm?: (transaction: Transaction) => void;
+  onKeepVariable?: (transaction: Transaction) => void;
 }
 
 /** One ledger row: everything but the name and the amount folds into one line. */
@@ -381,6 +395,9 @@ function TransactionListRow({
   onOpenItem,
   onDelete,
   deleting,
+  pending,
+  onConfirm,
+  onKeepVariable,
 }: RowProps) {
   const { formatDate, language } = useDateFormat();
   const { formatAmount, formatNative, formatNativeRange } = useMoneyFormat();
@@ -456,8 +473,13 @@ function TransactionListRow({
       }
       name={t.name}
       badges={
-        share || hidden.length > 0 || outLabel || labels.length > 0 ? (
+        share || pending || hidden.length > 0 || outLabel || labels.length > 0 ? (
           <>
+            {pending && (
+              <Badge variant="outline" tone="warning" caps>
+                {tr("badge.pending")}
+              </Badge>
+            )}
             {share && (
               <Badge variant="outline" tone="info" caps icon={<Repeat size={12} />}>
                 {tr("badge.monthlyShare")}
@@ -491,13 +513,28 @@ function TransactionListRow({
       note={t.note}
       muted={hidden.includes("chart")}
       amount={
-        !foreign
-          ? native
-          : band
-            ? formatNativeRange(band.floor, band.top, ctx.target, ctx.target)
-            : formatAmount(convertedAmount(t, ctx), ctx.target)
+        band ? (
+          <RangeAmount
+            from={formatNative(band.floor, ctx.target, ctx.target)}
+            to={formatNative(band.top, ctx.target, ctx.target)}
+          />
+        ) : !foreign ? (
+          native
+        ) : (
+          formatAmount(convertedAmount(t, ctx), ctx.target)
+        )
       }
-      amountMeta={amountMeta || undefined}
+      amountMeta={
+        // A band can't carry a charged pair, so its original is the whole footer.
+        foreign && t.amountFloor !== undefined ? (
+          <RangeAmount
+            from={formatNative(t.amountFloor, t.currency, displayCurrency)}
+            to={formatNative(t.amount, t.currency, displayCurrency)}
+          />
+        ) : (
+          amountMeta || undefined
+        )
+      }
       onClick={share && item && onOpenItem ? () => onOpenItem(item) : undefined}
       aria-label={
         share
@@ -509,6 +546,12 @@ function TransactionListRow({
           <KebabMenu
             aria-label={tc("action.actionsFor", { name: t.name })}
             actions={[
+              ...(pending && onConfirm
+                ? [{ label: tr("action.confirm"), onSelect: () => onConfirm(t) }]
+                : []),
+              ...(pending && onKeepVariable
+                ? [{ label: tr("action.keepVariable"), onSelect: () => onKeepVariable(t) }]
+                : []),
               ...(onEdit ? [{ label: tc("action.edit"), onSelect: () => onEdit(t) }] : []),
               {
                 label: deleting ? tr("deleting") : tc("action.delete"),

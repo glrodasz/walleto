@@ -227,6 +227,17 @@ export const DOMAIN_MESSAGES = defineMessages(
     "modal.valuationNote": "Recorded with {name}",
     "modal.saveChanges": "Save changes",
     "modal.addToPlan": "Add to plan",
+
+    "pending.title": "To confirm",
+    "pending.subtitle": "These periods are over. Enter what you really spent, or keep the range.",
+    "pending.confirm": "Confirm amount",
+    "pending.keep": "Keep it variable",
+    "confirm.title": "Confirm {name}",
+    "confirm.amount": "What you really spent",
+    "confirm.planned": "You planned {range} for {period}.",
+    "confirm.save": "Confirm",
+    "confirm.error": "Enter an amount greater than zero",
+    "confirm.failed": "Couldn't confirm {name}",
   },
   {
     "page.subtitle.INCOME": "Lo que esperas ganar cada mes y lo que de verdad llegó.",
@@ -438,5 +449,17 @@ export const DOMAIN_MESSAGES = defineMessages(
     "modal.valuationNote": "Registrado con {name}",
     "modal.saveChanges": "Guardar cambios",
     "modal.addToPlan": "Agregar al plan",
+
+    "pending.title": "Por confirmar",
+    "pending.subtitle":
+      "Estos períodos terminaron. Escribe lo que gastaste de verdad o deja el rango.",
+    "pending.confirm": "Confirmar monto",
+    "pending.keep": "Dejarlo variable",
+    "confirm.title": "Confirmar {name}",
+    "confirm.amount": "Lo que gastaste de verdad",
+    "confirm.planned": "Planeaste {range} para {period}.",
+    "confirm.save": "Confirmar",
+    "confirm.error": "Escribe un monto mayor que cero",
+    "confirm.failed": "No se pudo confirmar {name}",
   }
 );

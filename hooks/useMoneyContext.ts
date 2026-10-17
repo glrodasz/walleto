@@ -32,6 +32,10 @@ export function useMoneyContext() {
     await update({ displayCurrency: currency });
   };
 
+  const setScenario = async (next: Scenario) => {
+    await update({ scenario: next });
+  };
+
   return {
     ctx,
     target,
@@ -41,5 +45,6 @@ export function useMoneyContext() {
     fxLoading: loading,
     fxError: error,
     setDisplayCurrency,
+    setScenario,
   };
 }

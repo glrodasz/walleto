@@ -13,6 +13,11 @@ export const SETTINGS_MESSAGES = defineMessages(
     "preferences.separatorHint": "Typing accepts either key; this is how numbers are written back.",
     "preferences.decimals": "Decimals",
     "preferences.theme": "Theme",
+    "preferences.confirmVariable": "Confirm variable expenses",
+    "preferences.confirmVariableHint":
+      "Ask for the real amount once each period ends. Off keeps the ranges as they are.",
+    "preferences.on": "On",
+    "preferences.off": "Off",
 
     "page.title": "Settings",
     "page.subtitle": "Manage your preferences, categories, tags, and accounts.",
@@ -117,6 +122,11 @@ export const SETTINGS_MESSAGES = defineMessages(
       "Al escribir puedes usar cualquiera de los dos; así se muestran los números.",
     "preferences.decimals": "Decimales",
     "preferences.theme": "Tema",
+    "preferences.confirmVariable": "Confirmar gastos variables",
+    "preferences.confirmVariableHint":
+      "Pide el monto real al terminar cada período. Apagado deja los rangos como están.",
+    "preferences.on": "Activado",
+    "preferences.off": "Apagado",
 
     "page.title": "Ajustes",
     "page.subtitle": "Gestiona tus preferencias, categorías, etiquetas y cuentas.",

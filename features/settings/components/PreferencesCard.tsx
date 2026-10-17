@@ -98,6 +98,22 @@ export function PreferencesCard() {
         }
         hint={tr("preferences.example", { value: example })}
       />
+      <SettingsRow
+        label={tr("preferences.confirmVariable")}
+        control={
+          <SegmentedControl<"on" | "off">
+            label={tr("preferences.confirmVariable")}
+            size="sm"
+            options={[
+              { key: "on", label: tr("preferences.on") },
+              { key: "off", label: tr("preferences.off") },
+            ]}
+            value={userDoc?.confirmVariableExpenses === false ? "off" : "on"}
+            onChange={(next) => save({ confirmVariableExpenses: next === "on" })}
+          />
+        }
+        hint={tr("preferences.confirmVariableHint")}
+      />
       <SettingsRow label={tr("preferences.language")} control={<LanguageToggle />} />
       <SettingsRow
         label={tr("preferences.theme")}
