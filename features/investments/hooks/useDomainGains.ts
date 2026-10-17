@@ -22,13 +22,30 @@ export function useDomainGains(
   categories: Category[],
   ctx: MoneyContext,
   windows: { key: string }[]
-): { gains: Record<string, number>; rows: GainRow[]; loading: boolean; error: Error | null } {
+): {
+  gains: Record<string, number>;
+  rows: GainRow[];
+  /**
+   * The rows a running worth is built from: `rows`, except that a debt's
+   * first balance check reports the whole balance (see `worthLedger`).
+   */
+  worthRows: GainRow[];
+  loading: boolean;
+  error: Error | null;
+} {
   const { valuations, loading, error } = useAllInvestmentValuations(Boolean(domain));
   const active = domain && transactionsReady ? domain : null;
 
   const rows = useMemo(
     () => (active ? valuationGainRows(valuations, transactions, active, categories, ctx) : []),
     [active, valuations, transactions, categories, ctx]
+  );
+  const worthRows = useMemo(
+    () =>
+      active === "DEBT"
+        ? valuationGainRows(valuations, transactions, active, categories, ctx, { anchorDebt: true })
+        : rows,
+    [active, valuations, transactions, categories, ctx, rows]
   );
   const gains = useMemo(
     () =>
@@ -38,5 +55,5 @@ export function useDomainGains(
     [active, valuations, transactions, categories, ctx, windows]
   );
 
-  return { gains, rows, loading, error };
+  return { gains, rows, worthRows, loading, error };
 }

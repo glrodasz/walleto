@@ -2,6 +2,7 @@ import { categoryIdSet } from "../../../helpers/categoryTree";
 import { CategoryIcon } from "../../../components/atoms/CategoryIcon";
 import { IconDisc } from "../../../components/molecules/IconDisc";
 import { useMemo } from "react";
+import type { ReactNode } from "react";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
@@ -16,6 +17,7 @@ import { isSyntheticRow } from "../helpers/spread";
 import type { MonthWindow } from "../helpers/months";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import { gainLabel } from "../helpers/gainStack";
+import type { SummaryScope } from "../helpers/worthStack";
 import type { Category, Currency, Domain, RecurrentTransaction, Transaction } from "../../../types";
 import { useT } from "../../../hooks/useT";
 import { usePreferences } from "../../../hooks/usePreferences";
@@ -54,6 +56,14 @@ interface Props {
   onSelect: (categoryId: string) => void;
   /** Flip the category's hiddenFromChart flag. */
   onToggleHidden?: (category: Category) => void;
+  /**
+   * "total": `transactions` and `gains` reach back to inception, so each row
+   * is what the category holds at the end of the month — or, on a debt, what
+   * it still owes, shown as a positive balance. No plan rides on a balance.
+   */
+  scope?: SummaryScope;
+  /** Next to the title: the Month / Total switch. */
+  toolbar?: ReactNode;
 }
 
 export interface CategoryMonthRow {
@@ -91,7 +101,8 @@ export { categoryIdSet };
 /**
  * `gains` is what the month's value checks reported, per root category — it
  * joins the category's total, because what a holding was worth having is the
- * money put in plus what the market did to it.
+ * money put in plus what the market did to it. `sign` flips the total, so a
+ * debt's running worth (negative) reads as the balance owed.
  */
 export function categoryMonthRows(
   categories: Category[],
@@ -100,7 +111,8 @@ export function categoryMonthRows(
   ctx: MoneyContext,
   window: MonthWindow,
   now: Date = new Date(),
-  gains: Record<string, number> = {}
+  gains: Record<string, number> = {},
+  sign: 1 | -1 = 1
 ): CategoryMonthRow[] {
   const planned = window.isCurrent
     ? plannedOccurrences(items, ctx, now, new Date(window.end.getTime() - 1))
@@ -111,7 +123,7 @@ export function categoryMonthRows(
       const ids = categoryIdSet(category, categories);
       const mine = transactions.filter((t) => ids.has(t.categoryId));
       const gain = category.id ? (gains[category.id] ?? 0) : 0;
-      const total = mine.reduce((sum, t) => sum + convertedAmount(t, ctx), 0) + gain;
+      const total = sign * (mine.reduce((sum, t) => sum + convertedAmount(t, ctx), 0) + gain);
       const plannedHere = planned
         .filter((p) => ids.has(p.item.categoryId))
         .reduce((sum, p) => sum + p.amount, 0);
@@ -155,25 +167,48 @@ export function CategoryMonthList({
   unfiledGain = 0,
   onSelect,
   onToggleHidden,
+  scope = "month",
+  toolbar,
 }: Props) {
   const { formatAmount, formatNative } = useMoneyFormat();
   const { language } = usePreferences();
   const t = useT(DOMAIN_MESSAGES);
   const common = useT(COMMON_MESSAGES);
   const config = DOMAIN_CONFIG[domain];
+  const total = scope === "total";
+  // A debt's running worth is negative; the list says what is owed.
+  const sign = total && domain === "DEBT" ? -1 : 1;
   const rows = useMemo(
-    () => categoryMonthRows(categories, transactions, items, ctx, window, now, gains),
-    [categories, transactions, items, ctx, window, now, gains]
+    () =>
+      categoryMonthRows(
+        categories,
+        transactions,
+        total ? [] : items,
+        ctx,
+        window,
+        now,
+        gains,
+        sign
+      ),
+    [categories, transactions, total, items, ctx, window, now, gains, sign]
   );
+  const unfiled = sign * unfiledGain;
+  const subtitle = total
+    ? window.isCurrent
+      ? t(domain === "DEBT" ? "worth.todayOwed" : "worth.today")
+      : t(domain === "DEBT" ? "worth.endOwed" : "worth.end", { month: window.longLabel })
+    : undefined;
 
   return (
     <Card>
-      <SectionTitle title={common("noun.categories")} />
+      <SectionTitle title={common("noun.categories")} subtitle={subtitle}>
+        {toolbar}
+      </SectionTitle>
 
       {loading ? (
         <p className="empty">{common("state.loading")}</p>
-      ) : rows.length === 0 && unfiledGain === 0 ? (
-        <p className="empty">{t("categories.empty")}</p>
+      ) : rows.length === 0 && unfiled === 0 ? (
+        <p className="empty">{t(total ? "categories.emptyTotal" : "categories.empty")}</p>
       ) : (
         <ListItems>
           {rows.map((r) => {
@@ -201,7 +236,7 @@ export function CategoryMonthList({
                 meta={[
                   t("categories.count", { count: r.count }),
                   r.share > 0 ? t("categories.share", { share: r.share.toFixed(0) }) : null,
-                  r.gain !== 0
+                  r.gain !== 0 && sign > 0
                     ? t(gainKey(domain, r.gain), {
                         amount: formatAmount(Math.abs(r.gain), currency),
                       })
@@ -213,7 +248,7 @@ export function CategoryMonthList({
                   .filter(Boolean)
                   .join(" · ")}
                 progress={
-                  expected > 0
+                  !total && expected > 0
                     ? {
                         ratio: r.total / expected,
                         color: config.accent,
@@ -251,7 +286,7 @@ export function CategoryMonthList({
               />
             );
           })}
-          {unfiledGain !== 0 && (
+          {unfiled !== 0 && (
             <ListItem
               leading={
                 <IconDisc domain={domain} size={36}>
@@ -262,7 +297,7 @@ export function CategoryMonthList({
               meta={t(
                 domain === "DEBT" ? "categories.unfiled.balance" : "categories.unfiled.value"
               )}
-              amount={formatAmount(unfiledGain, currency)}
+              amount={formatAmount(unfiled, currency)}
             />
           )}
         </ListItems>
