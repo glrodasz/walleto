@@ -37,6 +37,7 @@ describe("Sidebar mobile navigation", () => {
     const nav = mobileNav();
     expect(nav.link("Home")).toHaveAttribute("href", "/");
     expect(nav.link("Investments")).toHaveAttribute("href", "/investments");
+    expect(nav.link("Investments")).toHaveTextContent("Invest.");
     expect(nav.link("Savings")).toBeNull();
     expect(screen.queryByRole("dialog")).toBeNull();
 
