@@ -11,9 +11,9 @@ import { useT } from "../../../hooks/useT";
 import { SETTINGS_MESSAGES } from "../messages";
 
 /**
- * Where the identity is managed. Auth0 owns name, password and second
- * factor, so those rows only point at its account page when one is
- * configured (NEXT_PUBLIC_AUTH0_ACCOUNT_URL); without it they stay quiet.
+ * Who is signed in. Auth0 owns the identity, so "Edit profile" only
+ * points at its account page when one is configured
+ * (NEXT_PUBLIC_AUTH0_ACCOUNT_URL); without it the card stays read-only.
  */
 export function AccountCard() {
   const { user } = useUser();
@@ -40,17 +40,6 @@ export function AccountCard() {
     >
       <SettingsRow label={tc("noun.name")} value={user?.name ?? "—"} />
       <SettingsRow label={tr("account.email")} value={user?.email ?? "—"} />
-      <SettingsRow
-        label={tr("account.password")}
-        value="••••••••"
-        hint={accountUrl ? undefined : tr("account.managedHint")}
-        href={accountUrl}
-      />
-      <SettingsRow
-        label={tr("account.twoFactor")}
-        value={tr("account.managed")}
-        href={accountUrl}
-      />
       {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
       <a href={LOGOUT_HREF} className="logout" onClick={logout}>
         {tr("account.logOut")}
