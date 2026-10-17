@@ -78,6 +78,7 @@ export function spreadTransactions(
         ...(item.accountId ? { accountId: item.accountId } : {}),
         name: item.name,
         amount: item.amount * factor,
+        ...(item.amountFloor !== undefined ? { amountFloor: item.amountFloor * factor } : {}),
         currency: item.currency,
         ...(item.chargedAmount !== undefined && item.chargedCurrency
           ? { chargedAmount: item.chargedAmount * factor, chargedCurrency: item.chargedCurrency }

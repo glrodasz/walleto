@@ -66,6 +66,18 @@ export function convertedAmount(item: MoneyFields, ctx: MoneyContext): number {
   return rowSign(item) * magnitude;
 }
 
+/** Both ends of a variable row's band in the target currency; null for a fixed amount. */
+export function convertedBand(
+  item: MoneyFields,
+  ctx: MoneyContext
+): { floor: number; top: number } | null {
+  if (item.amountFloor === undefined) return null;
+  return {
+    floor: convertedAmount(item, { ...ctx, scenario: "floor" }),
+    top: convertedAmount(item, { ...ctx, scenario: "top" }),
+  };
+}
+
 export function toMonthlyAmount(item: RecurrentTransaction, ctx: MoneyContext): number {
   return convertedAmount(item, ctx) * FREQ_TO_MONTHS[item.frequency];
 }

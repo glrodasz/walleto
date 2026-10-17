@@ -101,6 +101,13 @@ describe("spreadTransactions", () => {
     expect(spreadTransactions([{ ...insurance, spreadMonthly: false }], rows, windows)).toBe(rows);
   });
 
+  it("scales a variable item's band so every scenario reads the monthly slice", () => {
+    const band = { ...insurance, amountFloor: 600 };
+    const slice = spreadTransactions([band], [], windows).filter(isSyntheticRow)[0];
+    expect(slice.amount).toBeCloseTo(100, 6);
+    expect(slice.amountFloor).toBeCloseTo(50, 6);
+  });
+
   it("keeps rows paid before the item's start, under an earlier schedule", () => {
     // Was monthly at 39, turned yearly on Sep 27 (the slices start in Sep).
     const bear = {

@@ -2,6 +2,7 @@ import {
   computeFlow,
   computeMoM,
   convertedAmount,
+  convertedBand,
   groupByCategory,
   shareByCurrency,
   sumMonthly,
@@ -67,6 +68,11 @@ describe("convertedAmount", () => {
     expect(convertedAmount(groceries, { ...USD, scenario: "floor" })).toBe(400);
     expect(convertedAmount(groceries, { ...USD, scenario: "average" })).toBe(500);
     expect(sumMonthly([groceries], { ...USD, scenario: "floor" })).toBe(400);
+    expect(convertedBand(groceries, { ...USD, scenario: "average" })).toEqual({
+      floor: 400,
+      top: 600,
+    });
+    expect(convertedBand(makeItem("MONTHLY", 15, "cat1"), USD)).toBeNull();
   });
 
   it("converts a foreign-currency amount into the target", () => {

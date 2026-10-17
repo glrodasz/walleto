@@ -164,7 +164,12 @@ export function RecurringChecklist({
   busyId,
 }: Props) {
   const { formatDate, language } = useDateFormat();
-  const { formatAmount, formatNative } = useMoneyFormat();
+  const { formatAmount, formatNative, formatNativeRange } = useMoneyFormat();
+  // A variable item reads as its band, "€400 – €600".
+  const itemAmount = (item: RecurrentTransaction) =>
+    item.amountFloor !== undefined
+      ? formatNativeRange(item.amountFloor, item.amount, item.currency, currency)
+      : formatNative(item.amount, item.currency, currency);
   const t = useT(DOMAIN_MESSAGES);
   const common = useT(COMMON_MESSAGES);
   const config = DOMAIN_CONFIG[domain];
@@ -221,7 +226,7 @@ export function RecurringChecklist({
                         hidden={Boolean(o.item.hiddenFromDashboard)}
                         labels={tagNames(o.item.tags, tags)}
                         note={o.item.note}
-                        amount={formatNative(o.item.amount, o.item.currency, currency)}
+                        amount={itemAmount(o.item)}
                         status={o.status}
                         accent={config.accent}
                         actions={[
@@ -264,7 +269,7 @@ export function RecurringChecklist({
                         ? ` · ${t("plan.next", { date: formatDate(item.nextOccurrence.toDate(), "day") })}`
                         : ""
                     }`}
-                    amount={formatNative(item.amount, item.currency, currency)}
+                    amount={itemAmount(item)}
                     accent={config.accent}
                     hidden={Boolean(item.hiddenFromDashboard)}
                     labels={tagNames(item.tags, tags)}

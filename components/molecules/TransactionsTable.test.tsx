@@ -225,6 +225,29 @@ describe("TransactionsTable", () => {
     expect(within(usd).queryByText(/COP|USD/)).toBeNull();
   });
 
+  it("reads an unconfirmed variable expense as its band, converted when foreign", () => {
+    const rates = { ...IDENTITY_RATES, rates: { ...IDENTITY_RATES.rates, COP: 4000 } };
+    render(
+      <TransactionsTable
+        {...base}
+        ctx={{ rates, target: "USD" }}
+        onDelete={jest.fn()}
+        rows={[
+          tx("usd", "Groceries", new Date(2026, 8, 6, 9), { amount: 600, amountFloor: 400 }),
+          tx("cop", "Market", new Date(2026, 8, 5, 9), {
+            amount: 800_000,
+            amountFloor: 400_000,
+            currency: "COP",
+          }),
+        ]}
+      />
+    );
+    const [usd, cop] = bodyRows();
+    expect(within(usd).getByText("$400.00 – $600.00")).toBeInTheDocument();
+    expect(within(cop).getByText("$100.00 – $200.00")).toBeInTheDocument();
+    expect(within(cop).getByText("COP 400,000 – COP 800,000")).toBeInTheDocument();
+  });
+
   it("labels a row paid before the item's current schedule as such", () => {
     const bear = {
       id: "bear",

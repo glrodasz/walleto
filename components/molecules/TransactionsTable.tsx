@@ -24,7 +24,7 @@ import { paymentMethodLabel, paymentMethodOptionLabel } from "../../helpers/paym
 import { tagNames } from "../../helpers/tags";
 import { directionLabel, isAccountDomain } from "../../helpers/accounts";
 import { toDate } from "../../helpers/chartData";
-import { convertedAmount } from "../../helpers/aggregations";
+import { convertedAmount, convertedBand } from "../../helpers/aggregations";
 import type { MoneyContext } from "../../helpers/aggregations";
 import type {
   Category,
@@ -383,7 +383,7 @@ function TransactionListRow({
   deleting,
 }: RowProps) {
   const { formatDate, language } = useDateFormat();
-  const { formatAmount, formatNative } = useMoneyFormat();
+  const { formatAmount, formatNative, formatNativeRange } = useMoneyFormat();
   const tr = useT(TRANSACTION_MESSAGES);
   const tc = useT(COMMON_MESSAGES);
   const cadence = item ? tc(`frequency.${item.frequency}`) : "";
@@ -420,18 +420,19 @@ function TransactionListRow({
   // big (the charged amount when it was charged in that currency), the
   // original small underneath. Same currency: one figure, nothing repeated.
   const foreign = t.currency !== ctx.target;
+  // A variable expense not yet confirmed reads as its band, both ends.
+  const band = convertedBand(t, ctx);
+  const native =
+    t.amountFloor !== undefined
+      ? formatNativeRange(t.amountFloor, t.amount, t.currency, displayCurrency)
+      : formatNative(signed(t.amount), t.currency, displayCurrency);
   const charged =
     t.chargedAmount !== undefined && t.chargedCurrency && t.chargedCurrency !== ctx.target
       ? tr("charged", {
           amount: formatNative(signed(t.chargedAmount), t.chargedCurrency, displayCurrency),
         })
       : null;
-  const amountMeta = [
-    foreign ? formatNative(signed(t.amount), t.currency, displayCurrency) : null,
-    charged,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const amountMeta = [foreign ? native : null, charged].filter(Boolean).join(" · ");
 
   // One string, not one span per fact: the row reads as a sentence, and the
   // ellipsis lands at the end instead of inside a column.
@@ -490,9 +491,11 @@ function TransactionListRow({
       note={t.note}
       muted={hidden.includes("chart")}
       amount={
-        foreign
-          ? formatAmount(convertedAmount(t, ctx), ctx.target)
-          : formatNative(signed(t.amount), t.currency, displayCurrency)
+        !foreign
+          ? native
+          : band
+            ? formatNativeRange(band.floor, band.top, ctx.target, ctx.target)
+            : formatAmount(convertedAmount(t, ctx), ctx.target)
       }
       amountMeta={amountMeta || undefined}
       onClick={share && item && onOpenItem ? () => onOpenItem(item) : undefined}
