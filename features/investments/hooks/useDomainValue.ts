@@ -7,7 +7,13 @@ import type { MoneyContext } from "../../../helpers/aggregations";
 import { INCEPTION, withDomain } from "../helpers/valuation";
 import { domainValueRows, domainValueTotals } from "../helpers/domainValue";
 import type { AccountValueRow } from "../helpers/domainValue";
-import type { AccountDomain, Category, InvestmentValuation, Transaction } from "../../../types";
+import type {
+  Account,
+  AccountDomain,
+  Category,
+  InvestmentValuation,
+  Transaction,
+} from "../../../types";
 
 /**
  * What a domain's accounts and pockets are worth right now, per account and in
@@ -24,6 +30,8 @@ export function useDomainValue(
   ctx: MoneyContext
 ): {
   rows: AccountValueRow[];
+  /** The domain's live accounts, so a creator can match a typed name. */
+  accounts: Account[];
   invested: number;
   value: number;
   lastCheckedAt: Date | null;
@@ -53,6 +61,7 @@ export function useDomainValue(
 
   return {
     rows,
+    accounts,
     ...totals,
     transactions,
     valuations,

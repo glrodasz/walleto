@@ -2,11 +2,16 @@ import { useState } from "react";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { Button } from "../../../components/atoms/Button";
+import { Chip } from "../../../components/atoms/Chip";
+import { AccountCreator } from "../../../components/molecules/AccountCreator";
+import { createAccount } from "../../../hooks/useAccounts";
+import { useUserDoc } from "../../../hooks/useUserDoc";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { ErrorState } from "../../../components/atoms/ErrorState";
 import { formatInterestRate } from "../../../helpers/accounts";
 import { useT } from "../../../hooks/useT";
 import { COMMON_MESSAGES } from "../../../messages/common";
+import { FIELD_MESSAGES } from "../../../messages/fields";
 import { INVESTMENT_MESSAGES } from "../messages";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
@@ -33,12 +38,15 @@ interface Props {
  * form. Mounted only on the Value view, so its inception-to-date listener
  * runs nowhere else on this page. On debts the same list reads as balances:
  * what was repaid, what is still owed — a dash until a balance is recorded.
+ * New accounts are added right here with the Settings creator; the accounts
+ * listener brings the new row in.
  */
 export function AccountValueList({ domain, categories, ctx, currency }: Props) {
   const { formatDate, language } = useDateFormat();
   const { formatAmount, formatPercent, separator } = useMoneyFormat();
   const {
     rows,
+    accounts,
     transactions,
     valuations,
     loading: busy,
@@ -46,8 +54,12 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
   } = useDomainValue(domain, categories, ctx);
   const [selected, setSelected] = useState<string | null>(null);
   const [recording, setRecording] = useState<AccountValueRow | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const { userDoc } = useUserDoc();
   const t = useT(INVESTMENT_MESSAGES);
   const tc = useT(COMMON_MESSAGES);
+  const tf = useT(FIELD_MESSAGES);
   const accent = DOMAIN_CONFIG[domain].accent;
   const owes = domain === "DEBT";
 
@@ -115,6 +127,39 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
             ))}
           </ul>
         )}
+
+        {!busy && (
+          <div className="add">
+            {creating ? (
+              <AccountCreator
+                domain={domain}
+                accounts={accounts}
+                defaultCurrency={userDoc?.mainCurrency ?? currency}
+                createAccount={createAccount}
+                framed={false}
+                onCreated={() => setCreating(false)}
+                onCancel={() => setCreating(false)}
+                onError={setMessage}
+              />
+            ) : (
+              <Chip
+                variant="add"
+                onClick={() => {
+                  setCreating(true);
+                  setMessage(null);
+                }}
+              >
+                {tf(`account.add.${domain}`)}
+              </Chip>
+            )}
+          </div>
+        )}
+
+        {message && (
+          <p className="message" role="alert">
+            {message}
+          </p>
+        )}
       </Card>
 
       {open && (
@@ -155,6 +200,16 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
           margin: 0;
           font-size: 0.85rem;
           color: var(--fg-2);
+        }
+
+        .add {
+          margin-top: 12px;
+        }
+
+        .message {
+          margin: 10px 0 0;
+          font-size: 0.85rem;
+          color: var(--accent-hot);
         }
 
         .list {

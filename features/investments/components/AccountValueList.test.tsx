@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { AccountValueList } from "./AccountValueList";
 import { IDENTITY_RATES } from "../../../helpers/fx";
 import type { Category, Currency } from "../../../types";
@@ -13,7 +13,12 @@ const valuationModalMock = jest.fn((_props: unknown) => null);
 jest.mock("./ValuationModal", () => ({
   ValuationModal: (props: unknown) => valuationModalMock(props),
 }));
+const createAccountMock = jest.fn(async (_input: unknown) => "new-id");
+jest.mock("../../../hooks/useUserDoc", () => ({
+  useUserDoc: () => ({ userDoc: { mainCurrency: "SEK" }, loading: false }),
+}));
 jest.mock("../../../hooks/useAccounts", () => ({
+  createAccount: (input: unknown) => createAccountMock(input),
   useAccounts: () => ({
     accounts: [
       {
@@ -89,6 +94,7 @@ const ctx = { rates: IDENTITY_RATES, target: "USD" as Currency };
 beforeEach(() => {
   panelMock.mockClear();
   valuationModalMock.mockClear();
+  createAccountMock.mockClear();
 });
 
 describe("AccountValueList", () => {
@@ -145,5 +151,21 @@ describe("AccountValueList", () => {
     );
     fireEvent.click(seb);
     expect(panelMock).toHaveBeenCalledWith(expect.objectContaining({ domain: "DEBT" }));
+  });
+
+  it("adds a pocket right from the list, with the Settings form", async () => {
+    render(<AccountValueList domain="SAVING" categories={categories} ctx={ctx} currency="USD" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add pocket" }));
+    const form = screen.getByRole("group", { name: "New pocket" });
+    fireEvent.change(within(form).getAllByRole("textbox")[0], { target: { value: "Holiday" } });
+    fireEvent.click(within(form).getByRole("button", { name: "Add pocket" }));
+
+    await waitFor(() =>
+      expect(createAccountMock).toHaveBeenCalledWith(
+        expect.objectContaining({ domain: "SAVING", name: "Holiday", currency: "SEK" })
+      )
+    );
+    await waitFor(() => expect(screen.queryByRole("group", { name: "New pocket" })).toBeNull());
   });
 });
