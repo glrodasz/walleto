@@ -2,7 +2,7 @@ import { translate } from "../../../helpers/i18n";
 import type { Domain, Frequency, Language } from "../../../types";
 import { ONBOARDING_MESSAGES } from "../messages";
 
-export type CadenceSectionId = "monthly" | "yearly" | "other" | "oneTime";
+export type CadenceSectionId = "monthly" | "yearly" | "other";
 
 export interface CadenceSection {
   id: CadenceSectionId;
@@ -10,8 +10,6 @@ export interface CadenceSection {
   frequencies: readonly Frequency[];
   /** The frequency a row added from this section starts with. */
   defaultFrequency: Frequency;
-  /** Whether backfilling history applies — one-time items have a date instead. */
-  recurring: boolean;
   /**
    * The section most of a plan lives in: drawn larger and first, while the
    * others sit apart under "Less often" so an add aimed at it can't land in one.
@@ -22,42 +20,33 @@ export interface CadenceSection {
 /**
  * The wizard groups rows by cadence instead of a per-row frequency dropdown:
  * the shape of the form says "we care about what repeats" before any copy
- * does, and each group can offer exactly the date control it needs.
+ * does, and each group can offer exactly the date control it needs. There's
+ * no one-time group: the wizard sets up the plan, and a one-off is logged later.
  */
 export const CADENCE_SECTIONS: readonly CadenceSection[] = [
   {
     id: "monthly",
     frequencies: ["MONTHLY"],
     defaultFrequency: "MONTHLY",
-    recurring: true,
     primary: true,
   },
   {
     id: "yearly",
     frequencies: ["YEARLY"],
     defaultFrequency: "YEARLY",
-    recurring: true,
     primary: false,
   },
   {
     id: "other",
     frequencies: ["WEEKLY", "BIWEEKLY", "QUARTERLY"],
     defaultFrequency: "QUARTERLY",
-    recurring: true,
-    primary: false,
-  },
-  {
-    id: "oneTime",
-    frequencies: ["ONE_TIME"],
-    defaultFrequency: "ONE_TIME",
-    recurring: false,
     primary: false,
   },
 ];
 
 export function sectionFor(frequency: Frequency): CadenceSection {
   const section = CADENCE_SECTIONS.find((s) => s.frequencies.includes(frequency));
-  // Every Frequency is listed above; this is only for the type system.
+  // ONE_TIME has no section (only a legacy plan item can carry it).
   return section ?? CADENCE_SECTIONS[2];
 }
 

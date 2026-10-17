@@ -125,8 +125,6 @@ export const ONBOARDING_MESSAGES = defineMessages(
     "cadence.yearly.hint": "Annual plans, insurance renewals, taxes.",
     "cadence.other.title": "Other cadence",
     "cadence.other.hint": "Weekly, twice a month or quarterly.",
-    "cadence.oneTime.title": "One-time",
-    "cadence.oneTime.hint": "A single payment on a specific date.",
 
     "add.monthly.INCOME.first": "Add a monthly income",
     "add.monthly.INCOME.more": "Add another monthly income",
@@ -146,12 +144,6 @@ export const ONBOARDING_MESSAGES = defineMessages(
     "add.other.EXPENSE.more": "Add another expense on another cadence",
     "add.other.OTHER.first": "Add an item on another cadence",
     "add.other.OTHER.more": "Add another item on another cadence",
-    "add.oneTime.INCOME.first": "Add a one-time income",
-    "add.oneTime.INCOME.more": "Add another one-time income",
-    "add.oneTime.EXPENSE.first": "Add a one-time expense",
-    "add.oneTime.EXPENSE.more": "Add another one-time expense",
-    "add.oneTime.OTHER.first": "Add a one-time item",
-    "add.oneTime.OTHER.more": "Add another one-time item",
 
     // ── Review ────────────────────────────────────────────────────────────
     "review.loadFailed": "Couldn't load your plan",
@@ -275,8 +267,6 @@ export const ONBOARDING_MESSAGES = defineMessages(
     "cadence.yearly.hint": "Planes anuales, renovaciones de seguros, impuestos.",
     "cadence.other.title": "Otra frecuencia",
     "cadence.other.hint": "Semanal, quincenal o trimestral.",
-    "cadence.oneTime.title": "Una sola vez",
-    "cadence.oneTime.hint": "Un pago único en una fecha específica.",
 
     "add.monthly.INCOME.first": "Agregar un ingreso mensual",
     "add.monthly.INCOME.more": "Agregar otro ingreso mensual",
@@ -296,12 +286,6 @@ export const ONBOARDING_MESSAGES = defineMessages(
     "add.other.EXPENSE.more": "Agregar otro gasto con otra frecuencia",
     "add.other.OTHER.first": "Agregar un elemento con otra frecuencia",
     "add.other.OTHER.more": "Agregar otro elemento con otra frecuencia",
-    "add.oneTime.INCOME.first": "Agregar un ingreso puntual",
-    "add.oneTime.INCOME.more": "Agregar otro ingreso puntual",
-    "add.oneTime.EXPENSE.first": "Agregar un gasto puntual",
-    "add.oneTime.EXPENSE.more": "Agregar otro gasto puntual",
-    "add.oneTime.OTHER.first": "Agregar un elemento puntual",
-    "add.oneTime.OTHER.more": "Agregar otro elemento puntual",
 
     "review.loadFailed": "No se pudo cargar tu plan",
     "review.loading": "Cargando tu plan…",

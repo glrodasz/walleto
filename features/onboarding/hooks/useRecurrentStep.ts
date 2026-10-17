@@ -1,12 +1,7 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useCategories } from "../../../hooks/useCategories";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
 import { useRecurrentTransactions } from "../../../hooks/useRecurrentTransactions";
-import {
-  createTransaction,
-  deleteTransaction,
-  updateTransaction,
-} from "../../../hooks/useTransactions";
 import { useDraftRows } from "../../../hooks/useDraftRows";
 import type { DraftRow } from "../../../hooks/useDraftRows";
 import {
@@ -14,8 +9,7 @@ import {
   scheduleChoiceFromStartDate,
   toDateInputValue,
 } from "../../../helpers/scheduleAnchor";
-import { sectionFor } from "../helpers/cadenceSections";
-import { oneTimePatch, recurrentPatch } from "../helpers/recurrentPatch";
+import { recurrentPatch } from "../helpers/recurrentPatch";
 import { useDecimalInput } from "../../../hooks/useDecimalInput";
 import { saveAll } from "../../../utils/saveAll";
 import { UserFacingError } from "../../../utils/errorMessage";
@@ -37,7 +31,7 @@ export interface RecurrentRow extends DraftRow {
   secondDayOfMonth: number;
   /** YEARLY: month, 0–11. QUARTERLY: first month of the cycle. */
   month: number;
-  /** ONE_TIME / WEEKLY: the date, YYYY-MM-DD. */
+  /** WEEKLY: the date, YYYY-MM-DD. */
   date: string;
 }
 
@@ -64,9 +58,6 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
   const { parse, toInput } = useDecimalInput();
   const { language } = usePreferences();
   const [backfill, setBackfill] = useState(true);
-  // One-time rows are ledger entries that are never re-read: what each one
-  // looked like when it saved is what an edit is compared against.
-  const savedOneTime = useRef(new Map<string, RecurrentRow>());
 
   const saved = useMemo(
     () =>
@@ -130,11 +121,6 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
       if (!row.id) return [];
       const id = row.id;
       const amount = amountOf(row);
-      const before = savedOneTime.current.get(id);
-      if (before) {
-        const patch = oneTimePatch(row, before, { amount, beforeAmount: amountOf(before) });
-        return patch ? [{ row, send: () => updateTransaction(id, patch) }] : [];
-      }
       const item = items.find((i) => i.id === id);
       const patch = item
         ? recurrentPatch(row, item, { amount, type: typeFor(row), backfill })
@@ -168,48 +154,28 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
             secondDayOfMonth: row.secondDayOfMonth,
             month: row.month,
             date: row.date,
-            backfill: backfill && sectionFor(row.frequency).recurring,
+            backfill,
           });
 
-          // A one-time row is a ledger entry, not a plan: it becomes a dated
-          // transaction and is not re-hydrated as a row on the way back.
-          return row.frequency === "ONE_TIME"
-            ? createTransaction({
-                domain,
-                categoryId: row.categoryId,
-                name: row.name.trim(),
-                amount,
-                currency: row.currency,
-                occurredAt: startDate.toISOString(),
-                status: "PAID",
-                ...(row.paymentMethodId ? { paymentMethodId: row.paymentMethodId } : {}),
-              })
-            : create({
-                domain,
-                categoryId: row.categoryId,
-                name: row.name.trim(),
-                amount,
-                currency: row.currency,
-                frequency: row.frequency,
-                ...(row.frequency === "BIWEEKLY" ? { secondDayOfMonth: row.secondDayOfMonth } : {}),
-                type: typeFor(row),
-                startDate: startDate.toISOString(),
-                ...(row.paymentMethodId ? { paymentMethodId: row.paymentMethodId } : {}),
-              });
+          return create({
+            domain,
+            categoryId: row.categoryId,
+            name: row.name.trim(),
+            amount,
+            currency: row.currency,
+            frequency: row.frequency,
+            ...(row.frequency === "BIWEEKLY" ? { secondDayOfMonth: row.secondDayOfMonth } : {}),
+            type: typeFor(row),
+            startDate: startDate.toISOString(),
+            ...(row.paymentMethodId ? { paymentMethodId: row.paymentMethodId } : {}),
+          });
         },
-        (row, id) => {
-          if (row.frequency === "ONE_TIME") savedOneTime.current.set(id, { ...row, id });
-          draft.update(row.key, { id });
-        }
+        (row, id) => draft.update(row.key, { id })
       ),
       saveAll(
         edits(),
         ({ send }) => send(),
-        ({ row }) => {
-          if (row.id && savedOneTime.current.has(row.id)) {
-            savedOneTime.current.set(row.id, { ...row });
-          }
-        }
+        () => {}
       ),
     ]);
     if (created.status === "rejected") throw created.reason;
@@ -218,16 +184,14 @@ export function useRecurrentStep(domain: Domain, defaultCurrency: Currency) {
   };
 
   /**
-   * Removing only from local state would leave the transaction in Firestore, so
+   * Removing only from local state would leave the item in Firestore, so
    * it reappeared as soon as the step re-hydrated from the snapshot on the way back.
    */
   const removeAt = (key: string) => {
     const row = draft.rows.find((r) => r.key === key);
     draft.removeAt(key);
     if (row?.id) {
-      savedOneTime.current.delete(row.id);
-      const del = row.frequency === "ONE_TIME" ? deleteTransaction(row.id) : remove(row.id);
-      del.catch((err) => console.error("Failed to delete row:", err));
+      remove(row.id).catch((err) => console.error("Failed to delete row:", err));
     }
   };
 
