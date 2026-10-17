@@ -12,6 +12,7 @@ import type { ValueSelector } from "./valuation";
 import type {
   Account,
   AccountDomain,
+  Currency,
   InterestRate,
   InvestmentValuation,
   Language,
@@ -27,6 +28,8 @@ export interface AccountValueRow {
   /** The bank or broker, when the account names one. */
   sub?: string;
   rate?: InterestRate;
+  /** The account's own currency; the bucket row has none. */
+  currency?: Currency;
   invested: number;
   value: number;
   latest: InvestmentValuation | null;
@@ -63,7 +66,8 @@ export function domainValueRows(
     selector: ValueSelector,
     name: string,
     sub: string | undefined,
-    rate: InterestRate | undefined
+    rate: InterestRate | undefined,
+    currency?: Currency
   ): AccountValueRow => {
     const invested = costBasisAt(transactions, selector, now, ctx);
     const value = currentValue(transactions, valuations, selector, rate, now, ctx, sign);
@@ -77,6 +81,7 @@ export function domainValueRows(
       name,
       sub,
       rate,
+      currency,
       invested,
       value,
       latest,
@@ -86,7 +91,7 @@ export function domainValueRows(
 
   const byAccount = accounts
     .filter((a) => a.id)
-    .map((a) => build({ accountId: a.id! }, a.name, a.provider, a.interestRate));
+    .map((a) => build({ accountId: a.id! }, a.name, a.provider, a.interestRate, a.currency));
 
   const bucketName = translate(
     INVESTMENT_MESSAGES,

@@ -132,6 +132,25 @@ describe("AccountValueList", () => {
     );
   });
 
+  it("converts each pocket and keeps its own currency's figure underneath", () => {
+    const rates = { ...IDENTITY_RATES, rates: { ...IDENTITY_RATES.rates, SEK: 10 } };
+    render(
+      <AccountValueList
+        domain="SAVING"
+        categories={categories}
+        ctx={{ rates, target: "SEK" }}
+        currency="SEK"
+      />
+    );
+    // The USD pockets: SEK big, dollars small.
+    expect(screen.getAllByText(/^SEK 10,\d{3}\.\d\d$/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/^USD 1,0\d\d\.\d\d$/).length).toBeGreaterThan(0);
+    expect(screen.getByText("USD 0.00")).toBeInTheDocument();
+    // The bucket has no currency of its own: one figure.
+    expect(screen.getByText("SEK 2,600.00")).toBeInTheDocument();
+    expect(screen.queryByText("USD 260.00")).toBeNull();
+  });
+
   it("reads a debt as repaid and owed, with a dash until a balance is recorded", () => {
     render(<AccountValueList domain="DEBT" categories={categories} ctx={ctx} currency="USD" />);
     expect(screen.getByText("Balances")).toBeInTheDocument();

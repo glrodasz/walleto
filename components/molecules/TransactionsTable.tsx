@@ -24,6 +24,7 @@ import { paymentMethodLabel, paymentMethodOptionLabel } from "../../helpers/paym
 import { tagNames } from "../../helpers/tags";
 import { directionLabel, isAccountDomain } from "../../helpers/accounts";
 import { toDate } from "../../helpers/chartData";
+import { convertedAmount } from "../../helpers/aggregations";
 import type { MoneyContext } from "../../helpers/aggregations";
 import type {
   Category,
@@ -225,6 +226,7 @@ export function TransactionsTable({
               item={items.find((i) => i.id === t.recurrentTransactionId)}
               labels={tagNames(t.tags, tags)}
               displayCurrency={displayCurrency}
+              ctx={ctx}
               showMethod={showMethod}
               hidden={hiddenReasons?.(t) ?? []}
               onEdit={onEdit}
@@ -354,6 +356,7 @@ interface RowProps {
   item?: RecurrentTransaction;
   labels: string[];
   displayCurrency: Currency;
+  ctx: MoneyContext;
   showMethod: boolean;
   hidden: HiddenReason[];
   onEdit?: (transaction: Transaction) => void;
@@ -371,6 +374,7 @@ function TransactionListRow({
   item,
   labels,
   displayCurrency,
+  ctx,
   showMethod,
   hidden,
   onEdit,
@@ -379,7 +383,7 @@ function TransactionListRow({
   deleting,
 }: RowProps) {
   const { formatDate, language } = useDateFormat();
-  const { formatNative } = useMoneyFormat();
+  const { formatAmount, formatNative } = useMoneyFormat();
   const tr = useT(TRANSACTION_MESSAGES);
   const tc = useT(COMMON_MESSAGES);
   const cadence = item ? tc(`frequency.${item.frequency}`) : "";
@@ -411,6 +415,23 @@ function TransactionListRow({
   const out = t.direction === "OUT";
   const outLabel = out && isAccountDomain(domain) ? directionLabel(domain, "OUT", language) : null;
   const signed = (value: number) => (out ? -value : value);
+
+  // A row in another currency reads like the totals around it: converted
+  // big (the charged amount when it was charged in that currency), the
+  // original small underneath. Same currency: one figure, nothing repeated.
+  const foreign = t.currency !== ctx.target;
+  const charged =
+    t.chargedAmount !== undefined && t.chargedCurrency && t.chargedCurrency !== ctx.target
+      ? tr("charged", {
+          amount: formatNative(signed(t.chargedAmount), t.chargedCurrency, displayCurrency),
+        })
+      : null;
+  const amountMeta = [
+    foreign ? formatNative(signed(t.amount), t.currency, displayCurrency) : null,
+    charged,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   // One string, not one span per fact: the row reads as a sentence, and the
   // ellipsis lands at the end instead of inside a column.
@@ -468,14 +489,12 @@ function TransactionListRow({
       meta={meta}
       note={t.note}
       muted={hidden.includes("chart")}
-      amount={formatNative(signed(t.amount), t.currency, displayCurrency)}
-      amountMeta={
-        t.chargedAmount !== undefined && t.chargedCurrency
-          ? tr("charged", {
-              amount: formatNative(signed(t.chargedAmount), t.chargedCurrency, displayCurrency),
-            })
-          : undefined
+      amount={
+        foreign
+          ? formatAmount(convertedAmount(t, ctx), ctx.target)
+          : formatNative(signed(t.amount), t.currency, displayCurrency)
       }
+      amountMeta={amountMeta || undefined}
       onClick={share && item && onOpenItem ? () => onOpenItem(item) : undefined}
       aria-label={
         share
