@@ -48,6 +48,10 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
   if (existing.domain !== "EXPENSE") {
     return res.status(400).json({ error: "Only an expense can become a debt repayment" });
   }
+  // A band only means something in expenses (helpers/variable).
+  if (existing.amountFloor !== undefined) {
+    return res.status(400).json({ error: "A variable expense can't become a debt repayment" });
+  }
 
   // The category must be the caller's and live in the target domain.
   const catSnap = await db.collection("categories").doc(categoryId).get();

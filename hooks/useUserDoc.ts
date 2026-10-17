@@ -11,6 +11,7 @@ import type {
   Decimals,
   EmergencyPlan,
   Language,
+  Scenario,
   ThemePreference,
   WeekStart,
 } from "../types";
@@ -30,6 +31,8 @@ export interface UserDoc {
   decimalSeparator?: DecimalSeparator;
   decimals?: Decimals;
   emergencyPlan?: EmergencyPlan;
+  scenario?: Scenario;
+  confirmVariableExpenses?: boolean;
 }
 
 interface UserDocState {

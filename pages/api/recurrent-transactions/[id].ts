@@ -4,6 +4,7 @@ import admin from "../../../firebase/admin";
 import { RecurrentTransactionUpdateSchema } from "../../../schemas";
 import { nextOccurrenceFrom } from "../../../helpers/recurrence";
 import { staleOccurrenceIds } from "../../../helpers/materializeOccurrences";
+import { bandError } from "../../../helpers/variable";
 
 import "../../../firebase/admin";
 
@@ -42,6 +43,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
     const {
       name,
       amount,
+      amountFloor,
       currency,
       chargedAmount,
       chargedCurrency,
@@ -68,6 +70,18 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
     const nextCharged = chargedCurrency !== undefined ? chargedCurrency : existing.chargedCurrency;
     if (nextCharged && nextCharged === nextCurrency) {
       return res.status(400).json({ error: "chargedCurrency must differ from currency" });
+    }
+
+    // The band is checked as this patch leaves it: null drops it, undefined keeps it.
+    const band = bandError({
+      domain: existing.domain,
+      amount: amount ?? existing.amount,
+      amountFloor: amountFloor === undefined ? existing.amountFloor : (amountFloor ?? undefined),
+      chargedAmount:
+        chargedAmount === undefined ? existing.chargedAmount : (chargedAmount ?? undefined),
+    });
+    if (band) {
+      return res.status(400).json({ error: band });
     }
 
     if (categoryId) {
@@ -146,6 +160,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
     await ref.update({
       ...(name !== undefined ? { name } : {}),
       ...(amount !== undefined ? { amount } : {}),
+      ...(amountFloor !== undefined ? { amountFloor: amountFloor ?? del } : {}),
       ...(currency !== undefined ? { currency } : {}),
       ...(chargedAmount !== undefined ? { chargedAmount: chargedAmount ?? del } : {}),
       ...(chargedCurrency !== undefined ? { chargedCurrency: chargedCurrency ?? del } : {}),

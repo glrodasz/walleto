@@ -1,9 +1,11 @@
 import { convert } from "./fx";
 import type { ExchangeRates } from "./fx";
+import { scenarioAmount } from "./variable";
 import type {
   Currency,
   Domain,
   RecurrentTransaction,
+  Scenario,
   Transaction,
   TransactionDirection,
 } from "../types";
@@ -12,6 +14,8 @@ import type {
 export interface MoneyContext {
   rates: ExchangeRates;
   target: Currency;
+  /** Which end of a variable expense's band counts; unset = "top" (worst case). */
+  scenario?: Scenario;
 }
 
 /** Occurrences per month of each cadence — the monthly run-rate factor. */
@@ -26,6 +30,8 @@ export const FREQ_TO_MONTHS: Record<RecurrentTransaction["frequency"], number> =
 
 export interface MoneyFields {
   amount: number;
+  /** Variable expenses: the band's bottom (`amount` is its top). */
+  amountFloor?: number;
   currency: Currency;
   chargedAmount?: number;
   chargedCurrency?: Currency;
@@ -48,12 +54,15 @@ export function rowSign(row: Pick<MoneyFields, "direction">): 1 | -1 {
  *
  * Charged-pair precedence: when the doc records what was actually debited in
  * the target currency, that ground truth beats any market rate.
+ *
+ * A variable expense counts for the end of its band that `ctx.scenario`
+ * picks, so the Best / Average / Worst toggle reaches every total from here.
  */
 export function convertedAmount(item: MoneyFields, ctx: MoneyContext): number {
   const magnitude =
     item.chargedAmount !== undefined && item.chargedCurrency === ctx.target
       ? item.chargedAmount
-      : convert(item.amount, item.currency, ctx.target, ctx.rates);
+      : convert(scenarioAmount(item, ctx.scenario), item.currency, ctx.target, ctx.rates);
   return rowSign(item) * magnitude;
 }
 
