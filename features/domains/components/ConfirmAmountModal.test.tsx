@@ -7,6 +7,15 @@ jest.mock("../../../hooks/useTransactions", () => ({
   updateTransaction: (...args: unknown[]) => updateTransaction(...args),
 }));
 
+jest.mock("../../../hooks/useEnabledCurrencies", () => ({
+  useEnabledCurrencies: () => ({
+    optionsFor: () => [
+      { value: "EUR", label: "€ EUR" },
+      { value: "SEK", label: "kr SEK" },
+    ],
+  }),
+}));
+
 const date = new Date(2026, 8, 6, 9);
 const groceries = {
   id: "g_2026-09-06",
@@ -36,6 +45,22 @@ describe("ConfirmAmountModal", () => {
     expect(updateTransaction).toHaveBeenCalledWith("g_2026-09-06", {
       amount: 652.4,
       amountFloor: null,
+    });
+  });
+
+  it("sends the currency too when the money left in another one", async () => {
+    const onClose = jest.fn();
+    render(<ConfirmAmountModal transaction={groceries} onClose={onClose} />);
+    fireEvent.change(screen.getByLabelText("What you really spent"), {
+      target: { value: "6900" },
+    });
+    fireEvent.change(screen.getByLabelText("Currency"), { target: { value: "SEK" } });
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(updateTransaction).toHaveBeenCalledWith("g_2026-09-06", {
+      amount: 6900,
+      amountFloor: null,
+      currency: "SEK",
     });
   });
 

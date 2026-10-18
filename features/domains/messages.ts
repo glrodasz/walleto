@@ -178,7 +178,7 @@ export const DOMAIN_MESSAGES = defineMessages(
     "modal.editItem": "Edit the recurring item",
     "modal.direction": "Direction",
     "modal.variable": "Amount varies",
-    "modal.variableHint": "Plan a range instead of one figure, like groceries between 400 and 600.",
+    "modal.variableHint": "For expenses that change each time, with a minimum and a maximum.",
     "modal.variableHintRow": "Untick it and enter what you really spent to confirm this payment.",
     "modal.amountFrom": "From",
     "modal.amountUpTo": "Up to",
@@ -399,7 +399,7 @@ export const DOMAIN_MESSAGES = defineMessages(
     "modal.editItem": "Editar el elemento recurrente",
     "modal.direction": "Dirección",
     "modal.variable": "El monto varía",
-    "modal.variableHint": "Planea un rango en vez de una cifra, como el mercado entre 400 y 600.",
+    "modal.variableHint": "Para gastos variables que tienen un mínimo y un máximo.",
     "modal.variableHintRow":
       "Desmárcalo y escribe lo que gastaste de verdad para confirmar este pago.",
     "modal.amountFrom": "Desde",
