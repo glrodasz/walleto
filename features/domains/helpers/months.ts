@@ -193,6 +193,8 @@ export interface MonthOccurrence {
   status: OccurrenceStatus;
   /** Converted into the reporting currency. */
   amount: number;
+  /** The ledger row that settled a paid occurrence: its amount is what was paid. */
+  paid?: Transaction;
 }
 
 function sameDay(a: Date, b: Date): boolean {
@@ -211,8 +213,10 @@ function sameDay(a: Date, b: Date): boolean {
  * does not line up with — moved to another day, or written before an edit
  * moved the item's start — still happened: it settles the month's next open
  * occurrence, or stands as a paid one of its own, so the checklist never
- * contradicts the ledger. Items with nothing this month are returned
- * separately so the page can show them collapsed.
+ * contradicts the ledger. A paid occurrence is worth what its row says, not
+ * the item's current amount: raising the price must not rewrite past months.
+ * Items with nothing this month are returned separately so the page can show
+ * them collapsed.
  */
 export function monthOccurrences(
   items: RecurrentTransaction[],
@@ -221,13 +225,13 @@ export function monthOccurrences(
   window: MonthWindow,
   now: Date = new Date()
 ): { occurrences: MonthOccurrence[]; notThisMonth: RecurrentTransaction[] } {
-  const paidIds = new Set(transactions.map((t) => t.id).filter(Boolean));
-  const paidByItem = new Map<string, { id?: string; at: Date }[]>();
+  const paidById = new Map(transactions.filter((t) => t.id).map((t) => [t.id!, t]));
+  const paidByItem = new Map<string, { id?: string; at: Date; row: Transaction }[]>();
   for (const t of transactions) {
     const at = toDate(t.occurredAt);
     if (!t.recurrentTransactionId || at < window.start || at >= window.end) continue;
     const list = paidByItem.get(t.recurrentTransactionId) ?? [];
-    list.push({ id: t.id, at });
+    list.push({ id: t.id, at, row: t });
     paidByItem.set(t.recurrentTransactionId, list);
   }
 
@@ -250,16 +254,28 @@ export function monthOccurrences(
     for (const occ of occs) {
       const id = occurrenceId(item.id, occ.occurredAt);
       const match = unclaimed.findIndex((p) => p.id === id || sameDay(p.at, occ.occurredAt));
-      if (match !== -1) unclaimed.splice(match, 1);
-      if (match !== -1 || paidIds.has(id)) {
-        occurrences.push({ item, occurredAt: occ.occurredAt, status: "paid", amount });
+      const row = match !== -1 ? unclaimed.splice(match, 1)[0].row : paidById.get(id);
+      if (row) {
+        occurrences.push({
+          item,
+          occurredAt: occ.occurredAt,
+          status: "paid",
+          amount: convertedAmount(row, ctx),
+          paid: row,
+        });
       } else {
         open.push(occ.occurredAt);
       }
     }
     for (const paid of unclaimed) {
       const settled = open.shift();
-      occurrences.push({ item, occurredAt: settled ?? paid.at, status: "paid", amount });
+      occurrences.push({
+        item,
+        occurredAt: settled ?? paid.at,
+        status: "paid",
+        amount: convertedAmount(paid.row, ctx),
+        paid: paid.row,
+      });
     }
     for (const due of open) {
       occurrences.push({ item, occurredAt: due, status: due >= now ? "due" : "overdue", amount });

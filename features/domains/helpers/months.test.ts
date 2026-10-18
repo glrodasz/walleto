@@ -210,8 +210,29 @@ describe("monthOccurrences", () => {
       recurrentTransactionId: "fiber",
     });
     const { occurrences, notThisMonth } = monthOccurrences([moved], [paid], ctx, sep, now);
-    expect(occurrences).toEqual([{ item: moved, occurredAt: paidAt, status: "paid", amount: 439 }]);
+    expect(occurrences).toEqual([
+      { item: moved, occurredAt: paidAt, status: "paid", amount: 439, paid },
+    ]);
     expect(notThisMonth).toEqual([]);
+  });
+
+  it("keeps a paid month at what was paid after the item's price went up", () => {
+    const raised = { ...salary, amount: 63_415 };
+    const paidAt = new Date(2026, 8, 3, 12);
+    const paid = tx(occurrenceId("salary", paidAt), 57_650, paidAt, {
+      recurrentTransactionId: "salary",
+    });
+    const { occurrences } = monthOccurrences([raised], [paid], ctx, sep, now);
+    expect(occurrences).toEqual([
+      { item: raised, occurredAt: paidAt, status: "paid", amount: 57_650, paid },
+    ]);
+  });
+
+  it("prices an unpaid occurrence at the item's current amount", () => {
+    const raised = { ...salary, amount: 63_415 };
+    const { occurrences } = monthOccurrences([raised], [], ctx, sep, now);
+    expect(occurrences[0]).toMatchObject({ status: "overdue", amount: 63_415 });
+    expect(occurrences[0].paid).toBeUndefined();
   });
 
   it("lets a payment on another day settle the month's occurrence instead of adding one", () => {
