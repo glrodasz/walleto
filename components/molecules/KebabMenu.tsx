@@ -223,3 +223,27 @@ export function KebabMenu({ actions, "aria-label": label }: Props) {
     </div>
   );
 }
+
+/**
+ * The kebab's footprint with nothing in it, for a row in a list of kebab rows
+ * that has no actions of its own: its amount then lines up with the rest.
+ * Same width as the trigger above, at both breakpoints.
+ */
+export function KebabSpacer() {
+  return (
+    <span className="kebab-spacer" aria-hidden="true">
+      <style jsx>{`
+        .kebab-spacer {
+          display: inline-block;
+          width: 28px;
+        }
+
+        @media (max-width: 767px) {
+          .kebab-spacer {
+            width: 36px;
+          }
+        }
+      `}</style>
+    </span>
+  );
+}
