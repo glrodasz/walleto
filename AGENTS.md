@@ -499,7 +499,7 @@ therefore sees the worst case. `convertedAmount` resolves the band through `ctx.
 the Best / Average / Worst choice without knowing bands exist. The materializer copies the floor onto each
 occurrence; the row stays an estimate until the owner **confirms** it (`PATCH { amount, amountFloor: null }`, the
 route stamps `confirmedAt`; `occurredAt` never moves) or marks it `keepVariable`. A row is asked for once its
-cycle ends (`cycleEnd`: the item's next occurrence, or month end for a one-off), unless
+period ends (`cycleEnd`: the row's calendar month, or the next occurrence when that comes first — weekly; a quarterly or yearly item waits for its cycle), unless
 `users.confirmVariableExpenses === false`. A confirmed amount outside the band is allowed.
 
 ## 7. Deferred on purpose
