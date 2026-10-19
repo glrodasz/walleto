@@ -1,4 +1,10 @@
-import { isSpreadItem, isSyntheticRow, spreadItemIds, spreadTransactions } from "./spread";
+import {
+  isSpreadItem,
+  isSyntheticRow,
+  spreadItemIds,
+  spreadLookback,
+  spreadTransactions,
+} from "./spread";
 import { monthTotals, monthWindows } from "./months";
 import { withoutHidden } from "../../../helpers/hidden";
 import { IDENTITY_RATES } from "../../../helpers/fx";
@@ -125,8 +131,63 @@ describe("spreadTransactions", () => {
     expect(out.filter(isSyntheticRow).map((t) => t.id)).toEqual(["bear_spread_2026-09"]);
   });
 
+  it("spreads the cycle's real payment, so a price raise waits for the next cycle", () => {
+    // Paid 1,200 in January; the price went up to 1,320 afterwards.
+    const raised = { ...insurance, amount: 1320 };
+    const quarterly = {
+      ...insurance,
+      id: "q",
+      amount: 330,
+      frequency: "QUARTERLY" as const,
+    };
+    const history = [
+      tx("ins_2026-01-15", 1200, new Date(2026, 0, 15, 12), { recurrentTransactionId: "ins" }),
+      // Quarterly, paid at 300 through July; October is not paid yet.
+      tx("q_2026-04-15", 300, new Date(2026, 3, 15, 12), { recurrentTransactionId: "q" }),
+      tx("q-moved", 300, new Date(2026, 6, 20, 12), { recurrentTransactionId: "q" }),
+    ];
+    const slices = spreadTransactions([raised, quarterly], history, windows).filter(isSyntheticRow);
+    const by = (id: string) =>
+      slices.filter((s) => s.recurrentTransactionId === id).map((s) => s.amount);
+    expect(by("ins")).toEqual(Array(7).fill(100));
+    // Mar is January's cycle (not in the ledger): the current price.
+    expect(by("q")).toEqual([110, 100, 100, 100, 100, 100, 100]);
+
+    const nextYear = monthWindows(3, new Date(2027, 1, 10, 12)); // Dec 2026 … Feb 2027
+    const ahead = spreadTransactions([raised], history, nextYear).filter(isSyntheticRow);
+    expect(ahead.map((s) => s.amount)).toEqual([100, 110, 110]);
+    expect(ahead.map((s) => s.cycle)).toEqual([
+      {
+        start: new Date(2026, 0, 15, 12),
+        end: new Date(2027, 0, 14),
+        amount: 1200,
+        currency: "USD",
+        paid: true,
+      },
+      {
+        start: new Date(2027, 0, 15, 12),
+        end: new Date(2028, 0, 14),
+        amount: 1320,
+        currency: "USD",
+        paid: false,
+      },
+      expect.objectContaining({ start: new Date(2027, 0, 15, 12), paid: false }),
+    ]);
+  });
+
   it("composes with hiding through the item id", () => {
     const out = spreadTransactions([insurance], rows, windows);
     expect(withoutHidden(out, new Set(["ins"])).map((t) => t.id)).toEqual(["coffee"]);
+  });
+});
+
+describe("spreadLookback", () => {
+  it("reaches back to the payment that covers the first month", () => {
+    const from = windows[0].start; // Mar 1
+    expect(spreadLookback([insurance], from)).toEqual(new Date(2026, 0, 15));
+    expect(spreadLookback([{ ...insurance, spreadMonthly: false }], from)).toBe(from);
+    expect(spreadLookback([{ ...insurance, startDate: ts(new Date(2026, 5, 1)) }], from)).toBe(
+      from
+    );
   });
 });

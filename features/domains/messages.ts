@@ -79,6 +79,18 @@ export const DOMAIN_MESSAGES = defineMessages(
     "controls.stackBy": "Stack bars by",
     "controls.period": "Period",
     "controls.lastMonths": { one: "Last {count} month", other: "Last {count} months" },
+    "controls.figuresShow": "Figures show",
+    "controls.month": "Month",
+    "controls.total": "Total",
+
+    // WorthSummary
+    "worth.today": "Worth today",
+    "worth.end": "Worth at the end of {month}",
+    "worth.todayOwed": "Owed today",
+    "worth.endOwed": "Owed at the end of {month}",
+    "worth.change": "Change in {month}",
+    "worth.comparedTo": "Compared to {amount} at the end of {month}",
+    "worth.hiddenLeftOut": "Leaves out categories hidden from the chart.",
 
     // MonthSummary
     "summary.expected": "Expected this month",
@@ -142,6 +154,7 @@ export const DOMAIN_MESSAGES = defineMessages(
 
     // CategoryMonthList / CategoryDrilldown
     "categories.empty": "Nothing in this month yet",
+    "categories.emptyTotal": "Nothing recorded yet",
     "categories.hidden": "Hidden",
     "categories.count": { one: "{count} transaction", other: "{count} transactions" },
     "categories.share": "{share}%",
@@ -304,6 +317,17 @@ export const DOMAIN_MESSAGES = defineMessages(
     "controls.stackBy": "Apilar barras por",
     "controls.period": "Período",
     "controls.lastMonths": { one: "Último mes", other: "Últimos {count} meses" },
+    "controls.figuresShow": "Las cifras muestran",
+    "controls.month": "Mes",
+    "controls.total": "Total",
+
+    "worth.today": "Patrimonio hoy",
+    "worth.end": "Patrimonio al cierre de {month}",
+    "worth.todayOwed": "Adeudado hoy",
+    "worth.endOwed": "Adeudado al cierre de {month}",
+    "worth.change": "Cambio en {month}",
+    "worth.comparedTo": "Frente a {amount} al cierre de {month}",
+    "worth.hiddenLeftOut": "Sin las categorías ocultas en la gráfica.",
 
     "summary.expected": "Esperado este mes",
     "summary.monthTotal": "Total del mes",
@@ -364,6 +388,7 @@ export const DOMAIN_MESSAGES = defineMessages(
     "plan.runRate.DEBT": "Abonos mensuales planeados: {amount}/mes",
 
     "categories.empty": "Aún no hay nada este mes",
+    "categories.emptyTotal": "Aún no hay nada registrado",
     "categories.hidden": "Oculta",
     "categories.count": { one: "{count} movimiento", other: "{count} movimientos" },
     "categories.share": "{share} %",

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Card } from "../../../components/atoms/Card";
 import { Amount } from "../../../components/atoms/Amount";
 import { DeltaPill } from "../../../components/molecules/DeltaPill";
@@ -32,6 +33,8 @@ interface Props {
   gain?: number;
   /** Account domains: what left the accounts this month, as a positive figure. */
   withdrawn?: number;
+  /** Account domains: the Month / Total switch, top right. */
+  toolbar?: ReactNode;
 }
 
 /**
@@ -51,6 +54,7 @@ export function MonthSummary({
   contributed,
   gain,
   withdrawn = 0,
+  toolbar,
 }: Props) {
   const { formatAmount } = useMoneyFormat();
   const t = useT(DOMAIN_MESSAGES);
@@ -91,9 +95,12 @@ export function MonthSummary({
     <Card>
       <div className="summary">
         <div className="panel plan">
-          <span className="label">
-            {window.isCurrent ? t("summary.expected") : t("summary.monthTotal")}
-          </span>
+          <div className="head">
+            <span className="label">
+              {window.isCurrent ? t("summary.expected") : t("summary.monthTotal")}
+            </span>
+            {toolbar}
+          </div>
           <span className="figure">
             <Amount value={expected} currency={currency} size="lg" approximate={approximate} />
           </span>
@@ -143,6 +150,17 @@ export function MonthSummary({
       </div>
 
       <style jsx>{`
+        .head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          flex-wrap: wrap;
+          /* The toggle is taller than the caps label: let it overhang so the
+             label stays level with the other panel's. */
+          margin: -6px 0;
+        }
+
         .summary {
           display: grid;
           grid-template-columns: 1fr 1fr;

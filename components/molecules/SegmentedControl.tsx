@@ -13,7 +13,8 @@ interface Props<K extends string> {
   onChange: (key: K) => void;
   /** Accessible name of the group ("Theme", "Stack bars by"). */
   label: string;
-  size?: "sm" | "md";
+  /** "xs" sits inline with a caps label, like a card's own heading. */
+  size?: "xs" | "sm" | "md";
 }
 
 /**
@@ -41,7 +42,7 @@ export function SegmentedControl<K extends string>({
             className={`segment${active ? " is-active" : ""}`}
             onClick={() => onChange(o.key)}
           >
-            {Icon && <Icon size={size === "sm" ? 14 : 16} />}
+            {Icon && <Icon size={size === "md" ? 16 : 14} />}
             <span>{o.label}</span>
           </button>
         );
@@ -84,6 +85,16 @@ export function SegmentedControl<K extends string>({
           min-height: 28px;
           padding: 0 10px;
           font-size: 0.75rem;
+        }
+
+        .segments--xs {
+          padding: 2px;
+        }
+
+        .segments--xs .segment {
+          min-height: 22px;
+          padding: 0 8px;
+          font-size: 0.7rem;
         }
 
         .segment:hover {

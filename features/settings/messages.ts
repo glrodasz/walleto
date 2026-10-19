@@ -30,10 +30,6 @@ export const SETTINGS_MESSAGES = defineMessages(
 
     "account.editProfile": "Edit profile",
     "account.email": "Email",
-    "account.password": "Password",
-    "account.managedHint": "Managed by your sign-in provider.",
-    "account.twoFactor": "Two-factor authentication",
-    "account.managed": "Managed by your sign-in provider",
     "account.logOut": "Log out",
 
     "currency.yours": "Your currency",
@@ -139,10 +135,6 @@ export const SETTINGS_MESSAGES = defineMessages(
 
     "account.editProfile": "Editar perfil",
     "account.email": "Correo",
-    "account.password": "Contraseña",
-    "account.managedHint": "Lo gestiona tu proveedor de inicio de sesión.",
-    "account.twoFactor": "Verificación en dos pasos",
-    "account.managed": "Lo gestiona tu proveedor de inicio de sesión",
     "account.logOut": "Cerrar sesión",
 
     "currency.yours": "Tu moneda",

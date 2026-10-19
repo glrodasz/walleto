@@ -5,6 +5,8 @@ import { useRecurrentTransactions } from "../../../hooks/useRecurrentTransaction
 import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
 import { useCategories } from "../../../hooks/useCategories";
 import { hookDefaults, loadingState } from "../../../stories/fixtures/hookDefaults";
+import { occurrenceId, occurrenceToTransaction } from "../../../helpers/materializeOccurrences";
+import type { Transaction } from "../../../types";
 import { at, MOBILE, screen, withHash } from "../../../stories/templates";
 
 /**
@@ -56,6 +58,24 @@ export const DebtsBalanceView: Story = {
   beforeEach: withHash("value"),
 };
 
+/** "Total": the summary and the Categories view say what the savings hold at the month's end. */
+const totalScope = (domain: string, hash: string) => () => {
+  localStorage.setItem(`walleto:summary:${domain}:scope`, JSON.stringify("total"));
+  withHash(hash)();
+  return () => localStorage.removeItem(`walleto:summary:${domain}:scope`);
+};
+export const SavingsTotal: Story = {
+  args: { domain: "SAVING" },
+  parameters: at("/savings"),
+  beforeEach: totalScope("SAVING", "categories"),
+};
+/** A debt's total is what it still owes, counted from its first balance check. */
+export const DebtsTotal: Story = {
+  args: { domain: "DEBT" },
+  parameters: at("/debts"),
+  beforeEach: totalScope("DEBT", "categories"),
+};
+
 export const Loading: Story = {
   parameters: at("/expenses"),
   beforeEach: () => {
@@ -89,3 +109,34 @@ export const Empty: Story = {
 };
 
 export const Mobile: Story = { parameters: at("/expenses"), globals: MOBILE };
+
+/**
+ * Car insurance went from 1,440 to 1,584 a year after it was paid: its
+ * "Monthly share" still spreads the 1,440 paid (120 a month) until the next
+ * renewal.
+ */
+export const SpreadAfterPriceRaise: Story = {
+  parameters: at("/expenses"),
+  beforeEach: () => {
+    withHash("activity")();
+    const items = hookDefaults
+      .useRecurrentTransactions("EXPENSE")
+      .items.map((i) => (i.id === "rt-car-insurance" ? { ...i, amount: 1584 } : i));
+    mocked(useRecurrentTransactions).mockImplementation((d) => ({
+      ...hookDefaults.useRecurrentTransactions(d),
+      items,
+    }));
+    // The renewal it spreads, paid at the old price before the charts start.
+    const insurance = items.find((i) => i.id === "rt-car-insurance")!;
+    const renewal: Transaction = {
+      ...occurrenceToTransaction({ ...insurance, amount: 1440 }, insurance.startDate.toDate()),
+      id: occurrenceId(insurance.id!, insurance.startDate.toDate()),
+      occurredAt: insurance.startDate,
+      status: "PAID",
+    };
+    mocked(useDomainTransactions).mockImplementation((d, s) => {
+      const base = hookDefaults.useDomainTransactions(d, s);
+      return d === "EXPENSE" ? { ...base, transactions: [renewal, ...base.transactions] } : base;
+    });
+  },
+};

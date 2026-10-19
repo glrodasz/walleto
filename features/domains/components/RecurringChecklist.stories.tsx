@@ -10,6 +10,7 @@ import {
   STORY_CTX,
   STORY_PAYMENT_METHODS,
   STORY_TAGS,
+  STORY_WINDOWS,
   transactionsFor,
 } from "../../../stories/fixtures";
 
@@ -53,3 +54,14 @@ export const Incomes: Story = {
 export const Busy: Story = { args: { busyId: "rt-netflix" } };
 export const Loading: Story = { args: { loading: true } };
 export const Empty: Story = { args: { items: [], transactions: [] } };
+
+/**
+ * Last month after Rent went up 10%: the paid row still shows what was paid
+ * (1,650); the new price only applies from the edit on.
+ */
+export const PastMonthAfterPriceRaise: Story = {
+  args: {
+    items: recurrentFor("EXPENSE").map((i) => (i.id === "rt-rent" ? { ...i, amount: 1815 } : i)),
+    window: STORY_WINDOWS[STORY_WINDOWS.length - 2],
+  },
+};

@@ -129,7 +129,12 @@ features/
                 bars stacked by category or currency (ChartControls; in Investments and Savings the bars and Top
                 categories show **Worth** by default — each category's end-of-month balance, the running sum from
                 inception of its rows and filed gains (`helpers/worthStack`) — with "Activity" (the month's flow) one
-                tap away; Debts stays on activity; MonthSummary and the Categories view are always the month's flow;
+                tap away; Debts stays on activity; MonthSummary and the Categories view show the month's flow, and in the three
+                account domains a small "Month | Total" switch (`SummaryScope`, per-domain preference) turns both into
+                the total at the month's end — `WorthSummary` plus the Categories rows from inception, hidden-from-chart
+                categories left out of the figure unless "Show hidden" is on; a debt's total is what it still owes,
+                counted from its first balance check (`worthLedger` + `valuationGainRows(…, { anchorDebt: true })`), and
+                a debt nobody checked adds nothing;
                 the charts only display — the month
                 is set by the header picker, which is why the list of months the page computes is longer
                 than the one the bars draw), Top categories, and the views
@@ -428,7 +433,7 @@ The dashboard is the **run-rate of the recurring items** (the cards say so with 
 
 ### 3.3 Spreading monthly
 
-A non-monthly item (yearly, quarterly, weekly…) with `spreadMonthly` is drawn on the domain page as **one slice per month** (`amount × FREQ_TO_MONTHS`, in its currency) instead of the real spike: `features/domains/helpers/spread.ts` (`spreadTransactions`) removes the item's real rows and adds synthetic slices with `recurrentTransactionId` and `categoryId`, so `helpers/hidden` hides them like any other row. `DomainPage` uses them for bars, the month's figure and Categories (`planItems` excludes those items from the plan so they aren't summed twice); the ledger and the Recurring checklist keep the real rows. Activity also lists the month's slice as a read-only "Monthly share" row (no kebab; tapping it opens the item): it's derived, so it's edited only through the item. Only rows on or after the item's `startDate` give way to slices: a row dated earlier was paid under an earlier schedule (monthly before the item turned yearly) and stays, labelled "earlier schedule" in the ledger. A schedule change in the PATCH marks SKIPPED the old schedule's rows dated on or after the new start that aren't occurrences of the new one (`staleOccurrenceIds`). The dashboard doesn't change: its cards already normalize with `toMonthlyAmount` and its cash flow bars show the real payment.
+A non-monthly item (yearly, quarterly, weekly…) with `spreadMonthly` is drawn on the domain page as **one slice per month** instead of the real spike. A slice spreads the payment of the cycle that covers its month (that row's `amount × FREQ_TO_MONTHS`, in its currency), so raising the item's price only changes cycles not paid yet; a cycle with no payment in the ledger spreads the item's current amount, and the page's ledger query reaches back to the covering payment (`spreadLookback`): `features/domains/helpers/spread.ts` (`spreadTransactions`) removes the item's real rows and adds synthetic slices with `recurrentTransactionId` and `categoryId`, so `helpers/hidden` hides them like any other row. `DomainPage` uses them for bars, the month's figure and Categories (`planItems` excludes those items from the plan so they aren't summed twice); the ledger and the Recurring checklist keep the real rows. Activity also lists the month's slice as a read-only "Monthly share" row (no kebab; tapping it opens the item) that names the payment it spreads — paid, or still planned — and, on its own line, the dates that payment covers (`SpreadSlice.cycle`): it's derived, so it's edited only through the item. Only rows on or after the item's `startDate` give way to slices: a row dated earlier was paid under an earlier schedule (monthly before the item turned yearly) and stays, labelled "earlier schedule" in the ledger. A schedule change in the PATCH marks SKIPPED the old schedule's rows dated on or after the new start that aren't occurrences of the new one (`staleOccurrenceIds`). The dashboard doesn't change: its cards already normalize with `toMonthlyAmount` and its cash flow bars show the real payment.
 
 ### 3.4 One-off vs recurring
 

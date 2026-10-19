@@ -168,7 +168,7 @@ export function RecurringChecklist({
   const { formatDate, language } = useDateFormat();
   const { formatAmount, formatNative } = useMoneyFormat();
   // A variable item reads as its band, "€400 – €600".
-  const itemAmount = (item: RecurrentTransaction) =>
+  const itemAmount = (item: Pick<RecurrentTransaction, "amount" | "amountFloor" | "currency">) =>
     item.amountFloor !== undefined ? (
       <RangeAmount
         from={formatNative(item.amountFloor, item.currency, currency)}
@@ -233,7 +233,7 @@ export function RecurringChecklist({
                         hidden={Boolean(o.item.hiddenFromDashboard)}
                         labels={tagNames(o.item.tags, tags)}
                         note={o.item.note}
-                        amount={itemAmount(o.item)}
+                        amount={itemAmount(o.paid ?? o.item)}
                         status={o.status}
                         accent={config.accent}
                         actions={[
