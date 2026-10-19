@@ -120,6 +120,10 @@ describe("RecurringChecklist", () => {
     expect(groups[0]).toContain("Overdue");
     expect(groups[1]).toContain("Due");
     expect(groups[2]).toContain("Paid");
+    // Each total keeps the kebab's room, so it sits over the rows' amounts.
+    for (const h of screen.getAllByRole("heading", { level: 3 })) {
+      expect(h.querySelector(".kebab-spacer")).not.toBeNull();
+    }
 
     const overdue = screen.getByText("Gym").closest("li")!;
     expect(within(overdue).getByText("Overdue")).toBeInTheDocument();
