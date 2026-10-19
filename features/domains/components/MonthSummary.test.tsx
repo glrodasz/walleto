@@ -49,6 +49,25 @@ describe("MonthSummary", () => {
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100");
   });
 
+  it("says a month with no movements plainly, without a red −100% or a comparison", () => {
+    render(
+      <MonthSummary
+        domain="INVESTMENT"
+        window={aug}
+        realized={0}
+        expected={0}
+        delta={{ current: 0, previous: 989_623.6, deltaPct: -100, previousKey: "2026-07" }}
+        previousLabel="July 2026"
+        currency="USD"
+        contributed={0}
+        gain={0}
+      />
+    );
+    expect(screen.getByText("No movements in August 2026")).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Down/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Compared to/)).not.toBeInTheDocument();
+  });
+
   const investments = (gain: number | undefined, contributed = 5_000) => (
     <MonthSummary
       domain="INVESTMENT"
