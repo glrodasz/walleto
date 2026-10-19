@@ -89,6 +89,9 @@ export function MonthSummary({
   ]
     .filter(Boolean)
     .join(" · ");
+  // A month where nothing moved is not a 100% drop: it just says so, with no
+  // red pill and no comparison to dwell on.
+  const idle = realized === 0 && !showBreakdown;
   const [beforePct, afterPct] = splitSlot(t(`summary.progress.${domain}`, { pct: SLOT }));
 
   return (
@@ -133,18 +136,20 @@ export function MonthSummary({
           </span>
           <span className="figure">
             <Amount value={realized} currency={currency} size="md" approximate={approximate} />
-            {delta.deltaPct !== null && (
+            {!idle && delta.deltaPct !== null && (
               <DeltaPill pct={delta.deltaPct} upIsGood={config.upIsGood} />
             )}
           </span>
           {showBreakdown && <span className="line breakdown">{breakdown}</span>}
           <span className="line">
-            {delta.previousKey && previousLabel
-              ? t("summary.comparedTo", {
-                  amount: formatAmount(delta.previous, currency),
-                  month: previousLabel,
-                })
-              : t("summary.noPrevious")}
+            {idle
+              ? t("summary.noMovements", { month: window.longLabel })
+              : delta.previousKey && previousLabel
+                ? t("summary.comparedTo", {
+                    amount: formatAmount(delta.previous, currency),
+                    month: previousLabel,
+                  })
+                : t("summary.noPrevious")}
           </span>
         </div>
       </div>
