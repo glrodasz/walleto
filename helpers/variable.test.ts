@@ -87,9 +87,9 @@ describe("pendingConfirmations", () => {
   });
   const now = new Date(2026, 9, 17);
 
-  it("lists the variable rows whose cycle is over, oldest first", () => {
+  it("lists the variable rows whose cycle is over, newest first", () => {
     const rows = [row("sep", 8), row("aug", 7), row("oct", 9)];
-    expect(pendingConfirmations(rows, [item], true, now).map((r) => r.id)).toEqual(["aug", "sep"]);
+    expect(pendingConfirmations(rows, [item], true, now).map((r) => r.id)).toEqual(["sep", "aug"]);
   });
 
   it("skips confirmed, kept and skipped rows, and everything when turned off", () => {

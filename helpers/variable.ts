@@ -95,8 +95,9 @@ interface PendingCandidate extends Omit<PendingRow, "occurredAt"> {
 const dateOf = (d: PendingCandidate["occurredAt"]) => (d instanceof Date ? d : d.toDate());
 
 /**
- * Every row waiting for its real amount, oldest first — the order the owner
- * would go through receipts. Each row is checked against the schedule of the
+ * Every row waiting for its real amount, newest first: the period that just
+ * closed is the one the owner remembers, and the list shows only the latest
+ * few until older ones are confirmed. Each row is checked against the schedule of the
  * item that wrote it, so a yearly item only asks once its year is over.
  */
 export function pendingConfirmations<T extends PendingCandidate>(
@@ -116,5 +117,5 @@ export function pendingConfirmations<T extends PendingCandidate>(
         now
       )
     )
-    .sort((a, b) => dateOf(a.occurredAt).getTime() - dateOf(b.occurredAt).getTime());
+    .sort((a, b) => dateOf(b.occurredAt).getTime() - dateOf(a.occurredAt).getTime());
 }
