@@ -21,6 +21,9 @@ export const TRANSACTION_MESSAGES = defineMessages(
     "sort.amount-asc": "Smallest amount",
 
     "origin.shareOf": "{amount} {cadence}, reflected monthly",
+    "origin.cyclePaid": "{cadence} payment of {amount}",
+    "origin.cyclePlanned": "planned {cadence} payment of {amount}",
+    "origin.covers": "Covers {from} – {to}",
     "origin.share": "reflected monthly",
     "origin.oneOff": "one-off",
     "origin.recurring": "recurring",
@@ -52,6 +55,9 @@ export const TRANSACTION_MESSAGES = defineMessages(
     "sort.amount-asc": "Menor monto",
 
     "origin.shareOf": "{amount} {cadence}, repartido por mes",
+    "origin.cyclePaid": "pago {cadence} de {amount}",
+    "origin.cyclePlanned": "pago {cadence} previsto de {amount}",
+    "origin.covers": "Cubre {from} – {to}",
     "origin.share": "repartido por mes",
     "origin.oneOff": "puntual",
     "origin.recurring": "recurrente",

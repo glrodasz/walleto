@@ -77,7 +77,12 @@ import { usePreferences } from "../../../hooks/usePreferences";
 import { deleteTransaction } from "../../../hooks/useTransactions";
 import { toDate } from "../../../helpers/chartData";
 import { hiddenCategoryIds, hiddenItemIds, hiddenRowReasons } from "../../../helpers/hidden";
-import { isSyntheticRow, spreadItemIds, spreadTransactions } from "../helpers/spread";
+import {
+  isSyntheticRow,
+  spreadItemIds,
+  spreadLookback,
+  spreadTransactions,
+} from "../helpers/spread";
 import type { TransactionFilters } from "../helpers/transactionFilters";
 import type { Category, Currency, Domain, RecurrentTransaction, Transaction } from "../../../types";
 import { useT } from "../../../hooks/useT";
@@ -182,15 +187,20 @@ export function DomainPage({ domain }: Props) {
     );
   };
 
+  const { items, error: itemsError, remove, update } = useRecurrentTransactions(domain);
   // Investments and savings read their whole ledger: a value check is
   // measured against everything paid in before it, not just the bars' window.
-  // Every figure below filters by month anyway, so nothing else moves.
+  // Elsewhere it reaches back far enough for a spread item's slices to find
+  // the payment they spread. Every figure below filters by month anyway, so
+  // nothing else moves.
   const {
     transactions,
     loading: txLoading,
     error: txError,
-  } = useDomainTransactions(domain, accountDomain ? INCEPTION : windows[0].start);
-  const { items, error: itemsError, remove, update } = useRecurrentTransactions(domain);
+  } = useDomainTransactions(
+    domain,
+    accountDomain ? INCEPTION : spreadLookback(items, windows[0].start)
+  );
   const {
     categories,
     loading: catLoading,

@@ -221,7 +221,11 @@ export function RecurringChecklist({
                         hidden={Boolean(o.item.hiddenFromDashboard)}
                         labels={tagNames(o.item.tags, tags)}
                         note={o.item.note}
-                        amount={formatNative(o.item.amount, o.item.currency, currency)}
+                        amount={formatNative(
+                          (o.paid ?? o.item).amount,
+                          (o.paid ?? o.item).currency,
+                          currency
+                        )}
                         status={o.status}
                         accent={config.accent}
                         actions={[
