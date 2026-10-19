@@ -13,7 +13,7 @@ import type {
   Language,
   Transaction,
 } from "../../../types";
-import { valueAt } from "./interest";
+import { checkedBy, valueAt } from "./interest";
 import type { Deposit, ValuePoint } from "./interest";
 
 /**
@@ -204,7 +204,7 @@ export function latestValuationAt(
 ): InvestmentValuation | null {
   let best: InvestmentValuation | null = null;
   for (const v of [...valuations].sort(byAsOfAsc)) {
-    if (v.asOf.toDate() <= asOf) best = v;
+    if (checkedBy(v.asOf.toDate(), asOf)) best = v;
   }
   return best;
 }
@@ -227,7 +227,7 @@ export function currentValue(
   sign: 1 | -1 = 1
 ): number {
   const checks = valueChecks(valuations, selector, ctx, sign);
-  if (sign < 0 && !checks.some((c) => c.asOf <= asOf)) return 0;
+  if (sign < 0 && !checks.some((c) => checkedBy(c.asOf, asOf))) return 0;
   return sign * valueAt(depositsFor(transactions, selector, ctx), checks, rate, asOf);
 }
 
@@ -257,7 +257,7 @@ export function valuationSeries(
     const monthEnd = i === 0 ? now : new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59);
     const invested = deposits.filter((d) => d.at <= monthEnd).reduce((s, d) => s + d.amount, 0);
     // A debt has no balance before its first check — see `currentValue`.
-    const known = sign > 0 || checks.some((c) => c.asOf <= monthEnd);
+    const known = sign > 0 || checks.some((c) => checkedBy(c.asOf, monthEnd));
     const value = known ? sign * valueAt(deposits, checks, rate, monthEnd) : 0;
     points.push({
       label: formatDate(monthStart, "month", undefined, language),
