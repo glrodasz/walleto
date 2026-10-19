@@ -6,7 +6,7 @@ import { Select } from "../atoms/Select";
 import { Badge } from "../atoms/Badge";
 import { RangeAmount } from "../atoms/RangeAmount";
 import { CategoryIcon } from "../atoms/CategoryIcon";
-import { Chart, Home, Repeat, Search, Sliders } from "../atoms/Icons";
+import { Chart, Home, Repeat, Search, Shuffle, Sliders } from "../atoms/Icons";
 import { useMoneyFormat } from "../../hooks/useMoneyFormat";
 import { KebabMenu } from "./KebabMenu";
 import { IconDisc } from "./IconDisc";
@@ -409,6 +409,10 @@ function TransactionListRow({
   // It names the payment it spreads and the months that payment covers, so
   // a slice of last year's renewal reads apart from this year's.
   const share = isSyntheticRow(t);
+  // Any row of a variable expense: an estimate still to confirm, one kept
+  // variable, or a confirmed bill of an item whose amount is a band.
+  const variable =
+    t.amountFloor !== undefined || t.keepVariable === true || item?.amountFloor !== undefined;
   const date = toDate(t.occurredAt);
   // "recurring · Monthly", plus the item's name when the row was renamed;
   // a stopped item no longer resolves, so the row just says "recurring". A
@@ -490,7 +494,7 @@ function TransactionListRow({
       }
       name={t.name}
       badges={
-        share || pending || hidden.length > 0 || outLabel || labels.length > 0 ? (
+        share || pending || variable || hidden.length > 0 || outLabel || labels.length > 0 ? (
           <>
             {pending && (
               <Badge variant="outline" tone="warning" caps>
@@ -500,6 +504,11 @@ function TransactionListRow({
             {share && (
               <Badge variant="outline" tone="info" caps icon={<Repeat size={12} />}>
                 {tr("badge.monthlyShare")}
+              </Badge>
+            )}
+            {variable && (
+              <Badge variant="outline" tone="info" caps icon={<Shuffle size={12} />}>
+                {tc("state.variable")}
               </Badge>
             )}
             {outLabel && (

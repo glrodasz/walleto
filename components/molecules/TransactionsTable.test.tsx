@@ -279,6 +279,43 @@ describe("TransactionsTable", () => {
     expect(onKeepVariable).toHaveBeenCalledWith(groceries);
   });
 
+  it("tags every row of a variable expense, confirmed or not, and nothing else", () => {
+    const power = {
+      id: "power",
+      name: "Power",
+      amount: 900,
+      amountFloor: 500,
+      currency: "USD",
+      frequency: "MONTHLY",
+      startDate: ts(new Date(2026, 0, 28, 12)),
+    };
+    render(
+      <TransactionsTable
+        {...base}
+        items={[power] as never}
+        rows={[
+          tx("est", "Power", new Date(2026, 8, 28, 9), {
+            recurrentTransactionId: "power",
+            amount: 900,
+            amountFloor: 500,
+          }),
+          tx("conf", "Power", new Date(2026, 7, 28, 9), {
+            recurrentTransactionId: "power",
+            amount: 640,
+          }),
+          tx("kept", "Market", new Date(2026, 7, 20, 9), { keepVariable: true }),
+          tx("b", "Bread", new Date(2026, 7, 5, 9)),
+        ]}
+        onDelete={jest.fn()}
+      />
+    );
+    const [estimate, confirmed, kept, fixed] = bodyRows();
+    expect(within(estimate).getByText("Variable")).toBeInTheDocument();
+    expect(within(confirmed).getByText("Variable")).toBeInTheDocument();
+    expect(within(kept).getByText("Variable")).toBeInTheDocument();
+    expect(within(fixed).queryByText("Variable")).toBeNull();
+  });
+
   it("labels a row paid before the item's current schedule as such", () => {
     const bear = {
       id: "bear",

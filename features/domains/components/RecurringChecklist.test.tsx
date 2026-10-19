@@ -104,6 +104,14 @@ describe("RecurringChecklist", () => {
     expect(row).not.toHaveClass("is-muted");
   });
 
+  it("tags a variable item, and only that one", () => {
+    const power = item("Power", 900, new Date(2026, 2, 28, 12), { amountFloor: 500 });
+    setup({ items: [rent, netflix, gym, power] });
+    const row = screen.getByText("Power").closest("li")!;
+    expect(within(row).getByText("Variable")).toBeInTheDocument();
+    expect(screen.getAllByText("Variable")).toHaveLength(1);
+  });
+
   it("hides an item from the dashboard through the kebab — never from the chart", () => {
     const onToggleHidden = jest.fn();
     setup({ onToggleHidden });
