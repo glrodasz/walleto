@@ -80,7 +80,8 @@ const wireDoc = (data: Record<string, unknown> | undefined, opts: { exists?: boo
   return { setMock, updateMock };
 };
 
-const postReq = () => ({ method: "POST", query: { id: "rt1" } }) as unknown as NextApiRequest;
+const postReq = (body?: unknown) =>
+  ({ method: "POST", query: { id: "rt1" }, body }) as unknown as NextApiRequest;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -134,6 +135,61 @@ describe("POST /api/recurrent-transactions/[id]/mark-paid", () => {
     expect(updateMock).toHaveBeenCalledWith({
       nextOccurrence: { __ts: "2026-04-15T12:00:00.000Z" },
     });
+  });
+
+  it("pays the tapped overdue occurrence and leaves the schedule alone", async () => {
+    // nextOccurrence already moved past it (e.g. a schedule edit after its date).
+    const { setMock, updateMock } = wireDoc(item());
+    const res = mockRes();
+    await handler(postReq({ occurredAt: "2026-02-15T12:00:00.000Z" }), res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const body = (res.json as jest.Mock).mock.calls[0][0];
+    expect(body.transactionId).toBe("rt1_2026-02-15");
+    expect(setMock).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "PAID", occurredAt: { __ts: "2026-02-15T12:00:00.000Z" } }),
+      { merge: true }
+    );
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("advances the schedule when the tapped occurrence is the next one", async () => {
+    const { updateMock } = wireDoc(item());
+    const res = mockRes();
+    await handler(postReq({ occurredAt: "2026-03-15T12:00:00.000Z" }), res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(updateMock).toHaveBeenCalledWith({
+      nextOccurrence: { __ts: "2026-04-15T12:00:00.000Z" },
+    });
+  });
+
+  it("accepts an occurrence an hour off (another time zone across DST) at the schedule's instant", async () => {
+    const { setMock } = wireDoc(item());
+    const res = mockRes();
+    await handler(postReq({ occurredAt: "2026-02-15T11:00:00.000Z" }), res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(setMock).toHaveBeenCalledWith(
+      expect.objectContaining({ occurredAt: { __ts: "2026-02-15T12:00:00.000Z" } }),
+      { merge: true }
+    );
+  });
+
+  it("rejects a date that is not an occurrence of the item", async () => {
+    const { setMock } = wireDoc(item());
+    const res = mockRes();
+    await handler(postReq({ occurredAt: "2026-02-16T12:00:00.000Z" }), res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(setMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects a malformed date", async () => {
+    wireDoc(item());
+    const res = mockRes();
+    await handler(postReq({ occurredAt: "yesterday" }), res);
+    expect(res.status).toHaveBeenCalledWith(400);
   });
 
   it("falls back to now when the item has no nextOccurrence", async () => {

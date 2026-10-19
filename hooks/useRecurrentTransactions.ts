@@ -70,12 +70,20 @@ export function useRecurrentTransactions(domain?: Domain) {
 }
 
 /**
- * Pays the item's current nextOccurrence at the materializer's deterministic
- * id and advances the schedule. Standalone: the dashboard's upcoming list
- * and the domain pages' monthly checklist both call it.
+ * Pays one occurrence at the materializer's deterministic id: `occurredAt`
+ * when given (the Plan row that was tapped), else the item's current
+ * nextOccurrence (the dashboard's upcoming list). Standalone: both call it.
  */
-export async function markItemPaid(id: string): Promise<void> {
-  const res = await fetch(`/api/recurrent-transactions/${id}/mark-paid`, { method: "POST" });
+export async function markItemPaid(id: string, occurredAt?: Date): Promise<void> {
+  const res = await fetch(`/api/recurrent-transactions/${id}/mark-paid`, {
+    method: "POST",
+    ...(occurredAt
+      ? {
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ occurredAt: occurredAt.toISOString() }),
+        }
+      : {}),
+  });
   if (!res.ok) throw new Error(await res.text());
 }
 

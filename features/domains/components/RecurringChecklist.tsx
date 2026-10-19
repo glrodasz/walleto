@@ -46,7 +46,8 @@ interface Props {
   window: MonthWindow;
   now?: Date;
   loading?: boolean;
-  onMarkPaid: (itemId: string) => void;
+  /** Pay that exact occurrence: an overdue one sits behind the item's nextOccurrence. */
+  onMarkPaid: (itemId: string, occurredAt: Date) => void;
   onEdit: (item: RecurrentTransaction) => void;
   onStop: (itemId: string) => void;
   /** Flip the item's hiddenFromDashboard flag. */
@@ -241,7 +242,7 @@ export function RecurringChecklist({
                             ? [
                                 {
                                   label: busy ? t("plan.marking") : t("plan.markPaid"),
-                                  onSelect: () => onMarkPaid(id),
+                                  onSelect: () => onMarkPaid(id, o.occurredAt),
                                   disabled: busy,
                                 },
                               ]

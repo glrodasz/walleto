@@ -228,6 +228,14 @@ export const RecurrentTransactionConvertSchema = z.object({
   accountId: z.string().min(1).optional(),
 });
 
+/**
+ * Mark as paid: the occurrence the owner tapped. Omitted = the item's
+ * nextOccurrence (the dashboard's "Coming up" list).
+ */
+export const RecurrentTransactionMarkPaidSchema = z
+  .object({ occurredAt: z.iso.datetime().optional() })
+  .default({});
+
 export const TransactionInputSchema = z
   .object({
     domain: DomainSchema,
@@ -372,6 +380,7 @@ export type PaymentMethodUpdate = z.infer<typeof PaymentMethodUpdateSchema>;
 export type RecurrentTransactionInput = z.infer<typeof RecurrentTransactionInputSchema>;
 export type RecurrentTransactionUpdate = z.infer<typeof RecurrentTransactionUpdateSchema>;
 export type RecurrentTransactionConvert = z.infer<typeof RecurrentTransactionConvertSchema>;
+export type RecurrentTransactionMarkPaid = z.infer<typeof RecurrentTransactionMarkPaidSchema>;
 export type TransactionInput = z.infer<typeof TransactionInputSchema>;
 export type TransactionUpdate = z.infer<typeof TransactionUpdateSchema>;
 export type InvestmentValuationInput = z.infer<typeof InvestmentValuationInputSchema>;

@@ -141,7 +141,7 @@ describe("RecurringChecklist", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Actions for Rent" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Mark as paid" }));
-    expect(onMarkPaid).toHaveBeenCalledWith("Rent");
+    expect(onMarkPaid).toHaveBeenCalledWith("Rent", expect.any(Date));
 
     fireEvent.click(screen.getByRole("button", { name: "Actions for Netflix" }));
     expect(screen.queryByRole("menuitem", { name: "Mark as paid" })).toBeNull();
