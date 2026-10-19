@@ -8,7 +8,7 @@ import { RangeAmount } from "../atoms/RangeAmount";
 import { CategoryIcon } from "../atoms/CategoryIcon";
 import { Chart, Home, Repeat, Search, Sliders } from "../atoms/Icons";
 import { useMoneyFormat } from "../../hooks/useMoneyFormat";
-import { KebabMenu } from "./KebabMenu";
+import { KebabMenu, KebabSpacer } from "./KebabMenu";
 import { IconDisc } from "./IconDisc";
 import { ListItem, ListItems } from "./ListItem";
 import { useTransactionFilters } from "../../features/domains/hooks/useTransactionFilters";
@@ -559,7 +559,11 @@ function TransactionListRow({
           : undefined
       }
       trailing={
-        share ? undefined : (
+        // A share has no actions, but keeps the kebab's room so its amount
+        // lines up with the rows around it.
+        share ? (
+          <KebabSpacer />
+        ) : (
           <KebabMenu
             aria-label={tc("action.actionsFor", { name: t.name })}
             actions={[
