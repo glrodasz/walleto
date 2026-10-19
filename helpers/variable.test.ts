@@ -50,6 +50,17 @@ describe("cycleEnd", () => {
     expect(cycleEnd(new Date(2026, 2, 15), yearly)).toEqual(new Date(2027, 2, 15));
   });
 
+  it("closes a monthly item with its calendar month, not its next charge", () => {
+    const monthlyOn28th = { frequency: "MONTHLY" as const, startDate: ts(new Date(2026, 0, 28)) };
+    expect(cycleEnd(new Date(2026, 8, 28), monthlyOn28th)).toEqual(new Date(2026, 9, 1));
+  });
+
+  it("closes a weekly item with its next occurrence when that comes first", () => {
+    const weekly = { frequency: "WEEKLY" as const, startDate: ts(new Date(2026, 8, 7)) };
+    expect(cycleEnd(new Date(2026, 8, 7), weekly)).toEqual(new Date(2026, 8, 14));
+    expect(cycleEnd(new Date(2026, 8, 28), weekly)).toEqual(new Date(2026, 9, 1));
+  });
+
   it("is the end of the calendar month for a one-off", () => {
     expect(cycleEnd(new Date(2026, 9, 12, 18))).toEqual(new Date(2026, 10, 1));
   });

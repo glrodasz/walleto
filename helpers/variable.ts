@@ -54,21 +54,30 @@ interface PendingRow extends BandFields {
 
 type Schedule = Pick<RecurrentTransaction, "startDate" | "frequency" | "secondDayOfMonth">;
 
+/** Cadences whose cycle outlasts a month: their real amount is asked for once the cycle is over. */
+const LONG_CYCLES = new Set<RecurrentTransaction["frequency"]>(["QUARTERLY", "YEARLY"]);
+
 /**
- * When a variable row's cycle is over and its real amount can be asked for:
- * the day the item's next occurrence starts (month end for a monthly item on
- * the 1st, a year later for a yearly one). A one-off, or a row whose item is
- * gone, closes with its calendar month. The row's own date never moves: it
- * only says which period the money belongs to.
+ * When a variable row's period is over and its real amount can be asked for.
+ * The period is the row's calendar month: September's bill is asked for on
+ * October 1st, even when the item next charges on the 28th. A weekly item
+ * closes sooner, with its next occurrence; a quarterly or yearly one closes
+ * with its cycle (a year later for a yearly one). A one-off, or a row whose
+ * item is gone, closes with its calendar month. The row's own date never
+ * moves: it only says which period the money belongs to.
  */
 export function cycleEnd(occurredAt: Date, item?: Schedule): Date {
+  const monthEnd = new Date(occurredAt.getFullYear(), occurredAt.getMonth() + 1, 1);
   if (item && item.frequency !== "ONE_TIME") {
     const next = nextOccurrenceFrom(item.startDate.toDate(), item.frequency, occurredAt, {
       secondDayOfMonth: item.secondDayOfMonth,
     });
-    if (next) return new Date(next.getFullYear(), next.getMonth(), next.getDate());
+    if (next) {
+      const nextDay = new Date(next.getFullYear(), next.getMonth(), next.getDate());
+      if (LONG_CYCLES.has(item.frequency) || nextDay < monthEnd) return nextDay;
+    }
   }
-  return new Date(occurredAt.getFullYear(), occurredAt.getMonth() + 1, 1);
+  return monthEnd;
 }
 
 /**
