@@ -32,6 +32,15 @@ export function monthlyRate(rate?: InterestRate | null): number {
 }
 
 /**
+ * Whether a value check already applies at `asOf`. A check is a reading for
+ * its whole day: the form stores it at noon, so comparing instants would
+ * hide one recorded this morning until midday.
+ */
+export function checkedBy(checkAsOf: Date, asOf: Date): boolean {
+  return startOfDay(checkAsOf) <= asOf.getTime();
+}
+
+/**
  * Elapsed months counted in whole calendar days: interest accrues per day, so
  * a value check reads exactly as entered on its own day and a figure doesn't
  * creep up second by second while the page is open. Rounding the day count
@@ -72,7 +81,7 @@ export function valueAt(
   // later one in the array is the later-recorded one and wins.
   let latest: ValuePoint | null = null;
   for (const c of checks) {
-    if (c.asOf <= asOf && (!latest || c.asOf >= latest.asOf)) latest = c;
+    if (checkedBy(c.asOf, asOf) && (!latest || c.asOf >= latest.asOf)) latest = c;
   }
   if (!latest) return estimateWithInterest(deposits, r, asOf);
   const anchor = latest;
@@ -96,7 +105,7 @@ export function interestAccrued(
 ): number | null {
   let first: ValuePoint | null = null;
   for (const c of checks) {
-    if (c.asOf <= asOf && (!first || c.asOf < first.asOf)) first = c;
+    if (checkedBy(c.asOf, asOf) && (!first || c.asOf < first.asOf)) first = c;
   }
   if (!first) return null;
   const anchor = first;

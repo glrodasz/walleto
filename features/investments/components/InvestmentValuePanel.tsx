@@ -20,7 +20,7 @@ import {
   valueChecks,
 } from "../helpers/valuation";
 import type { ValueSelector } from "../helpers/valuation";
-import { interestAccrued } from "../helpers/interest";
+import { checkedBy, interestAccrued } from "../helpers/interest";
 import { ValuationModal } from "./ValuationModal";
 import type {
   AccountDomain,
@@ -108,7 +108,8 @@ export function InvestmentValuePanel({
     () => currentValue(transactions, valuations, selector, rate, now, ctx, sign),
     [transactions, valuations, selector, rate, now, ctx, sign]
   );
-  const latest = valuations[0] ?? null;
+  // The check the value is read from: one dated later hasn't happened yet.
+  const latest = valuations.find((v) => checkedBy(v.asOf.toDate(), now)) ?? null;
   const gain = value - invested;
   const gainPct = gainFromValue(invested, value);
   // A debt's third figure: what repayments did not explain since the first balance.

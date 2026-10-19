@@ -162,6 +162,15 @@ describe("currentValue", () => {
     expect(currentValue(repayments, [], visa, rate, apr, ctx, -1)).toBe(0);
     expect(currentValue(repayments, balance, visa, rate, new Date(2025, 11, 1), ctx, -1)).toBe(0);
   });
+
+  it("counts a check from the start of its day, even read before the noon it's stored at", () => {
+    const seb = { accountId: "seb" };
+    const list = [tx(115264, new Date(2025, 11, 10), { ...seb, domain: "INVESTMENT" })];
+    const checks = [valuation(114718, new Date(2026, 9, 19, 12), seb)];
+    const morning = new Date(2026, 9, 19, 10, 33);
+    expect(currentValue(list, checks, seb, undefined, morning, ctx)).toBe(114718);
+    expect(currentValue(list, checks, seb, undefined, new Date(2026, 9, 18, 23), ctx)).toBe(115264);
+  });
 });
 
 describe("latestValuationAt", () => {
@@ -171,6 +180,11 @@ describe("latestValuationAt", () => {
     const later = valuation(300, new Date(2026, 6, 1));
     expect(latestValuationAt([later, a, b], new Date(2026, 4, 1))).toBe(b);
     expect(latestValuationAt([a, b], new Date(2026, 0, 1))).toBeNull();
+  });
+
+  it("finds a check recorded for today before its noon timestamp", () => {
+    const today = valuation(114718, new Date(2026, 9, 19, 12));
+    expect(latestValuationAt([today], new Date(2026, 9, 19, 8))).toBe(today);
   });
 });
 
