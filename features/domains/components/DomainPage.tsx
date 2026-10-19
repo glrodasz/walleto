@@ -817,7 +817,9 @@ export function DomainPage({ domain }: Props) {
         currency={currency}
         window={window}
         now={now}
-        onMarkPaid={(id) => withBusy(id, () => markItemPaid(id), "mark as paid")}
+        onMarkPaid={(id, occurredAt) =>
+          withBusy(id, () => markItemPaid(id, occurredAt), "mark as paid")
+        }
         onEdit={openEdit}
         onStop={(id) => withBusy(id, () => remove(id), "stop the item")}
         onToggleHidden={toggleItemHidden}
