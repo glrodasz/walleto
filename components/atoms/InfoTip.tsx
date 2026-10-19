@@ -43,7 +43,9 @@ export function InfoTip({ label, children, placement = "top", trigger }: Props) 
     if (!bubble || typeof window === "undefined") return;
     bubble.style.transform = "";
     const { left, right } = bubble.getBoundingClientRect();
-    const max = window.innerWidth - GUTTER;
+    // The layout width, not innerWidth: on a phone a bubble that already
+    // spills over widens innerWidth with it, so it would never look too wide.
+    const max = document.documentElement.clientWidth - GUTTER;
     let shift = 0;
     if (right > max) shift = max - right;
     if (left + shift < GUTTER) shift = GUTTER - left;

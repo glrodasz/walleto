@@ -61,6 +61,7 @@ export function occurrenceToTransaction(item: RecurrentTransaction, occurredAt: 
     ...(item.accountId ? { accountId: item.accountId } : {}),
     name: item.name,
     amount: item.amount,
+    ...(item.amountFloor !== undefined ? { amountFloor: item.amountFloor } : {}),
     currency: item.currency,
     ...(item.chargedAmount !== undefined ? { chargedAmount: item.chargedAmount } : {}),
     ...(item.chargedCurrency ? { chargedCurrency: item.chargedCurrency } : {}),

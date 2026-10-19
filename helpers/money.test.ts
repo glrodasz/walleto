@@ -2,6 +2,7 @@ import {
   formatAmount,
   formatCompact,
   formatNative,
+  formatNativeRange,
   formatNumber,
   formatPercent,
   MONEY_MASK,
@@ -120,5 +121,18 @@ describe("number preferences", () => {
 
   it("masks with either separator", () => {
     expect(formatAmount(1150, "USD", { hidden: true, separator: "," })).toBe(`$${MONEY_MASK}`);
+  });
+});
+
+describe("formatNativeRange", () => {
+  it("writes both ends of a band, with the code on both when it differs", () => {
+    expect(formatNativeRange(400, 600, "USD", "USD")).toBe("$400.00 – $600.00");
+    expect(norm(formatNativeRange(400, 600, "SEK", "USD"))).toBe("SEK 400.00 – SEK 600.00");
+  });
+
+  it("masks both ends in privacy mode", () => {
+    expect(formatNativeRange(400, 600, "USD", "USD", { hidden: true })).toBe(
+      `$${MONEY_MASK} – $${MONEY_MASK}`
+    );
   });
 });

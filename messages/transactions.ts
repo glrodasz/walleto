@@ -31,6 +31,9 @@ export const TRANSACTION_MESSAGES = defineMessages(
     "origin.cadence": "recurring · {cadence}",
 
     "badge.monthlyShare": "Monthly share",
+    "badge.pending": "To confirm",
+    "action.confirm": "Confirm amount",
+    "action.keepVariable": "Keep it variable",
     charged: "charged {amount}",
     shareLabel: "{name}: monthly share, edit {item}",
     "shareLabel.theItem": "the item",
@@ -65,6 +68,9 @@ export const TRANSACTION_MESSAGES = defineMessages(
     "origin.cadence": "recurrente · {cadence}",
 
     "badge.monthlyShare": "Cuota mensual",
+    "badge.pending": "Por confirmar",
+    "action.confirm": "Confirmar monto",
+    "action.keepVariable": "Dejarlo variable",
     charged: "cobrado {amount}",
     shareLabel: "{name}: cuota mensual, editar {item}",
     "shareLabel.theItem": "el elemento",

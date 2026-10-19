@@ -308,3 +308,53 @@ describe("PATCH /api/transactions/[id] — tags and note", () => {
     expect(update).toHaveBeenCalledWith({ tags: "DELETE_FIELD", note: "DELETE_FIELD" });
   });
 });
+
+describe("PATCH /api/transactions/[id] — variable expenses", () => {
+  const mk = (body: unknown) =>
+    ({ method: "PATCH", query: { id: "t1" }, body }) as unknown as NextApiRequest;
+  const variableRow = {
+    userId: "user1",
+    domain: "EXPENSE",
+    currency: "EUR",
+    amount: 600,
+    amountFloor: 400,
+    status: "PAID",
+  };
+
+  it("confirms the real amount: drops the band and stamps confirmedAt", async () => {
+    const update = wireDoc({ data: { ...variableRow, keepVariable: true } });
+    const res = mockRes();
+    await handler(mk({ amount: 452.3, amountFloor: null }), res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(update).toHaveBeenCalledWith({
+      amount: 452.3,
+      amountFloor: "DELETE_FIELD",
+      keepVariable: "DELETE_FIELD",
+      confirmedAt: "SERVER_TIMESTAMP",
+    });
+  });
+
+  it("allows a confirmed amount above the old top", async () => {
+    const update = wireDoc({ data: variableRow });
+    await handler(mk({ amount: 640, amountFloor: null }), mockRes());
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ amount: 640 }));
+  });
+
+  it("keeps a row variable, and refuses to on a fixed one", async () => {
+    const update = wireDoc({ data: variableRow });
+    await handler(mk({ keepVariable: true }), mockRes());
+    expect(update).toHaveBeenCalledWith({ keepVariable: true });
+
+    wireDoc({ data: { ...variableRow, amountFloor: undefined } });
+    const res = mockRes();
+    await handler(mk({ keepVariable: true }), res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it("rejects a new top at or below the stored floor", async () => {
+    wireDoc({ data: variableRow });
+    const res = mockRes();
+    await handler(mk({ amount: 400 }), res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+});

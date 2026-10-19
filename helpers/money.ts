@@ -136,6 +136,20 @@ export function formatNative(
   return formatAmount(value, currency, { ...options, code: currency !== displayCurrency });
 }
 
+/**
+ * A variable expense's band, "€400 – €600": each end written like any other
+ * amount, so privacy mode masks both and the code shows on both or neither.
+ */
+export function formatNativeRange(
+  floor: number,
+  top: number,
+  currency: Currency,
+  displayCurrency: Currency,
+  options: Omit<FormatOptions, "code"> = {}
+): string {
+  return `${formatNative(floor, currency, displayCurrency, options)} – ${formatNative(top, currency, displayCurrency, options)}`;
+}
+
 export interface PlainNumberOptions extends Pick<NumberFormatPrefs, "separator"> {
   minDecimals?: number;
   maxDecimals?: number;

@@ -161,6 +161,7 @@ export function spreadTransactions(
         ...(item.accountId ? { accountId: item.accountId } : {}),
         name: item.name,
         amount: source.amount * factor,
+        ...(source.amountFloor !== undefined ? { amountFloor: source.amountFloor * factor } : {}),
         currency: source.currency,
         ...(source.chargedAmount !== undefined && source.chargedCurrency
           ? {

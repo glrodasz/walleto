@@ -63,3 +63,25 @@ describe("InfoTip", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 });
+
+describe("InfoTip near the right edge", () => {
+  const rect = Element.prototype.getBoundingClientRect;
+  afterEach(() => {
+    Element.prototype.getBoundingClientRect = rect;
+  });
+
+  it("keeps the hidden bubble inside the layout width, even when the window reads wider", () => {
+    // A phone whose page already spilled over: innerWidth grew, the layout didn't.
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 616 });
+    Object.defineProperty(document.documentElement, "clientWidth", {
+      configurable: true,
+      value: 390,
+    });
+    Element.prototype.getBoundingClientRect = function () {
+      return { left: 330, right: 610, top: 0, bottom: 0, width: 280, height: 0 } as DOMRect;
+    };
+    render(<InfoTip label="About scenarios">Best uses the low end.</InfoTip>);
+    const bubble = screen.getByText("Best uses the low end.").closest(".bubble") as HTMLElement;
+    expect(bubble.style.transform).toBe("translateX(-236px)");
+  });
+});

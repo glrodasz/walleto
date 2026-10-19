@@ -5,6 +5,7 @@ import {
   formatAmount as format,
   formatCompact as compact,
   formatNative as native,
+  formatNativeRange as nativeRange,
   formatNumber as number,
   formatPercent as percent,
 } from "../helpers/money";
@@ -39,6 +40,13 @@ export function useMoneyFormat() {
         compact(value, currency, { hidden, separator }),
       formatNative: (value: number, currency: Currency, displayCurrency: Currency) =>
         native(value, currency, displayCurrency, { hidden, separator, decimals }),
+      /** A variable expense's band, both ends in `currency`. */
+      formatNativeRange: (
+        floor: number,
+        top: number,
+        currency: Currency,
+        displayCurrency: Currency
+      ) => nativeRange(floor, top, currency, displayCurrency, { hidden, separator, decimals }),
       /** A rate or a ratio: never masked, since it is a proportion rather than money. */
       formatNumber: (value: number, maxDecimals = 2, minDecimals = 0) =>
         number(value, { minDecimals, maxDecimals, separator }),

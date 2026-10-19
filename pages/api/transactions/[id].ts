@@ -3,6 +3,7 @@ import auth0 from "../../../lib/auth0";
 import admin from "../../../firebase/admin";
 import { TransactionUpdateSchema } from "../../../schemas";
 import { isAccountDomain } from "../../../helpers/accounts";
+import { bandError } from "../../../helpers/variable";
 
 export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await auth0.getSession(req, res);
@@ -39,6 +40,8 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       accountId,
       name,
       amount,
+      amountFloor,
+      keepVariable,
       currency,
       occurredAt,
       chargedAmount,
@@ -60,6 +63,23 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
     if (nextCharged && nextCharged === nextCurrency) {
       return res.status(400).json({ error: "chargedCurrency must differ from currency" });
     }
+
+    // The band as this patch leaves it: null confirms the row, undefined keeps it.
+    const nextFloor = amountFloor === undefined ? existing.amountFloor : (amountFloor ?? undefined);
+    const band = bandError({
+      domain: existing.domain,
+      amount: amount ?? existing.amount,
+      amountFloor: nextFloor,
+      chargedAmount:
+        chargedAmount === undefined ? existing.chargedAmount : (chargedAmount ?? undefined),
+    });
+    if (band) {
+      return res.status(400).json({ error: band });
+    }
+    if (keepVariable && nextFloor === undefined) {
+      return res.status(400).json({ error: "Only a variable expense can stay variable" });
+    }
+    const confirming = amountFloor === null && existing.amountFloor !== undefined;
 
     if (categoryId) {
       const catSnap = await db.collection("categories").doc(categoryId).get();
@@ -119,6 +139,13 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       ...(accountId !== undefined ? { accountId: accountId ?? del } : {}),
       ...(name !== undefined ? { name } : {}),
       ...(amount !== undefined ? { amount } : {}),
+      ...(amountFloor !== undefined ? { amountFloor: amountFloor ?? del } : {}),
+      // Confirming answers the question for good, so "keep it variable" goes with the band.
+      ...(confirming
+        ? { keepVariable: del, confirmedAt: admin.firestore.FieldValue.serverTimestamp() }
+        : keepVariable !== undefined
+          ? { keepVariable: keepVariable || del }
+          : {}),
       ...(currency ? { currency } : {}),
       ...(occurredAt
         ? { occurredAt: admin.firestore.Timestamp.fromDate(new Date(occurredAt)) }

@@ -3,6 +3,7 @@ import auth0 from "../../../lib/auth0";
 import admin from "../../../firebase/admin";
 import { TransactionInputSchema } from "../../../schemas";
 import { isAccountDomain } from "../../../helpers/accounts";
+import { bandError } from "../../../helpers/variable";
 
 export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await auth0.getSession(req, res);
@@ -23,6 +24,8 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       accountId,
       name,
       amount,
+      amountFloor,
+      keepVariable,
       currency,
       chargedAmount,
       chargedCurrency,
@@ -37,6 +40,14 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
     // Only money sitting somewhere can flow both ways.
     if (direction && !isAccountDomain(domain)) {
       return res.status(400).json({ error: "Direction only applies to accounts" });
+    }
+
+    const band = bandError({ domain, amount, amountFloor, chargedAmount });
+    if (band) {
+      return res.status(400).json({ error: band });
+    }
+    if (keepVariable && amountFloor === undefined) {
+      return res.status(400).json({ error: "Only a variable expense can stay variable" });
     }
 
     const catSnap = await db.collection("categories").doc(categoryId).get();
@@ -95,6 +106,8 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       ...(accountId ? { accountId } : {}),
       name,
       amount,
+      ...(amountFloor !== undefined ? { amountFloor } : {}),
+      ...(keepVariable ? { keepVariable } : {}),
       currency,
       ...(chargedAmount !== undefined ? { chargedAmount } : {}),
       ...(chargedCurrency ? { chargedCurrency } : {}),

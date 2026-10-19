@@ -5,6 +5,7 @@ import { CurrencySelector } from "../molecules/CurrencySelector";
 import { PrivacyToggle } from "../molecules/PrivacyToggle";
 import { MonthPicker } from "../molecules/MonthPicker";
 import { CreateLauncher } from "../../features/create/components/CreateLauncher";
+import { ScenarioBar } from "./ScenarioBar";
 import { useMoneyContext } from "../../hooks/useMoneyContext";
 import { useSelectedMonth } from "../../hooks/useSelectedMonth";
 import { useT } from "../../hooks/useT";
@@ -21,6 +22,8 @@ interface Props {
   hideCurrency?: boolean;
   /** Pages that are not about one month (Settings) skip the month picker. */
   hideMonth?: boolean;
+  /** Pages whose figures follow the Best / Average / Worst choice show its toggle. */
+  scenario?: boolean;
   children: ReactNode;
 }
 
@@ -29,7 +32,15 @@ interface Props {
  * the mobile create launcher must exist on every page, and every page is
  * built on this layout.
  */
-export function PageLayout({ title, subtitle, domain, hideCurrency, hideMonth, children }: Props) {
+export function PageLayout({
+  title,
+  subtitle,
+  domain,
+  hideCurrency,
+  hideMonth,
+  scenario,
+  children,
+}: Props) {
   // Privacy mode, the display currency and the selected month are properties
   // of the whole app, so their controls live in every page header, not only on
   // the dashboard.
@@ -68,7 +79,10 @@ export function PageLayout({ title, subtitle, domain, hideCurrency, hideMonth, c
             </div>
           </header>
 
-          <main className="main">{children}</main>
+          <main className="main">
+            {scenario && <ScenarioBar />}
+            {children}
+          </main>
         </div>
 
         <CreateLauncher domain={domain} />
