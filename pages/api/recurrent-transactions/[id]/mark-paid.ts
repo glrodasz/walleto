@@ -10,6 +10,9 @@ import {
 import { RecurrentTransactionMarkPaidSchema } from "../../../../schemas";
 import type { RecurrentTransaction } from "../../../../types";
 
+/** How far a client's occurrence instant may sit from the server's (time zones, DST). */
+const MATCH_WINDOW_MS = 12 * 60 * 60 * 1000;
+
 /**
  * Marks one occurrence of the item as PAID: the one named in the body (the
  * Plan row the owner tapped, which can be an overdue one behind the
@@ -61,8 +64,19 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
   if (parsed.data.occurredAt) {
     const asked = new Date(parsed.data.occurredAt);
     // Only a real occurrence of the schedule: any other day would write a row
-    // the checklist and the materializer never line up with.
-    const [occ] = materializeOccurrences({ ...item, id }, asked, asked);
+    // the checklist and the materializer never line up with. The browser and
+    // this server can sit in different time zones, so across a DST change the
+    // same occurrence lands an hour apart: take the schedule's own instant
+    // nearest to the one asked for, as the materializer would write it.
+    const [occ] = materializeOccurrences(
+      { ...item, id },
+      new Date(asked.getTime() - MATCH_WINDOW_MS),
+      new Date(asked.getTime() + MATCH_WINDOW_MS)
+    ).sort(
+      (a, b) =>
+        Math.abs(a.occurredAt.getTime() - asked.getTime()) -
+        Math.abs(b.occurredAt.getTime() - asked.getTime())
+    );
     if (!occ) {
       return res.status(400).json({ error: "Not an occurrence of this item" });
     }

@@ -164,6 +164,18 @@ describe("POST /api/recurrent-transactions/[id]/mark-paid", () => {
     });
   });
 
+  it("accepts an occurrence an hour off (another time zone across DST) at the schedule's instant", async () => {
+    const { setMock } = wireDoc(item());
+    const res = mockRes();
+    await handler(postReq({ occurredAt: "2026-02-15T11:00:00.000Z" }), res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(setMock).toHaveBeenCalledWith(
+      expect.objectContaining({ occurredAt: { __ts: "2026-02-15T12:00:00.000Z" } }),
+      { merge: true }
+    );
+  });
+
   it("rejects a date that is not an occurrence of the item", async () => {
     const { setMock } = wireDoc(item());
     const res = mockRes();
