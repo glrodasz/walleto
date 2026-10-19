@@ -53,3 +53,23 @@ describe("PendingConfirmations", () => {
     expect(onKeepVariable).toHaveBeenCalledWith(row);
   });
 });
+
+describe("PendingConfirmations cap", () => {
+  const many = Array.from({ length: 7 }, (_, i) => ({ ...row, id: `g_${i}`, name: `Bill ${i}` }));
+
+  it("shows the newest few and the older ones on demand", () => {
+    render(
+      <PendingConfirmations
+        rows={many}
+        categories={categories}
+        displayCurrency="USD"
+        onConfirm={jest.fn()}
+        onKeepVariable={jest.fn()}
+      />
+    );
+    expect(screen.getByText("Bill 4")).toBeInTheDocument();
+    expect(screen.queryByText("Bill 5")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show 2 older periods" }));
+    expect(screen.getByText("Bill 6")).toBeInTheDocument();
+  });
+});

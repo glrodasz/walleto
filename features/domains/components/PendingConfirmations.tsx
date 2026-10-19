@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { Button } from "../../../components/atoms/Button";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { CategoryIcon } from "../../../components/atoms/CategoryIcon";
@@ -13,8 +15,11 @@ import { COMMON_MESSAGES } from "../../../messages/common";
 import { DOMAIN_MESSAGES } from "../messages";
 import type { Category, Currency, Transaction } from "../../../types";
 
+/** How many periods the card asks for at once; confirming one brings up the next. */
+export const PENDING_VISIBLE = 5;
+
 interface Props {
-  /** Already the pending rows, in the order to show them. */
+  /** Already the pending rows, newest first. */
   rows: Transaction[];
   categories: Category[];
   displayCurrency: Currency;
@@ -35,12 +40,15 @@ export function PendingConfirmations({
   onKeepVariable,
 }: Props) {
   const t = useT(DOMAIN_MESSAGES);
+  const [showAll, setShowAll] = useState(false);
   if (rows.length === 0) return null;
+  const visible = showAll ? rows : rows.slice(0, PENDING_VISIBLE);
+  const hidden = rows.length - visible.length;
   return (
     <Card>
       <SectionTitle title={t("pending.title")} subtitle={t("pending.subtitle")} />
       <ListItems>
-        {rows.map((row) => (
+        {visible.map((row) => (
           <PendingRow
             key={row.id}
             row={row}
@@ -51,6 +59,20 @@ export function PendingConfirmations({
           />
         ))}
       </ListItems>
+      {hidden > 0 && (
+        <div className="more">
+          <Button variant="ghost" size="sm" onClick={() => setShowAll(true)}>
+            {t("pending.showOlder", { count: hidden })}
+          </Button>
+        </div>
+      )}
+      <style jsx>{`
+        .more {
+          display: flex;
+          justify-content: flex-end;
+          margin-top: 8px;
+        }
+      `}</style>
     </Card>
   );
 }

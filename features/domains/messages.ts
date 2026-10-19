@@ -245,6 +245,7 @@ export const DOMAIN_MESSAGES = defineMessages(
     "pending.subtitle": "These periods are over. Enter what you really spent, or keep the range.",
     "pending.confirm": "Confirm amount",
     "pending.keep": "Keep it variable",
+    "pending.showOlder": { one: "Show {count} older period", other: "Show {count} older periods" },
     "confirm.title": "Confirm {name}",
     "confirm.amount": "What you really spent",
     "confirm.planned": "You planned {range} for {period}.",
@@ -480,6 +481,10 @@ export const DOMAIN_MESSAGES = defineMessages(
       "Estos períodos terminaron. Escribe lo que gastaste de verdad o deja el rango.",
     "pending.confirm": "Confirmar monto",
     "pending.keep": "Dejarlo variable",
+    "pending.showOlder": {
+      one: "Ver {count} período anterior",
+      other: "Ver {count} períodos anteriores",
+    },
     "confirm.title": "Confirmar {name}",
     "confirm.amount": "Lo que gastaste de verdad",
     "confirm.planned": "Planeaste {range} para {period}.",
