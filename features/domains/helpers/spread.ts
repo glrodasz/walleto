@@ -1,11 +1,26 @@
 import { FREQ_TO_MONTHS } from "../../../helpers/aggregations";
 import { materializeOccurrences, occurrenceId } from "../../../helpers/materializeOccurrences";
-import type { RecurrentTransaction, Transaction } from "../../../types";
+import { nextOccurrenceFrom } from "../../../helpers/recurrence";
+import type { Currency, RecurrentTransaction, Transaction } from "../../../types";
 import type { MonthWindow } from "./months";
+
+/** The payment a slice spreads, and the stretch of months it covers. */
+export interface SpreadCycle {
+  /** The cycle's occurrence day. */
+  start: Date;
+  /** The day before the next occurrence. */
+  end: Date;
+  /** What the cycle costs, in its own currency: paid, or still planned. */
+  amount: number;
+  currency: Currency;
+  paid: boolean;
+}
 
 /** A synthetic monthly slice of a spread item; never stored. */
 export interface SpreadSlice extends Transaction {
   synthetic: true;
+  /** Absent only when the month falls before the item's first occurrence. */
+  cycle?: SpreadCycle;
 }
 
 export function isSyntheticRow(t: Transaction): t is SpreadSlice {
@@ -130,6 +145,13 @@ export function spreadTransactions(
       while (i + 1 < occs.length && occs[i + 1] < w.end) i++;
       const payment = i >= 0 ? paymentFor(item.id!, occs[i], occs[i + 1], rows) : undefined;
       const source = payment ?? item;
+      const next =
+        i >= 0
+          ? (occs[i + 1] ??
+            nextOccurrenceFrom(start, item.frequency, occs[i], {
+              secondDayOfMonth: item.secondDayOfMonth,
+            }))
+          : null;
       slices.push({
         id: `${item.id}_spread_${w.key}`,
         userId: item.userId,
@@ -149,6 +171,19 @@ export function spreadTransactions(
         occurredAt: at(w.start),
         status: "PAID",
         synthetic: true,
+        ...(i >= 0
+          ? {
+              cycle: {
+                start: occs[i],
+                end: next
+                  ? new Date(next.getFullYear(), next.getMonth(), next.getDate() - 1)
+                  : occs[i],
+                amount: source.amount,
+                currency: source.currency,
+                paid: Boolean(payment),
+              },
+            }
+          : {}),
       });
     }
   }

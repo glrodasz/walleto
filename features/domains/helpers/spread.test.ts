@@ -149,6 +149,23 @@ describe("spreadTransactions", () => {
     const nextYear = monthWindows(3, new Date(2027, 1, 10, 12)); // Dec 2026 … Feb 2027
     const ahead = spreadTransactions([raised], history, nextYear).filter(isSyntheticRow);
     expect(ahead.map((s) => s.amount)).toEqual([100, 110, 110]);
+    expect(ahead.map((s) => s.cycle)).toEqual([
+      {
+        start: new Date(2026, 0, 15, 12),
+        end: new Date(2027, 0, 14),
+        amount: 1200,
+        currency: "USD",
+        paid: true,
+      },
+      {
+        start: new Date(2027, 0, 15, 12),
+        end: new Date(2028, 0, 14),
+        amount: 1320,
+        currency: "USD",
+        paid: false,
+      },
+      expect.objectContaining({ start: new Date(2027, 0, 15, 12), paid: false }),
+    ]);
   });
 
   it("composes with hiding through the item id", () => {

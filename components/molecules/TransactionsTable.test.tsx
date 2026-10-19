@@ -291,6 +291,50 @@ describe("TransactionsTable", () => {
     expect(onOpenItem).toHaveBeenCalledWith(bear);
   });
 
+  it("names the payment a share spreads and the months it covers", () => {
+    const insurance = {
+      id: "ins",
+      name: "Insurance",
+      amount: 1584,
+      currency: "USD",
+      frequency: "YEARLY",
+      startDate: ts(new Date(2026, 1, 14, 12)),
+    };
+    const share = (key: string, paid: boolean, amount: number, year: number) =>
+      ({
+        ...tx(`ins_spread_${key}`, "Insurance", new Date(year, 9, 1), {
+          recurrentTransactionId: "ins",
+          amount: amount / 12,
+        }),
+        synthetic: true,
+        cycle: {
+          start: new Date(year, 1, 14),
+          end: new Date(year + 1, 0, 13),
+          amount,
+          currency: "USD",
+          paid,
+        },
+      }) as Transaction;
+    render(
+      <TransactionsTable
+        {...base}
+        items={[insurance] as never}
+        rows={[share("2026-10", true, 1440, 2026), share("2027-10", false, 1584, 2027)]}
+        onOpenItem={jest.fn()}
+        onDelete={jest.fn()}
+      />
+    );
+    const text = bodyRows().map((r) => r.textContent);
+    expect(
+      text.some((t) => t?.includes("yearly payment of $1,440.00Covers Feb 14, 2026 – Jan 13, 2027"))
+    ).toBe(true);
+    expect(
+      text.some((t) =>
+        t?.includes("planned yearly payment of $1,584.00Covers Feb 14, 2027 – Jan 13, 2028")
+      )
+    ).toBe(true);
+  });
+
   it("caps the rows and leaves the method out when asked", () => {
     render(
       <TransactionsTable {...base} rows={rows} onDelete={jest.fn()} limit={2} showMethod={false} />

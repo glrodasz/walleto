@@ -389,6 +389,8 @@ function TransactionListRow({
   const cadence = item ? tc(`frequency.${item.frequency}`) : "";
   // A "reflected monthly" share is not a payment: it is the month's slice of
   // a yearly (quarterly…) item, derived from it and edited only through it.
+  // It names the payment it spreads and the months that payment covers, so
+  // a slice of last year's renewal reads apart from this year's.
   const share = isSyntheticRow(t);
   const date = toDate(t.occurredAt);
   // "recurring · Monthly", plus the item's name when the row was renamed;
@@ -396,12 +398,17 @@ function TransactionListRow({
   // row older than the item's start was paid under an earlier schedule, so
   // the item's cadence today would mislabel it.
   const origin = share
-    ? item
-      ? tr("origin.shareOf", {
-          amount: formatNative(item.amount, item.currency, displayCurrency),
+    ? item && t.cycle
+      ? tr(t.cycle.paid ? "origin.cyclePaid" : "origin.cyclePlanned", {
           cadence: cadence.toLocaleLowerCase(),
+          amount: formatNative(t.cycle.amount, t.cycle.currency, displayCurrency),
         })
-      : tr("origin.share")
+      : item
+        ? tr("origin.shareOf", {
+            amount: formatNative(item.amount, item.currency, displayCurrency),
+            cadence: cadence.toLocaleLowerCase(),
+          })
+        : tr("origin.share")
     : !t.recurrentTransactionId
       ? tr("origin.oneOff")
       : !item
@@ -409,6 +416,16 @@ function TransactionListRow({
         : date < startOfDay(toDate(item.startDate))
           ? `${tr("origin.earlier")}${item.name !== t.name ? ` · ${item.name}` : ""}`
           : `${tr("origin.cadence", { cadence })}${item.name !== t.name ? ` · ${item.name}` : ""}`;
+
+  // Which stretch the spread payment covers gets its own line: in the
+  // joined meta it would be the first thing a phone's ellipsis cuts.
+  const covers =
+    share && item && t.cycle
+      ? tr("origin.covers", {
+          from: formatDate(t.cycle.start, "dayYear"),
+          to: formatDate(t.cycle.end, "dayYear"),
+        })
+      : null;
 
   // Money that left the account: the amount reads negative and the row says
   // why ("Withdrawal", or "Borrowed" on a debt).
@@ -487,7 +504,7 @@ function TransactionListRow({
         ) : undefined
       }
       meta={meta}
-      note={t.note}
+      note={covers ?? t.note}
       muted={hidden.includes("chart")}
       amount={
         foreign
