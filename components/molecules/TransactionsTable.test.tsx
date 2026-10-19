@@ -378,6 +378,8 @@ describe("TransactionsTable", () => {
     expect(row).toHaveTextContent("Monthly share");
     expect(row).toHaveTextContent("$399.00 yearly, reflected monthly");
     expect(within(row).queryByRole("button", { name: /actions for/i })).toBeNull();
+    // No kebab, but its room is kept so the amount lines up with the others.
+    expect(row.querySelector(".trailing .kebab-spacer")).not.toBeNull();
     fireEvent.click(within(row).getByRole("button", { name: /monthly share, edit Bear/ }));
     expect(onOpenItem).toHaveBeenCalledWith(bear);
   });

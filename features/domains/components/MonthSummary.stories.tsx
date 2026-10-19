@@ -77,3 +77,17 @@ export const Withdrawals: Story = {
     withdrawn: 500,
   },
 };
+
+/** A closed month where nothing moved: no red −100%, just "No movements". */
+export const NoMovements: Story = {
+  args: {
+    domain: "INVESTMENT",
+    window: previous,
+    realized: 0,
+    expected: 0,
+    delta: { current: 0, previous: 989_623.6, deltaPct: -100, previousKey: "prev" },
+    previousLabel: previous.longLabel,
+    contributed: 0,
+    gain: 0,
+  },
+};

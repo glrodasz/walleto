@@ -5,7 +5,7 @@ import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { Badge } from "../../../components/atoms/Badge";
 import { Home, Shuffle } from "../../../components/atoms/Icons";
-import { KebabMenu } from "../../../components/molecules/KebabMenu";
+import { KebabMenu, KebabSpacer } from "../../../components/molecules/KebabMenu";
 import { RangeAmount } from "../../../components/atoms/RangeAmount";
 import { ListItem, ListItems } from "../../../components/molecules/ListItem";
 import type { KebabAction } from "../../../components/molecules/KebabMenu";
@@ -230,7 +230,12 @@ export function RecurringChecklist({
               <section key={status} className="group">
                 <h3 className="group-title">
                   <span>{t(`plan.group.${status}`)}</span>
-                  <span className="group-total">{formatAmount(total, currency)}</span>
+                  {/* The kebab's room on the right, so the total sits over the
+                      rows' amounts. */}
+                  <span className="group-end">
+                    <span className="group-total">{formatAmount(total, currency)}</span>
+                    <KebabSpacer />
+                  </span>
                 </h3>
                 <ListItems>
                   {rows.map((o) => {
@@ -337,6 +342,13 @@ export function RecurringChecklist({
           letter-spacing: 0.06em;
           text-transform: uppercase;
           color: var(--fg-2);
+        }
+
+        .group-end {
+          display: inline-flex;
+          align-items: center;
+          /* Same gap as ListItem's row between the amount and its kebab. */
+          gap: 8px;
         }
 
         .group-total {
