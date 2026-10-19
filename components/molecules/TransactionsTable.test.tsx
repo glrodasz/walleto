@@ -251,6 +251,28 @@ describe("TransactionsTable", () => {
     expect(within(cop).getByText("COP 800,000")).toBeInTheDocument();
   });
 
+  it("drops a charged pair that only repeats the row's own amount", () => {
+    const rates = { ...IDENTITY_RATES, rates: { ...IDENTITY_RATES.rates, COP: 4000 } };
+    render(
+      <TransactionsTable
+        {...base}
+        ctx={{ rates, target: "USD" }}
+        onDelete={jest.fn()}
+        rows={[
+          tx("same", "Coffee beans", new Date(2026, 8, 4, 9), {
+            amount: 64_000,
+            currency: "COP",
+            chargedAmount: 64_000,
+            chargedCurrency: "COP",
+          }),
+        ]}
+      />
+    );
+    const [row] = bodyRows();
+    expect(within(row).getByText("COP 64,000")).toBeInTheDocument();
+    expect(row).not.toHaveTextContent("charged");
+  });
+
   it("marks a pending variable row and offers to confirm or keep it", () => {
     const onConfirm = jest.fn();
     const onKeepVariable = jest.fn();

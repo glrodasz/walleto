@@ -464,8 +464,14 @@ function TransactionListRow({
     t.amountFloor !== undefined
       ? formatNativeRange(t.amountFloor, t.amount, t.currency, displayCurrency)
       : formatNative(signed(t.amount), t.currency, displayCurrency);
+  // A charge in the row's own currency, for the same amount, says nothing
+  // the original doesn't already say.
+  const sameAsNative = t.chargedCurrency === t.currency && t.chargedAmount === t.amount;
   const charged =
-    t.chargedAmount !== undefined && t.chargedCurrency && t.chargedCurrency !== ctx.target
+    t.chargedAmount !== undefined &&
+    t.chargedCurrency &&
+    t.chargedCurrency !== ctx.target &&
+    !sameAsNative
       ? tr("charged", {
           amount: formatNative(signed(t.chargedAmount), t.chargedCurrency, displayCurrency),
         })
