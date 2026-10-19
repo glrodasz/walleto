@@ -162,6 +162,21 @@ function ListItemBody({
             font-size: 0.9rem;
           }
 
+          /* The name always keeps room to be read: the amount column takes
+             at most half the row, and its footer (the original currency,
+             the charged pair) wraps under the figure instead of pushing the
+             name into a one-letter ellipsis. */
+          .value {
+            flex-shrink: 1;
+            min-width: 0;
+            max-width: 50%;
+          }
+
+          .amount-meta {
+            white-space: normal;
+            text-align: right;
+          }
+
           /* On a phone the facts line is the first thing to run out of room.
              One line hides the method, the frequency and the origin; wrapping
              freely makes a five-line row. Two lines, then the ellipsis. */

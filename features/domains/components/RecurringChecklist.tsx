@@ -4,7 +4,7 @@ import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { Badge } from "../../../components/atoms/Badge";
-import { Home } from "../../../components/atoms/Icons";
+import { Home, Shuffle } from "../../../components/atoms/Icons";
 import { KebabMenu, KebabSpacer } from "../../../components/molecules/KebabMenu";
 import { RangeAmount } from "../../../components/atoms/RangeAmount";
 import { ListItem, ListItems } from "../../../components/molecules/ListItem";
@@ -84,6 +84,8 @@ interface RowProps {
    *  glyph for that screen, so it cannot be read as "hidden from the chart".
    *  Not dimmed: the item still counts on its domain page. */
   hidden?: boolean;
+  /** A variable expense: its amount is a band, not a fixed price. */
+  variable?: boolean;
   /** The user's own tags. */
   labels?: string[];
   note?: string;
@@ -104,12 +106,20 @@ function OccurrenceRow({
   accent,
   actions,
   hidden,
+  variable,
   labels,
   note,
 }: RowProps) {
   const t = useT(DOMAIN_MESSAGES);
   const common = useT(COMMON_MESSAGES);
   const flags = [
+    ...(variable
+      ? [
+          <Badge key="variable" variant="outline" tone="info" caps icon={<Shuffle size={12} />}>
+            {common("state.variable")}
+          </Badge>,
+        ]
+      : []),
     ...(hidden
       ? [
           <Badge key="hidden" variant="outline" tone="warning" caps icon={<Home size={12} />}>
@@ -237,6 +247,7 @@ export function RecurringChecklist({
                         name={o.item.name}
                         meta={`${formatDate(o.occurredAt, "day")} · ${common(`frequency.${o.item.frequency}`)}${details(o.item)}`}
                         hidden={Boolean(o.item.hiddenFromDashboard)}
+                        variable={o.item.amountFloor !== undefined}
                         labels={tagNames(o.item.tags, tags)}
                         note={o.item.note}
                         amount={itemAmount(o.paid ?? o.item)}
@@ -285,6 +296,7 @@ export function RecurringChecklist({
                     amount={itemAmount(item)}
                     accent={config.accent}
                     hidden={Boolean(item.hiddenFromDashboard)}
+                    variable={item.amountFloor !== undefined}
                     labels={tagNames(item.tags, tags)}
                     note={item.note}
                     actions={[

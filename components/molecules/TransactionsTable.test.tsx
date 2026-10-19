@@ -251,6 +251,28 @@ describe("TransactionsTable", () => {
     expect(within(cop).getByText("COP 800,000")).toBeInTheDocument();
   });
 
+  it("drops a charged pair that only repeats the row's own amount", () => {
+    const rates = { ...IDENTITY_RATES, rates: { ...IDENTITY_RATES.rates, COP: 4000 } };
+    render(
+      <TransactionsTable
+        {...base}
+        ctx={{ rates, target: "USD" }}
+        onDelete={jest.fn()}
+        rows={[
+          tx("same", "Coffee beans", new Date(2026, 8, 4, 9), {
+            amount: 64_000,
+            currency: "COP",
+            chargedAmount: 64_000,
+            chargedCurrency: "COP",
+          }),
+        ]}
+      />
+    );
+    const [row] = bodyRows();
+    expect(within(row).getByText("COP 64,000")).toBeInTheDocument();
+    expect(row).not.toHaveTextContent("charged");
+  });
+
   it("marks a pending variable row and offers to confirm or keep it", () => {
     const onConfirm = jest.fn();
     const onKeepVariable = jest.fn();
@@ -277,6 +299,43 @@ describe("TransactionsTable", () => {
     fireEvent.click(screen.getByRole("button", { name: "Actions for Groceries" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Keep it variable" }));
     expect(onKeepVariable).toHaveBeenCalledWith(groceries);
+  });
+
+  it("tags every row of a variable expense, confirmed or not, and nothing else", () => {
+    const power = {
+      id: "power",
+      name: "Power",
+      amount: 900,
+      amountFloor: 500,
+      currency: "USD",
+      frequency: "MONTHLY",
+      startDate: ts(new Date(2026, 0, 28, 12)),
+    };
+    render(
+      <TransactionsTable
+        {...base}
+        items={[power] as never}
+        rows={[
+          tx("est", "Power", new Date(2026, 8, 28, 9), {
+            recurrentTransactionId: "power",
+            amount: 900,
+            amountFloor: 500,
+          }),
+          tx("conf", "Power", new Date(2026, 7, 28, 9), {
+            recurrentTransactionId: "power",
+            amount: 640,
+          }),
+          tx("kept", "Market", new Date(2026, 7, 20, 9), { keepVariable: true }),
+          tx("b", "Bread", new Date(2026, 7, 5, 9)),
+        ]}
+        onDelete={jest.fn()}
+      />
+    );
+    const [estimate, confirmed, kept, fixed] = bodyRows();
+    expect(within(estimate).getByText("Variable")).toBeInTheDocument();
+    expect(within(confirmed).getByText("Variable")).toBeInTheDocument();
+    expect(within(kept).getByText("Variable")).toBeInTheDocument();
+    expect(within(fixed).queryByText("Variable")).toBeNull();
   });
 
   it("labels a row paid before the item's current schedule as such", () => {
