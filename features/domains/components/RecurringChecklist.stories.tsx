@@ -12,7 +12,9 @@ import {
   STORY_TAGS,
   STORY_WINDOWS,
   transactionsFor,
+  ts,
 } from "../../../stories/fixtures";
+import type { Transaction } from "../../../types";
 
 const meta = {
   title: "Organisms/Domains/RecurringChecklist",
@@ -55,13 +57,36 @@ export const Busy: Story = { args: { busyId: "rt-netflix" } };
 export const Loading: Story = { args: { loading: true } };
 export const Empty: Story = { args: { items: [], transactions: [] } };
 
+const LAST_MONTH = STORY_WINDOWS[STORY_WINDOWS.length - 2];
+const inLastMonth = (t: Transaction) => {
+  const at = t.occurredAt.toDate();
+  return at >= LAST_MONTH.start && at < LAST_MONTH.end;
+};
+const lastMonthRows = transactionsFor("EXPENSE").filter(inLastMonth);
+
 /**
- * Last month after Rent went up 10%: the paid row still shows what was paid
- * (1,650); the new price only applies from the edit on.
+ * Last month, where the ledger strayed from the plan. Each row still reads as
+ * the plan — today's price, the scheduled day — and only what differs shows:
+ * Rent went up 10% after it was paid (the pill keeps the 1,650 paid), Netflix
+ * was paid two days late, and Spotify's payment was removed from Activity, so
+ * it reads as skipped instead of overdue.
  */
-export const PastMonthAfterPriceRaise: Story = {
+export const PaidDiffersFromPlan: Story = {
   args: {
+    window: LAST_MONTH,
     items: recurrentFor("EXPENSE").map((i) => (i.id === "rt-rent" ? { ...i, amount: 1815 } : i)),
-    window: STORY_WINDOWS[STORY_WINDOWS.length - 2],
+    transactions: lastMonthRows
+      .filter((t) => t.recurrentTransactionId !== "rt-spotify")
+      .map((t) => {
+        if (t.recurrentTransactionId !== "rt-netflix") return t;
+        const at = t.occurredAt.toDate();
+        return {
+          ...t,
+          occurredAt: ts(new Date(at.getFullYear(), at.getMonth(), at.getDate() + 2, 9)),
+        };
+      }),
+    skipped: lastMonthRows
+      .filter((t) => t.recurrentTransactionId === "rt-spotify")
+      .map((t) => ({ ...t, status: "SKIPPED" as const })),
   },
 };

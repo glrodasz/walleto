@@ -13,8 +13,9 @@ import { sumMonthly } from "../../../helpers/aggregations";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import { paymentMethodOptionLabel } from "../../../helpers/paymentMethodLabel";
 import { tagNames } from "../../../helpers/tags";
+import { toDate } from "../../../helpers/chartData";
 import { monthOccurrences } from "../helpers/months";
-import type { MonthWindow, OccurrenceStatus } from "../helpers/months";
+import type { MonthOccurrence, MonthWindow, OccurrenceStatus } from "../helpers/months";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import { SLOT, splitSlot } from "../helpers/slot";
 import { useT } from "../../../hooks/useT";
@@ -37,6 +38,8 @@ interface Props {
   items: RecurrentTransaction[];
   /** The selected month's PAID transactions. */
   transactions: Transaction[];
+  /** The selected month's SKIPPED transactions: payments removed from Activity. */
+  skipped?: Transaction[];
   paymentMethods: PaymentMethod[];
   categories: Category[];
   /** The user's tags, to name an item's tag ids. */
@@ -71,13 +74,17 @@ const hiddenAction = (
       ]
     : [];
 
-const GROUPS: OccurrenceStatus[] = ["overdue", "due", "paid"];
+const NO_ROWS: Transaction[] = [];
+
+const GROUPS: OccurrenceStatus[] = ["overdue", "due", "paid", "skipped"];
 
 interface RowProps {
   name: string;
   meta: string;
   amount: ReactNode;
   status?: OccurrenceStatus;
+  /** What was paid, when it differs from the plan: rides the "Paid" pill. */
+  paidAmount?: string;
   accent: string;
   actions: KebabAction[];
   /** Hidden from the dashboard — flagged with the house, the sidebar's own
@@ -92,7 +99,28 @@ interface RowProps {
 }
 
 const STATUS_COLOR = (status: OccurrenceStatus, accent: string) =>
-  status === "overdue" ? "var(--negative)" : status === "paid" ? "var(--positive)" : accent;
+  status === "overdue"
+    ? "var(--negative)"
+    : status === "paid"
+      ? "var(--positive)"
+      : status === "skipped"
+        ? "var(--fg-2)"
+        : accent;
+
+function sameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+/** The paid row says something the plan doesn't: another amount, or a band confirmed. */
+const paidDiffers = ({ item, paid }: MonthOccurrence) =>
+  paid !== undefined &&
+  (paid.amount !== item.amount ||
+    paid.currency !== item.currency ||
+    paid.amountFloor !== item.amountFloor);
 
 /**
  * One checklist row: the shared ListItem, plus the two things only this list
@@ -103,6 +131,7 @@ function OccurrenceRow({
   meta,
   amount,
   status,
+  paidAmount,
   accent,
   actions,
   hidden,
@@ -135,21 +164,35 @@ function OccurrenceRow({
   ];
 
   return (
-    <ListItem
-      name={name}
-      badges={flags.length > 0 ? flags : undefined}
-      note={note}
-      meta={meta}
-      amount={amount}
-      amountMeta={
-        status ? (
-          <Badge color={STATUS_COLOR(status, accent)} caps>
-            {t(`plan.status.${status}`)}
-          </Badge>
-        ) : undefined
-      }
-      trailing={<KebabMenu aria-label={common("action.actionsFor", { name })} actions={actions} />}
-    />
+    <>
+      <ListItem
+        name={name}
+        badges={flags.length > 0 ? flags : undefined}
+        note={note}
+        meta={meta}
+        muted={status === "skipped"}
+        amount={amount}
+        amountMeta={
+          status ? (
+            <Badge color={STATUS_COLOR(status, accent)} caps>
+              {t(`plan.status.${status}`)}
+              {paidAmount && <span className="paid-amount">{paidAmount}</span>}
+            </Badge>
+          ) : undefined
+        }
+        trailing={
+          <KebabMenu aria-label={common("action.actionsFor", { name })} actions={actions} />
+        }
+      />
+      <style jsx>{`
+        .paid-amount {
+          font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
+          font-variant-numeric: tabular-nums;
+          text-transform: none;
+          letter-spacing: 0;
+        }
+      `}</style>
+    </>
   );
 }
 
@@ -162,6 +205,7 @@ export function RecurringChecklist({
   domain,
   items,
   transactions,
+  skipped = NO_ROWS,
   paymentMethods,
   categories,
   tags = [],
@@ -177,7 +221,7 @@ export function RecurringChecklist({
   busyId,
 }: Props) {
   const { formatDate, language } = useDateFormat();
-  const { formatAmount, formatNative } = useMoneyFormat();
+  const { formatAmount, formatNative, formatNativeRange } = useMoneyFormat();
   // A variable item reads as its band, "€400 – €600".
   const itemAmount = (item: Pick<RecurrentTransaction, "amount" | "amountFloor" | "currency">) =>
     item.amountFloor !== undefined ? (
@@ -192,8 +236,8 @@ export function RecurringChecklist({
   const common = useT(COMMON_MESSAGES);
   const config = DOMAIN_CONFIG[domain];
   const { occurrences, notThisMonth } = useMemo(
-    () => monthOccurrences(items, transactions, ctx, window, now),
-    [items, transactions, ctx, window, now]
+    () => monthOccurrences(items, transactions, ctx, window, now, skipped),
+    [items, transactions, ctx, window, now, skipped]
   );
   const runRate = useMemo(() => sumMonthly(items, ctx), [items, ctx]);
   // Where it is filed and how it is paid, both in full — the row is the one
@@ -206,6 +250,23 @@ export function RecurringChecklist({
       .map((part) => ` · ${part}`)
       .join("");
   };
+
+  // The row is the plan: its day and the item's price today. What the ledger
+  // says only shows when it differs — the day it moved to, the amount on the
+  // pill — so a paid month never reads as next month's price.
+  const occurrenceDate = (o: MonthOccurrence) => {
+    const planned = formatDate(o.occurredAt, "day");
+    const paidAt = o.paid ? toDate(o.paid.occurredAt) : null;
+    return paidAt && !sameDay(paidAt, o.occurredAt)
+      ? t("plan.moved", { planned, paid: formatDate(paidAt, "day") })
+      : planned;
+  };
+  const paidAmount = (o: MonthOccurrence) =>
+    o.paid && paidDiffers(o)
+      ? o.paid.amountFloor !== undefined
+        ? formatNativeRange(o.paid.amountFloor, o.paid.amount, o.paid.currency, currency)
+        : formatNative(o.paid.amount, o.paid.currency, currency)
+      : undefined;
 
   const [runRateBefore, runRateAfter] = splitSlot(t(`plan.runRate.${domain}`, { amount: SLOT }));
 
@@ -225,7 +286,8 @@ export function RecurringChecklist({
           {GROUPS.map((status) => {
             const rows = occurrences.filter((o) => o.status === status);
             if (rows.length === 0) return null;
-            const total = rows.reduce((sum, o) => sum + o.amount, 0);
+            // Skipped didn't happen: nothing to add up.
+            const total = status === "skipped" ? null : rows.reduce((sum, o) => sum + o.amount, 0);
             return (
               <section key={status} className="group">
                 <h3 className="group-title">
@@ -233,7 +295,9 @@ export function RecurringChecklist({
                   {/* The kebab's room on the right, so the total sits over the
                       rows' amounts. */}
                   <span className="group-end">
-                    <span className="group-total">{formatAmount(total, currency)}</span>
+                    {total !== null && (
+                      <span className="group-total">{formatAmount(total, currency)}</span>
+                    )}
                     <KebabSpacer />
                   </span>
                 </h3>
@@ -245,13 +309,14 @@ export function RecurringChecklist({
                       <OccurrenceRow
                         key={`${id}_${o.occurredAt.toISOString()}`}
                         name={o.item.name}
-                        meta={`${formatDate(o.occurredAt, "day")} · ${common(`frequency.${o.item.frequency}`)}${details(o.item)}`}
+                        meta={`${occurrenceDate(o)} · ${common(`frequency.${o.item.frequency}`)}${details(o.item)}`}
                         hidden={Boolean(o.item.hiddenFromDashboard)}
                         variable={o.item.amountFloor !== undefined}
                         labels={tagNames(o.item.tags, tags)}
                         note={o.item.note}
-                        amount={itemAmount(o.paid ?? o.item)}
+                        amount={itemAmount(o.item)}
                         status={o.status}
+                        paidAmount={paidAmount(o)}
                         accent={config.accent}
                         actions={[
                           ...(o.status !== "paid"

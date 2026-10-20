@@ -185,7 +185,7 @@ export function trailingAverage(
   return complete.reduce((sum, w) => sum + (totals[w.key] ?? 0), 0) / complete.length;
 }
 
-export type OccurrenceStatus = "paid" | "due" | "overdue";
+export type OccurrenceStatus = "paid" | "due" | "overdue" | "skipped";
 
 export interface MonthOccurrence {
   item: RecurrentTransaction;
@@ -215,17 +215,22 @@ function sameDay(a: Date, b: Date): boolean {
  * occurrence, or stands as a paid one of its own, so the checklist never
  * contradicts the ledger. A paid occurrence is worth what its row says, not
  * the item's current amount: raising the price must not rewrite past months.
- * Items with nothing this month are returned separately so the page can show
- * them collapsed.
+ * An occurrence whose row was removed from Activity (SKIPPED at its
+ * deterministic id) didn't happen: it is skipped, never overdue — the
+ * materializer will not write it again. Items with nothing this month are
+ * returned separately so the page can show them collapsed.
  */
 export function monthOccurrences(
   items: RecurrentTransaction[],
   transactions: Transaction[],
   ctx: MoneyContext,
   window: MonthWindow,
-  now: Date = new Date()
+  now: Date = new Date(),
+  /** The month's SKIPPED rows: payments removed from Activity. */
+  skipped: Transaction[] = []
 ): { occurrences: MonthOccurrence[]; notThisMonth: RecurrentTransaction[] } {
   const paidById = new Map(transactions.filter((t) => t.id).map((t) => [t.id!, t]));
+  const skippedIds = new Set(skipped.map((t) => t.id).filter(Boolean));
   const paidByItem = new Map<string, { id?: string; at: Date; row: Transaction }[]>();
   for (const t of transactions) {
     const at = toDate(t.occurredAt);
@@ -253,6 +258,10 @@ export function monthOccurrences(
     const open: Date[] = [];
     for (const occ of occs) {
       const id = occurrenceId(item.id, occ.occurredAt);
+      if (skippedIds.has(id) && !paidById.has(id)) {
+        occurrences.push({ item, occurredAt: occ.occurredAt, status: "skipped", amount });
+        continue;
+      }
       const match = unclaimed.findIndex((p) => p.id === id || sameDay(p.at, occ.occurredAt));
       const row = match !== -1 ? unclaimed.splice(match, 1)[0].row : paidById.get(id);
       if (row) {
