@@ -66,7 +66,10 @@ import {
 } from "../helpers/months";
 import { monthTotalsByCategory } from "../../../helpers/stacks";
 import type { StackedTotals } from "../../../helpers/stacks";
-import { useDomainTransactions } from "../../../hooks/useDomainTransactions";
+import {
+  useDomainTransactions,
+  useSkippedTransactions,
+} from "../../../hooks/useDomainTransactions";
 import { useCategories } from "../../../hooks/useCategories";
 import { useRecurrentTransactions, markItemPaid } from "../../../hooks/useRecurrentTransactions";
 import { usePaymentMethods } from "../../../hooks/usePaymentMethods";
@@ -207,6 +210,13 @@ export function DomainPage({ domain }: Props) {
   } = useDomainTransactions(
     domain,
     accountDomain ? INCEPTION : spreadLookback(items, windows[0].start)
+  );
+  // Payments removed from Activity: the Plan shows them as skipped, not overdue.
+  const { transactions: skippedTransactions } = useSkippedTransactions(
+    domain,
+    window.start,
+    window.end,
+    view === "plan"
   );
   const {
     categories,
@@ -810,6 +820,7 @@ export function DomainPage({ domain }: Props) {
         domain={domain}
         items={items}
         transactions={monthTransactions}
+        skipped={skippedTransactions}
         paymentMethods={methods}
         categories={categories}
         tags={tags}

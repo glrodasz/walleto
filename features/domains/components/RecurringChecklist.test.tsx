@@ -165,6 +165,43 @@ describe("RecurringChecklist", () => {
     expect(onStop).toHaveBeenCalledWith("Gym");
   });
 
+  it("reads as the plan, with what was paid on the pill only when it differs", () => {
+    // Netflix went up to 180 after September's 150 was paid on the 5th, not the 3rd.
+    const raised = { ...netflix, amount: 180 };
+    setup({
+      items: [rent, raised, gym],
+      transactions: [{ ...paidNetflix, occurredAt: ts(new Date(2026, 8, 5, 12)) }],
+    });
+    const row = screen.getByText("Netflix").closest("li")!;
+    expect(within(row).getByText("$180.00")).toBeInTheDocument();
+    expect(within(row).getByText("Paid").textContent).toBe("Paid$150.00");
+    expect(within(row).getByText(/^Sep 3 → Sep 5 · Monthly/)).toBeInTheDocument();
+  });
+
+  it("adds nothing when the payment matches the plan", () => {
+    setup();
+    const row = screen.getByText("Netflix").closest("li")!;
+    expect(within(row).getByText("Paid").textContent).toBe("Paid");
+    expect(within(row).getByText(/^Sep 3 · Monthly/)).toBeInTheDocument();
+  });
+
+  it("shows a payment removed from Activity as skipped, not overdue", () => {
+    const { onMarkPaid } = setup({
+      transactions: [],
+      skipped: [{ ...paidNetflix, status: "SKIPPED" }],
+    });
+    const row = screen.getByText("Netflix").closest("li")!;
+    expect(within(row).getByText("Skipped")).toBeInTheDocument();
+    expect(row).toHaveClass("is-muted");
+    const groups = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
+    expect(groups[groups.length - 1]).toBe("Skipped");
+
+    // Marking it paid writes the payment back.
+    fireEvent.click(screen.getByRole("button", { name: "Actions for Netflix" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Mark as paid" }));
+    expect(onMarkPaid).toHaveBeenCalledWith("Netflix", new Date(2026, 8, 3, 12));
+  });
+
   it("shows the empty state without items", () => {
     setup({ items: [], transactions: [] });
     expect(screen.getByText(/Nothing in your plan yet/)).toBeInTheDocument();

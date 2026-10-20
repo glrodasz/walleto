@@ -12,7 +12,7 @@ import { useTags } from "../../hooks/useTags";
 import { usePaymentMethods } from "../../hooks/usePaymentMethods";
 import { useAccounts } from "../../hooks/useAccounts";
 import { useRecurrentTransactions } from "../../hooks/useRecurrentTransactions";
-import { useDomainTransactions } from "../../hooks/useDomainTransactions";
+import { useDomainTransactions, useSkippedTransactions } from "../../hooks/useDomainTransactions";
 import { useAllInvestmentValuations } from "../../hooks/useInvestmentValuations";
 import { useMaterialize } from "../../hooks/useMaterialize";
 import { useUpcomingItems } from "../../features/dashboard/hooks/useUpcomingItems";
@@ -30,6 +30,9 @@ export function resetStoryMocks() {
     .mockReset()
     .mockImplementation(hookDefaults.useRecurrentTransactions);
   mocked(useDomainTransactions).mockReset().mockImplementation(hookDefaults.useDomainTransactions);
+  mocked(useSkippedTransactions)
+    .mockReset()
+    .mockImplementation(hookDefaults.useSkippedTransactions);
   mocked(useAllInvestmentValuations)
     .mockReset()
     .mockImplementation(hookDefaults.useAllInvestmentValuations);

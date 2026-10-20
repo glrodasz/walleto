@@ -252,6 +252,27 @@ describe("monthOccurrences", () => {
     expect(occurrences.map((o) => o.status)).toEqual(["paid"]);
   });
 
+  it("marks an occurrence removed from Activity as skipped, not overdue", () => {
+    const due = new Date(2026, 8, 3, 12);
+    const removed = tx(occurrenceId("salary", due), 57_650, due, {
+      recurrentTransactionId: "salary",
+      status: "SKIPPED",
+    });
+    const { occurrences } = monthOccurrences([salary], [], ctx, sep, now, [removed]);
+    expect(occurrences).toEqual([
+      { item: salary, occurredAt: due, status: "skipped", amount: 57_650 },
+    ]);
+  });
+
+  it("lets a payment written again over a removed occurrence win", () => {
+    const due = new Date(2026, 8, 3, 12);
+    const id = occurrenceId("salary", due);
+    const paid = tx(id, 57_650, due, { recurrentTransactionId: "salary" });
+    const removed = { ...paid, status: "SKIPPED" as const };
+    const { occurrences } = monthOccurrences([salary], [paid], ctx, sep, now, [removed]);
+    expect(occurrences.map((o) => o.status)).toEqual(["paid"]);
+  });
+
   it("ignores the item's payments from other months", () => {
     const august = new Date(2026, 7, 28, 12);
     const paid = tx(occurrenceId("fiber", august), 439, august, {

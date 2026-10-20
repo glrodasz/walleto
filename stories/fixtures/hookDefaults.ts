@@ -28,6 +28,7 @@ type Hooks = {
   useAccounts: typeof import("../../hooks/useAccounts").useAccounts;
   useRecurrentTransactions: typeof import("../../hooks/useRecurrentTransactions").useRecurrentTransactions;
   useDomainTransactions: typeof import("../../hooks/useDomainTransactions").useDomainTransactions;
+  useSkippedTransactions: typeof import("../../hooks/useDomainTransactions").useSkippedTransactions;
   useAllInvestmentValuations: typeof import("../../hooks/useInvestmentValuations").useAllInvestmentValuations;
   useMaterialize: typeof import("../../hooks/useMaterialize").useMaterialize;
   useUpcomingItems: typeof import("../../features/dashboard/hooks/useUpcomingItems").useUpcomingItems;
@@ -135,6 +136,11 @@ const useDomainTransactions: Hooks["useDomainTransactions"] = memo(
   })
 );
 
+const useSkippedTransactions: Hooks["useSkippedTransactions"] = memo(
+  () => "skipped",
+  () => ({ transactions: [] })
+);
+
 const useAllInvestmentValuations: Hooks["useAllInvestmentValuations"] = memo(
   () => "valuations",
   () => ({ valuations: STORY_VALUATIONS, loading: false, error: null })
@@ -157,6 +163,7 @@ export const hookDefaults: Hooks = {
   useAccounts,
   useRecurrentTransactions,
   useDomainTransactions,
+  useSkippedTransactions,
   useAllInvestmentValuations,
   useMaterialize,
   useUpcomingItems,
