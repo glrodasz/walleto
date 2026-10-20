@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { createPortal } from "react-dom";
-import { Check, ChevronDown } from "../atoms/Icons";
+import { Check, ChevronDown, Shuffle } from "../atoms/Icons";
 import { useOverlayLayer } from "../../hooks/useOverlayLayer";
 import { useT } from "../../hooks/useT";
 import { UI_MESSAGES } from "../../messages/ui";
@@ -152,6 +152,10 @@ export function ScenarioPicker({ value, onChange }: Props) {
           }
         }}
       >
+        {/* The same mark as the "Variable" tag on Plan and Activity rows. */}
+        <span className="icon" aria-hidden="true">
+          <Shuffle size={16} />
+        </span>
         <span className="value">{current}</span>
         <span className="chevron" aria-hidden="true">
           <ChevronDown size={14} />
@@ -214,6 +218,7 @@ export function ScenarioPicker({ value, onChange }: Props) {
           cursor: pointer;
         }
 
+        .icon,
         .chevron {
           display: inline-flex;
           color: var(--fg-2);
@@ -298,7 +303,8 @@ export function ScenarioPicker({ value, onChange }: Props) {
           }
 
           .trigger {
-            padding: 0 10px;
+            padding: 0 10px 0 9px;
+            gap: 5px;
           }
 
           .option {

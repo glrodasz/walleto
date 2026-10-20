@@ -221,9 +221,9 @@ export function PageLayout({
           }
         }
 
-        /* The very narrowest screens scroll the row sideways rather than
-           widen the page. */
-        @media (max-width: 359px) {
+        /* Narrow phones scroll the row sideways rather than widen the page
+           when the longest pick ("Promedio") doesn't fit. */
+        @media (max-width: 379px) {
           .controls {
             gap: 4px;
             overflow-x: auto;
