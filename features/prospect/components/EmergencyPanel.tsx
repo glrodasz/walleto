@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card } from "../../../components/atoms/Card";
 import { CheckboxField } from "../../../components/atoms/CheckboxField";
+import { InfoTip } from "../../../components/atoms/InfoTip";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { Select } from "../../../components/atoms/Select";
 import { TextField } from "../../../components/atoms/TextField";
@@ -131,8 +132,10 @@ export function EmergencyPanel({
         />
         {plan.includeInvestments && accounts.length > 0 && (
           <fieldset className="accounts">
-            <legend className="legend">{t("panel.accounts")}</legend>
-            <p className="note">{t("panel.accountsHint")}</p>
+            <legend className="legend">
+              {t("panel.accounts")}
+              <InfoTip label={t("panel.accountsAbout")}>{t("panel.accountsHint")}</InfoTip>
+            </legend>
             {accounts.map((a) => (
               <CheckboxField
                 key={a.id}
@@ -185,17 +188,13 @@ export function EmergencyPanel({
         }
 
         .legend {
+          display: flex;
+          align-items: center;
+          gap: 6px;
           padding: 0;
           font-size: 0.75rem;
           font-weight: 600;
           color: var(--fg-1);
-        }
-
-        .note {
-          margin: -4px 0 0;
-          font-size: 0.75rem;
-          line-height: 1.4;
-          color: var(--fg-2);
         }
 
         .error {
