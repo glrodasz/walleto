@@ -211,11 +211,12 @@ export function DomainPage({ domain }: Props) {
     domain,
     accountDomain ? INCEPTION : spreadLookback(items, windows[0].start)
   );
-  // Payments removed from Activity: the Plan shows them as skipped, not overdue.
+  // Payments removed from Activity: the Plan shows them as skipped, not
+  // overdue. From the first month on the page, like the ledger: a removed
+  // payment may have been moved to another month first.
   const { transactions: skippedTransactions, error: skippedError } = useSkippedTransactions(
     domain,
-    window.start,
-    window.end,
+    windows[0].start,
     view === "plan"
   );
   const {
@@ -819,7 +820,7 @@ export function DomainPage({ domain }: Props) {
       <RecurringChecklist
         domain={domain}
         items={items}
-        transactions={monthTransactions}
+        transactions={transactions}
         skipped={skippedTransactions}
         paymentMethods={methods}
         categories={categories}

@@ -90,3 +90,29 @@ export const PaidDiffersFromPlan: Story = {
       .map((t) => ({ ...t, status: "SKIPPED" as const })),
   },
 };
+
+const nextMonthDay = (t: Transaction) => {
+  const at = t.occurredAt.toDate();
+  return ts(new Date(at.getFullYear(), at.getMonth() + 1, 1, 9));
+};
+
+/**
+ * Last month, with payments re-dated into this month in Activity: Netflix
+ * still reads as paid in its own month (with the day it moved to), and
+ * Spotify, moved and then removed, reads as skipped — not overdue.
+ */
+export const PaymentMovedToNextMonth: Story = {
+  args: {
+    window: LAST_MONTH,
+    transactions: transactionsFor("EXPENSE")
+      .filter((t) => !(inLastMonth(t) && t.recurrentTransactionId === "rt-spotify"))
+      .map((t) =>
+        inLastMonth(t) && t.recurrentTransactionId === "rt-netflix"
+          ? { ...t, occurredAt: nextMonthDay(t) }
+          : t
+      ),
+    skipped: lastMonthRows
+      .filter((t) => t.recurrentTransactionId === "rt-spotify")
+      .map((t) => ({ ...t, occurredAt: nextMonthDay(t), status: "SKIPPED" as const })),
+  },
+};

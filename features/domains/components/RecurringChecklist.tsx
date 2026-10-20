@@ -36,9 +36,10 @@ import { useDateFormat } from "../../../hooks/usePreferences";
 interface Props {
   domain: Domain;
   items: RecurrentTransaction[];
-  /** The selected month's PAID transactions. */
+  /** PAID transactions. Not just the month's: a payment moved to another
+   *  month still settles its own occurrence, matched by id. */
   transactions: Transaction[];
-  /** The selected month's SKIPPED transactions: payments removed from Activity. */
+  /** SKIPPED transactions: payments removed from Activity, matched by id. */
   skipped?: Transaction[];
   paymentMethods: PaymentMethod[];
   categories: Category[];

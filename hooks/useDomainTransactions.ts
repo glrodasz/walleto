@@ -43,11 +43,13 @@ export function useDomainTransactions(domain: Domain, startDate: Date) {
 }
 
 /**
- * The month's SKIPPED rows: payments removed from Activity. Only the Plan
- * reads them, to tell an occurrence that didn't happen from an overdue one.
- * Same composite index as the PAID query (status is an equality filter).
+ * SKIPPED rows from `startDate` on: payments removed from Activity. Only the
+ * Plan reads them, to tell an occurrence that didn't happen from an overdue
+ * one — by its deterministic id, so a payment moved to another month before
+ * it was removed still finds its occurrence. Same composite index as the
+ * PAID query (status is an equality filter).
  */
-export function useSkippedTransactions(domain: Domain, start: Date, end: Date, enabled = true) {
+export function useSkippedTransactions(domain: Domain, startDate: Date, enabled = true) {
   const { user } = useUser();
   const { ready } = useFirebaseAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -61,8 +63,7 @@ export function useSkippedTransactions(domain: Domain, start: Date, end: Date, e
       where("userId", "==", user.sub),
       where("domain", "==", domain),
       where("status", "==", "SKIPPED"),
-      where("occurredAt", ">=", Timestamp.fromDate(start)),
-      where("occurredAt", "<", Timestamp.fromDate(end)),
+      where("occurredAt", ">=", Timestamp.fromDate(startDate)),
       orderBy("occurredAt", "asc")
     );
 
@@ -78,7 +79,7 @@ export function useSkippedTransactions(domain: Domain, start: Date, end: Date, e
         setError(err instanceof Error ? err : new Error(String(err)));
       }
     );
-  }, [enabled, ready, user?.sub, domain, start.getTime(), end.getTime()]);
+  }, [enabled, ready, user?.sub, domain, startDate.getTime()]);
 
   return enabled ? { transactions, error } : { transactions: [], error: null };
 }
