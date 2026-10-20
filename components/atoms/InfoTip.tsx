@@ -4,6 +4,8 @@ import { Info } from "./Icons";
 
 /** Room the bubble keeps from either edge of the viewport. */
 const GUTTER = 16;
+/** How far left of the trigger the bubble starts: the CSS `left: -8px`. */
+const BUBBLE_OFFSET = 8;
 
 // useLayoutEffect warns during SSR; the measurement only matters in the browser.
 const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
@@ -24,9 +26,11 @@ interface Props {
 /**
  * An "i" that explains something on hover, keyboard focus or tap. Hover and
  * focus are pure CSS; a tap toggles it (touch has no hover) and a tap outside
- * or Escape closes it. The bubble is always in the DOM — hidden, not
- * unmounted — so the trigger's `aria-describedby` always resolves, and so it
- * can be measured and nudged back inside the viewport before it shows.
+ * or Escape closes it. The bubble is always in the DOM — so the trigger's
+ * `aria-describedby` always resolves — but takes no box while closed: a hidden
+ * bubble near the right edge still widens the page, and a phone zooms out to
+ * fit it, leaving a blank strip down the right side. It is measured and
+ * nudged back inside the viewport each time it shows.
  */
 export function InfoTip({ label, children, placement = "top", trigger }: Props) {
   const id = useId();
@@ -36,14 +40,26 @@ export function InfoTip({ label, children, placement = "top", trigger }: Props) 
   // Escape has to beat hover and focus too, until the pointer or focus leaves.
   const [dismissed, setDismissed] = useState(false);
 
-  // Written straight to the element, not through state: the measurement has
-  // to see the unshifted position, and there is nothing else to re-render.
+  // Written straight to the element, not through state: there is nothing
+  // else to re-render. The bubble is measured pinned to the viewport's left
+  // edge, never where it would land: a phone widens its layout viewport for
+  // any box that spills past it, even for the one layout that measures it,
+  // and doesn't narrow it again.
   const nudge = useCallback(() => {
+    const root = rootRef.current;
     const bubble = bubbleRef.current;
-    if (!bubble || typeof window === "undefined") return;
+    if (!root || !bubble || typeof window === "undefined") return;
     bubble.style.transform = "";
-    const { left, right } = bubble.getBoundingClientRect();
-    // The layout width, not innerWidth: on a phone a bubble that already
+    bubble.style.position = "fixed";
+    bubble.style.left = "0px";
+    const { width } = bubble.getBoundingClientRect();
+    const left = root.getBoundingClientRect().left - BUBBLE_OFFSET;
+    bubble.style.position = "";
+    bubble.style.left = "";
+    // Closed, it has no box to measure.
+    if (!width) return;
+    const right = left + width;
+    // The layout width, not innerWidth: on a phone a page that already
     // spills over widens innerWidth with it, so it would never look too wide.
     const max = document.documentElement.clientWidth - GUTTER;
     let shift = 0;
@@ -53,10 +69,14 @@ export function InfoTip({ label, children, placement = "top", trigger }: Props) 
   }, []);
 
   useIsomorphicLayoutEffect(() => {
-    nudge();
     window.addEventListener("resize", nudge);
     return () => window.removeEventListener("resize", nudge);
   }, [nudge]);
+
+  // A tap opens it through state, so it only has a box after this render.
+  useIsomorphicLayoutEffect(() => {
+    if (open) nudge();
+  }, [open, nudge]);
 
   useEffect(() => {
     if (!open && !dismissed) return;
@@ -95,7 +115,6 @@ export function InfoTip({ label, children, placement = "top", trigger }: Props) 
         onClick={(event) => {
           // Inside a <label>, a click must not also toggle the labelled control.
           event.preventDefault();
-          nudge();
           setDismissed(false);
           setOpen((current) => !current);
         }}
@@ -170,12 +189,13 @@ export function InfoTip({ label, children, placement = "top", trigger }: Props) 
           color: var(--fg-1);
           text-align: left;
           white-space: normal;
-          visibility: hidden;
-          opacity: 0;
-          pointer-events: none;
-          transition:
-            opacity 0.12s ease,
-            visibility 0.12s;
+          display: none;
+        }
+
+        @keyframes infotip-in {
+          from {
+            opacity: 0;
+          }
         }
 
         .bubble--top {
@@ -188,24 +208,20 @@ export function InfoTip({ label, children, placement = "top", trigger }: Props) 
 
         .is-open .bubble,
         .trigger:focus-visible + .bubble {
-          visibility: visible;
-          opacity: 1;
-          pointer-events: auto;
+          display: block;
+          animation: infotip-in 0.12s ease;
         }
 
         @media (hover: hover) {
           .infotip:hover .bubble {
-            visibility: visible;
-            opacity: 1;
-            pointer-events: auto;
+            display: block;
+            animation: infotip-in 0.12s ease;
           }
         }
 
         /* Escape wins over hover and focus until the pointer or focus leaves. */
         .infotip.is-dismissed .trigger + .bubble {
-          visibility: hidden;
-          opacity: 0;
-          pointer-events: none;
+          display: none;
         }
       `}</style>
     </span>

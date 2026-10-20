@@ -70,7 +70,7 @@ describe("InfoTip near the right edge", () => {
     Element.prototype.getBoundingClientRect = rect;
   });
 
-  it("keeps the hidden bubble inside the layout width, even when the window reads wider", () => {
+  it("keeps the bubble inside the layout width when it opens, even when the window reads wider", () => {
     // A phone whose page already spilled over: innerWidth grew, the layout didn't.
     Object.defineProperty(window, "innerWidth", { configurable: true, value: 616 });
     Object.defineProperty(document.documentElement, "clientWidth", {
@@ -78,10 +78,21 @@ describe("InfoTip near the right edge", () => {
       value: 390,
     });
     Element.prototype.getBoundingClientRect = function () {
-      return { left: 330, right: 610, top: 0, bottom: 0, width: 280, height: 0 } as DOMRect;
+      return { left: 338, right: 618, top: 0, bottom: 0, width: 280, height: 0 } as DOMRect;
     };
     render(<InfoTip label="About scenarios">Best uses the low end.</InfoTip>);
+    fireEvent.click(screen.getByRole("button", { name: "About scenarios" }));
     const bubble = screen.getByText("Best uses the low end.").closest(".bubble") as HTMLElement;
     expect(bubble.style.transform).toBe("translateX(-236px)");
+  });
+
+  it("measures nothing while closed: a hidden bubble has no box", () => {
+    Element.prototype.getBoundingClientRect = function () {
+      return { left: 0, right: 0, top: 0, bottom: 0, width: 0, height: 0 } as DOMRect;
+    };
+    render(<InfoTip label="About scenarios">Best uses the low end.</InfoTip>);
+    window.dispatchEvent(new Event("resize"));
+    const bubble = screen.getByText("Best uses the low end.").closest(".bubble") as HTMLElement;
+    expect(bubble.style.transform).toBe("");
   });
 });
