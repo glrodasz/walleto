@@ -176,9 +176,9 @@ export function EmergencyPanel({
           margin-top: 14px;
         }
 
-        /* Nested under the toggle it refines: indented past its checkbox. */
+        /* Nested under the toggle it refines: a light indent. */
         .accounts {
-          margin: 12px 0 0 26px;
+          margin: 14px 0 0 12px;
           padding: 0;
           border: 0;
           display: flex;
@@ -191,6 +191,8 @@ export function EmergencyPanel({
           display: flex;
           align-items: center;
           gap: 6px;
+          /* A legend sits outside the fieldset's flex gap. */
+          margin-bottom: 14px;
           padding: 0;
           font-size: 0.75rem;
           font-weight: 600;
