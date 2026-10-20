@@ -145,6 +145,8 @@ export const AccountInputSchema = z.object({
   provider: z.string().max(60).trim().optional(),
   currency: CurrencySchema,
   interestRate: InterestRateSchema.optional(),
+  /** INVESTMENT only; the route rejects it elsewhere. Omitted = available. */
+  emergencyAvailable: z.boolean().optional(),
 });
 
 export const AccountUpdateSchema = z
@@ -154,6 +156,8 @@ export const AccountUpdateSchema = z
     provider: z.string().max(60).trim().nullable().optional(),
     currency: CurrencySchema.optional(),
     interestRate: InterestRateSchema.nullable().optional(),
+    /** INVESTMENT only; the route rejects it elsewhere. */
+    emergencyAvailable: z.boolean().optional(),
     archived: z.boolean().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "At least one field is required" });

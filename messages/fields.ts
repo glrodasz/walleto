@@ -30,6 +30,9 @@ export const FIELD_MESSAGES = defineMessages(
     "account.period": "Period",
     "account.period.YEARLY": "Yearly",
     "account.period.MONTHLY": "Monthly",
+    "account.emergency": "Available in an emergency",
+    "account.emergencyHint":
+      "Emergency mode can sell it for cash. Untick it for a pension or a locked deposit.",
 
     "category.typeName": "Type a name",
     "category.pickIcon": "Pick an icon (optional)",
@@ -123,6 +126,9 @@ export const FIELD_MESSAGES = defineMessages(
     "account.period": "Período",
     "account.period.YEARLY": "Anual",
     "account.period.MONTHLY": "Mensual",
+    "account.emergency": "Disponible en una emergencia",
+    "account.emergencyHint":
+      "El modo emergencia puede venderla para tener efectivo. Desmárcala si es una pensión o un depósito bloqueado.",
 
     "category.typeName": "Escribe un nombre",
     "category.pickIcon": "Elige un ícono (opcional)",

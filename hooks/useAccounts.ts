@@ -3,6 +3,7 @@ import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { db } from "../firebase/client";
 import { useFirebaseAuth } from "./useFirebaseAuth";
+import { pickBooleans, useOptimisticPatches } from "./useOptimisticPatches";
 import { sortAccountsByLabel } from "../helpers/accounts";
 import type { Account, AccountDomain } from "../types";
 import type { AccountInput, AccountUpdate } from "../schemas";
@@ -69,12 +70,18 @@ export function useAccounts(domain: AccountDomain | "ALL" | null) {
     );
   }, [ready, user?.sub, domain]);
 
+  // A flag flipped with a tap (emergencyAvailable) paints before the
+  // listener catches up — see useOptimisticPatches.
+  const optimistic = useOptimisticPatches(accounts);
+  const update = (id: string, patch: AccountUpdate) =>
+    optimistic.apply(id, pickBooleans(patch), () => updateAccount(id, patch));
+
   return {
-    accounts,
+    accounts: optimistic.docs,
     loading: domain ? loading : false,
     error,
     create: createAccount,
-    update: updateAccount,
+    update,
     remove: removeAccount,
   };
 }

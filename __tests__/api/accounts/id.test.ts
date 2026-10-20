@@ -91,6 +91,22 @@ describe("PATCH /api/accounts/[id]", () => {
     await handler(req("PATCH", { interestRate: { value: 0.3, period: "MONTHLY" } }), res);
     expect(update).toHaveBeenCalledWith({ interestRate: { value: 0.3, period: "MONTHLY" } });
   });
+
+  it("marks an investment account as not available in an emergency", async () => {
+    const update = wireDoc({ userId: "user1", domain: "INVESTMENT" });
+    const res = mockRes();
+    await handler(req("PATCH", { emergencyAvailable: false }), res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(update).toHaveBeenCalledWith({ emergencyAvailable: false });
+  });
+
+  it("rejects the emergency flag outside investments", async () => {
+    const update = wireDoc({ userId: "user1", domain: "SAVING" });
+    const res = mockRes();
+    await handler(req("PATCH", { emergencyAvailable: false }), res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(update).not.toHaveBeenCalled();
+  });
 });
 
 describe("DELETE /api/accounts/[id]", () => {

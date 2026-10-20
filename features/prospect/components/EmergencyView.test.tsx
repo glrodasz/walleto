@@ -1,12 +1,22 @@
-import { render, screen } from "@testing-library/react";
-import type { EmergencyPlan } from "../../../types";
+import { fireEvent, render, screen } from "@testing-library/react";
+import type { Account, EmergencyPlan } from "../../../types";
 
-type Value = { value: number; loading: boolean; error: Error | null };
+type Value = {
+  value: number;
+  loading: boolean;
+  error: Error | null;
+  rows?: { selector: { accountId: string } | { domain: string }; value: number }[];
+};
 let values: Record<"SAVING" | "INVESTMENT", Value>;
 let planState: { plan: EmergencyPlan; loading: boolean };
+let accounts: Partial<Account>[];
+const updateAccount = jest.fn(async () => {});
 
 jest.mock("../../investments/hooks/useDomainValue", () => ({
   useDomainValue: (domain: "SAVING" | "INVESTMENT") => ({ rows: [], ...values[domain] }),
+}));
+jest.mock("../../../hooks/useAccounts", () => ({
+  useAccounts: () => ({ accounts, update: updateAccount }),
 }));
 jest.mock("../hooks/useEmergencyPlan", () => ({
   useEmergencyPlan: () => ({ ...planState, save: jest.fn(), error: null }),
@@ -48,6 +58,8 @@ beforeEach(() => {
     INVESTMENT: { value: 0, loading: false, error: null },
   };
   planState = { plan, loading: false };
+  accounts = [];
+  updateAccount.mockClear();
 });
 
 describe("EmergencyView", () => {
@@ -74,6 +86,29 @@ describe("EmergencyView", () => {
     planState = { plan: { ...plan, includeInvestments: true }, loading: false };
     view();
     expect(screen.getByText("Couldn't read your savings")).toBeInTheDocument();
+  });
+
+  it("counts only the investment accounts that could be sold", () => {
+    accounts = [
+      { id: "isk", name: "ISK" },
+      { id: "pension", name: "Pension", emergencyAvailable: false },
+    ];
+    values.INVESTMENT = {
+      value: 70_000,
+      loading: false,
+      error: null,
+      rows: [
+        { selector: { accountId: "isk" }, value: 20_000 },
+        { selector: { accountId: "pension" }, value: 50_000 },
+      ],
+    };
+    planState = { plan: { ...plan, includeInvestments: true }, loading: false };
+    view();
+    expect(screen.getByText(/20,000.* today, if sold/)).toBeInTheDocument();
+    expect(screen.getByText(/50,000.* today · stays invested/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText(/Pension/));
+    expect(updateAccount).toHaveBeenCalledWith("pension", { emergencyAvailable: true });
   });
 
   it("holds the runway and the panel until the saved plan arrives", () => {

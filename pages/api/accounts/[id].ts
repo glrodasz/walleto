@@ -33,7 +33,10 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
-    const { name, provider, currency, interestRate, archived } = parsed.data;
+    const { name, provider, currency, interestRate, emergencyAvailable, archived } = parsed.data;
+    if (emergencyAvailable !== undefined && snap.data()?.domain !== "INVESTMENT") {
+      return res.status(400).json({ error: "Only investment accounts are sold in an emergency" });
+    }
 
     const del = admin.firestore.FieldValue.delete();
     await ref.update({
@@ -41,6 +44,7 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       ...(provider !== undefined ? { provider: provider || del } : {}),
       ...(currency !== undefined ? { currency } : {}),
       ...(interestRate !== undefined ? { interestRate: interestRate ?? del } : {}),
+      ...(emergencyAvailable !== undefined ? { emergencyAvailable } : {}),
       ...(archived !== undefined ? { archived } : {}),
     });
     return res.status(200).json({ id });

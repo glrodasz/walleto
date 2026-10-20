@@ -11,6 +11,7 @@ describe("accountDraft", () => {
       currency: "SEK",
       rate: "",
       period: "YEARLY",
+      emergencyAvailable: true,
     });
   });
 
@@ -33,6 +34,7 @@ describe("accountDraft", () => {
       currency: "SEK",
       rate: "2.5",
       period: "MONTHLY",
+      emergencyAvailable: true,
     });
   });
 
@@ -52,8 +54,37 @@ describe("accountDraft", () => {
   it("reads empty optionals as null and trims", () => {
     const draft = { ...emptyAccountDraft("USD"), name: " ISK ", provider: " " };
     expect(readAccountDraft(draft, parse, "INVESTMENT")).toEqual({
-      values: { name: "ISK", provider: null, currency: "USD", interestRate: null },
+      values: {
+        name: "ISK",
+        provider: null,
+        currency: "USD",
+        interestRate: null,
+        emergencyAvailable: true,
+      },
     });
+  });
+
+  it("carries an investment's emergency mark, and only an investment's", () => {
+    const draft = { ...emptyAccountDraft("SEK"), name: "Pension", emergencyAvailable: false };
+    const investment = readAccountDraft(draft, parse, "INVESTMENT");
+    expect("values" in investment && investment.values.emergencyAvailable).toBe(false);
+    const saving = readAccountDraft(draft, parse, "SAVING");
+    expect("values" in saving && saving.values).not.toHaveProperty("emergencyAvailable");
+  });
+
+  it("prefills an investment marked as not available", () => {
+    const draft = accountDraftOf(
+      {
+        id: "p",
+        userId: "u",
+        domain: "INVESTMENT",
+        name: "Pension",
+        currency: "SEK",
+        emergencyAvailable: false,
+      },
+      String
+    );
+    expect(draft.emergencyAvailable).toBe(false);
   });
 
   it("reads a comma-typed rate with its period", () => {
