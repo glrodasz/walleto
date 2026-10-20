@@ -34,7 +34,7 @@ export const UI_MESSAGES = defineMessages(
     "scenario.floor": "Best",
     "scenario.average": "Average",
     "scenario.top": "Worst",
-    "scenario.about": "About the scenario",
+    "scenario.current": "Variable expenses count at {scenario}",
     "scenario.hint": "Best uses the low end of each range, Worst the high end.",
 
     "delta.up": "Up {pct}%",
@@ -83,7 +83,7 @@ export const UI_MESSAGES = defineMessages(
     "scenario.floor": "Mejor",
     "scenario.average": "Promedio",
     "scenario.top": "Peor",
-    "scenario.about": "Sobre el escenario",
+    "scenario.current": "Los gastos variables cuentan en {scenario}",
     "scenario.hint": "Mejor usa el extremo bajo de cada rango; Peor, el alto.",
 
     "delta.up": "Sube {pct}%",
