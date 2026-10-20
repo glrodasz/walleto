@@ -205,6 +205,31 @@ function sameDay(a: Date, b: Date): boolean {
   );
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Whether `id` is the deterministic id of one of the item's occurrences
+ * outside the window: that row belongs to its own month, even after its date
+ * was moved into this one.
+ */
+function ownsOccurrenceElsewhere(
+  item: RecurrentTransaction,
+  id: string,
+  window: MonthWindow
+): boolean {
+  const prefix = `${item.id}_`;
+  if (!id.startsWith(prefix)) return false;
+  const day = new Date(`${id.slice(prefix.length)}T00:00:00Z`);
+  if (Number.isNaN(day.getTime())) return false;
+  // The id's date is UTC: the occurrence sits within a day of it either side.
+  const occ = materializeOccurrences(
+    item,
+    new Date(day.getTime() - DAY_MS),
+    new Date(day.getTime() + 2 * DAY_MS)
+  ).find((o) => occurrenceId(item.id!, o.occurredAt) === id);
+  return occ !== undefined && (occ.occurredAt < window.start || occ.occurredAt >= window.end);
+}
+
 /**
  * The month's checklist: each active item's occurrences inside the window,
  * marked paid when a PAID transaction sits at the deterministic id (or on the
@@ -217,8 +242,13 @@ function sameDay(a: Date, b: Date): boolean {
  * the item's current amount: raising the price must not rewrite past months.
  * An occurrence whose row was removed from Activity (SKIPPED at its
  * deterministic id) didn't happen: it is skipped, never overdue — the
- * materializer will not write it again. Items with nothing this month are
- * returned separately so the page can show them collapsed.
+ * materializer will not write it again. A row at an occurrence's
+ * deterministic id belongs to that occurrence's month wherever its date was
+ * moved to, so `transactions` and `skipped` may reach past the window: a
+ * payment re-dated into another month still settles (or skips) its own
+ * occurrence, and never settles one of the month it landed in. Items with
+ * nothing this month are returned separately so the page can show them
+ * collapsed.
  */
 export function monthOccurrences(
   items: RecurrentTransaction[],
@@ -226,15 +256,18 @@ export function monthOccurrences(
   ctx: MoneyContext,
   window: MonthWindow,
   now: Date = new Date(),
-  /** The month's SKIPPED rows: payments removed from Activity. */
+  /** SKIPPED rows: payments removed from Activity. */
   skipped: Transaction[] = []
 ): { occurrences: MonthOccurrence[]; notThisMonth: RecurrentTransaction[] } {
+  const itemsById = new Map(items.filter((i) => i.id).map((i) => [i.id!, i]));
   const paidById = new Map(transactions.filter((t) => t.id).map((t) => [t.id!, t]));
   const skippedIds = new Set(skipped.map((t) => t.id).filter(Boolean));
   const paidByItem = new Map<string, { id?: string; at: Date; row: Transaction }[]>();
   for (const t of transactions) {
     const at = toDate(t.occurredAt);
     if (!t.recurrentTransactionId || at < window.start || at >= window.end) continue;
+    const item = itemsById.get(t.recurrentTransactionId);
+    if (item && t.id && ownsOccurrenceElsewhere(item, t.id, window)) continue;
     const list = paidByItem.get(t.recurrentTransactionId) ?? [];
     list.push({ id: t.id, at, row: t });
     paidByItem.set(t.recurrentTransactionId, list);
@@ -262,7 +295,14 @@ export function monthOccurrences(
         occurrences.push({ item, occurredAt: occ.occurredAt, status: "skipped", amount });
         continue;
       }
-      const match = unclaimed.findIndex((p) => p.id === id || sameDay(p.at, occ.occurredAt));
+      // Its own row first, wherever it was moved to; else a same-day one.
+      const byId = unclaimed.findIndex((p) => p.id === id);
+      const match =
+        byId !== -1
+          ? byId
+          : paidById.has(id)
+            ? -1
+            : unclaimed.findIndex((p) => sameDay(p.at, occ.occurredAt));
       const row = match !== -1 ? unclaimed.splice(match, 1)[0].row : paidById.get(id);
       if (row) {
         occurrences.push({

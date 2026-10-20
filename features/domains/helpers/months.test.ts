@@ -273,6 +273,33 @@ describe("monthOccurrences", () => {
     expect(occurrences.map((o) => o.status)).toEqual(["paid"]);
   });
 
+  describe("a payment moved to another month", () => {
+    // August's salary (due Aug 3), re-dated in Activity to September 1.
+    const aug = monthWindows(2, now)[0];
+    const due = new Date(2026, 7, 3, 12);
+    const moved = tx(occurrenceId("salary", due), 57_650, new Date(2026, 8, 1, 12), {
+      recurrentTransactionId: "salary",
+    });
+
+    it("still settles its own occurrence", () => {
+      const { occurrences } = monthOccurrences([salary], [moved], ctx, aug, now);
+      expect(occurrences).toEqual([
+        { item: salary, occurredAt: due, status: "paid", amount: 57_650, paid: moved },
+      ]);
+    });
+
+    it("never settles one of the month it landed in", () => {
+      const { occurrences } = monthOccurrences([salary], [moved], ctx, sep, now);
+      expect(occurrences.map((o) => [o.occurredAt.getDate(), o.status])).toEqual([[3, "overdue"]]);
+    });
+
+    it("reads as skipped in its own month once removed", () => {
+      const removed = { ...moved, status: "SKIPPED" as const };
+      const { occurrences } = monthOccurrences([salary], [], ctx, aug, now, [removed]);
+      expect(occurrences.map((o) => o.status)).toEqual(["skipped"]);
+    });
+  });
+
   it("ignores the item's payments from other months", () => {
     const august = new Date(2026, 7, 28, 12);
     const paid = tx(occurrenceId("fiber", august), 439, august, {
