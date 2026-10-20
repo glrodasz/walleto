@@ -212,7 +212,7 @@ export function DomainPage({ domain }: Props) {
     accountDomain ? INCEPTION : spreadLookback(items, windows[0].start)
   );
   // Payments removed from Activity: the Plan shows them as skipped, not overdue.
-  const { transactions: skippedTransactions } = useSkippedTransactions(
+  const { transactions: skippedTransactions, error: skippedError } = useSkippedTransactions(
     domain,
     window.start,
     window.end,
@@ -226,7 +226,7 @@ export function DomainPage({ domain }: Props) {
   } = useCategories(domain);
   const { methods } = usePaymentMethods();
   const { tags } = useTags();
-  const error = txError ?? itemsError ?? catError;
+  const error = txError ?? itemsError ?? catError ?? skippedError;
 
   // Categories hidden from the chart stay out of the bars and the month
   // figure unless the owner flips "Show hidden"; the lists below always show

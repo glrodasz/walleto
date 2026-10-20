@@ -138,7 +138,7 @@ const useDomainTransactions: Hooks["useDomainTransactions"] = memo(
 
 const useSkippedTransactions: Hooks["useSkippedTransactions"] = memo(
   () => "skipped",
-  () => ({ transactions: [] })
+  () => ({ transactions: [], error: null })
 );
 
 const useAllInvestmentValuations: Hooks["useAllInvestmentValuations"] = memo(

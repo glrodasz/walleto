@@ -51,6 +51,7 @@ export function useSkippedTransactions(domain: Domain, start: Date, end: Date, e
   const { user } = useUser();
   const { ready } = useFirebaseAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     if (!enabled || !ready || !user?.sub) return;
@@ -67,11 +68,17 @@ export function useSkippedTransactions(domain: Domain, start: Date, end: Date, e
 
     return onSnapshot(
       q,
-      (snap) => setTransactions(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Transaction)),
-      // Without them a removed occurrence reads as overdue, as it did before.
-      (err) => console.error("useSkippedTransactions onSnapshot error:", err)
+      (snap) => {
+        setTransactions(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Transaction));
+        setError(null);
+      },
+      // Without them a removed occurrence would read as overdue: say so.
+      (err) => {
+        console.error("useSkippedTransactions onSnapshot error:", err);
+        setError(err instanceof Error ? err : new Error(String(err)));
+      }
     );
   }, [enabled, ready, user?.sub, domain, start.getTime(), end.getTime()]);
 
-  return { transactions: enabled ? transactions : [] };
+  return enabled ? { transactions, error } : { transactions: [], error: null };
 }
