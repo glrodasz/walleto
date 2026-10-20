@@ -66,4 +66,23 @@ describe("ScenarioPicker", () => {
     fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
+
+  it("hands Tab back to the browser from the pill, so Shift+Tab goes backwards", () => {
+    render(<ScenarioPicker value="top" onChange={jest.fn()} />);
+    openMenu();
+    const option = screen.getByRole("menuitemradio", { name: "Best" });
+    const notPrevented = fireEvent.keyDown(option, { key: "Tab", shiftKey: true });
+    expect(notPrevented).toBe(true);
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Variable expenses count at Worst" })).toHaveFocus();
+  });
+
+  it("stays open while the menu scrolls itself, and closes when the page does", () => {
+    render(<ScenarioPicker value="top" onChange={jest.fn()} />);
+    openMenu();
+    fireEvent.scroll(screen.getByRole("menu"));
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+    fireEvent.scroll(document);
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
 });

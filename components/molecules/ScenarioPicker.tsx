@@ -12,6 +12,8 @@ const SCENARIOS: Scenario[] = ["floor", "average", "top"];
 const GAP = 6;
 /** Room kept free between the menu and the viewport's edges. */
 const EDGE = 8;
+/** The least the menu shrinks to on a short screen before it scrolls. */
+const MIN_HEIGHT = 120;
 
 interface Props {
   value: Scenario;
@@ -65,9 +67,13 @@ export function ScenarioPicker({ value, onChange }: Props) {
     if (!trigger || !menu) return;
     // Under the pill, lined up with its left edge unless that runs the menu
     // off the right of a phone.
+    // On a short screen (a phone on its side) it scrolls instead of running
+    // off the bottom.
+    const top = trigger.bottom + GAP;
     setPos({
-      top: trigger.bottom + GAP,
+      top,
       left: Math.max(EDGE, Math.min(trigger.left, window.innerWidth - menu.width - EDGE)),
+      maxHeight: Math.max(MIN_HEIGHT, window.innerHeight - top - EDGE),
     });
   }, [open]);
 
@@ -89,24 +95,30 @@ export function ScenarioPicker({ value, onChange }: Props) {
       setOpen(false);
       triggerRef.current?.focus();
     };
-    // Fixed coordinates go stale the moment the page moves under them.
-    const onMove = () => setOpen(false);
+    // Fixed coordinates go stale the moment the page moves under them — but
+    // the menu may scroll itself on a short screen.
+    const onScroll = (e: Event) => {
+      if (menuRef.current?.contains(e.target as Node)) return;
+      setOpen(false);
+    };
+    const onResize = () => setOpen(false);
     document.addEventListener("mousedown", onDown);
     window.addEventListener("keydown", onKey);
-    window.addEventListener("scroll", onMove, true);
-    window.addEventListener("resize", onMove);
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onResize);
     return () => {
       document.removeEventListener("mousedown", onDown);
       window.removeEventListener("keydown", onKey);
-      window.removeEventListener("scroll", onMove, true);
-      window.removeEventListener("resize", onMove);
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onResize);
     };
   }, [open]);
 
-  // Up/Down walk the three options; Tab leaves, like a select would.
+  // Up/Down walk the three options. Tab leaves, like a select would: focus
+  // goes back to the pill first, so the browser's own Tab or Shift+Tab then
+  // moves on from there to the next or previous control.
   const onMenuKey = (e: ReactKeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Tab") {
-      e.preventDefault();
       close(true);
       return;
     }
@@ -224,6 +236,8 @@ export function ScenarioPicker({ value, onChange }: Props) {
           padding: 4px;
           display: flex;
           flex-direction: column;
+          overflow-y: auto;
+          overscroll-behavior: contain;
         }
 
         .title {
