@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
 import { ChevronRight, ExternalLink } from "../../../components/atoms/Icons";
+import { InfoTip } from "../../../components/atoms/InfoTip";
+import { useT } from "../../../hooks/useT";
+import { UI_MESSAGES } from "../../../messages/ui";
 
 interface Props {
   label: string;
@@ -9,6 +12,11 @@ interface Props {
   control?: ReactNode;
   /** Grey text after the control, explaining it. */
   hint?: string;
+  /**
+   * Background behind an "i" beside the label, for what helps but isn't
+   * needed to choose. Only on a row that isn't a link or a button itself.
+   */
+  info?: string;
   /** The control takes the whole right column, for one that wraps (chips). */
   fill?: boolean;
   /** Makes the row a link (external ones get the arrow icon)… */
@@ -18,7 +26,7 @@ interface Props {
   danger?: boolean;
 }
 
-interface BodyProps extends Pick<Props, "label" | "value" | "control" | "hint" | "fill"> {
+interface BodyProps extends Pick<Props, "label" | "value" | "control" | "hint" | "info" | "fill"> {
   external: boolean;
   interactive: boolean;
 }
@@ -28,10 +36,23 @@ interface BodyProps extends Pick<Props, "label" | "value" | "control" | "hint" |
  * scopes the JSX a component returns itself, so markup parked in a variable
  * compiles with bare class names and its CSS silently does nothing.
  */
-function SettingsRowBody({ label, value, control, hint, fill, external, interactive }: BodyProps) {
+function SettingsRowBody({
+  label,
+  value,
+  control,
+  hint,
+  info,
+  fill,
+  external,
+  interactive,
+}: BodyProps) {
+  const t = useT(UI_MESSAGES);
   return (
     <>
-      <span className="label">{label}</span>
+      <span className="label">
+        {label}
+        {info && !interactive && <InfoTip label={t("field.moreInfo")}>{info}</InfoTip>}
+      </span>
       <span className="right">
         {control && <span className={`control${fill ? " is-fill" : ""}`}>{control}</span>}
         {value !== undefined && <span className="value">{value}</span>}
@@ -45,6 +66,9 @@ function SettingsRowBody({ label, value, control, hint, fill, external, interact
 
       <style jsx>{`
         .label {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
           font-size: 0.88rem;
           color: var(--fg-1);
         }
@@ -103,10 +127,20 @@ function SettingsRowBody({ label, value, control, hint, fill, external, interact
 }
 
 /** One "label · value" line of a Settings card; a chevron when it leads somewhere. */
-export function SettingsRow({ label, value, control, hint, fill, href, onClick, danger }: Props) {
+export function SettingsRow({
+  label,
+  value,
+  control,
+  hint,
+  info,
+  fill,
+  href,
+  onClick,
+  danger,
+}: Props) {
   const external = Boolean(href?.startsWith("http") || href?.startsWith("mailto:"));
   const interactive = Boolean(href || onClick);
-  const body = { label, value, control, hint, fill, external, interactive };
+  const body = { label, value, control, hint, info, fill, external, interactive };
 
   return (
     <div className={`row${danger ? " danger" : ""}`}>

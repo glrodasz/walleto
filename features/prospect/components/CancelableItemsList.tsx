@@ -67,8 +67,12 @@ export function CancelableItemsList({
 
   return (
     <Card>
-      <SectionTitle title={emergency ? t("list.title.emergency") : t("list.title.whatif")} />
-      <p className="hint">{emergency ? t("list.hint.emergency") : t("list.hint.whatif")}</p>
+      <div className="head">
+        <SectionTitle
+          title={emergency ? t("list.title.emergency") : t("list.title.whatif")}
+          info={emergency ? t("list.hint.emergency") : t("list.hint.whatif")}
+        />
+      </div>
 
       {!emergency && topOptions.length > 0 && (
         <div className="chips" role="group" aria-label={t("list.quickPicks")}>
@@ -124,11 +128,8 @@ export function CancelableItemsList({
       )}
 
       <style jsx>{`
-        .hint {
-          margin: 0 0 14px;
-          font-size: 0.85rem;
-          color: var(--fg-1);
-          line-height: 1.45;
+        .head {
+          margin-bottom: 14px;
         }
 
         .chips {

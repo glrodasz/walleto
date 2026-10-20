@@ -78,11 +78,11 @@ export function CurrencyCard() {
             onValueChange={changeCurrency}
           />
         }
-        hint={tr("currency.yoursHint")}
+        info={tr("currency.yoursHint")}
       />
       <SettingsRow
         label={tr("currency.available")}
-        hint={tr("currency.availableHint")}
+        info={tr("currency.availableHint")}
         fill
         control={
           <CurrencyToggles

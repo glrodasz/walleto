@@ -282,12 +282,10 @@ export function ValuationModal({
                   .filter((c) => !c.parentId && c.id)
                   .map((c) => ({ value: c.id!, label: c.name })),
               ]}
+              hint={owes ? t("modal.categoryHint.debt") : t("modal.categoryHint.asset")}
               value={categoryId}
               onValueChange={setCategoryId}
             />
-            <p className="hint">
-              {owes ? t("modal.categoryHint.debt") : t("modal.categoryHint.asset")}
-            </p>
           </>
         )}
 

@@ -595,7 +595,7 @@ export function RecurrentTransactionModal({
         {offersDebtToggle && (
           <CheckboxField
             label={t("modal.paysDebt")}
-            hint={t("modal.paysDebtHint")}
+            info={t("modal.paysDebtHint")}
             checked={form.paysDebt}
             onChange={togglePaysDebt}
           />
@@ -726,7 +726,7 @@ export function RecurrentTransactionModal({
         {offersSpread && (
           <CheckboxField
             label={t("modal.spread")}
-            hint={t("modal.spreadHint", { amount: formatAmount(monthlySlice, effectiveCurrency) })}
+            info={t("modal.spreadHint", { amount: formatAmount(monthlySlice, effectiveCurrency) })}
             checked={form.spreadMonthly}
             onChange={(spreadMonthly) => patch({ spreadMonthly })}
           />
@@ -810,10 +810,10 @@ export function RecurrentTransactionModal({
               placeholder="0"
               inputMode="decimal"
               align="right"
+              hint={t("modal.gainPctHint")}
               value={form.gainPct}
               onValueChange={(v) => patch({ gainPct: decimal.sanitize(v, { negative: true }) })}
             />
-            <p className="field-hint">{t("modal.gainPctHint")}</p>
           </div>
         )}
 
@@ -821,7 +821,7 @@ export function RecurrentTransactionModal({
           <>
             <CheckboxField
               label={t("modal.charged")}
-              hint={t("modal.chargedHint")}
+              info={t("modal.chargedHint")}
               checked={form.chargedEnabled}
               onChange={(chargedEnabled) => patch({ chargedEnabled })}
             />
@@ -887,13 +887,6 @@ export function RecurrentTransactionModal({
           gap: 12px;
         }
 
-        .field-hint {
-          margin: 24px 0 0;
-          font-size: 0.78rem;
-          color: var(--fg-2);
-          align-self: center;
-        }
-
         .parent {
           display: flex;
           align-items: center;
@@ -942,11 +935,6 @@ export function RecurrentTransactionModal({
           /* From and Up to stay side by side; the currency drops below. */
           .trio {
             grid-template-columns: 1fr 1fr;
-          }
-
-          .field-hint {
-            margin-top: 0;
-            align-self: flex-start;
           }
         }
       `}</style>

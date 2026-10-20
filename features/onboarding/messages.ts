@@ -100,6 +100,7 @@ export const ONBOARDING_MESSAGES = defineMessages(
     "currencies.yours": "Your currency",
     "currencies.yoursHint":
       "Totals are shown in it and new entries start in it. The switcher in the header shows totals in another currency anytime.",
+    "currencies.yoursLabel": "About your currency",
     "currencies.used": "Currencies you use",
     "currencies.turnOffLabel": "About turning off a currency",
     "currencies.turnOffTip":
@@ -243,6 +244,7 @@ export const ONBOARDING_MESSAGES = defineMessages(
     "currencies.yours": "Tu moneda",
     "currencies.yoursHint":
       "Los totales se muestran en ella y los registros nuevos empiezan en ella. Con el selector del encabezado puedes ver los totales en otra moneda cuando quieras.",
+    "currencies.yoursLabel": "Sobre tu moneda",
     "currencies.used": "Monedas que usas",
     "currencies.turnOffLabel": "Sobre desactivar una moneda",
     "currencies.turnOffTip":

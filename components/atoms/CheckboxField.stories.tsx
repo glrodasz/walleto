@@ -51,4 +51,13 @@ export const WithTag: Story = {
   // Room above for the tooltip, which opens upwards.
   decorators: [(Story) => <div style={{ paddingTop: 140 }}>{Story()}</div>],
 };
+/** Background that helps but isn't needed to decide, behind an "i" beside the label. */
+export const WithInfo: Story = {
+  args: {
+    label: "Spread it monthly",
+    hint: undefined,
+    info: "The graph and the plan count $12.50 a month, and Activity shows it as a read-only monthly share next to the real payment.",
+  },
+  decorators: [(Story) => <div style={{ paddingTop: 120 }}>{Story()}</div>],
+};
 export const Disabled: Story = { args: { disabled: true, checked: true } };

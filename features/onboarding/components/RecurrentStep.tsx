@@ -51,7 +51,7 @@ export function RecurrentStep({ state, showPaymentMethod = false }: Props) {
       <div className="backfill">
         <CheckboxField
           label={t("recurrent.backfill")}
-          hint={t("recurrent.backfillHint")}
+          info={t("recurrent.backfillHint")}
           checked={backfill}
           onChange={setBackfill}
         />

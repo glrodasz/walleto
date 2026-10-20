@@ -42,3 +42,10 @@ export const WithControls: Story = {
     ),
   },
 };
+/** How to read the section, behind an "i" instead of a subtitle line. */
+export const WithInfo: Story = {
+  args: {
+    title: "Tags",
+    info: "A payment with several tags counts under each of them.",
+  },
+};

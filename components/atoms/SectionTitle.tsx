@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { InfoTip } from "./InfoTip";
 import { useT } from "../../hooks/useT";
 import { UI_MESSAGES } from "../../messages/ui";
 
@@ -7,6 +8,8 @@ interface Props {
   title: string;
   /** One line under the title saying what the numbers are. */
   subtitle?: string;
+  /** Background behind an "i" beside the title: how to read the section, not what it is. */
+  info?: string;
   /** "View all" as a link… */
   href?: string;
   /** …or as a button, when it changes something on the same page. */
@@ -16,13 +19,30 @@ interface Props {
   children?: ReactNode;
 }
 
-export function SectionTitle({ title, subtitle, href, onAction, actionLabel, children }: Props) {
+export function SectionTitle({
+  title,
+  subtitle,
+  info,
+  href,
+  onAction,
+  actionLabel,
+  children,
+}: Props) {
   const t = useT(UI_MESSAGES);
   const action = actionLabel ?? t("section.viewAll");
   return (
     <div className="header">
       <div className="text">
-        <h2 className="title">{title}</h2>
+        {info ? (
+          <div className="title-row">
+            <h2 className="title">{title}</h2>
+            <InfoTip label={t("field.moreInfo")} placement="bottom">
+              {info}
+            </InfoTip>
+          </div>
+        ) : (
+          <h2 className="title">{title}</h2>
+        )}
         {subtitle && <p className="subtitle">{subtitle}</p>}
       </div>
       <div className="right">
@@ -50,6 +70,13 @@ export function SectionTitle({ title, subtitle, href, onAction, actionLabel, chi
           display: flex;
           flex-direction: column;
           gap: 2px;
+          min-width: 0;
+        }
+
+        .title-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
           min-width: 0;
         }
 

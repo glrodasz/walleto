@@ -1,10 +1,18 @@
 import type { ReactNode } from "react";
+import { InfoTip } from "./InfoTip";
+import { useT } from "../../hooks/useT";
+import { UI_MESSAGES } from "../../messages/ui";
 
 interface Props {
   /** What ticking it does, in a few words. */
   label: ReactNode;
   /** The consequence or the caveat, on its own line under the label. */
   hint?: ReactNode;
+  /**
+   * Background that helps but isn't needed to decide — behind an "i" beside
+   * the label instead of a line under it. A warning stays a `hint`.
+   */
+  info?: ReactNode;
   /** A status pill beside the label ("Guessed from category") — always a `Badge size="sm"`. */
   tag?: ReactNode;
   checked: boolean;
@@ -18,7 +26,16 @@ interface Props {
  * message below in small, quiet text — never a "— …" tail glued to the
  * label, which wrapped mid-sentence and buried the option's own name.
  */
-export function CheckboxField({ label, hint, tag, checked, onChange, disabled = false }: Props) {
+export function CheckboxField({
+  label,
+  hint,
+  info,
+  tag,
+  checked,
+  onChange,
+  disabled = false,
+}: Props) {
+  const t = useT(UI_MESSAGES);
   return (
     <label className={`checkbox${disabled ? " is-disabled" : ""}`}>
       <input
@@ -30,6 +47,7 @@ export function CheckboxField({ label, hint, tag, checked, onChange, disabled = 
       <span className="text">
         <span className="head">
           <span className="label">{label}</span>
+          {info && <InfoTip label={t("field.moreInfo")}>{info}</InfoTip>}
           {tag}
         </span>
         {hint && <span className="hint">{hint}</span>}
