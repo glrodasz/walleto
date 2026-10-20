@@ -595,7 +595,7 @@ export function RecurrentTransactionModal({
         {offersDebtToggle && (
           <CheckboxField
             label={t("modal.paysDebt")}
-            info={t("modal.paysDebtHint")}
+            hint={t("modal.paysDebtHint")}
             checked={form.paysDebt}
             onChange={togglePaysDebt}
           />
