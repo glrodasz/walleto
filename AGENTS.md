@@ -164,7 +164,9 @@ features/
                 payments; checking simulates cancelling and WhatIfSummary (SummaryCard) gives the month's net before and after.
                 Emergency (EmergencyView, mounts the value listeners only while active): regular income
                 is cut, non-essentials and all contributions are paused, and helpers/emergency.ts simulates month by month
-                how long the cushion lasts (savings, + investments if the owner asks, + severance) paying
+                how long the cushion lasts (savings, + investments if the owner asks — only the accounts not marked
+                `emergencyAvailable: false`, a pension say; ticked per account in EmergencyPanel or in Settings ›
+                Accounts — + severance) paying
                 essentials and debts, with unemployment benefit while it lasts — RunwayCard + EmergencyPanel
                 (the emergency plan lives in the user doc, hooks/useEmergencyPlan). Like the dashboard, it leaves out
                 `hiddenFromDashboard` items

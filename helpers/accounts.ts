@@ -23,6 +23,11 @@ export function isAccountDomain(domain: Domain): domain is AccountDomain {
   return domain === "INVESTMENT" || domain === "SAVING" || domain === "DEBT";
 }
 
+/** Whether emergency mode may count it as cash: unset means yes. */
+export function isEmergencyAvailable(account: { emergencyAvailable?: boolean }): boolean {
+  return account.emergencyAvailable !== false;
+}
+
 /** "2.5% yearly" / "0.4% monthly", for pills and rows, in the user's separator. */
 export function formatInterestRate(
   rate: InterestRate,

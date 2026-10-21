@@ -1,4 +1,5 @@
 import {
+  availableInvestments,
   balanceSeries,
   chartHorizon,
   emergencyBudget,
@@ -23,6 +24,29 @@ const ranked = (monthly: number): RankedItem => ({
   monthly,
   essential: true,
   guessed: false,
+});
+
+describe("availableInvestments", () => {
+  const rows = [
+    { selector: { accountId: "isk" }, value: 20_000 },
+    { selector: { accountId: "pension" }, value: 50_000 },
+    { selector: { domain: "INVESTMENT" as const }, value: 1_000 },
+  ];
+
+  it("counts everything while nothing is marked", () => {
+    expect(availableInvestments(rows, [{ id: "isk" }, { id: "pension" }])).toEqual({
+      value: 71_000,
+      held: 0,
+    });
+  });
+
+  it("holds back the accounts marked as not available", () => {
+    const accounts = [
+      { id: "isk", emergencyAvailable: true },
+      { id: "pension", emergencyAvailable: false },
+    ];
+    expect(availableInvestments(rows, accounts)).toEqual({ value: 21_000, held: 50_000 });
+  });
 });
 
 describe("emergencyBudget", () => {

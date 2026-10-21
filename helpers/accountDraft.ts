@@ -1,5 +1,6 @@
 import { LABEL_MESSAGES } from "../messages/labels";
 import { translate } from "./i18n";
+import { isEmergencyAvailable } from "./accounts";
 import type {
   Account,
   AccountDomain,
@@ -16,6 +17,8 @@ export interface AccountDraft {
   currency: Currency;
   rate: string;
   period: InterestPeriod;
+  /** INVESTMENT only: emergency mode may sell it. */
+  emergencyAvailable: boolean;
 }
 
 /** The form's values, read and validated: empty optionals come back as `null`. */
@@ -24,6 +27,8 @@ export interface AccountDraftValues {
   provider: string | null;
   currency: Currency;
   interestRate: InterestRate | null;
+  /** Only for INVESTMENT; other domains leave it out. */
+  emergencyAvailable?: boolean;
 }
 
 export const emptyAccountDraft = (currency: Currency): AccountDraft => ({
@@ -32,6 +37,7 @@ export const emptyAccountDraft = (currency: Currency): AccountDraft => ({
   currency,
   rate: "",
   period: "YEARLY",
+  emergencyAvailable: true,
 });
 
 export const accountDraftOf = (a: Account, toInput: (n: number) => string): AccountDraft => ({
@@ -40,6 +46,7 @@ export const accountDraftOf = (a: Account, toInput: (n: number) => string): Acco
   currency: a.currency,
   rate: a.interestRate ? toInput(a.interestRate.value) : "",
   period: a.interestRate?.period ?? "YEARLY",
+  emergencyAvailable: isEmergencyAvailable(a),
 });
 
 /**
@@ -65,6 +72,7 @@ export function readAccountDraft(
       provider: draft.provider.trim() || null,
       currency: draft.currency,
       interestRate: rate === null ? null : { value: rate, period: draft.period },
+      ...(domain === "INVESTMENT" ? { emergencyAvailable: draft.emergencyAvailable } : {}),
     },
   };
 }

@@ -28,7 +28,25 @@ export const Investment: Story = {};
 export const SavingPocket: Story = {
   args: {
     domain: "SAVING",
-    initial: { name: "Buffer", provider: "SEB", currency: "SEK", rate: "2.5", period: "YEARLY" },
+    initial: {
+      name: "Buffer",
+      provider: "SEB",
+      currency: "SEK",
+      rate: "2.5",
+      period: "YEARLY",
+      emergencyAvailable: true,
+    },
+  },
+};
+/** An investment emergency mode leaves alone: a pension can't be sold for cash. */
+export const PensionNotForEmergencies: Story = {
+  args: {
+    initial: {
+      ...emptyAccountDraft("SEK"),
+      name: "Pension",
+      provider: "AMF",
+      emergencyAvailable: false,
+    },
   },
 };
 /** A debt names its lender instead of a bank or broker. */

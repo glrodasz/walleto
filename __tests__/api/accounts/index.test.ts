@@ -151,6 +151,37 @@ describe("POST /api/accounts", () => {
   });
 });
 
+describe("POST emergencyAvailable", () => {
+  const post = (body: Record<string, unknown>) =>
+    ({
+      method: "POST",
+      query: {},
+      body: { name: "Pension", currency: "SEK", ...body },
+    }) as NextApiRequest;
+
+  it("stores an investment account that can't be sold in an emergency", async () => {
+    const { add } = wire();
+    const res = mockRes();
+    await handler(post({ domain: "INVESTMENT", emergencyAvailable: false }), res);
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(add).toHaveBeenCalledWith(expect.objectContaining({ emergencyAvailable: false }));
+  });
+
+  it("leaves an available account unmarked", async () => {
+    const { add } = wire();
+    await handler(post({ domain: "INVESTMENT", emergencyAvailable: true }), mockRes());
+    expect(add.mock.calls[0][0]).not.toHaveProperty("emergencyAvailable");
+  });
+
+  it("rejects the flag outside investments", async () => {
+    const { add } = wire();
+    const res = mockRes();
+    await handler(post({ domain: "SAVING", emergencyAvailable: false }), res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(add).not.toHaveBeenCalled();
+  });
+});
+
 describe("unsupported methods", () => {
   it("returns 405", async () => {
     wire();

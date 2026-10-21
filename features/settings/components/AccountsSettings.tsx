@@ -12,7 +12,7 @@ import { AccountFormFields } from "../../../components/molecules/AccountFormFiel
 import { ErrorState } from "../../../components/atoms/ErrorState";
 import { useAccounts } from "../../../hooks/useAccounts";
 import { useUserDoc } from "../../../hooks/useUserDoc";
-import { accountLabel, formatInterestRate } from "../../../helpers/accounts";
+import { accountLabel, formatInterestRate, isEmergencyAvailable } from "../../../helpers/accounts";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import { useDecimalInput } from "../../../hooks/useDecimalInput";
 import { usePreferences } from "../../../hooks/usePreferences";
@@ -130,6 +130,9 @@ export function AccountsSettings() {
                       {a.currency}
                       {a.interestRate
                         ? ` · ${formatInterestRate(a.interestRate, decimal.separator, language)}`
+                        : ""}
+                      {domain === "INVESTMENT" && !isEmergencyAvailable(a)
+                        ? ` · ${tr("accounts.notInEmergency")}`
                         : ""}
                     </span>
                   </span>

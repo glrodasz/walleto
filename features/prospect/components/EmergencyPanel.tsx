@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card } from "../../../components/atoms/Card";
 import { CheckboxField } from "../../../components/atoms/CheckboxField";
+import { InfoTip } from "../../../components/atoms/InfoTip";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { Select } from "../../../components/atoms/Select";
 import { TextField } from "../../../components/atoms/TextField";
@@ -13,11 +14,22 @@ import { COMMON_MESSAGES } from "../../../messages/common";
 import { PROSPECT_MESSAGES } from "../messages";
 import type { Currency, EmergencyPlan } from "../../../types";
 
+/** An investment account as the panel lists it: value already in `currency`. */
+export interface EmergencyAccount {
+  id: string;
+  label: string;
+  value: number;
+  available: boolean;
+}
+
 interface Props {
   plan: EmergencyPlan;
   onSave: (patch: Partial<EmergencyPlan>) => void;
-  /** Today's investments, in `currency` — shown on the toggle that counts them. */
+  /** Today's sellable investments, in `currency` — shown on the toggle that counts them. */
   investments: number;
+  /** Each investment account, to mark which ones could be sold. */
+  accounts?: EmergencyAccount[];
+  onToggleAccount?: (id: string, available: boolean) => void;
   currency: Currency;
   error?: string | null;
 }
@@ -55,7 +67,15 @@ function useCommittedNumber(value: number, commit: (n: number) => void, integer 
  * for a number of months and a one-off severance — plus whether investments
  * count as cash. Saved on the user doc, so the runway reads the same next time.
  */
-export function EmergencyPanel({ plan, onSave, investments, currency, error }: Props) {
+export function EmergencyPanel({
+  plan,
+  onSave,
+  investments,
+  accounts = [],
+  onToggleAccount,
+  currency,
+  error,
+}: Props) {
   const { optionsFor } = useEnabledCurrencies();
   const { formatAmount } = useMoneyFormat();
   const t = useT(PROSPECT_MESSAGES);
@@ -110,6 +130,26 @@ export function EmergencyPanel({ plan, onSave, investments, currency, error }: P
           checked={plan.includeInvestments}
           onChange={(includeInvestments) => onSave({ includeInvestments })}
         />
+        {plan.includeInvestments && accounts.length > 0 && (
+          <fieldset className="accounts">
+            <legend className="legend">
+              {t("panel.accounts")}
+              <InfoTip label={t("panel.accountsAbout")}>{t("panel.accountsHint")}</InfoTip>
+            </legend>
+            {accounts.map((a) => (
+              <CheckboxField
+                key={a.id}
+                label={a.label}
+                hint={t(a.available ? "panel.accountValue" : "panel.accountHeld", {
+                  amount: formatAmount(a.value, currency),
+                })}
+                checked={a.available}
+                disabled={!onToggleAccount}
+                onChange={(available) => onToggleAccount?.(a.id, available)}
+              />
+            ))}
+          </fieldset>
+        )}
       </div>
 
       {error && (
@@ -134,6 +174,29 @@ export function EmergencyPanel({ plan, onSave, investments, currency, error }: P
 
         .toggle {
           margin-top: 14px;
+        }
+
+        /* Nested under the toggle it refines: a light indent. */
+        .accounts {
+          margin: 14px 0 0 12px;
+          padding: 0;
+          border: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          min-width: 0;
+        }
+
+        .legend {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          /* A legend sits outside the fieldset's flex gap. */
+          margin-bottom: 14px;
+          padding: 0;
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: var(--fg-1);
         }
 
         .error {

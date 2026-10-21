@@ -58,7 +58,7 @@ export function AccountCreator({
     }
     const read = readAccountDraft(draft, parse, domain, language);
     if ("error" in read) return onError?.(read.error);
-    const { name, provider, currency, interestRate } = read.values;
+    const { name, provider, currency, interestRate, emergencyAvailable } = read.values;
     setBusy(true);
     try {
       const id = await createAccount({
@@ -67,6 +67,7 @@ export function AccountCreator({
         currency,
         ...(provider ? { provider } : {}),
         ...(interestRate ? { interestRate } : {}),
+        ...(emergencyAvailable === false ? { emergencyAvailable } : {}),
       });
       onCreated(id);
     } catch (err) {

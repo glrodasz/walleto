@@ -1,3 +1,4 @@
+import { CheckboxField } from "../atoms/CheckboxField";
 import { Select } from "../atoms/Select";
 import { TextField } from "../atoms/TextField";
 import { useEnabledCurrencies } from "../../hooks/useEnabledCurrencies";
@@ -19,7 +20,8 @@ const PERIODS: InterestPeriod[] = ["YEARLY", "MONTHLY"];
 
 /**
  * The fields of an account / pocket / debt — name, bank or broker (the lender,
- * for a debt), currency and the interest rate as the bank quotes it. Creating
+ * for a debt), currency and the interest rate as the bank quotes it — plus,
+ * for an investment, whether emergency mode may sell it. Creating
  * and editing render this same piece, so both forms look alike.
  */
 export function AccountFormFields({ domain, draft, onChange, autoFocus }: Props) {
@@ -70,6 +72,14 @@ export function AccountFormFields({ domain, draft, onChange, autoFocus }: Props)
           />
         </div>
       </div>
+      {domain === "INVESTMENT" && (
+        <CheckboxField
+          label={t("account.emergency")}
+          hint={t("account.emergencyHint")}
+          checked={draft.emergencyAvailable}
+          onChange={(emergencyAvailable) => set({ emergencyAvailable })}
+        />
+      )}
 
       <style jsx>{`
         .fields {

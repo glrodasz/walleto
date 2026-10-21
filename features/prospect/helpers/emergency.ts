@@ -1,6 +1,8 @@
 import { convert } from "../../../helpers/fx";
 import type { MoneyContext } from "../../../helpers/aggregations";
-import type { EmergencyPlan, Language } from "../../../types";
+import type { Account, EmergencyPlan, Language } from "../../../types";
+import { isEmergencyAvailable } from "../../../helpers/accounts";
+import type { AccountValueRow } from "../../investments/helpers/domainValue";
 import type { FlowPoint } from "../../../helpers/chartData";
 import { formatDate } from "../../../helpers/dates";
 import { translate } from "../../../helpers/i18n";
@@ -53,6 +55,25 @@ export function planInTarget(
     benefitMonths: plan.benefitMonths,
     severance: convert(plan.severance, plan.currency, ctx.target, ctx.rates),
   };
+}
+
+/**
+ * What the investments bring in an emergency: every account the owner hasn't
+ * marked as off-limits (a pension, a locked deposit), plus the "No account"
+ * bucket, which has nothing to mark. `held` is what stays invested.
+ */
+export function availableInvestments(
+  rows: Pick<AccountValueRow, "selector" | "value">[],
+  accounts: Pick<Account, "id" | "emergencyAvailable">[]
+): { value: number; held: number } {
+  const locked = new Set(accounts.filter((a) => !isEmergencyAvailable(a)).map((a) => a.id));
+  let value = 0;
+  let held = 0;
+  for (const r of rows) {
+    if ("accountId" in r.selector && locked.has(r.selector.accountId)) held += r.value;
+    else value += r.value;
+  }
+  return { value, held };
 }
 
 export interface RunwayInput {

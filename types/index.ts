@@ -160,6 +160,11 @@ export interface Account {
   provider?: string;
   currency: Currency;
   interestRate?: InterestRate;
+  /**
+   * INVESTMENT only: whether Prospect's emergency mode may sell it for cash.
+   * Unset means available; a pension or a locked deposit is stored `false`.
+   */
+  emergencyAvailable?: boolean;
   archived?: boolean;
   createdAt?: Timestamp;
 }

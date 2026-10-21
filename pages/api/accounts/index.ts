@@ -32,7 +32,10 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
-    const { domain, name, provider, currency, interestRate } = parsed.data;
+    const { domain, name, provider, currency, interestRate, emergencyAvailable } = parsed.data;
+    if (emergencyAvailable !== undefined && domain !== "INVESTMENT") {
+      return res.status(400).json({ error: "Only investment accounts are sold in an emergency" });
+    }
 
     // A duplicate is the same domain with the same name, case-insensitively.
     // Firestore compares strings exactly, so the name check runs in memory
@@ -63,6 +66,8 @@ export default auth0.withApiAuthRequired(async (req: NextApiRequest, res: NextAp
       ...(provider ? { provider } : {}),
       currency,
       ...(interestRate ? { interestRate } : {}),
+      // Unset reads as available, so only the exception is stored.
+      ...(emergencyAvailable === false ? { emergencyAvailable } : {}),
       archived: false,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
