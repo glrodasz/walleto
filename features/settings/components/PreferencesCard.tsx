@@ -84,7 +84,7 @@ export function PreferencesCard() {
             onValueChange={(v) => save({ decimalSeparator: v as DecimalSeparator })}
           />
         }
-        hint={tr("preferences.separatorHint")}
+        info={tr("preferences.separatorHint")}
       />
       <SettingsRow
         label={tr("preferences.decimals")}
@@ -112,7 +112,7 @@ export function PreferencesCard() {
             onChange={(next) => save({ confirmVariableExpenses: next === "on" })}
           />
         }
-        hint={tr("preferences.confirmVariableHint")}
+        info={tr("preferences.confirmVariableHint")}
       />
       <SettingsRow label={tr("preferences.language")} control={<LanguageToggle />} />
       <SettingsRow

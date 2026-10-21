@@ -41,6 +41,24 @@ export const WithControl: Story = {
     ),
   },
 };
+/** Background behind an "i" beside the label, instead of grey text after the control. */
+export const WithInfo: Story = {
+  args: {
+    label: "Decimal separator",
+    value: undefined,
+    control: (
+      <Select
+        aria-label="Decimal separator"
+        options={[
+          { value: ".", label: "Point (1,234.56)" },
+          { value: ",", label: "Comma (1.234,56)" },
+        ]}
+        defaultValue="."
+      />
+    ),
+    info: "Typing accepts either key; this is how numbers are written back.",
+  },
+};
 export const Clickable: Story = {
   args: { label: "Run setup again", value: undefined, onClick: fn() },
 };

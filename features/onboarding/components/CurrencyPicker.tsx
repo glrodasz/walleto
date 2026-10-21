@@ -1,4 +1,5 @@
 import { Chip } from "../../../components/atoms/Chip";
+import { InfoTip } from "../../../components/atoms/InfoTip";
 import { SELECTABLE_CURRENCIES } from "../../../constants";
 import { useT } from "../../../hooks/useT";
 import type { Currency } from "../../../types";
@@ -14,8 +15,12 @@ export function CurrencyPicker({ value, onChange }: Props) {
   return (
     <section className="picker">
       <header className="head">
-        <h2 className="heading">{t("currencies.yours")}</h2>
-        <p className="hint">{t("currencies.yoursHint")}</p>
+        <h2 className="heading">
+          {t("currencies.yours")}
+          <InfoTip label={t("currencies.yoursLabel")} placement="bottom">
+            {t("currencies.yoursHint")}
+          </InfoTip>
+        </h2>
       </header>
       <div className="chips" role="group" aria-label={t("currencies.yours")}>
         {SELECTABLE_CURRENCIES.map((c) => (
@@ -41,16 +46,13 @@ export function CurrencyPicker({ value, onChange }: Props) {
         }
 
         .heading {
+          display: flex;
+          align-items: center;
+          gap: 10px;
           margin: 0;
           font-size: 0.9375rem;
           font-weight: 600;
           color: var(--fg-1);
-        }
-
-        .hint {
-          margin: 0;
-          font-size: 0.8125rem;
-          color: var(--fg-2);
         }
 
         .chips {

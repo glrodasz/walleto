@@ -1,6 +1,9 @@
 import { useId } from "react";
 import type { SelectHTMLAttributes } from "react";
 import { ChevronDown } from "./Icons";
+import { InfoTip } from "./InfoTip";
+import { useT } from "../../hooks/useT";
+import { UI_MESSAGES } from "../../messages/ui";
 
 export interface SelectOption {
   value: string;
@@ -9,6 +12,8 @@ export interface SelectOption {
 
 interface Props extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "onChange" | "children"> {
   label?: string;
+  /** Help text behind an "i" beside the label, as in `TextField`. */
+  hint?: string;
   options: SelectOption[];
   placeholder?: string;
   /**
@@ -24,6 +29,7 @@ interface Props extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "onChange"
 
 export function Select({
   label,
+  hint,
   options,
   placeholder,
   flat = false,
@@ -33,15 +39,19 @@ export function Select({
   value,
   ...rest
 }: Props) {
+  const t = useT(UI_MESSAGES);
   const generatedId = useId();
   const selectId = id ?? generatedId;
 
   return (
     <div className={`field${className ? ` ${className}` : ""}`}>
       {label && (
-        <label className="label" htmlFor={selectId}>
-          {label}
-        </label>
+        <div className="label-row">
+          <label className="label" htmlFor={selectId}>
+            {label}
+          </label>
+          {hint && <InfoTip label={t("field.moreInfo")}>{hint}</InfoTip>}
+        </div>
       )}
       <div className="control">
         <select
@@ -73,6 +83,12 @@ export function Select({
           flex-direction: column;
           gap: 6px;
           min-width: 0;
+        }
+
+        .label-row {
+          display: flex;
+          align-items: center;
+          gap: 6px;
         }
 
         .label {

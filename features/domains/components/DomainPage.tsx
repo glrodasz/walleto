@@ -778,7 +778,7 @@ export function DomainPage({ domain }: Props) {
       />
     ) : view === "tags" ? (
       <Card>
-        <SectionTitle title={common("noun.tags")} subtitle={t("tags.subtitle")} />
+        <SectionTitle title={common("noun.tags")} info={t("tags.subtitle")} />
         <GroupedTotalsList
           groups={byTag}
           currency={currency}
