@@ -846,6 +846,17 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
             align-self: stretch;
           }
 
+          /* The three ticks fit on one line at 390px. */
+          .badges {
+            gap: 8px 14px;
+            font-size: 0.8rem;
+          }
+
+          .badges li {
+            gap: 4px;
+            white-space: nowrap;
+          }
+
           .grid--3,
           .grid--4 {
             grid-template-columns: minmax(0, 1fr);

@@ -22,7 +22,7 @@ export const LANDING_MESSAGES = defineMessages(
     "hero.secondary": "See how it works",
     "hero.trust.bank": "No bank connection",
     "hero.trust.currencies": "8 currencies",
-    "hero.trust.languages": "English and Spanish",
+    "hero.trust.languages": "Multilingual",
     "hero.art":
       "Illustration of Walleto: what's left to allocate this month, and the month's payments on a phone.",
 
@@ -173,7 +173,7 @@ export const LANDING_MESSAGES = defineMessages(
     "hero.secondary": "Mira cómo funciona",
     "hero.trust.bank": "Sin conectar tu banco",
     "hero.trust.currencies": "8 monedas",
-    "hero.trust.languages": "Español e inglés",
+    "hero.trust.languages": "Multilingüe",
     "hero.art":
       "Ilustración de Walleto: lo que te queda por asignar este mes y los pagos del mes en un teléfono.",
 
