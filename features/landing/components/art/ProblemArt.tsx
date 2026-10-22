@@ -1,4 +1,4 @@
-import { CoinPiles } from "./Coins";
+import { CoinRow } from "./Coins";
 
 /**
  * The three small drawings on the problem cards: past bars with an empty
@@ -22,7 +22,7 @@ export function ProblemArt({ id }: { id: "1" | "2" | "3" }) {
           <i className="block block--kept" />
         </>
       )}
-      {id === "3" && <CoinPiles />}
+      {id === "3" && <CoinRow />}
       <style jsx>{`
         .mini {
           display: flex;
