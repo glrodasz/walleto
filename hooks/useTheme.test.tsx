@@ -48,6 +48,14 @@ describe("useTheme", () => {
     mockMatchMedia(false);
   });
 
+  it("defaults to light even when the OS is dark, until the user picks a theme", () => {
+    mockMatchMedia(true);
+    const { result } = renderHook(() => useTheme(), { wrapper });
+    expect(result.current.preference).toBe("light");
+    expect(result.current.resolved).toBe("light");
+    expect(document.documentElement.dataset.theme).toBe("light");
+  });
+
   it("hydrates from localStorage and stamps <html>", () => {
     localStorage.setItem(THEME_STORAGE_KEY, "dark");
     const { result } = renderHook(() => useTheme(), { wrapper });
