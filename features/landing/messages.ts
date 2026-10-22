@@ -16,7 +16,8 @@ export const LANDING_MESSAGES = defineMessages(
     "nav.language": "Language",
 
     "hero.eyebrow": "Personal finance planner",
-    "hero.title": "Your money plan, month by month.",
+    // Non-breaking spaces keep the closing phrase on one line.
+    "hero.title": "Your money plan, month\u00a0by\u00a0month.",
     "hero.subtitle": "Plan every month and see how you're doing, in any currency.",
     "hero.secondary": "See how it works",
     "hero.trust.bank": "No bank connection",
@@ -143,7 +144,7 @@ export const LANDING_MESSAGES = defineMessages(
     "nav.language": "Idioma",
 
     "hero.eyebrow": "Planificador de finanzas personales",
-    "hero.title": "Tu plan de dinero, mes a mes.",
+    "hero.title": "Tu plan de dinero, mes\u00a0a\u00a0mes.",
     "hero.subtitle": "Planea cada mes y mira cómo vas, en cualquier moneda.",
     "hero.secondary": "Mira cómo funciona",
     "hero.trust.bank": "Sin conectar tu banco",

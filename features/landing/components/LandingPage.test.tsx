@@ -6,7 +6,7 @@ describe("LandingPage", () => {
     render(<LandingPage language="es" origin="https://walleto.app" />);
 
     expect(
-      screen.getByRole("heading", { level: 1, name: "Tu plan de dinero, mes a mes." })
+      screen.getByRole("heading", { level: 1, name: "Tu plan de dinero, mes\u00a0a\u00a0mes." })
     ).toBeInTheDocument();
     for (const link of screen.getAllByRole("link", { name: /^Entrar/ })) {
       expect(link).toHaveAttribute("href", "/api/auth/login?ui_locales=es");
