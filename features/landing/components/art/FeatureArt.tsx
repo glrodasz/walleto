@@ -182,11 +182,14 @@ function VariableArt({ t }: { t: T }) {
 
         .track i {
           position: absolute;
-          top: -4px;
-          width: 4px;
-          height: 14px;
-          border-radius: 2px;
+          top: -5px;
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
           background: var(--domain-expense);
+          border: 3px solid var(--bg-0);
+          box-shadow: 0 2px 6px -1px color-mix(in srgb, var(--domain-expense) 60%, transparent);
+          transform: translateX(-50%);
         }
       `}</style>
     </>

@@ -10,6 +10,7 @@ import {
   Check,
   Coins,
   Compass,
+  Github,
   EyeOff,
   Globe,
   Heart,
@@ -70,6 +71,13 @@ const TRUST = [
   { id: "auth", icon: <Shield size={20} /> },
 ] as const;
 
+/** Rows of 0s and 1s for the source card's backdrop; fixed so SSR and the client agree. */
+const BINARY = Array.from({ length: 14 }, (_, row) =>
+  Array.from({ length: 96 }, (_, col) =>
+    (row * 7 + col * 13 + ((row * col) % 5)) % 3 === 0 ? "1" : "0"
+  ).join(" ")
+).join("\n");
+
 const OG_LOCALE: Record<Language, string> = { en: "en_US", es: "es_ES" };
 
 /**
@@ -114,169 +122,179 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
 
-      <div className="landing">
-        <LandingNav language={language} signedIn={signedIn} />
+      <div className="page">
+        <div className="landing">
+          <LandingNav language={language} signedIn={signedIn} />
 
-        <main>
-          <section className="hero">
-            <div className="hero-copy">
-              <p className="pill">{t("hero.eyebrow")}</p>
-              <h1>{t("hero.title")}</h1>
-              <p className="lead">{t("hero.subtitle")}</p>
-              <div className="ctas">
-                {primaryCta("btn btn--primary")}
-                <a className="btn btn--ghost" href="#how">
-                  {t("hero.secondary")}
-                </a>
+          <main>
+            <section className="hero">
+              <div className="hero-copy">
+                <p className="pill">{t("hero.eyebrow")}</p>
+                <h1>{t("hero.title")}</h1>
+                <p className="lead">{t("hero.subtitle")}</p>
+                <div className="ctas">
+                  {primaryCta("btn btn--primary")}
+                  <a className="btn btn--ghost" href="#how">
+                    {t("hero.secondary")}
+                  </a>
+                </div>
+                <ul className="badges">
+                  {(["bank", "currencies", "languages"] as const).map((id) => (
+                    <li key={id}>
+                      <Check size={16} /> {t(`hero.trust.${id}`)}
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <ul className="badges">
-                {(["bank", "currencies", "languages"] as const).map((id) => (
+              <HeroArt language={language} label={t("hero.art")} />
+            </section>
+
+            <section className="section" aria-labelledby="problem-title">
+              <header className="head">
+                <p className="eyebrow">{t("problem.eyebrow")}</p>
+                <h2 id="problem-title">
+                  {t("problem.title")} <span className="muted">{t("problem.titleMuted")}</span>
+                </h2>
+              </header>
+              <div className="grid grid--3">
+                {(["1", "2", "3"] as const).map((id) => (
+                  <div key={id} className="tile glass">
+                    <ProblemArt id={id} />
+                    <h3>{t(`problem.${id}.title`)}</h3>
+                    <p>{t(`problem.${id}.body`)}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section id="how" className="band" aria-labelledby="how-title">
+              <header className="head">
+                <p className="eyebrow">{t("how.eyebrow")}</p>
+                <h2 id="how-title">{t("how.title")}</h2>
+              </header>
+              <ol className="steps">
+                {STEPS.map(({ id, icon }) => (
                   <li key={id}>
-                    <Check size={16} /> {t(`hero.trust.${id}`)}
+                    <p className="step-mark" aria-hidden="true">
+                      <span className="step-icon">{icon}</span>
+                      <span className="step-number">{id.padStart(2, "0")}</span>
+                    </p>
+                    <h3>{t(`how.${id}.title`)}</h3>
+                    <p>{t(`how.${id}.body`)}</p>
+                  </li>
+                ))}
+              </ol>
+            </section>
+
+            <section className="section" aria-labelledby="features-title">
+              <header className="head">
+                <p className="eyebrow">{t("features.eyebrow")}</p>
+                <h2 id="features-title">{t("features.title")}</h2>
+              </header>
+              <div className="features">
+                {FEATURES.map(({ id, color, icon }, index) => (
+                  <FeatureRow
+                    key={id}
+                    eyebrow={t(`features.${id}.eyebrow`)}
+                    title={t(`features.${id}.title`)}
+                    body={t(`features.${id}.body`)}
+                    color={color}
+                    icon={icon}
+                    art={
+                      <FeatureArt
+                        id={id}
+                        language={language}
+                        color={color}
+                        tilt={index % 2 === 1 ? -2 : 2}
+                      />
+                    }
+                    flip={index % 2 === 1}
+                  />
+                ))}
+              </div>
+            </section>
+
+            <section className="section" aria-labelledby="extras-title">
+              <header className="head">
+                <p className="eyebrow">{t("extras.eyebrow")}</p>
+                <h2 id="extras-title">{t("extras.title")}</h2>
+              </header>
+              <div className="grid grid--4">
+                {EXTRAS.map(({ id, icon }) => (
+                  <div key={id} className="tile glass">
+                    <span className="square" aria-hidden="true">
+                      {icon}
+                    </span>
+                    <h3>{t(`extras.${id}.title`)}</h3>
+                    <p>{t(`extras.${id}.body`)}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="trust glass" aria-labelledby="trust-title">
+              <div className="trust-head">
+                <p className="eyebrow">{t("trust.eyebrow")}</p>
+                <h2 id="trust-title">{t("trust.title")}</h2>
+                <Link className="text-link" href="/privacy">
+                  {t("trust.policy")} <ArrowRight size={16} />
+                </Link>
+              </div>
+              <ul className="trust-list">
+                {TRUST.map(({ id, icon }) => (
+                  <li key={id}>
+                    <span className="square square--positive" aria-hidden="true">
+                      {icon}
+                    </span>
+                    <div>
+                      <h3>{t(`trust.${id}.title`)}</h3>
+                      <p>{t(`trust.${id}.body`)}</p>
+                    </div>
                   </li>
                 ))}
               </ul>
-            </div>
-            <HeroArt language={language} label={t("hero.art")} />
-          </section>
+            </section>
 
-          <section className="section" aria-labelledby="problem-title">
-            <header className="head">
-              <p className="eyebrow">{t("problem.eyebrow")}</p>
-              <h2 id="problem-title">
-                {t("problem.title")} <span className="muted">{t("problem.titleMuted")}</span>
-              </h2>
-            </header>
-            <div className="grid grid--3">
-              {(["1", "2", "3"] as const).map((id) => (
-                <div key={id} className="tile glass">
-                  <ProblemArt id={id} />
-                  <h3>{t(`problem.${id}.title`)}</h3>
-                  <p>{t(`problem.${id}.body`)}</p>
-                </div>
-              ))}
-            </div>
-          </section>
+            <section className="source" aria-labelledby="source-title">
+              <pre className="binary" aria-hidden="true">
+                {BINARY}
+              </pre>
+              <div className="source-copy">
+                <p className="prompt" aria-hidden="true">
+                  <span>$</span> git clone walleto
+                </p>
+                <h2 id="source-title">{t("source.title")}</h2>
+                <p>{t("source.body")}</p>
+              </div>
+              <a className="btn btn--light" href={GITHUB_REPO_URL} rel="noopener">
+                <Github size={18} /> {t("source.cta")}
+              </a>
+            </section>
 
-          <section id="how" className="band" aria-labelledby="how-title">
-            <header className="head">
-              <p className="eyebrow">{t("how.eyebrow")}</p>
-              <h2 id="how-title">{t("how.title")}</h2>
-            </header>
-            <ol className="steps">
-              {STEPS.map(({ id, icon }) => (
-                <li key={id}>
-                  <p className="step-mark" aria-hidden="true">
-                    <span className="step-icon">{icon}</span>
-                    <span className="step-number">{id.padStart(2, "0")}</span>
-                  </p>
-                  <h3>{t(`how.${id}.title`)}</h3>
-                  <p>{t(`how.${id}.body`)}</p>
-                </li>
-              ))}
-            </ol>
-          </section>
+            <section className="section faq" aria-labelledby="faq-title">
+              <header className="head">
+                <h2 id="faq-title">{t("faq.title")}</h2>
+              </header>
+              <LandingFaq language={language} />
+            </section>
 
-          <section className="section" aria-labelledby="features-title">
-            <header className="head">
-              <p className="eyebrow">{t("features.eyebrow")}</p>
-              <h2 id="features-title">{t("features.title")}</h2>
-            </header>
-            <div className="features">
-              {FEATURES.map(({ id, color, icon }, index) => (
-                <FeatureRow
-                  key={id}
-                  eyebrow={t(`features.${id}.eyebrow`)}
-                  title={t(`features.${id}.title`)}
-                  body={t(`features.${id}.body`)}
-                  color={color}
-                  icon={icon}
-                  art={
-                    <FeatureArt
-                      id={id}
-                      language={language}
-                      color={color}
-                      tilt={index % 2 === 1 ? -2 : 2}
-                    />
-                  }
-                  flip={index % 2 === 1}
-                />
-              ))}
-            </div>
-          </section>
+            <section className="final" aria-labelledby="final-title">
+              <h2 id="final-title">{t("final.title")}</h2>
+              <p>{t("final.body")}</p>
+              {primaryCta("btn btn--light")}
+            </section>
+          </main>
 
-          <section className="section" aria-labelledby="extras-title">
-            <header className="head">
-              <p className="eyebrow">{t("extras.eyebrow")}</p>
-              <h2 id="extras-title">{t("extras.title")}</h2>
-            </header>
-            <div className="grid grid--4">
-              {EXTRAS.map(({ id, icon }) => (
-                <div key={id} className="tile glass">
-                  <span className="square" aria-hidden="true">
-                    {icon}
-                  </span>
-                  <h3>{t(`extras.${id}.title`)}</h3>
-                  <p>{t(`extras.${id}.body`)}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="trust glass" aria-labelledby="trust-title">
-            <div className="trust-head">
-              <p className="eyebrow">{t("trust.eyebrow")}</p>
-              <h2 id="trust-title">{t("trust.title")}</h2>
-              <Link className="text-link" href="/privacy">
-                {t("trust.policy")} <ArrowRight size={16} />
-              </Link>
-            </div>
-            <ul className="trust-list">
-              {TRUST.map(({ id, icon }) => (
-                <li key={id}>
-                  <span className="square square--positive" aria-hidden="true">
-                    {icon}
-                  </span>
-                  <div>
-                    <h3>{t(`trust.${id}.title`)}</h3>
-                    <p>{t(`trust.${id}.body`)}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section className="source" aria-labelledby="source-title">
-            <div>
-              <p className="prompt" aria-hidden="true">
-                <span>$</span> git clone walleto
-              </p>
-              <h2 id="source-title">{t("source.title")}</h2>
-              <p>{t("source.body")}</p>
-            </div>
-            <a className="btn btn--light" href={GITHUB_REPO_URL} rel="noopener">
-              {t("source.cta")} <ArrowRight size={18} />
-            </a>
-          </section>
-
-          <section className="section faq" aria-labelledby="faq-title">
-            <header className="head">
-              <h2 id="faq-title">{t("faq.title")}</h2>
-            </header>
-            <LandingFaq language={language} />
-          </section>
-
-          <section className="final" aria-labelledby="final-title">
-            <h2 id="final-title">{t("final.title")}</h2>
-            <p>{t("final.body")}</p>
-            {primaryCta("btn btn--light")}
-          </section>
-        </main>
-
-        <LandingFooter language={language} />
+          <LandingFooter language={language} />
+        </div>
       </div>
 
       <style jsx>{`
+        /* Clips the full-bleed band's overhang; "clip" keeps the nav sticky. */
+        .page {
+          overflow-x: clip;
+        }
+
         .landing {
           /* The dark bands keep their night colours in either theme. */
           --ink: #0b1020;
@@ -529,17 +547,26 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
           display: flex;
           flex-direction: column;
           gap: 56px;
-          padding: 72px 56px;
-          border-radius: 32px;
+          padding: 104px 0;
+          position: relative;
+          isolation: isolate;
+          color: var(--ink-fg);
+        }
+
+        /* Full-bleed: the ink runs edge to edge while the content keeps the
+           page's column; clipped so the page never scrolls sideways. */
+        .band::before {
+          content: "";
+          position: absolute;
+          inset: 0 -100vmax;
+          z-index: -1;
           background:
             radial-gradient(
-              120% 90% at 100% 0%,
-              color-mix(in srgb, var(--accent) 28%, transparent),
-              transparent 60%
+              30% 70% at 50% 0%,
+              color-mix(in srgb, var(--accent) 26%, transparent),
+              transparent 100%
             ),
             var(--ink);
-          border: 1px solid var(--ink-line);
-          color: var(--ink-fg);
         }
 
         .band h2 {
@@ -661,6 +688,8 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
 
         /* ── Built in the open ────────────────────────────────────────── */
         .source {
+          position: relative;
+          overflow: hidden;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -670,6 +699,29 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
           background: var(--ink);
           border: 1px solid var(--ink-line);
           color: var(--ink-fg);
+        }
+
+        .source-copy,
+        .source :global(.btn) {
+          position: relative;
+        }
+
+        /* 0s and 1s, faint, fading in from the right. */
+        .binary {
+          position: absolute;
+          inset: 0;
+          margin: 0;
+          padding: 16px;
+          font-family: var(--font-mono), ui-monospace, monospace;
+          font-size: 12px;
+          line-height: 1.6;
+          color: var(--ink-fg);
+          opacity: 0.14;
+          white-space: pre;
+          pointer-events: none;
+          user-select: none;
+          -webkit-mask-image: linear-gradient(100deg, transparent 25%, #000 95%);
+          mask-image: linear-gradient(100deg, transparent 25%, #000 95%);
         }
 
         .prompt {
@@ -803,7 +855,6 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
             padding: 24px;
           }
 
-          .band,
           .trust,
           .source {
             padding: 40px 24px;
@@ -812,6 +863,7 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
 
           .band {
             gap: 40px;
+            padding: 72px 0;
           }
 
           .final {
