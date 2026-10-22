@@ -146,6 +146,13 @@ features/
   methods/      MethodsList (saved methods as a wallet: one MethodFace per method, grouped by type) +
                 EditMethodModal (with the full-size face as a preview) — used by Settings › Payment methods
                 (the /methods page redirects)
+  landing/      the public landing page (LandingPage): `/` for signed-out visitors (negotiated language),
+                `/en` and `/es` pinned (`routes.ts`; _document reads the pinned language for <html lang>). The one
+                public screen, so the only one with per-language URLs, canonical/hreflang and Open Graph. Copy in
+                `messages.ts` must stay true of the app today (no pricing, no bank sync). No screenshots: the app is
+                drawn as vector art (`components/art/`, glass cards with the app's icons, domain colours and
+                var(--accent), never a fixed blue); only the Open Graph image lives in `public/landing/<language>/`.
+                One way in, "Sign in" / "Entrar" (`/api/auth/login?ui_locales=…`): Google via Auth0 creates the account on first use
   insights/     SubscriptionInsights — monthly/annualized subscription cost
   investments/  value per account / pocket / debt (and per category for what has no account): invested vs value,
                 gain %, history; helpers/interest.ts estimates with the account's rate; a debt is the

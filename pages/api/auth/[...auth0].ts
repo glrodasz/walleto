@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import auth0 from "../../../lib/auth0";
 import { requestOrigin } from "../../../utils/requestOrigin";
+import { isLocale } from "../../../i18n/locale";
 
 /**
  * The redirect URI is derived per request from the host the user is on,
@@ -15,9 +16,26 @@ export function callbackUrlFor(req: NextApiRequest): string | undefined {
   return origin ? `${origin}/api/auth/callback` : undefined;
 }
 
+/**
+ * The landing page links here with `ui_locales`, so Universal Login speaks
+ * the landing's language. Anything else in the query is ignored.
+ */
+export function loginParamsFor(req: NextApiRequest): Record<string, string> {
+  const uiLocales = req.query?.ui_locales;
+  return isLocale(uiLocales) ? { ui_locales: uiLocales } : {};
+}
+
 export async function handleLoginForHost(req: NextApiRequest, res: NextApiResponse) {
   const redirect_uri = callbackUrlFor(req);
-  await auth0.handleLogin(req, res, redirect_uri ? { authorizationParams: { redirect_uri } } : {});
+  const authorizationParams = {
+    ...loginParamsFor(req),
+    ...(redirect_uri && { redirect_uri }),
+  };
+  await auth0.handleLogin(
+    req,
+    res,
+    Object.keys(authorizationParams).length ? { authorizationParams } : {}
+  );
 }
 
 // Wrap the Auth0 callback so failures redirect to a readable error page.
