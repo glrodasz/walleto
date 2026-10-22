@@ -16,12 +16,15 @@ export const THEME_COLOR: Record<ResolvedTheme, string> = { light: "#eef2f7", da
 const isPreference = (v: unknown): v is ThemePreference =>
   v === "light" || v === "dark" || v === "system";
 
+/** Light until the user picks a theme; only an explicit "system" follows the OS. */
+export const DEFAULT_THEME: ThemePreference = "light";
+
 function readStored(): ThemePreference {
   try {
     const v = localStorage.getItem(THEME_STORAGE_KEY);
-    return isPreference(v) ? v : "system";
+    return isPreference(v) ? v : DEFAULT_THEME;
   } catch {
-    return "system";
+    return DEFAULT_THEME;
   }
 }
 
@@ -55,7 +58,7 @@ const ThemeContext = createContext<ThemeContextValue>({
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const { userDoc, update } = useUserDoc();
-  const [preference, setLocal] = useState<ThemePreference>("light");
+  const [preference, setLocal] = useState<ThemePreference>(DEFAULT_THEME);
   const [resolved, setResolved] = useState<ResolvedTheme>("light");
 
   // Hydrate from what the boot script already applied.

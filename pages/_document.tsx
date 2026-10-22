@@ -8,11 +8,11 @@ import { buildInfo } from "../helpers/buildInfo";
 
 /**
  * Resolves the theme before first paint so a dark-mode user never sees a
- * light flash. Runs inline, ahead of every stylesheet; hooks/useTheme keeps
+ * light flash. Light unless the user explicitly chose dark or system. Runs inline, ahead of every stylesheet; hooks/useTheme keeps
  * the attribute in sync afterwards. Next hydrates only #__next, so touching
  * <html> here never causes a hydration mismatch.
  */
-const THEME_BOOT = `(function(){try{var p=localStorage.getItem("walleto:theme")||"system";var d=p==="dark"||(p==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light"}catch(e){}})()`;
+const THEME_BOOT = `(function(){try{var p=localStorage.getItem("walleto:theme")||"light";var d=p==="dark"||(p==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light"}catch(e){}})()`;
 
 type Props = DocumentInitialProps & { language: Language };
 
