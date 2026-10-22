@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 /**
  * The three small drawings on the problem cards: past bars with an empty
  * slot for this month, spending next to money set aside, and a row of
@@ -20,12 +22,16 @@ export function ProblemArt({ id }: { id: "1" | "2" | "3" }) {
           <i className="block block--kept" />
         </>
       )}
-      {id === "3" &&
-        ["$", "€", "MXN", "kr", "¥"].map((c) => (
-          <span key={c} className="chip">
-            {c}
-          </span>
-        ))}
+      {id === "3" && (
+        <Image
+          className="coins"
+          src="/landing/coins.webp"
+          alt=""
+          width={960}
+          height={253}
+          sizes="(max-width: 599px) 90vw, 340px"
+        />
+      )}
       <style jsx>{`
         .mini {
           display: flex;
@@ -69,23 +75,16 @@ export function ProblemArt({ id }: { id: "1" | "2" | "3" }) {
         }
 
         .mini--3 {
-          align-items: flex-start;
-          flex-wrap: wrap;
+          height: auto;
         }
 
-        .chip {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          min-width: 38px;
-          height: 38px;
-          padding: 0 10px;
-          border-radius: 999px;
-          background: var(--glass-raised);
-          border: 1px solid var(--line);
-          font-family: var(--font-mono), ui-monospace, monospace;
-          font-weight: 600;
-          color: var(--fg-0);
+        /* A cut-out photo on transparency, so it sits on either theme. */
+        .mini--3 :global(.coins) {
+          display: block;
+          width: 100%;
+          max-width: 340px;
+          height: auto;
+          filter: drop-shadow(0 10px 12px rgba(15, 23, 42, 0.18));
         }
       `}</style>
     </div>
