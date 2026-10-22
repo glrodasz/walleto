@@ -1,4 +1,4 @@
-import { CoinRow } from "./Coins";
+import Image from "next/image";
 
 /**
  * The three small drawings on the problem cards: past bars with an empty
@@ -22,7 +22,16 @@ export function ProblemArt({ id }: { id: "1" | "2" | "3" }) {
           <i className="block block--kept" />
         </>
       )}
-      {id === "3" && <CoinRow />}
+      {id === "3" && (
+        <Image
+          className="coins"
+          src="/landing/coins.webp"
+          alt=""
+          width={960}
+          height={253}
+          sizes="(max-width: 599px) 90vw, 340px"
+        />
+      )}
       <style jsx>{`
         .mini {
           display: flex;
@@ -67,7 +76,15 @@ export function ProblemArt({ id }: { id: "1" | "2" | "3" }) {
 
         .mini--3 {
           height: auto;
-          min-height: 64px;
+        }
+
+        /* A cut-out photo on transparency, so it sits on either theme. */
+        .mini--3 :global(.coins) {
+          display: block;
+          width: 100%;
+          max-width: 340px;
+          height: auto;
+          filter: drop-shadow(0 10px 12px rgba(15, 23, 42, 0.18));
         }
       `}</style>
     </div>
