@@ -2,9 +2,8 @@ import Document, { Html, Head, Main, NextScript } from "next/document";
 import type { DocumentContext, DocumentInitialProps } from "next/document";
 import { requestLocale } from "../i18n/locale";
 import type { Language } from "../types";
-import { translate } from "../helpers/i18n";
-import { PAGE_MESSAGES } from "../messages/pages";
 import { buildInfo } from "../helpers/buildInfo";
+import { landingLanguageFor } from "../features/landing/routes";
 
 /**
  * Resolves the theme before first paint so a dark-mode user never sees a
@@ -25,7 +24,6 @@ export default function AppDocument({ language }: Props) {
     <Html lang={language} data-theme="light" data-env={env}>
       <Head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
-        <meta name="description" content={translate(PAGE_MESSAGES, language, "meta.description")} />
         <link rel="icon" href={favicon} type="image/svg+xml" />
         {env === "production" && (
           <>
@@ -42,8 +40,12 @@ export default function AppDocument({ language }: Props) {
   );
 }
 
-// Same resolution as pages/_app.tsx, so <html lang> matches the text.
+// Same resolution as pages/_app.tsx, so <html lang> matches the text. The
+// landing's /en and /es speak their own language whatever the cookie says.
 AppDocument.getInitialProps = async (ctx: DocumentContext): Promise<Props> => {
   const initialProps = await Document.getInitialProps(ctx);
-  return { ...initialProps, language: requestLocale(ctx.req) };
+  return {
+    ...initialProps,
+    language: landingLanguageFor(ctx.pathname) ?? requestLocale(ctx.req),
+  };
 };

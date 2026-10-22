@@ -103,6 +103,32 @@ describe("login and logout follow the request host", () => {
     expect(handleLoginMock).toHaveBeenCalledWith(expect.anything(), expect.anything(), {});
   });
 
+  it("opens on the sign-up form, in the landing's language, when asked", async () => {
+    handleLoginMock.mockResolvedValue(undefined);
+    const signup = {
+      headers: { host: "walleto.app", "x-forwarded-proto": "https" },
+      query: { screen_hint: "signup", ui_locales: "es" },
+    } as unknown as NextApiRequest;
+    await handleLoginForHost(signup, {} as NextApiResponse);
+    expect(handleLoginMock).toHaveBeenCalledWith(expect.anything(), expect.anything(), {
+      authorizationParams: {
+        screen_hint: "signup",
+        ui_locales: "es",
+        redirect_uri: "https://walleto.app/api/auth/callback",
+      },
+    });
+  });
+
+  it("ignores login hints it doesn't know", async () => {
+    handleLoginMock.mockResolvedValue(undefined);
+    const odd = {
+      headers: {},
+      query: { screen_hint: "reset", ui_locales: "fr", prompt: "none" },
+    } as unknown as NextApiRequest;
+    await handleLoginForHost(odd, {} as NextApiResponse);
+    expect(handleLoginMock).toHaveBeenCalledWith(expect.anything(), expect.anything(), {});
+  });
+
   it("logs out back to the same origin", async () => {
     handleLogoutMock.mockResolvedValue(undefined);
     await handleLogoutForHost(req("sublr-git-branch-team.vercel.app"), {} as NextApiResponse);
