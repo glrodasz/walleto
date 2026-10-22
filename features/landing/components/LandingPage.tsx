@@ -24,7 +24,7 @@ import {
   Heart,
 } from "../../../components/atoms/Icons";
 import { LANDING_MESSAGES } from "../messages";
-import { LANDING_PATH, signUpHref } from "../routes";
+import { LANDING_PATH, signInHref } from "../routes";
 import { ogImageSrc } from "../data/shots";
 import type { ShotId } from "../data/shots";
 import { LandingNav } from "./LandingNav";
@@ -117,8 +117,8 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
                     {t("nav.openApp")} <ArrowRight size={18} />
                   </Link>
                 ) : (
-                  <a className="btn btn--primary" href={signUpHref(language)}>
-                    {t("hero.cta")} <ArrowRight size={18} />
+                  <a className="btn btn--primary" href={signInHref(language)}>
+                    {t("nav.signIn")} <ArrowRight size={18} />
                   </a>
                 )}
                 <a className="btn btn--ghost" href="#how">
@@ -265,8 +265,8 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
                 {t("nav.openApp")} <ArrowRight size={18} />
               </Link>
             ) : (
-              <a className="btn btn--primary" href={signUpHref(language)}>
-                {t("hero.cta")} <ArrowRight size={18} />
+              <a className="btn btn--primary" href={signInHref(language)}>
+                {t("nav.signIn")} <ArrowRight size={18} />
               </a>
             )}
           </section>
@@ -296,16 +296,14 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
         .hero {
           display: flex;
           flex-direction: column;
-          align-items: center;
           gap: 56px;
         }
 
+        /* Left-aligned and wide: the title is the first thing anyone reads. */
         .hero-copy {
-          max-width: 760px;
-          text-align: center;
           display: flex;
           flex-direction: column;
-          align-items: center;
+          align-items: flex-start;
         }
 
         .pill {
@@ -321,25 +319,26 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
         }
 
         h1 {
-          margin: 0 0 20px;
-          font-size: clamp(2.4rem, 1.4rem + 4vw, 4.2rem);
-          line-height: 1.04;
-          letter-spacing: -0.035em;
+          margin: 0 0 24px;
+          max-width: 15ch;
+          font-size: clamp(3rem, 1.2rem + 6vw, 6.5rem);
+          line-height: 0.98;
+          letter-spacing: -0.045em;
           color: var(--fg-0);
         }
 
         .lead {
-          margin: 0 0 32px;
-          max-width: 620px;
+          margin: 0 0 36px;
+          max-width: 30ch;
           color: var(--fg-1);
-          font-size: clamp(1.05rem, 0.95rem + 0.4vw, 1.25rem);
-          line-height: 1.55;
+          font-size: clamp(1.3rem, 1rem + 1.1vw, 1.9rem);
+          line-height: 1.35;
+          letter-spacing: -0.01em;
         }
 
         .ctas {
           display: flex;
           flex-wrap: wrap;
-          justify-content: center;
           gap: 12px;
         }
 
@@ -349,7 +348,6 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
           padding: 0;
           display: flex;
           flex-wrap: wrap;
-          justify-content: center;
           gap: 8px 20px;
           color: var(--fg-2);
           font-size: 0.875rem;

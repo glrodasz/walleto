@@ -2,14 +2,15 @@ import { render, screen } from "@testing-library/react";
 import { LandingPage } from "./LandingPage";
 
 describe("LandingPage", () => {
-  it("speaks the language it is given and sends sign-ups to Auth0", () => {
+  it("speaks the language it is given and sends visitors to Auth0", () => {
     render(<LandingPage language="es" origin="https://walleto.app" />);
 
     expect(
       screen.getByRole("heading", { level: 1, name: "Tu plan de dinero, mes a mes." })
     ).toBeInTheDocument();
-    const signUps = screen.getAllByRole("link", { name: /Crea tu cuenta/ });
-    expect(signUps[0]).toHaveAttribute("href", "/api/auth/login?screen_hint=signup&ui_locales=es");
+    for (const link of screen.getAllByRole("link", { name: /^Entrar/ })) {
+      expect(link).toHaveAttribute("href", "/api/auth/login?ui_locales=es");
+    }
     expect(screen.getByRole("link", { name: "English" })).toHaveAttribute("href", "/en");
   });
 
@@ -35,7 +36,7 @@ describe("LandingPage", () => {
   it("offers a signed-in visitor the app instead of a new account", () => {
     render(<LandingPage language="en" origin="https://walleto.app" signedIn />);
 
-    expect(screen.queryByRole("link", { name: /Create/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Sign in/ })).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /Open Walleto/ })[0]).toHaveAttribute("href", "/");
   });
 });

@@ -103,16 +103,15 @@ describe("login and logout follow the request host", () => {
     expect(handleLoginMock).toHaveBeenCalledWith(expect.anything(), expect.anything(), {});
   });
 
-  it("opens on the sign-up form, in the landing's language, when asked", async () => {
+  it("opens Universal Login in the landing's language", async () => {
     handleLoginMock.mockResolvedValue(undefined);
-    const signup = {
+    const fromLanding = {
       headers: { host: "walleto.app", "x-forwarded-proto": "https" },
-      query: { screen_hint: "signup", ui_locales: "es" },
+      query: { ui_locales: "es" },
     } as unknown as NextApiRequest;
-    await handleLoginForHost(signup, {} as NextApiResponse);
+    await handleLoginForHost(fromLanding, {} as NextApiResponse);
     expect(handleLoginMock).toHaveBeenCalledWith(expect.anything(), expect.anything(), {
       authorizationParams: {
-        screen_hint: "signup",
         ui_locales: "es",
         redirect_uri: "https://walleto.app/api/auth/callback",
       },
@@ -123,7 +122,7 @@ describe("login and logout follow the request host", () => {
     handleLoginMock.mockResolvedValue(undefined);
     const odd = {
       headers: {},
-      query: { screen_hint: "reset", ui_locales: "fr", prompt: "none" },
+      query: { screen_hint: "signup", ui_locales: "fr", prompt: "none" },
     } as unknown as NextApiRequest;
     await handleLoginForHost(odd, {} as NextApiResponse);
     expect(handleLoginMock).toHaveBeenCalledWith(expect.anything(), expect.anything(), {});

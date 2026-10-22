@@ -17,16 +17,12 @@ export function callbackUrlFor(req: NextApiRequest): string | undefined {
 }
 
 /**
- * The landing page's "Create account" links here with `?screen_hint=signup`
- * (Universal Login opens on its sign-up form) and `ui_locales` (in the
- * landing's language). Anything else in the query is ignored.
+ * The landing page links here with `ui_locales`, so Universal Login speaks
+ * the landing's language. Anything else in the query is ignored.
  */
 export function loginParamsFor(req: NextApiRequest): Record<string, string> {
-  const query = req.query ?? {};
-  return {
-    ...(query.screen_hint === "signup" && { screen_hint: "signup" }),
-    ...(isLocale(query.ui_locales) && { ui_locales: query.ui_locales }),
-  };
+  const uiLocales = req.query?.ui_locales;
+  return isLocale(uiLocales) ? { ui_locales: uiLocales } : {};
 }
 
 export async function handleLoginForHost(req: NextApiRequest, res: NextApiResponse) {

@@ -151,7 +151,7 @@ features/
                 public screen, so the only one with per-language URLs, canonical/hreflang and Open Graph. Copy in
                 `messages.ts` must stay true of the app today (no pricing, no bank sync). Screenshots live in
                 `public/landing/<language>/` (Storybook demo data, light theme, WebP); `data/shots.ts` holds their sizes.
-                "Create account" goes to `/api/auth/login?screen_hint=signup&ui_locales=…`
+                One way in, "Sign in" / "Entrar" (`/api/auth/login?ui_locales=…`): Google via Auth0 creates the account on first use
   insights/     SubscriptionInsights — monthly/annualized subscription cost
   investments/  value per account / pocket / debt (and per category for what has no account): invested vs value,
                 gain %, history; helpers/interest.ts estimates with the account's rate; a debt is the

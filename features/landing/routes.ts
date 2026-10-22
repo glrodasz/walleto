@@ -16,11 +16,10 @@ export function landingLanguageFor(pathname: string): Language | null {
   return match ?? null;
 }
 
-/** Universal Login, opened on sign-up and in the page's language. */
-export function signUpHref(language: Language): string {
-  return `/api/auth/login?screen_hint=signup&ui_locales=${language}`;
-}
-
+/**
+ * Sign-in and sign-up are the same step (Google through Auth0 creates the
+ * account on first use), so the landing has one way in, in its language.
+ */
 export function signInHref(language: Language): string {
   return `/api/auth/login?ui_locales=${language}`;
 }

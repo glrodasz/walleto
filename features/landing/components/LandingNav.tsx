@@ -3,17 +3,17 @@ import type { Language } from "../../../types";
 import { translator } from "../../../helpers/i18n";
 import { LANGUAGE_NAMES } from "../../../i18n/locale";
 import { LANDING_MESSAGES } from "../messages";
-import { LANDING_PATH, signInHref, signUpHref } from "../routes";
+import { LANDING_PATH, signInHref } from "../routes";
 
 interface Props {
   language: Language;
-  /** A signed-in visitor (on /en or /es) gets a way back into the app instead. */
+  /** A signed-in visitor (on /en or /es) goes straight back into the app. */
   signedIn: boolean;
 }
 
 const OTHER: Record<Language, Language> = { en: "es", es: "en" };
 
-/** Logo, the other language, and the two ways in. */
+/** Logo, the other language, and the way in. */
 export function LandingNav({ language, signedIn }: Props) {
   const t = translator(LANDING_MESSAGES, language);
   const other = OTHER[language];
@@ -35,15 +35,10 @@ export function LandingNav({ language, signedIn }: Props) {
             {t("nav.openApp")}
           </Link>
         ) : (
-          <>
-            {/* Auth0 SDK routes, not Next pages — they must stay <a>. */}
-            <a className="signin" href={signInHref(language)}>
-              {t("nav.signIn")}
-            </a>
-            <a className="cta cta--signup" href={signUpHref(language)}>
-              {t("nav.signUp")}
-            </a>
-          </>
+          // An Auth0 SDK route, not a Next page — it must stay <a>.
+          <a className="cta" href={signInHref(language)}>
+            {t("nav.signIn")}
+          </a>
         )}
       </nav>
 
@@ -113,11 +108,6 @@ export function LandingNav({ language, signedIn }: Props) {
 
           .actions :global(a) {
             padding: 0 10px;
-          }
-
-          /* The hero repeats the sign-up button right below; the nav keeps sign-in. */
-          .actions :global(.cta--signup) {
-            display: none;
           }
         }
       `}</style>

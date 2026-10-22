@@ -12,15 +12,12 @@ export const LANDING_MESSAGES = defineMessages(
       "Plan your income, expenses, savings, investments and debts. See whether the month is on plan and what you're worth today, in every currency you use.",
 
     "nav.signIn": "Sign in",
-    "nav.signUp": "Create account",
     "nav.openApp": "Open Walleto",
     "nav.language": "Language",
 
     "hero.eyebrow": "Personal finance planner",
     "hero.title": "Your money plan, month by month.",
-    "hero.subtitle":
-      "Plan your income, expenses, savings, investments and debts. See whether the month is on plan and what you're worth today, in every currency you use.",
-    "hero.cta": "Create your account",
+    "hero.subtitle": "Plan every month and see how you're doing, in any currency.",
     "hero.secondary": "See how it works",
     "hero.trust.bank": "No bank connection",
     "hero.trust.currencies": "8 currencies",
@@ -141,16 +138,13 @@ export const LANDING_MESSAGES = defineMessages(
     "meta.description":
       "Planea tus ingresos, gastos, ahorros, inversiones y deudas. Mira si el mes va según el plan y cuánto vales hoy, en todas tus monedas.",
 
-    "nav.signIn": "Iniciar sesión",
-    "nav.signUp": "Crear cuenta",
+    "nav.signIn": "Entrar",
     "nav.openApp": "Abrir Walleto",
     "nav.language": "Idioma",
 
     "hero.eyebrow": "Planificador de finanzas personales",
     "hero.title": "Tu plan de dinero, mes a mes.",
-    "hero.subtitle":
-      "Planea tus ingresos, gastos, ahorros, inversiones y deudas. Mira si el mes va según el plan y cuánto vales hoy, en todas tus monedas.",
-    "hero.cta": "Crea tu cuenta",
+    "hero.subtitle": "Planea cada mes y mira cómo vas, en cualquier moneda.",
     "hero.secondary": "Mira cómo funciona",
     "hero.trust.bank": "Sin conectar tu banco",
     "hero.trust.currencies": "8 monedas",
