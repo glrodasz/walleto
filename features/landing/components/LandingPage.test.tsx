@@ -14,7 +14,7 @@ describe("LandingPage", () => {
     expect(screen.getByRole("link", { name: "English" })).toHaveAttribute("href", "/en");
   });
 
-  it("shows every feature with its screenshot", () => {
+  it("shows every feature, drawn rather than captured", () => {
     render(<LandingPage language="en" origin="https://walleto.app" />);
 
     for (const title of [
@@ -27,10 +27,7 @@ describe("LandingPage", () => {
     ]) {
       expect(screen.getByRole("heading", { level: 3, name: title })).toBeInTheDocument();
     }
-    expect(screen.getByAltText("Emergency mode: how long the cushion lasts.")).toHaveAttribute(
-      "src",
-      expect.stringContaining("landing%2Fen%2Fprospect.webp")
-    );
+    expect(screen.getByRole("img", { name: /^Illustration of Walleto/ })).toBeInTheDocument();
   });
 
   it("offers a signed-in visitor the app instead of a new account", () => {

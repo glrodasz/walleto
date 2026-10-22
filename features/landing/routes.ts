@@ -23,3 +23,8 @@ export function landingLanguageFor(pathname: string): Language | null {
 export function signInHref(language: Language): string {
   return `/api/auth/login?ui_locales=${language}`;
 }
+
+/** The social preview (Open Graph / Twitter), 1200×630, one per language. */
+export function ogImageSrc(language: Language): string {
+  return `/landing/${language}/og.png`;
+}
