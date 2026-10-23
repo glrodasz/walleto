@@ -4,6 +4,7 @@ import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { Badge } from "../../../components/atoms/Badge";
+import { InfoTip } from "../../../components/atoms/InfoTip";
 import { Home, Shuffle } from "../../../components/atoms/Icons";
 import { KebabMenu, KebabSpacer } from "../../../components/molecules/KebabMenu";
 import { RangeAmount } from "../../../components/atoms/RangeAmount";
@@ -127,9 +128,9 @@ const paidDiffers = ({ item, paid }: MonthOccurrence) =>
     paid.amountFloor !== item.amountFloor);
 
 /** The average on a Variable pill: set apart from the label, in figures, not caps. */
-function AverageNote({ label, hint }: { label: string; hint: string }) {
+function AverageNote({ label }: { label: string }) {
   return (
-    <span className="average" title={hint}>
+    <span className="average">
       {label}
       <style jsx>{`
         .average {
@@ -170,10 +171,26 @@ function OccurrenceRow({
   const flags = [
     ...(variable
       ? [
-          <Badge key="variable" variant="outline" tone="info" caps icon={<Shuffle size={12} />}>
-            {common("state.variable")}
-            {average && <AverageNote {...average} />}
-          </Badge>,
+          average ? (
+            // The pill explains its average on tap, hover or focus: a phone
+            // has no hover for a title.
+            <InfoTip
+              key="variable"
+              label={`${common("state.variable")}, ${average.label}`}
+              trigger={
+                <Badge variant="outline" tone="info" caps icon={<Shuffle size={12} />}>
+                  {common("state.variable")}
+                  <AverageNote label={average.label} />
+                </Badge>
+              }
+            >
+              {average.hint}
+            </InfoTip>
+          ) : (
+            <Badge key="variable" variant="outline" tone="info" caps icon={<Shuffle size={12} />}>
+              {common("state.variable")}
+            </Badge>
+          ),
         ]
       : []),
     ...(hidden

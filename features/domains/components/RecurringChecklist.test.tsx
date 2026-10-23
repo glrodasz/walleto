@@ -135,8 +135,10 @@ describe("RecurringChecklist", () => {
       ],
     });
     const row = screen.getByText("Power").closest("li")!;
-    const average = within(row).getByText("avg $650.00 · 2 mo");
-    expect(average).toHaveAttribute("title", expect.stringContaining("2 months"));
+    expect(within(row).getByText("avg $650.00 · 2 mo")).toBeInTheDocument();
+    // Explained on tap or focus, not by a title nobody on a phone can see.
+    const about = within(row).getByRole("button", { name: "Variable, avg $650.00 · 2 mo" });
+    expect(about).toHaveAccessibleDescription(expect.stringContaining("2 months"));
     // A fixed item has no pill, so no average.
     expect(screen.getAllByText(/^avg /)).toHaveLength(1);
   });
