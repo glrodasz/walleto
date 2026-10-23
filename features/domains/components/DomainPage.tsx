@@ -90,6 +90,7 @@ import {
   spreadTransactions,
 } from "../helpers/spread";
 import type { TransactionFilters } from "../helpers/transactionFilters";
+import { averageFrom } from "../helpers/variableAverage";
 import type { Category, Currency, Domain, RecurrentTransaction, Transaction } from "../../../types";
 import { useT } from "../../../hooks/useT";
 import { COMMON_MESSAGES } from "../../../messages/common";
@@ -201,16 +202,19 @@ export function DomainPage({ domain }: Props) {
   // Investments and savings read their whole ledger: a value check is
   // measured against everything paid in before it, not just the bars' window.
   // Elsewhere it reaches back far enough for a spread item's slices to find
-  // the payment they spread. Every figure below filters by month anyway, so
-  // nothing else moves.
+  // the payment they spread, and for a variable expense's average to see the
+  // six months before the one on screen. Every figure below filters by month
+  // anyway, so nothing else moves.
+  const lookback = useMemo(() => {
+    const spread = spreadLookback(items, windows[0].start);
+    const average = averageFrom(window.start);
+    return items.some((i) => i.amountFloor !== undefined) && average < spread ? average : spread;
+  }, [items, windows, window.start]);
   const {
     transactions,
     loading: txLoading,
     error: txError,
-  } = useDomainTransactions(
-    domain,
-    accountDomain ? INCEPTION : spreadLookback(items, windows[0].start)
-  );
+  } = useDomainTransactions(domain, accountDomain ? INCEPTION : lookback);
   // Payments removed from Activity: the Plan shows them as skipped, not
   // overdue. From the first month on the page, like the ledger: a removed
   // payment may have been moved to another month first.

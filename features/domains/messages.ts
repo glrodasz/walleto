@@ -150,6 +150,12 @@ export const DOMAIN_MESSAGES = defineMessages(
     "plan.stop": "Stop",
     "plan.notThisMonth": "Not this month ({count})",
     "plan.next": "next {date}",
+    "plan.average": "avg {amount} · {count} mo",
+    "plan.averageHint": {
+      one: "Average of what you actually paid in the last 6 months (1 month with a confirmed amount)",
+      other:
+        "Average of what you actually paid in the last 6 months ({count} months with a confirmed amount)",
+    },
     "plan.runRate.INCOME": "Planned monthly income: {amount}/mo",
     "plan.runRate.EXPENSE": "Planned monthly expenses: {amount}/mo",
     "plan.runRate.INVESTMENT": "Planned monthly investments: {amount}/mo",
@@ -390,6 +396,12 @@ export const DOMAIN_MESSAGES = defineMessages(
     "plan.stop": "Detener",
     "plan.notThisMonth": "No es de este mes ({count})",
     "plan.next": "próximo: {date}",
+    "plan.average": "prom. {amount} · {count} m",
+    "plan.averageHint": {
+      one: "Promedio de lo que pagaste realmente en los últimos 6 meses (1 mes con monto confirmado)",
+      other:
+        "Promedio de lo que pagaste realmente en los últimos 6 meses ({count} meses con monto confirmado)",
+    },
     "plan.runRate.INCOME": "Ingresos mensuales planeados: {amount}/mes",
     "plan.runRate.EXPENSE": "Gastos mensuales planeados: {amount}/mes",
     "plan.runRate.INVESTMENT": "Inversiones mensuales planeadas: {amount}/mes",
