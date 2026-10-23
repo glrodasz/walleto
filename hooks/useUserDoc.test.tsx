@@ -7,6 +7,8 @@ jest.mock("../firebase/client", () => ({ db: {} }));
 jest.mock("firebase/firestore", () => ({
   doc: (_db: unknown, ...path: string[]) => path.join("/"),
   onSnapshot: (...args: unknown[]) => onSnapshotMock(...args),
+  updateDoc: jest.fn(() => Promise.resolve()),
+  serverTimestamp: jest.fn(),
 }));
 jest.mock("@auth0/nextjs-auth0/client", () => ({
   useUser: () => ({ user: { sub: "user1" } }),

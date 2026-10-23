@@ -1,9 +1,11 @@
 import { createContext, createElement, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
+import type { Timestamp } from "firebase/firestore";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { db } from "../firebase/client";
 import { useFirebaseAuth } from "./useFirebaseAuth";
+import { useLastSeen } from "./useLastSeen";
 import type {
   Currency,
   DateFormat,
@@ -33,6 +35,8 @@ export interface UserDoc {
   emergencyPlan?: EmergencyPlan;
   scenario?: Scenario;
   confirmVariableExpenses?: boolean;
+  /** Stamped once a day by useLastSeen; read only by the admin dashboard. */
+  lastSeenAt?: Timestamp | null;
 }
 
 interface UserDocState {
@@ -74,6 +78,8 @@ function useUserDocSubscription(enabled: boolean): UserDocState {
  */
 export function UserDocProvider({ children }: { children: ReactNode }) {
   const state = useUserDocSubscription(true);
+  const { user } = useUser();
+  useLastSeen(user?.sub ?? undefined, state.userDoc?.lastSeenAt, state.userDoc !== null);
   return createElement(UserDocContext.Provider, { value: state }, children);
 }
 
