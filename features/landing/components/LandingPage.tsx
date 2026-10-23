@@ -79,6 +79,7 @@ const BINARY = Array.from({ length: 14 }, (_, row) =>
 ).join("\n");
 
 const OG_LOCALE: Record<Language, string> = { en: "en_US", es: "es_ES" };
+const OTHER_LANGUAGE: Record<Language, Language> = { en: "es", es: "en" };
 
 /**
  * The public front door: what someone gets when they create an account,
@@ -119,7 +120,28 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta property="og:locale" content={OG_LOCALE[language]} />
+        <meta property="og:locale:alternate" content={OG_LOCALE[OTHER_LANGUAGE[language]]} />
         <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={t("meta.title")} />
+        <meta name="twitter:description" content={t("meta.description")} />
+        <meta name="twitter:image" content={url(ogImageSrc(language))} />
+        <script
+          type="application/ld+json"
+          // "<" escaped, so no value (the origin comes from the request) can close the tag.
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              name: "Walleto",
+              url: url(LANDING_PATH[language]),
+              description: t("meta.description"),
+              applicationCategory: "FinanceApplication",
+              operatingSystem: "Web",
+              inLanguage: ["en", "es"],
+              image: url(ogImageSrc(language)),
+            }).replace(/</g, "\\u003c"),
+          }}
+        />
       </Head>
 
       <div className="page">
@@ -659,8 +681,8 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
         .landing :global(.text-link) {
           display: inline-flex;
           align-items: center;
+          min-height: 44px;
           gap: 6px;
-          margin-top: 8px;
           color: var(--accent);
           font-weight: 600;
         }

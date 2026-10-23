@@ -58,6 +58,7 @@ export function LandingNav({ language, signedIn }: Props) {
         .nav :global(.brand) {
           display: inline-flex;
           align-items: center;
+          min-height: 44px;
           gap: 8px;
           color: var(--fg-0);
           font-weight: 700;
@@ -78,7 +79,7 @@ export function LandingNav({ language, signedIn }: Props) {
         .actions :global(a) {
           display: inline-flex;
           align-items: center;
-          min-height: 40px;
+          min-height: 44px;
           padding: 0 14px;
           border-radius: var(--r-pill);
           font-size: 0.875rem;

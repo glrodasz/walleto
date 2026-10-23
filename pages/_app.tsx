@@ -33,6 +33,8 @@ function MyApp({ Component, pageProps, language }: Props) {
   return (
     <UserProvider>
       <Head>
+        {/* Next's default omits initial-scale; zooming stays allowed. */}
+        <meta key="viewport" name="viewport" content="width=device-width, initial-scale=1" />
         {/* Keyed, so a page with its own description (the landing) replaces it. */}
         <meta
           key="description"
