@@ -146,9 +146,12 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
 
       <div className="page">
         <div className="landing">
+          <a className="skip" href="#main-content">
+            {t("nav.skip")}
+          </a>
           <LandingNav language={language} signedIn={signedIn} />
 
-          <main>
+          <main id="main-content" tabIndex={-1}>
             <section className="hero">
               <div className="hero-copy">
                 <p className="pill">{t("hero.eyebrow")}</p>
@@ -278,9 +281,8 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
             </section>
 
             <section className="source" aria-labelledby="source-title">
-              <pre className="binary" aria-hidden="true">
-                {BINARY}
-              </pre>
+              {/* Drawn as generated content, so it is never read or contrast-checked as text. */}
+              <div className="binary" aria-hidden="true" data-bits={BINARY} />
               <div className="source-copy">
                 <p className="prompt" aria-hidden="true">
                   <span>$</span> git clone walleto
@@ -315,6 +317,29 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
         /* Clips the full-bleed band's overhang; "clip" keeps the nav sticky. */
         .page {
           overflow-x: clip;
+        }
+
+        /* First stop for the keyboard: off-screen until it has keyboard focus. */
+        .skip {
+          position: fixed;
+          top: 12px;
+          left: 12px;
+          z-index: 100;
+          padding: 12px 18px;
+          border-radius: var(--r-pill);
+          background: var(--accent);
+          color: var(--on-accent);
+          font-weight: 700;
+          transform: translateY(-200%);
+        }
+
+        .skip:focus-visible {
+          transform: none;
+        }
+
+        /* Focus lands here from the skip link; the page itself needs no ring. */
+        main:focus {
+          outline: none;
         }
 
         .landing {
@@ -451,10 +476,15 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
         }
 
         /* White on the dark and accent panels; the label takes the accent. */
+        /* Dark mode's mint accent is unreadable on white, so the label goes ink there. */
         .landing :global(.btn--light) {
           background: #fff;
           color: var(--accent);
           box-shadow: 0 12px 28px -14px rgba(15, 23, 42, 0.6);
+        }
+
+        :global([data-theme="dark"]) .landing :global(.btn--light) {
+          color: var(--ink);
         }
 
         .landing :global(.btn--light:hover) {
@@ -475,9 +505,10 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
           max-width: 760px;
         }
 
+        /* Mixed toward the text colour: small caps in the bare accent miss 4.5:1. */
         .eyebrow {
           margin: 0;
-          color: var(--accent);
+          color: color-mix(in srgb, var(--accent) 80%, var(--fg-0));
           font-size: 0.8rem;
           font-weight: 700;
           letter-spacing: 0.12em;
@@ -740,10 +771,15 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
           color: var(--ink-fg);
           opacity: 0.14;
           white-space: pre;
+          overflow: hidden;
           pointer-events: none;
           user-select: none;
           -webkit-mask-image: linear-gradient(100deg, transparent 25%, #000 95%);
           mask-image: linear-gradient(100deg, transparent 25%, #000 95%);
+        }
+
+        .binary::before {
+          content: attr(data-bits);
         }
 
         .prompt {
@@ -797,6 +833,11 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
             var(--accent);
           color: var(--on-accent);
           box-shadow: 0 40px 80px -40px var(--accent);
+        }
+
+        /* An accent ring would vanish on the accent panel. */
+        .final :global(:focus-visible) {
+          outline-color: var(--on-accent);
         }
 
         .final h2 {

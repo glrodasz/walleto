@@ -12,7 +12,7 @@ export function LandingFooter({ language }: { language: Language }) {
       <p className="tagline">
         <strong>Walleto</strong> · {t("footer.tagline")}
       </p>
-      <nav className="links" aria-label="Walleto">
+      <nav className="links" aria-label={t("footer.nav")}>
         <Link href="/privacy">{t("footer.privacy")}</Link>
         <a href={GITHUB_REPO_URL} rel="noopener">
           {t("footer.source")}
@@ -34,6 +34,7 @@ export function LandingFooter({ language }: { language: Language }) {
 
         .tagline {
           margin: 0;
+          color: var(--fg-1);
         }
 
         .tagline strong {
