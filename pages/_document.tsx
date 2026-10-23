@@ -17,7 +17,7 @@ type Props = DocumentInitialProps & { language: Language };
 
 export default function AppDocument({ language }: Props) {
   // data-env recolours the accent per build (styles/globals.css); the favicon
-  // follows. The .ico and touch icon are blue rasters, so only production
+  // follows. The .ico, touch icon and manifest icons are blue rasters, so only production
   // links them — elsewhere a browser could prefer them over the tinted SVG.
   const { env, favicon } = buildInfo();
   return (
@@ -29,6 +29,7 @@ export default function AppDocument({ language }: Props) {
           <>
             <link rel="icon" href="/favicon.ico" sizes="any" />
             <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+            <link rel="manifest" href="/site.webmanifest" />
           </>
         )}
       </Head>

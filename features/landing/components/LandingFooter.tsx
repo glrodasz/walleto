@@ -26,7 +26,7 @@ export function LandingFooter({ language }: { language: Language }) {
           align-items: center;
           justify-content: space-between;
           gap: 12px 24px;
-          padding: 24px 4px 8px;
+          padding: 16px 4px 0;
           border-top: 1px solid var(--line);
           color: var(--fg-2);
           font-size: 0.875rem;
@@ -43,10 +43,14 @@ export function LandingFooter({ language }: { language: Language }) {
         .links {
           display: flex;
           flex-wrap: wrap;
-          gap: 4px 20px;
+          gap: 0 20px;
         }
 
+        /* 44px tall, so each link is an easy tap on a phone. */
         .links :global(a) {
+          display: inline-flex;
+          align-items: center;
+          min-height: 44px;
           color: var(--fg-1);
           font-weight: 600;
         }
