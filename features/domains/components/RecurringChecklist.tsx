@@ -4,6 +4,7 @@ import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { Badge } from "../../../components/atoms/Badge";
+import { InfoTip } from "../../../components/atoms/InfoTip";
 import { Home, Shuffle } from "../../../components/atoms/Icons";
 import { KebabMenu, KebabSpacer } from "../../../components/molecules/KebabMenu";
 import { RangeAmount } from "../../../components/atoms/RangeAmount";
@@ -18,6 +19,7 @@ import { monthOccurrences } from "../helpers/months";
 import type { MonthOccurrence, MonthWindow, OccurrenceStatus } from "../helpers/months";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import { SLOT, splitSlot } from "../helpers/slot";
+import { variableAverage } from "../helpers/variableAverage";
 import { useT } from "../../../hooks/useT";
 import type { Translator } from "../../../helpers/i18n";
 import { COMMON_MESSAGES } from "../../../messages/common";
@@ -94,6 +96,8 @@ interface RowProps {
   hidden?: boolean;
   /** A variable expense: its amount is a band, not a fixed price. */
   variable?: boolean;
+  /** A variable item's real average over the last months, behind an "i" beside its pill. */
+  average?: string;
   /** The user's own tags. */
   labels?: string[];
   note?: string;
@@ -137,6 +141,7 @@ function OccurrenceRow({
   actions,
   hidden,
   variable,
+  average,
   labels,
   note,
 }: RowProps) {
@@ -148,6 +153,14 @@ function OccurrenceRow({
           <Badge key="variable" variant="outline" tone="info" caps icon={<Shuffle size={12} />}>
             {common("state.variable")}
           </Badge>,
+          // The average waits behind an "i" (hover, focus or tap) so the row stays clean.
+          ...(average
+            ? [
+                <InfoTip key="variable-average" label={t("plan.averageAbout")}>
+                  {average}
+                </InfoTip>,
+              ]
+            : []),
         ]
       : []),
     ...(hidden
@@ -241,6 +254,17 @@ export function RecurringChecklist({
     [items, transactions, ctx, window, now, skipped]
   );
   const runRate = useMemo(() => sumMonthly(items, ctx), [items, ctx]);
+  // What a variable item really cost in the months before this one, beside
+  // its band: the band is the guess, the average is the track record.
+  const averageOf = (item: RecurrentTransaction) => {
+    const avg = variableAverage(item, transactions, window.start, ctx.rates);
+    return avg
+      ? t("plan.averageHint", {
+          amount: formatNative(avg.amount, item.currency, currency),
+          count: avg.payments,
+        })
+      : undefined;
+  };
   // Where it is filed and how it is paid, both in full — the row is the one
   // place that answers "which card, which bucket" at a glance.
   const details = (item: RecurrentTransaction) => {
@@ -313,6 +337,7 @@ export function RecurringChecklist({
                         meta={`${occurrenceDate(o)} · ${common(`frequency.${o.item.frequency}`)}${details(o.item)}`}
                         hidden={Boolean(o.item.hiddenFromDashboard)}
                         variable={o.item.amountFloor !== undefined}
+                        average={averageOf(o.item)}
                         labels={tagNames(o.item.tags, tags)}
                         note={o.item.note}
                         amount={itemAmount(o.item)}
@@ -363,6 +388,7 @@ export function RecurringChecklist({
                     accent={config.accent}
                     hidden={Boolean(item.hiddenFromDashboard)}
                     variable={item.amountFloor !== undefined}
+                    average={averageOf(item)}
                     labels={tagNames(item.tags, tags)}
                     note={item.note}
                     actions={[

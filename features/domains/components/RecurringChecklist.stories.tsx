@@ -116,3 +116,23 @@ export const PaymentMovedToNextMonth: Story = {
       .map((t) => ({ ...t, occurredAt: nextMonthDay(t), status: "SKIPPED" as const })),
   },
 };
+
+// What each run of groceries really cost, once confirmed: varied around the band.
+const CONFIRMED_GROCERIES = [820_000, 910_000, 760_000, 880_000, 950_000, 790_000];
+
+/**
+ * A variable item explains its real track record behind an "i" beside the
+ * Variable pill: the average of its confirmed payments in the six months
+ * before this one, and how many payments that is. Estimates still waiting for
+ * their real amount stay out of it.
+ */
+export const VariableAverage: Story = {
+  args: {
+    transactions: transactionsFor("EXPENSE").map((t, i) => {
+      if (t.recurrentTransactionId !== "rt-groceries") return t;
+      if (t.occurredAt.toDate() >= CURRENT_WINDOW.start) return t;
+      const { amountFloor: _estimate, ...confirmed } = t;
+      return { ...confirmed, amount: CONFIRMED_GROCERIES[i % CONFIRMED_GROCERIES.length] };
+    }),
+  },
+};

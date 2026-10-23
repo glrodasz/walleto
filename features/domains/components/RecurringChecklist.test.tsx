@@ -112,6 +112,46 @@ describe("RecurringChecklist", () => {
     expect(screen.getAllByText("Variable")).toHaveLength(1);
   });
 
+  it("explains a variable item's average of the last six months beside its Variable pill", () => {
+    const power = item("Power", 900, new Date(2026, 2, 28, 12), { amountFloor: 500 });
+    const paid = (month: number, amount: number, overrides: Partial<Transaction> = {}) => ({
+      ...paidNetflix,
+      id: `power-${month}`,
+      recurrentTransactionId: "Power",
+      name: "Power",
+      amount,
+      occurredAt: ts(new Date(2026, month, 28, 12)),
+      ...overrides,
+    });
+    setup({
+      items: [rent, power],
+      transactions: [
+        paid(5, 600),
+        paid(6, 700),
+        // Still an estimate: says nothing about what was spent.
+        paid(7, 900, { amountFloor: 500 }),
+        // Older than six months.
+        paid(1, 5_000),
+      ],
+    });
+    const row = screen.getByText("Power").closest("li")!;
+    // Behind an "i" beside the pill, not on the pill itself.
+    const about = within(row).getByRole("button", { name: "Average of recent payments" });
+    expect(about).toHaveAccessibleDescription(
+      "$650.00 on average: your last 2 confirmed payments, from the last 6 months."
+    );
+    // A fixed item has no pill, so no average.
+    expect(screen.getAllByRole("button", { name: "Average of recent payments" })).toHaveLength(1);
+  });
+
+  it("shows no average for a variable item with nothing confirmed yet", () => {
+    const power = item("Power", 900, new Date(2026, 2, 28, 12), { amountFloor: 500 });
+    setup({ items: [power], transactions: [] });
+    expect(
+      screen.queryByRole("button", { name: "Average of recent payments" })
+    ).not.toBeInTheDocument();
+  });
+
   it("hides an item from the dashboard through the kebab — never from the chart", () => {
     const onToggleHidden = jest.fn();
     setup({ onToggleHidden });
