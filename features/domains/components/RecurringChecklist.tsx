@@ -96,8 +96,8 @@ interface RowProps {
   hidden?: boolean;
   /** A variable expense: its amount is a band, not a fixed price. */
   variable?: boolean;
-  /** A variable item's real average over the last months: rides the Variable pill. */
-  average?: { label: string; hint: string };
+  /** A variable item's real average over the last months, behind an "i" beside its pill. */
+  average?: string;
   /** The user's own tags. */
   labels?: string[];
   note?: string;
@@ -127,27 +127,6 @@ const paidDiffers = ({ item, paid }: MonthOccurrence) =>
     paid.currency !== item.currency ||
     paid.amountFloor !== item.amountFloor);
 
-/** The average on a Variable pill: set apart from the label, in figures, not caps. */
-function AverageNote({ label }: { label: string }) {
-  return (
-    <span className="average">
-      {label}
-      <style jsx>{`
-        .average {
-          margin-left: 2px;
-          padding-left: 6px;
-          border-left: 1px solid currentColor;
-          font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
-          font-variant-numeric: tabular-nums;
-          text-transform: none;
-          letter-spacing: 0;
-          font-weight: 500;
-        }
-      `}</style>
-    </span>
-  );
-}
-
 /**
  * One checklist row: the shared ListItem, plus the two things only this list
  * has — the paid/due/overdue pill under the amount, and the kebab.
@@ -171,26 +150,17 @@ function OccurrenceRow({
   const flags = [
     ...(variable
       ? [
-          average ? (
-            // The pill explains its average on tap, hover or focus: a phone
-            // has no hover for a title.
-            <InfoTip
-              key="variable"
-              label={`${common("state.variable")}, ${average.label}`}
-              trigger={
-                <Badge variant="outline" tone="info" caps icon={<Shuffle size={12} />}>
-                  {common("state.variable")}
-                  <AverageNote label={average.label} />
-                </Badge>
-              }
-            >
-              {average.hint}
-            </InfoTip>
-          ) : (
-            <Badge key="variable" variant="outline" tone="info" caps icon={<Shuffle size={12} />}>
-              {common("state.variable")}
-            </Badge>
-          ),
+          <Badge key="variable" variant="outline" tone="info" caps icon={<Shuffle size={12} />}>
+            {common("state.variable")}
+          </Badge>,
+          // The average waits behind an "i" (hover, focus or tap) so the row stays clean.
+          ...(average
+            ? [
+                <InfoTip key="variable-average" label={t("plan.averageAbout")}>
+                  {average}
+                </InfoTip>,
+              ]
+            : []),
         ]
       : []),
     ...(hidden
@@ -289,13 +259,10 @@ export function RecurringChecklist({
   const averageOf = (item: RecurrentTransaction) => {
     const avg = variableAverage(item, transactions, window.start, ctx.rates);
     return avg
-      ? {
-          label: t("plan.average", {
-            amount: formatNative(avg.amount, item.currency, currency),
-            count: avg.months,
-          }),
-          hint: t("plan.averageHint", { count: avg.months }),
-        }
+      ? t("plan.averageHint", {
+          amount: formatNative(avg.amount, item.currency, currency),
+          count: avg.payments,
+        })
       : undefined;
   };
   // Where it is filed and how it is paid, both in full — the row is the one

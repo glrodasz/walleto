@@ -112,7 +112,7 @@ describe("RecurringChecklist", () => {
     expect(screen.getAllByText("Variable")).toHaveLength(1);
   });
 
-  it("puts a variable item's average of the last six months on its Variable pill", () => {
+  it("explains a variable item's average of the last six months beside its Variable pill", () => {
     const power = item("Power", 900, new Date(2026, 2, 28, 12), { amountFloor: 500 });
     const paid = (month: number, amount: number, overrides: Partial<Transaction> = {}) => ({
       ...paidNetflix,
@@ -135,18 +135,21 @@ describe("RecurringChecklist", () => {
       ],
     });
     const row = screen.getByText("Power").closest("li")!;
-    expect(within(row).getByText("avg $650.00 · 2 mo")).toBeInTheDocument();
-    // Explained on tap or focus, not by a title nobody on a phone can see.
-    const about = within(row).getByRole("button", { name: "Variable, avg $650.00 · 2 mo" });
-    expect(about).toHaveAccessibleDescription(expect.stringContaining("2 months"));
+    // Behind an "i" beside the pill, not on the pill itself.
+    const about = within(row).getByRole("button", { name: "Average of recent payments" });
+    expect(about).toHaveAccessibleDescription(
+      "$650.00 on average: your last 2 confirmed payments, from the last 6 months."
+    );
     // A fixed item has no pill, so no average.
-    expect(screen.getAllByText(/^avg /)).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Average of recent payments" })).toHaveLength(1);
   });
 
   it("shows no average for a variable item with nothing confirmed yet", () => {
     const power = item("Power", 900, new Date(2026, 2, 28, 12), { amountFloor: 500 });
     setup({ items: [power], transactions: [] });
-    expect(screen.queryByText(/^avg /)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Average of recent payments" })
+    ).not.toBeInTheDocument();
   });
 
   it("hides an item from the dashboard through the kebab — never from the chart", () => {

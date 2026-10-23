@@ -33,11 +33,22 @@ describe("averageFrom", () => {
 });
 
 describe("variableAverage", () => {
+  it("counts payments, not months: a biweekly item pays twice a month", () => {
+    const rows = [
+      row(7, 400),
+      row(7, 600, { id: "g-7b", occurredAt: ts(new Date(2026, 7, 20, 12)) }),
+    ];
+    expect(variableAverage(groceries, rows, october, IDENTITY_RATES)).toEqual({
+      amount: 500,
+      payments: 2,
+    });
+  });
+
   it("averages the confirmed amounts of the six months before the one on screen", () => {
     const rows = [3, 4, 5, 6, 7, 8].map((m, i) => row(m, 400 + i * 40));
     expect(variableAverage(groceries, rows, october, IDENTITY_RATES)).toEqual({
       amount: 500,
-      months: 6,
+      payments: 6,
     });
   });
 
@@ -45,7 +56,7 @@ describe("variableAverage", () => {
     const rows = [row(2, 9_000), row(8, 500), row(9, 9_000)];
     expect(variableAverage(groceries, rows, october, IDENTITY_RATES)).toEqual({
       amount: 500,
-      months: 1,
+      payments: 1,
     });
   });
 
@@ -57,7 +68,7 @@ describe("variableAverage", () => {
     ];
     expect(variableAverage(groceries, rows, october, IDENTITY_RATES)).toEqual({
       amount: 450,
-      months: 1,
+      payments: 1,
     });
   });
 

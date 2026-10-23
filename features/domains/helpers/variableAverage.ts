@@ -1,7 +1,6 @@
 import { tryConvert } from "../../../helpers/fx";
 import type { ExchangeRates } from "../../../helpers/fx";
 import { toDate } from "../../../helpers/chartData";
-import { monthKey } from "../../../helpers/dates";
 import type { RecurrentTransaction, Transaction } from "../../../types";
 
 /** How far back a variable item's average looks: the six months before the one on screen. */
@@ -15,8 +14,8 @@ export function averageFrom(monthStart: Date): Date {
 export interface VariableAverage {
   /** Per payment, in the item's currency. */
   amount: number;
-  /** Calendar months with a real amount in the range, at most AVERAGE_MONTHS. */
-  months: number;
+  /** How many confirmed payments it averages: up to 6 for a monthly item, more for a weekly one. */
+  payments: number;
 }
 
 /**
@@ -34,7 +33,6 @@ export function variableAverage(
 ): VariableAverage | null {
   if (item.amountFloor === undefined || !item.id) return null;
   const from = averageFrom(monthStart);
-  const months = new Set<string>();
   let sum = 0;
   let count = 0;
   for (const row of transactions) {
@@ -46,7 +44,6 @@ export function variableAverage(
     if (amount === null) continue;
     sum += amount;
     count += 1;
-    months.add(monthKey(at));
   }
-  return count === 0 ? null : { amount: sum / count, months: months.size };
+  return count === 0 ? null : { amount: sum / count, payments: count };
 }

@@ -150,11 +150,10 @@ export const DOMAIN_MESSAGES = defineMessages(
     "plan.stop": "Stop",
     "plan.notThisMonth": "Not this month ({count})",
     "plan.next": "next {date}",
-    "plan.average": "avg {amount} · {count} mo",
+    "plan.averageAbout": "Average of recent payments",
     "plan.averageHint": {
-      one: "Average of what you actually paid in the last 6 months (1 month with a confirmed amount)",
-      other:
-        "Average of what you actually paid in the last 6 months ({count} months with a confirmed amount)",
+      one: "{amount}: your only confirmed payment in the last 6 months.",
+      other: "{amount} on average: your last {count} confirmed payments, from the last 6 months.",
     },
     "plan.runRate.INCOME": "Planned monthly income: {amount}/mo",
     "plan.runRate.EXPENSE": "Planned monthly expenses: {amount}/mo",
@@ -396,11 +395,10 @@ export const DOMAIN_MESSAGES = defineMessages(
     "plan.stop": "Detener",
     "plan.notThisMonth": "No es de este mes ({count})",
     "plan.next": "próximo: {date}",
-    "plan.average": "prom. {amount} · {count} m",
+    "plan.averageAbout": "Promedio de los pagos recientes",
     "plan.averageHint": {
-      one: "Promedio de lo que pagaste realmente en los últimos 6 meses (1 mes con monto confirmado)",
-      other:
-        "Promedio de lo que pagaste realmente en los últimos 6 meses ({count} meses con monto confirmado)",
+      one: "{amount}: tu único pago confirmado de los últimos 6 meses.",
+      other: "{amount} en promedio: tus últimos {count} pagos confirmados, de los últimos 6 meses.",
     },
     "plan.runRate.INCOME": "Ingresos mensuales planeados: {amount}/mes",
     "plan.runRate.EXPENSE": "Gastos mensuales planeados: {amount}/mes",

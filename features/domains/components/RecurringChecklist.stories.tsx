@@ -121,10 +121,10 @@ export const PaymentMovedToNextMonth: Story = {
 const CONFIRMED_GROCERIES = [820_000, 910_000, 760_000, 880_000, 950_000, 790_000];
 
 /**
- * A variable item carries its real track record on the Variable pill: the
- * average of the confirmed payments of the six months before this one (the
- * hover says how many months had one). Estimates still waiting for their real
- * amount stay out of it.
+ * A variable item explains its real track record behind an "i" beside the
+ * Variable pill: the average of its confirmed payments in the six months
+ * before this one, and how many payments that is. Estimates still waiting for
+ * their real amount stay out of it.
  */
 export const VariableAverage: Story = {
   args: {
