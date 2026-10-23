@@ -8,7 +8,7 @@ import { defineMessages } from "../../helpers/i18n";
  */
 export const LANDING_MESSAGES = defineMessages(
   {
-    "meta.title": "Walleto · Your money plan, month by month",
+    "meta.title": "Walleto · Personal finance planner, month by month",
     "meta.description":
       "Plan your income, expenses, savings, investments and debts. See whether the month is on plan and what you're worth today, in every currency you use.",
 
@@ -160,7 +160,7 @@ export const LANDING_MESSAGES = defineMessages(
     "art.whatIf": "What-if: cancel 3 subscriptions",
   },
   {
-    "meta.title": "Walleto · Tu plan de dinero, mes a mes",
+    "meta.title": "Walleto · Planificador de finanzas personales, mes a mes",
     "meta.description":
       "Planea tus ingresos, gastos, ahorros, inversiones y deudas. Mira si el mes va según el plan y cuánto vales hoy, en todas tus monedas.",
 
