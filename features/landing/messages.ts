@@ -12,6 +12,7 @@ export const LANDING_MESSAGES = defineMessages(
     "meta.description":
       "Plan your income, expenses, savings, investments and debts. See whether the month is on plan and what you're worth today, in every currency you use.",
 
+    "nav.skip": "Skip to content",
     "nav.signIn": "Sign in",
     "nav.openApp": "Open Walleto",
 
@@ -119,6 +120,7 @@ export const LANDING_MESSAGES = defineMessages(
     "final.title": "Set up your plan today.",
     "final.body": "It takes a few minutes, and you can change everything later.",
 
+    "footer.nav": "Footer",
     "footer.privacy": "Privacy",
     "footer.source": "Source code",
     "footer.contact": "Contact",
@@ -164,6 +166,7 @@ export const LANDING_MESSAGES = defineMessages(
     "meta.description":
       "Planea tus ingresos, gastos, ahorros, inversiones y deudas. Mira si el mes va según el plan y cuánto vales hoy, en todas tus monedas.",
 
+    "nav.skip": "Saltar al contenido",
     "nav.signIn": "Entrar",
     "nav.openApp": "Abrir Walleto",
 
@@ -271,6 +274,7 @@ export const LANDING_MESSAGES = defineMessages(
     "final.title": "Arma tu plan hoy.",
     "final.body": "Toma unos minutos, y puedes cambiar todo después.",
 
+    "footer.nav": "Pie de página",
     "footer.privacy": "Privacidad",
     "footer.source": "Código fuente",
     "footer.contact": "Contacto",

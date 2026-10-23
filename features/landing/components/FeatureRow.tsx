@@ -49,7 +49,8 @@ export function FeatureRow({ eyebrow, title, body, color, icon, art, flip }: Pro
           align-items: center;
           gap: 10px;
           margin: 0 0 16px;
-          color: var(--row-color);
+          /* The icon keeps the pure colour; the small caps text needs 4.5:1. */
+          color: color-mix(in srgb, var(--row-color) 55%, var(--fg-0));
           font-size: 0.8rem;
           font-weight: 700;
           letter-spacing: 0.08em;
@@ -63,6 +64,7 @@ export function FeatureRow({ eyebrow, title, body, color, icon, art, flip }: Pro
           width: 36px;
           height: 36px;
           border-radius: 11px;
+          color: var(--row-color);
           background: color-mix(in srgb, var(--row-color) 14%, transparent);
           border: 1px solid color-mix(in srgb, var(--row-color) 28%, transparent);
         }

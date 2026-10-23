@@ -151,7 +151,7 @@ features/
                 public screen, so the only one with per-language URLs, canonical/hreflang and Open Graph. Copy in
                 `messages.ts` must stay true of the app today (no pricing, no bank sync). No screenshots: the app is
                 drawn as vector art (`components/art/`, glass cards with the app's icons, domain colours and
-                var(--accent), never a fixed blue); only the Open Graph image lives in `public/landing/<language>/og.png` (the hero rendered at 1200×630 without its buttons; re-render it when the hero changes).
+                var(--accent), never a fixed blue); only the Open Graph image lives in `public/landing/<language>/og.png` (the hero rendered at 1200×630 without its buttons; re-render it when the hero changes). Accessibility: a skip link is the first Tab stop and targets `<main id="main-content" tabIndex={-1}>`; each `<nav>` has its own label; small coloured text (eyebrows, art labels) is mixed toward `--fg-0` with `color-mix` to reach 4.5:1, while icons keep the pure colour.
                 One way in, "Sign in" / "Entrar" (`/api/auth/login?ui_locales=…`): Google via Auth0 creates the account on first use
   insights/     SubscriptionInsights — monthly/annualized subscription cost
   investments/  value per account / pocket / debt (and per category for what has no account): invested vs value,

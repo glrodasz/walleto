@@ -232,7 +232,7 @@ export function HeroArt({ language, label }: { language: Language; label: string
         }
 
         .amount {
-          color: var(--fg-2);
+          color: var(--fg-1);
           font-size: 0.72rem;
           font-family: var(--font-mono), ui-monospace, monospace;
         }
@@ -244,16 +244,17 @@ export function HeroArt({ language, label }: { language: Language; label: string
           text-transform: uppercase;
         }
 
+        /* Mixed toward the text colour, so the small labels stay readable (4.5:1). */
         .status--paid {
-          color: var(--domain-income);
+          color: color-mix(in srgb, var(--domain-income) 70%, var(--fg-0));
         }
 
         .status--due {
-          color: var(--domain-saving);
+          color: color-mix(in srgb, var(--domain-saving) 55%, var(--fg-0));
         }
 
         .status--overdue {
-          color: var(--domain-expense);
+          color: color-mix(in srgb, var(--domain-expense) 70%, var(--fg-0));
         }
 
         /* On a phone the board would be too small to read: the phone alone tells it. */
