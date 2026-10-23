@@ -20,8 +20,8 @@ export function resetLastSeen() {
 }
 
 /**
- * Stamps `lastSeenAt` on the user doc the first time the app opens each UTC
- * day — what the admin dashboard counts as daily / weekly / monthly active.
+ * Stamps `lastSeenAt` on the user doc the first time the app is opened (or
+ * comes back into view) each UTC day — what the admin dashboard counts as daily / weekly / monthly active.
  * Auth0's last login can't answer that: a session lasts for days.
  */
 export function useLastSeen(
@@ -32,13 +32,23 @@ export function useLastSeen(
   const lastSeenMs = lastSeenAt?.toMillis?.() ?? null;
   useEffect(() => {
     if (!sub || !loaded) return;
-    const now = new Date();
-    const key = `${sub}:${utcDay(now)}`;
-    if (touched === key) return;
-    if (!isNewDay(lastSeenMs === null ? null : new Date(lastSeenMs), now)) return;
-    touched = key;
-    updateDoc(doc(db, "users", sub), { lastSeenAt: serverTimestamp() }).catch((err) => {
-      console.error("useLastSeen update error:", err);
-    });
+    const touch = () => {
+      const now = new Date();
+      const key = `${sub}:${utcDay(now)}`;
+      if (touched === key) return;
+      if (!isNewDay(lastSeenMs === null ? null : new Date(lastSeenMs), now)) return;
+      touched = key;
+      updateDoc(doc(db, "users", sub), { lastSeenAt: serverTimestamp() }).catch((err) => {
+        console.error("useLastSeen update error:", err);
+      });
+    };
+    touch();
+    // A tab left open across midnight never remounts: check again whenever
+    // it comes back into view.
+    const onVisible = () => {
+      if (document.visibilityState === "visible") touch();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, [sub, lastSeenMs, loaded]);
 }

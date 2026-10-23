@@ -48,4 +48,15 @@ describe("useLastSeen", () => {
     renderHook(() => useLastSeen(undefined, null, true));
     expect(updateDocMock).not.toHaveBeenCalled();
   });
+
+  it("checks again when the tab comes back into view on a new day", () => {
+    jest.useFakeTimers().setSystemTime(new Date("2026-10-23T23:50:00Z"));
+    renderHook(() => useLastSeen("user1", null, true));
+    expect(updateDocMock).toHaveBeenCalledTimes(1);
+
+    jest.setSystemTime(new Date("2026-10-24T08:00:00Z"));
+    document.dispatchEvent(new Event("visibilitychange"));
+    expect(updateDocMock).toHaveBeenCalledTimes(2);
+    jest.useRealTimers();
+  });
 });
