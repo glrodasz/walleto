@@ -160,6 +160,13 @@ features/
                 AccountValueList (Worth / Owed view), AccountValuePanels (drilldown), RecordValueModal ("+"),
                 DomainValueLine (the "Worth …" on the dashboard cards); hooks/useDomainValue
                 (listener from inception: mount it only where the figure is shown) and hooks/useDomainGains
+  admin/        the owner-only usage dashboard at /admin (AdminPage → AdminUsageView, props-driven for Storybook):
+                users, active today / 7 / 30 days, signups per week and a table of people with item counts.
+                `helpers/admin` `isAdmin(sub)` reads ADMIN_USER_IDS (Auth0 ids, never emails); the page's
+                getServerSideProps and `/api/admin/usage` both answer 404 to anyone else. The API joins the user
+                docs (createdAt, `lastSeenAt` — stamped once per UTC day by hooks/useLastSeen from UserDocProvider)
+                with Auth0's Management API (helpers/auth0Users; optional AUTH0_MGMT_* env) and count()s per user.
+                Only counts and dates leave the route — never amounts or item names
   settings/     section tabs (General / Categories / Tags / Payment methods / Accounts & debts, the active one
                 goes in the URL hash). General is six cards (Account, Currency, Preferences, Setup, Data &
                 privacy, About) on SettingsCard + SettingsRow; Currency is a single "Your currency" row (see
