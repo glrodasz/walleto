@@ -11,7 +11,9 @@ describe("LandingPage", () => {
     for (const link of screen.getAllByRole("link", { name: /^Entrar/ })) {
       expect(link).toHaveAttribute("href", "/api/auth/login?ui_locales=es");
     }
-    expect(screen.getByRole("link", { name: "English" })).toHaveAttribute("href", "/en");
+    const toEnglish = screen.getByRole("link", { name: "Switch to English" });
+    expect(toEnglish).toHaveAttribute("href", "/en");
+    expect(toEnglish).toHaveTextContent("English");
   });
 
   it("shows every feature, drawn rather than captured", () => {

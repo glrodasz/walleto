@@ -1,7 +1,9 @@
 import Link from "next/link";
 import type { Language } from "../../../types";
-import { translator } from "../../../helpers/i18n";
+import { Globe } from "../../../components/atoms/Icons";
+import { translate, translator } from "../../../helpers/i18n";
 import { LANGUAGE_NAMES } from "../../../i18n/locale";
+import { UI_MESSAGES } from "../../../messages/ui";
 import { LANDING_MESSAGES } from "../messages";
 import { LANDING_PATH, signInHref } from "../routes";
 
@@ -27,8 +29,15 @@ export function LandingNav({ language, signedIn }: Props) {
       </Link>
 
       <nav className="actions" aria-label="Walleto">
-        <Link className="lang" href={LANDING_PATH[other]} hrefLang={other} lang={other}>
-          {LANGUAGE_NAMES[other]}
+        <Link
+          className="lang"
+          href={LANDING_PATH[other]}
+          hrefLang={other}
+          lang={other}
+          aria-label={translate(UI_MESSAGES, other, "language.switchTo")}
+        >
+          <Globe size={14} />
+          <span>{LANGUAGE_NAMES[other]}</span>
         </Link>
         {signedIn ? (
           <Link className="cta" href="/">
@@ -90,6 +99,10 @@ export function LandingNav({ language, signedIn }: Props) {
 
         .actions :global(a:hover) {
           color: var(--fg-0);
+        }
+
+        .actions :global(.lang) {
+          gap: 6px;
         }
 
         .actions :global(.cta) {
