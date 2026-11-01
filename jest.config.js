@@ -1,4 +1,9 @@
 // jest.config.js
+// Run in UTC like the servers (Vercel) and CI: the date helpers work in local
+// time on purpose, so expectations would otherwise depend on the machine's
+// time zone and DST. Set here so the workers inherit it.
+process.env.TZ = "UTC";
+
 const nextJest = require("next/jest");
 
 const createJestConfig = nextJest({
