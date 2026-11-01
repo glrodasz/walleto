@@ -5,11 +5,11 @@
 **A monthly money plan that tells you if you're on track and what you're worth today, in 8 currencies.**
 
 [![CI](https://github.com/glrodasz/walleto/actions/workflows/ci.yml/badge.svg)](https://github.com/glrodasz/walleto/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 ![Next.js 14](https://img.shields.io/badge/Next.js-14-000000.svg)
 ![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178C6.svg)
 ![Firestore](https://img.shields.io/badge/data-Firestore-FFCA28.svg)
 ![Auth0](https://img.shields.io/badge/auth-Auth0-EB5424.svg)
-![Vercel](https://img.shields.io/badge/deploy-Vercel-000000.svg)
 
 <br clear="left">
 
@@ -250,6 +250,6 @@ pnpm tsc --noEmit && pnpm lint && pnpm test && pnpm build && pnpm build-storyboo
 
 ## License
 
-© 2026 Guillermo Rodas. All rights reserved.
+[Apache-2.0](LICENSE) © 2026 Guillermo Rodas.
 
 <sub>Built by [Guillermo Rodas](https://github.com/glrodasz).</sub>
