@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 236" width="880" role="img">
+<title>Sign-in: from an Auth0 session to Firestore access</title>
+<desc>The owner signs in through Auth0 Universal Login; the callback sets the Auth0 session cookie for the host they are on; the onboarding guard sends unfinished users to the setup wizard; in the browser useFirebaseAuth reuses a restored Firebase session or calls /api/firebase, which creates the user doc on first login and mints a custom token keyed to the Auth0 sub; signing in with it lets Firestore rules match the user's own documents.</desc>
+<defs>
+<marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk" d="M2 1L8 5L2 9"/></marker>
+<marker id="al" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk e-coral" d="M2 1L8 5L2 9"/></marker>
+</defs>
+
+<g class="s-gray">
+<rect x="30" y="30" width="190" height="56" rx="8"/>
+<text class="th" x="125" y="49" text-anchor="middle" dominant-baseline="central">Universal Login</text>
+<text class="ts" x="125" y="68" text-anchor="middle" dominant-baseline="central">Auth0, Google</text>
+</g>
+<g class="s-purple">
+<rect x="240" y="30" width="190" height="56" rx="8"/>
+<text class="tm" x="335" y="49" text-anchor="middle" dominant-baseline="central">/api/auth/callback</text>
+<text class="ts" x="335" y="68" text-anchor="middle" dominant-baseline="central">session cookie, per host</text>
+</g>
+<g class="s-purple">
+<rect x="450" y="30" width="190" height="56" rx="8"/>
+<text class="tm" x="545" y="49" text-anchor="middle" dominant-baseline="central">withOnboardingGuard</text>
+<text class="ts" x="545" y="68" text-anchor="middle" dominant-baseline="central">wizard or dashboard</text>
+</g>
+<g class="s-teal">
+<rect x="660" y="30" width="190" height="56" rx="8"/>
+<text class="tm" x="755" y="49" text-anchor="middle" dominant-baseline="central">useFirebaseAuth</text>
+<text class="ts" x="755" y="68" text-anchor="middle" dominant-baseline="central">reuses restored session</text>
+</g>
+<path class="arr" d="M220 58 H238" marker-end="url(#a)"/>
+<path class="arr" d="M430 58 H448" marker-end="url(#a)"/>
+<path class="arr" d="M640 58 H658" marker-end="url(#a)"/>
+<path class="arr" d="M755 86 V123 H125 V158" marker-end="url(#a)"/>
+<text class="ts" x="135" y="141" dominant-baseline="central">first login on device</text>
+<g class="s-purple">
+<rect x="30" y="160" width="190" height="56" rx="8"/>
+<text class="tm" x="125" y="179" text-anchor="middle" dominant-baseline="central">/api/firebase</text>
+<text class="ts" x="125" y="198" text-anchor="middle" dominant-baseline="central">custom token, uid = sub</text>
+</g>
+<g class="s-amber">
+<rect x="240" y="160" width="190" height="56" rx="8"/>
+<text class="th" x="335" y="179" text-anchor="middle" dominant-baseline="central">Firebase Auth</text>
+<text class="ts" x="335" y="198" text-anchor="middle" dominant-baseline="central">signInWithCustomToken</text>
+</g>
+<g class="s-amber">
+<rect x="450" y="160" width="190" height="56" rx="8"/>
+<text class="th" x="545" y="179" text-anchor="middle" dominant-baseline="central">Firestore rules</text>
+<text class="ts" x="545" y="198" text-anchor="middle" dominant-baseline="central">auth.uid == userId</text>
+</g>
+<path class="arr" d="M220 188 H238" marker-end="url(#a)"/>
+<path class="arr" d="M430 188 H448" marker-end="url(#a)"/>
+</svg>
