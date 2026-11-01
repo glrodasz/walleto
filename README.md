@@ -15,7 +15,7 @@
 
 [**Live site**](https://walleto.guillermorodas.com) · [Storybook](https://walleto.guillermorodas.com/storybook) · [How it works](#how-it-works) · [Architecture](#architecture) · [Quick start](#quick-start) · [Deploy](#deploy)
 
-<img src="docs/assets/dashboard.png" alt="Walleto dashboard with demo data: the monthly plan is On plan with $1,334.17 left to allocate, net worth today, and a card per domain showing what's planned per month and the currency mix" width="860">
+<img src="public/landing/en/og.png" alt="Walleto: your money plan, month by month. Plan every month and see how you're doing, in any currency." width="860">
 
 ## Why
 
