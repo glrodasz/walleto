@@ -19,5 +19,14 @@ export const INSIGHTS_MESSAGES = defineMessages(
     cost: "{monthly}/mes · ≈ {yearly}/año",
     next: "Próximo: {date}",
     impliedRate: "≈{rate} de tasa implícita",
+  },
+  {
+    title: "Custo das assinaturas",
+    monthly: "Mensal",
+    annualized: "Anualizado",
+    ofIncome: "Da receita",
+    cost: "{monthly}/mês · ≈ {yearly}/ano",
+    next: "Próximo: {date}",
+    impliedRate: "≈{rate} de taxa implícita",
   }
 );

@@ -152,8 +152,8 @@ becomes the numbers on screen are drawn in [**docs/ARCHITECTURE.md**](docs/ARCHI
 
 **App:** Next.js 14 (Pages Router), React 18, strict TypeScript, styled-jsx, Recharts, Zod ·
 **Data:** Firestore (client SDK with IndexedDB persistence, `firebase-admin` on the server) ·
-**Auth:** Auth0 (`@auth0/nextjs-auth0`) with Firebase custom tokens · **i18n:** English and
-Spanish catalogs · **Quality:** Jest and Testing Library (1,300+ tests), ESLint, Prettier, Husky,
+**Auth:** Auth0 (`@auth0/nextjs-auth0`) with Firebase custom tokens · **i18n:** English, Spanish
+and Portuguese catalogs · **Quality:** Jest and Testing Library (1,300+ tests), ESLint, Prettier, Husky,
 Storybook 10 with the a11y addon · **Infra:** Vercel, GitHub Actions, pnpm
 
 ## Usage
@@ -222,7 +222,7 @@ hooks/                 data hooks (Firestore listeners) and shared state
 helpers/               business logic: aggregations, fx, recurrence, materializer…
 utils/                 generic utilities with no business knowledge
 schemas/ types/        Zod schemas and domain types
-messages/ i18n/        English and Spanish catalogs, locale resolution
+messages/ i18n/        English, Spanish and Portuguese catalogs, locale resolution
 firebase/ lib/         Firebase and Auth0 SDK setup
 stories/               Storybook fixtures, mocks and page templates
 scripts/firebase/      seed scripts
@@ -241,7 +241,7 @@ firestore.rules        per-user security rules; firestore.indexes.json for compo
 ## Contributing
 
 Issues and pull requests are welcome. Read [AGENTS.md](AGENTS.md) first: small single-purpose
-files, every write through an API route, every visible string in both the English and Spanish
+files, every write through an API route, every visible string in the English, Spanish and Portuguese
 catalogs, and a colocated story and test next to each component. Before pushing, run what CI runs:
 
 ```bash

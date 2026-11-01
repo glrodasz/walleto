@@ -41,7 +41,7 @@ export default function AppDocument({ language }: Props) {
 }
 
 // Same resolution as pages/_app.tsx, so <html lang> matches the text. The
-// landing's /en and /es speak their own language whatever the cookie says.
+// landing's /en, /es and /pt speak their own language whatever the cookie says.
 AppDocument.getInitialProps = async (ctx: DocumentContext): Promise<Props> => {
   const initialProps = await Document.getInitialProps(ctx);
   return {

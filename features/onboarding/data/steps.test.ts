@@ -29,7 +29,7 @@ describe("ONBOARDING_STEPS", () => {
 
   it("keeps each summary to one short line", () => {
     for (const step of ONBOARDING_STEPS) {
-      for (const language of ["en", "es"] as const) {
+      for (const language of ["en", "es", "pt"] as const) {
         const summary = stepSummary(step.id, language);
         expect(summary.length).toBeGreaterThan(0);
         expect(summary.length).toBeLessThanOrEqual(60);
@@ -69,6 +69,7 @@ describe("introSlide", () => {
     for (const id of INTRO_SLIDE_IDS) {
       expect(introSlide(id).body).toMatch(/\*\*.+?\*\*/);
       expect(introSlide(id, "es").body).toMatch(/\*\*.+?\*\*/);
+      expect(introSlide(id, "pt").body).toMatch(/\*\*.+?\*\*/);
     }
   });
 });

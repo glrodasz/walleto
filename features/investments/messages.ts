@@ -195,5 +195,100 @@ export const INVESTMENT_MESSAGES = defineMessages(
     "modal.error.value": "Escribe un valor o un % de ganancia",
     "modal.error.date": "Elige una fecha",
     "modal.error.save": "No se pudo guardar. Intenta de nuevo.",
+  },
+  {
+    "bucket.INVESTMENT": "Sem conta",
+    "bucket.SAVING": "Sem caixinha",
+    "bucket.DEBT": "Sem dívida atribuída",
+    "bucket.unassigned": "Sem atribuição",
+
+    "line.worth": "Valor {amount}",
+    "line.worth.checked": "Valor {amount} · conferido em {date}",
+    "line.worth.estimated": "Valor {amount} · estimado",
+    "line.owed.checked": "Devido {amount} · conferido em {date}",
+
+    "update.value": "Atualizar valor",
+    "update.balance": "Atualizar saldo",
+
+    "list.title.value": "Valor",
+    "list.title.balances": "Saldos",
+    "list.empty.INVESTMENT":
+      "Ainda não há nada: registre um aporte numa conta para acompanhar o valor dela",
+    "list.empty.SAVING":
+      "Ainda não há nada: registre um depósito numa caixinha para acompanhar o valor dela",
+    "list.empty.DEBT":
+      "Ainda não há nada: registre uma amortização numa dívida para acompanhar o saldo dela",
+    "list.in": "Aportado {amount}",
+    "list.repaid": "Amortizado (líquido) {amount}",
+    "status.checked": "conferido em {date}",
+    "status.noBalance": "ainda sem saldo",
+    "status.estimated": "estimado",
+    "status.noCheck": "ainda sem valor registrado",
+
+    "record.title.value": "Atualizar valor atual",
+    "record.title.balance": "Atualizar saldo atual",
+    "record.empty.INVESTMENT":
+      "Ainda não há contas para avaliar: primeiro registre um aporte numa delas.",
+    "record.empty.SAVING":
+      "Ainda não há caixinhas para avaliar: primeiro registre um depósito numa delas.",
+    "record.empty.DEBT":
+      "Ainda não há dívidas para registrar saldo: primeiro registre uma amortização numa delas.",
+    "record.pick.INVESTMENT": "Escolha uma conta",
+    "record.pick.SAVING": "Escolha uma caixinha",
+    "record.pick.DEBT": "Escolha uma dívida",
+    "record.inSoFar": "Aportado até agora:",
+
+    "panel.title.value": "{name} — valor",
+    "panel.title.balance": "{name} — saldo",
+    "panel.invested": "Investido",
+    "panel.repaid": "Amortizado",
+    "panel.currentValue": "Valor atual",
+    "panel.owed": "Devido",
+    "panel.value": "Valor",
+    "panel.gain": "Ganho",
+    "panel.interest": "Juros",
+    "panel.sinceFirstBalance": "desde o primeiro saldo",
+    "panel.checked": "conferido em {date}",
+    "panel.checkedRate": "conferido em {date}, a {rate} desde então",
+    "panel.noBalanceCheck": "ainda sem saldo registrado",
+    "panel.estimatedAt": "estimado a {rate}",
+    "panel.noValueCheck": "ainda sem valor registrado",
+    "panel.gainOn": "{pct} sobre {amount}",
+    "panel.actions": "Ações do valor de {date}",
+    "panel.deleting": "Excluindo…",
+
+    "modal.title.value": "Avaliar {name}",
+    "modal.title.editValue": "Editar valor — {name}",
+    "modal.title.balance": "Saldo — {name}",
+    "modal.title.editBalance": "Editar saldo — {name}",
+    "modal.investedSoFar": "Investido até agora:",
+    "modal.repaidSoFar": "Amortizado até agora:",
+    "modal.asOf": "Data",
+    "modal.balanceOwed": "Saldo devedor",
+    "modal.currentValue": "Valor atual",
+    "modal.gainPct": "% de ganho",
+    "modal.nothingPaidIn.INVESTMENT":
+      "Você ainda não aportou nada nesta conta, então não há % de ganho para calcular: só o quanto ela vale.",
+    "modal.nothingPaidIn.SAVING":
+      "Você ainda não aportou nada nesta caixinha, então não há % de ganho para calcular: só o quanto ela vale.",
+    "modal.nothingPaidIn.DEBT":
+      "Você ainda não amortizou nada desta dívida, então não há % de ganho para calcular: só o quanto ela vale.",
+    "modal.nothingNet":
+      "Depois dos saques não sobra nada investido líquido, então não há % de ganho para digitar: só o quanto vale a posição.",
+    "modal.eitherOne":
+      "Digite qualquer um dos dois e o outro se ajusta. Corrija o valor se a sua corretora disser outra coisa.",
+    "modal.noCategory": "Sem categoria",
+    "modal.categoryHint.debt":
+      "Onde entram, no detalhamento do mês, os juros e encargos que este saldo revela. Uma dívida pode ter várias categorias e só você sabe qual mudou.",
+    "modal.categoryHint.asset":
+      "Onde entra este ganho no detalhamento do mês. Uma conta pode ter vários investimentos e só você sabe qual mudou.",
+    "modal.note": "Nota (opcional)",
+    "modal.notePlaceholder": "ex.: extrato de junho",
+    "modal.saveChanges": "Salvar alterações",
+    "modal.record": "Registrar",
+    "modal.error.balance": "Digite o saldo devedor",
+    "modal.error.value": "Digite um valor ou um % de ganho",
+    "modal.error.date": "Escolha uma data",
+    "modal.error.save": "Não foi possível salvar. Tente de novo.",
   }
 );

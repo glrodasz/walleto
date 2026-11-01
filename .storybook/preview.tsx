@@ -59,6 +59,7 @@ const preview: Preview = {
         items: [
           { value: "en", title: "English" },
           { value: "es", title: "Español" },
+          { value: "pt", title: "Português" },
         ],
         dynamicTitle: true,
       },

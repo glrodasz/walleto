@@ -31,5 +31,20 @@ export const METHOD_MESSAGES = defineMessages(
     "edit.saveFailed": "No se pudo guardar. Intenta de nuevo.",
     "edit.defaultCurrency": "Moneda por defecto",
     "edit.saveChanges": "Guardar cambios",
+  },
+  {
+    "list.title": "Formas salvas",
+    "list.emptyTitle": "Você ainda não tem formas de pagamento",
+    "list.emptyDescription": "Adicione uma acima para vinculá-la às suas receitas e despesas.",
+    "list.edit": "Editar {name}",
+    "list.defaultCurrency": "Padrão em {currency}",
+    "list.noDefaultCurrency": "Sem moeda padrão",
+    "list.archiving": "Arquivando…",
+
+    "edit.title": "Editar {name}",
+    "edit.nameRequired": "Dê um nome",
+    "edit.saveFailed": "Não foi possível salvar. Tente de novo.",
+    "edit.defaultCurrency": "Moeda padrão",
+    "edit.saveChanges": "Salvar alterações",
   }
 );

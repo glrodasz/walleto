@@ -6,7 +6,7 @@ import type { Language } from "../../types";
  * its language. `/` shows it to signed-out visitors in the negotiated
  * language (the app's usual cookie → browser → English).
  */
-export const LANDING_PATH: Record<Language, string> = { en: "/en", es: "/es" };
+export const LANDING_PATH: Record<Language, string> = { en: "/en", es: "/es", pt: "/pt" };
 
 /** The language a landing route pins, or null for every other route. */
 export function landingLanguageFor(pathname: string): Language | null {

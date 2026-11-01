@@ -8,7 +8,8 @@ import type { Language } from "../types";
  *               else the browser's languages, else English — i18n/locale.ts,
  *               resolved on the server by _app / _document
  *   messages    one catalog per area, built with `defineMessages`: English is
- *               the type source, so a key missing in Spanish fails `tsc`
+ *               the type source, so a key missing in Spanish or
+ *               Portuguese fails `tsc`
  *   formatting  dates through helpers/dates (language-aware), plurals through
  *               Intl.PluralRules, never a hand-written month name or "s"
  */
@@ -21,7 +22,7 @@ export const DEFAULT_LANGUAGE: Language = DEFAULT_LOCALE;
 export const LANGUAGE_LABELS: Record<Language, string> = LANGUAGE_NAMES;
 
 /** BCP 47 tag handed to Intl (dates, plurals, relative days, lists). */
-export const INTL_LOCALE: Record<Language, string> = { en: "en-US", es: "es-ES" };
+export const INTL_LOCALE: Record<Language, string> = { en: "en-US", es: "es-ES", pt: "pt-BR" };
 
 // ── Messages ────────────────────────────────────────────────────────────────
 
@@ -35,20 +36,22 @@ export type Message = string | PluralMessage;
 
 export type Params = Record<string, string | number>;
 
-/** Spanish must carry every English key, with the same kind (plain or plural). */
+/** Every translation must carry every English key, with the same kind (plain or plural). */
 type Translation<E> = { [K in keyof E]: E[K] extends string ? string : PluralMessage };
 
 export interface Messages<E extends Record<string, Message>> {
   en: E;
   es: Translation<E>;
+  pt: Translation<E>;
 }
 
 /** One area's catalog. English is the source of truth for keys. */
 export function defineMessages<const E extends Record<string, Message>>(
   en: E,
-  es: Translation<E>
+  es: Translation<E>,
+  pt: Translation<E>
 ): Messages<E> {
-  return { en, es };
+  return { en, es, pt };
 }
 
 const pluralRules = new Map<Language, Intl.PluralRules>();
@@ -140,6 +143,25 @@ const SETTINGS_MESSAGES = defineMessages(
     "theme.dark": "Oscuro",
     "theme.system": "Sistema",
     "weekStart.monday": "Lunes",
+    "weekStart.sunday": "Domingo",
+  },
+  {
+    "settings.general.title": "Geral",
+    "settings.account.title": "Conta",
+    "settings.account.subtitle": "As informações da sua conta e da sua sessão.",
+    "settings.currency.title": "Moeda",
+    "settings.currency.subtitle": "Como os valores são exibidos e digitados.",
+    "settings.preferences.title": "Preferências",
+    "settings.preferences.subtitle": "Deixe o app do seu jeito.",
+    "settings.setup.title": "Configuração inicial",
+    "settings.setup.subtitle": "Ferramentas para aproveitar o Walleto ao máximo.",
+    "settings.privacy.title": "Dados e privacidade",
+    "settings.privacy.subtitle": "Seus dados são privados e pertencem a você.",
+    "settings.about.title": "Sobre",
+    "theme.light": "Claro",
+    "theme.dark": "Escuro",
+    "theme.system": "Sistema",
+    "weekStart.monday": "Segunda-feira",
     "weekStart.sunday": "Domingo",
   }
 );

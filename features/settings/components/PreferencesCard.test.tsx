@@ -38,9 +38,14 @@ describe("PreferencesCard", () => {
     await waitFor(() => expect(update).toHaveBeenCalledWith({ confirmVariableExpenses: false }));
   });
 
-  it("offers Spanish next to the theme", () => {
+  it("offers every language next to the theme", () => {
     render(<PreferencesCard />);
-    expect(screen.getByRole("button", { name: "Cambiar a español" })).toHaveTextContent("Español");
+    fireEvent.click(screen.getByRole("button", { name: "Language: English" }));
+    expect(screen.getAllByRole("menuitemradio").map((o) => o.textContent)).toEqual([
+      "English",
+      "Español",
+      "Português",
+    ]);
   });
 
   it("saves the decimal separator and the decimals shown, with a live example", async () => {

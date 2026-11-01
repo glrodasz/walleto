@@ -84,7 +84,7 @@ export const LANDING_MESSAGES = defineMessages(
     "extras.privacy.body": "Hides every amount behind ****.",
     "extras.theme.title": "Light and dark",
     "extras.theme.body": "A calm light theme and a neon dark one.",
-    "extras.language.title": "English and Spanish",
+    "extras.language.title": "English, Spanish and Portuguese",
     "extras.language.body": "With your own date and number formats.",
 
     "trust.eyebrow": "Privacy",
@@ -238,7 +238,7 @@ export const LANDING_MESSAGES = defineMessages(
     "extras.privacy.body": "Oculta todos los montos tras ****.",
     "extras.theme.title": "Claro y oscuro",
     "extras.theme.body": "Un tema claro y tranquilo, y uno oscuro neón.",
-    "extras.language.title": "Español e inglés",
+    "extras.language.title": "Español, inglés y portugués",
     "extras.language.body": "Con tu propio formato de fechas y números.",
 
     "trust.eyebrow": "Privacidad",
@@ -314,5 +314,158 @@ export const LANDING_MESSAGES = defineMessages(
     "art.emergency": "Modo emergencia",
     "art.runway": "meses de colchón",
     "art.whatIf": "Escenario: cancela 3 suscripciones",
+  },
+  {
+    "meta.title": "Walleto · Planejador de finanças pessoais, mês a mês",
+    "meta.description":
+      "Planeje suas receitas, despesas, poupança, investimentos e dívidas. Veja se o mês está dentro do plano e quanto você vale hoje, em todas as suas moedas.",
+
+    "nav.skip": "Pular para o conteúdo",
+    "nav.signIn": "Entrar",
+    "nav.openApp": "Abrir o Walleto",
+
+    "hero.eyebrow": "Planejador de finanças pessoais",
+    "hero.title": "Seu plano de dinheiro, mês a mês.",
+    "hero.subtitle": "Planeje cada mês e veja como você está, em qualquer moeda.",
+    "hero.secondary": "Veja como funciona",
+    "hero.trust.bank": "Sem conectar seu banco",
+    "hero.trust.currencies": "8 moedas",
+    "hero.trust.languages": "Multilíngue",
+    "hero.art":
+      "Ilustração do Walleto: o que falta distribuir neste mês e os pagamentos do mês num celular.",
+
+    "problem.eyebrow": "O problema",
+    "problem.title": "Quase todos os apps dizem o que aconteceu.",
+    "problem.titleMuted": "Não se você está indo bem.",
+    "problem.1.title": "Registrar não é planejar",
+    "problem.1.body":
+      "A lista do que você gastou no mês passado não diz nada sobre este. O Walleto parte do plano.",
+    "problem.2.title": "Poupar não é gastar",
+    "problem.2.body":
+      "O que você poupa ou investe continua sendo seu. O Walleto conta isso à parte, para que o que sobra seja real.",
+    "problem.3.title": "Sua vida está em mais de uma moeda",
+    "problem.3.body":
+      "Você recebe em dólares, paga o aluguel em reais e uma assinatura em euros. Cada valor guarda a sua moeda.",
+
+    "how.eyebrow": "Como funciona",
+    "how.title": "Três passos para um plano em que você confia.",
+    "how.1.title": "Monte seu plano em minutos",
+    "how.1.body": "Uma configuração guiada sugere categorias e assinaturas com preços locais.",
+    "how.2.title": "O Walleto faz o registro",
+    "how.2.body": "Os pagamentos recorrentes se lançam sozinhos. Você só mexe no que mudou.",
+    "how.3.title": "Decida com números reais",
+    "how.3.body": "Veja quanto sobra, o que vence e quanto dura sua reserva.",
+
+    "features.eyebrow": "O que você ganha",
+    "features.title": "Tudo de que um plano mensal precisa.",
+    "features.plan.eyebrow": "Plano mensal",
+    "features.plan.title": "Saiba quanto falta distribuir",
+    "features.plan.body":
+      "Receitas menos despesas, poupança, investimentos e pagamentos de dívidas. Um número para o que ainda não tem destino, com o veredito Dentro do plano ou Comprometido demais.",
+    "features.checklist.eyebrow": "Plano vs. pago",
+    "features.checklist.title": "Este mês, como uma lista",
+    "features.checklist.body":
+      "Cada pagamento planejado está Vencido, Pendente ou Pago. Se você pagou outro valor ou em outro dia, vê as duas coisas.",
+    "features.variable.eyebrow": "Despesas variáveis",
+    "features.variable.title": "Contas que nunca custam o mesmo",
+    "features.variable.body":
+      "Dê à conta de luz ou ao mercado um piso e um teto. Alterne entre o melhor caso, a média e o pior.",
+    "features.currency.eyebrow": "Multimoeda",
+    "features.currency.title": "Todas as suas moedas, um só total",
+    "features.currency.body":
+      "USD, EUR, MXN, GBP, SEK, CHF, JPY e COP. Cada valor guarda a sua moeda; os totais são convertidos e marcados com ≈.",
+    "features.worth.eyebrow": "Patrimônio",
+    "features.worth.title": "Quanto você vale, hoje",
+    "features.worth.body":
+      "Investimentos mais poupança menos o que você ainda deve. Atualize o valor de uma conta de vez em quando e o Walleto calcula o ganho.",
+    "features.prospect.eyebrow": "Simulador",
+    "features.prospect.title": "Se a sua renda parasse hoje",
+    "features.prospect.body":
+      "O modo emergência mostra quantos meses dura a sua reserva. Cenários mostra quanto você libera se cancelar assinaturas.",
+
+    "extras.eyebrow": "Detalhes",
+    "extras.title": "E os detalhes que o deixam com a sua cara.",
+    "extras.organize.title": "Organize do seu jeito",
+    "extras.organize.body": "Categorias, etiquetas e formas de pagamento.",
+    "extras.privacy.title": "Modo privacidade",
+    "extras.privacy.body": "Esconde todos os valores atrás de ****.",
+    "extras.theme.title": "Claro e escuro",
+    "extras.theme.body": "Um tema claro e tranquilo, e um escuro neon.",
+    "extras.language.title": "Português, espanhol e inglês",
+    "extras.language.body": "Com o seu próprio formato de datas e números.",
+
+    "trust.eyebrow": "Privacidade",
+    "trust.title": "Seus números são seus.",
+    "trust.bank.title": "Nunca nos conectamos ao seu banco",
+    "trust.bank.body": "Cada número é você quem digita.",
+    "trust.ads.title": "Sem anúncios, sem venda de dados",
+    "trust.ads.body": "Suas informações são usadas só para o Walleto funcionar.",
+    "trust.auth.title": "Login seguro",
+    "trust.auth.body": "Com Auth0; os dados trafegam criptografados e ficam no Google Cloud.",
+    "trust.policy": "Leia a política de privacidade",
+
+    "source.title": "Feito às claras",
+    "source.body": "O código do Walleto é público. Confira como cada número é calculado.",
+    "source.cta": "Ver no GitHub",
+
+    "faq.title": "Perguntas",
+    "faq.bank.q": "Ele se conecta ao meu banco?",
+    "faq.bank.a":
+      "Não. Você digita cada número e os pagamentos recorrentes se lançam sozinhos. Nenhum terceiro guarda as senhas do seu banco.",
+    "faq.currencies.q": "Quais moedas ele aceita?",
+    "faq.currencies.a":
+      "USD, EUR, MXN, GBP, SEK, CHF, JPY e COP. Cada valor guarda a sua moeda; os totais são convertidos para a que você escolher.",
+    "faq.phone.q": "Funciona no celular?",
+    "faq.phone.a": "Sim. O Walleto funciona no navegador do celular e no computador.",
+    "faq.tracker.q": "Qual a diferença para um app de gastos?",
+    "faq.tracker.a":
+      "Um app de gastos olha para trás. O Walleto parte do seu plano, conta a poupança, os investimentos e as dívidas separadamente, e diz se este mês está indo bem.",
+    "faq.data.q": "Posso apagar meus dados?",
+    "faq.data.a":
+      "Sim. Escreva para nós pela política de privacidade e apagamos sua conta e os dados dela.",
+
+    "final.title": "Monte seu plano hoje.",
+    "final.body": "Leva poucos minutos, e você pode mudar tudo depois.",
+
+    "footer.nav": "Rodapé",
+    "footer.privacy": "Privacidade",
+    "footer.source": "Código-fonte",
+    "footer.contact": "Contato",
+    "footer.tagline": "Um plano claro hoje, um amanhã mais livre.",
+
+    "art.greeting": "Bom dia, Ada",
+    "art.month": "Outubro 2026 · dentro do plano",
+    "art.leftToAllocate": "A distribuir",
+    "art.income": "Receitas",
+    "art.expenses": "Despesas",
+    "art.invest": "Investimento",
+    "art.debts": "Dívidas",
+    "art.thisMonth": "Este mês",
+    "art.netWorthToday": "Patrimônio hoje",
+    "art.netWorthAsOf": "Patrimônio, até hoje",
+    "art.investments": "Investimentos",
+    "art.savings": "Poupança",
+    "art.paid": "Pago",
+    "art.due": "Pendente",
+    "art.overdue": "Vencido",
+    "art.rent": "Aluguel",
+    "art.electricity": "Luz",
+    "art.groceries": "Mercado",
+    "art.fuel": "Gasolina",
+    "art.carLoan": "Financiamento do carro",
+    "art.internet": "Internet",
+    "art.gym": "Academia",
+    "art.phone": "Celular",
+    "art.paidDifferent": "você pagou $49 no dia 4",
+    "art.octoberBudget": "Plano de outubro",
+    "art.left": "livre",
+    "art.best": "Melhor",
+    "art.average": "Média",
+    "art.worst": "Pior",
+    "art.freelance": "Freela",
+    "art.total": "Total",
+    "art.emergency": "Modo emergência",
+    "art.runway": "meses de reserva",
+    "art.whatIf": "Cenário: cancele 3 assinaturas",
   }
 );
