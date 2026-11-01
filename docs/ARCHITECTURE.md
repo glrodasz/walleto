@@ -7,8 +7,7 @@ what each screen shows lives in the [product overview](product-overview.md).
 
 **Reading the diagrams:** teal is the browser, purple is Vercel (Next.js pages and API routes),
 amber is Google Firebase, gray is people and outside services. Function, route and hook names are
-set in monospace. Sources live in [`diagrams/src/`](diagrams/src) and are baked to light and dark
-SVGs.
+set in monospace.
 
 ## Containers: what runs where
 

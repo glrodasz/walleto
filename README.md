@@ -147,7 +147,6 @@ browser.
 
 What runs where, how sign-in turns an Auth0 session into Firestore access, and how a plan item
 becomes the numbers on screen are drawn in [**docs/ARCHITECTURE.md**](docs/ARCHITECTURE.md).
-Diagram sources live in [`docs/diagrams/src/`](docs/diagrams/src).
 
 ### Tech stack
 
@@ -251,6 +250,6 @@ pnpm tsc --noEmit && pnpm lint && pnpm test && pnpm build && pnpm build-storyboo
 
 ## License
 
-No license file has been added yet, so default copyright applies.
+© 2026 Guillermo Rodas. All rights reserved.
 
 <sub>Built by [Guillermo Rodas](https://github.com/glrodasz).</sub>
