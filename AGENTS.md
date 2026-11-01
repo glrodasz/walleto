@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Conventions for **sublr**. The general rule: **small files with a single responsibility**, so every piece can be tested on its own and read at a glance.
+Conventions for **walleto**. The general rule: **small files with a single responsibility**, so every piece can be tested on its own and read at a glance.
 
 Stack: Next.js 14 (Pages Router) · strict TypeScript · Firestore + `firebase-admin` · Auth0 · Zod · styled-jsx · Jest · pnpm 9.
 
@@ -26,7 +26,7 @@ utils/errorMessage.ts          UserFacingError + errorMessage(err, fallback) —
 
 ### `helpers/` — with project context
 
-Same idea of a "utility", but it knows sublr's business.
+Same idea of a "utility", but it knows walleto's business.
 
 ```
 helpers/aggregations.ts           monthly amounts per domain, rate-aware (see §3.1); rowSign / signed convertedAmount (direction OUT); shareByCurrency for the currency mix
