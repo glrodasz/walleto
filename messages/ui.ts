@@ -7,7 +7,8 @@ import { defineMessages } from "../helpers/i18n";
  */
 export const UI_MESSAGES = defineMessages(
   {
-    "language.switchTo": "Switch to English",
+    "language.label": "Language",
+    "language.current": "Language: {language}",
     "combobox.placeholder": "Search or create",
     "combobox.create": "Create",
 
@@ -56,7 +57,8 @@ export const UI_MESSAGES = defineMessages(
     "boundary.reload": "Reload",
   },
   {
-    "language.switchTo": "Cambiar a español",
+    "language.label": "Idioma",
+    "language.current": "Idioma: {language}",
     "combobox.placeholder": "Busca o crea",
     "combobox.create": "Crear",
 
@@ -103,5 +105,55 @@ export const UI_MESSAGES = defineMessages(
     "boundary.title": "Algo salió mal",
     "boundary.body": "Ocurrió un error inesperado. Recargar la página suele solucionarlo.",
     "boundary.reload": "Recargar",
+  },
+  {
+    "language.label": "Idioma",
+    "language.current": "Idioma: {language}",
+    "combobox.placeholder": "Busque ou crie",
+    "combobox.create": "Criar",
+
+    "error.title": "Não foi possível carregar estes dados",
+    "error.description": "Algo deu errado do nosso lado. Tente recarregar a página.",
+    "error.createIndex": "Criar o índice que falta →",
+
+    "section.viewAll": "Ver tudo",
+    "field.moreInfo": "Mais informações",
+
+    "build.viewCommit": "{sha} — ver o commit no GitHub",
+    "build.stagingCommit": "Versão de staging {sha} — ver o commit no GitHub",
+
+    "kebab.moreOptions": "Mais opções",
+
+    "pager.label": "Páginas",
+    "pager.previous": "Anterior",
+    "pager.status": "Página {page} de {count}",
+
+    "privacy.show": "Mostrar valores",
+    "privacy.hide": "Ocultar valores",
+
+    "scenario.label": "Despesas variáveis contam no cenário",
+    "scenario.floor": "Melhor",
+    "scenario.average": "Média",
+    "scenario.top": "Pior",
+    "scenario.current": "Despesas variáveis contam no cenário {scenario}",
+    "scenario.hint": "Melhor usa o valor mais baixo de cada faixa; Pior, o mais alto.",
+
+    "delta.up": "Sobe {pct}%",
+    "delta.down": "Cai {pct}%",
+
+    "grouped.transactions": {
+      one: "{count} lançamento · {share}%",
+      other: "{count} lançamentos · {share}%",
+    },
+    "grouped.share": "Participação de {label}",
+
+    "month.previous": "Mês anterior",
+    "month.next": "Próximo mês",
+    "month.current": "Mês: {month}",
+    "month.showLast": "Ver os últimos {count} meses",
+
+    "boundary.title": "Algo deu errado",
+    "boundary.body": "Ocorreu um erro inesperado. Recarregar a página costuma resolver.",
+    "boundary.reload": "Recarregar",
   }
 );

@@ -90,5 +90,50 @@ export const ADMIN_MESSAGES = defineMessages(
     "table.pending": "Pendiente",
     "table.never": "Nunca",
     "table.empty": "Nadie se ha registrado todavía.",
+  },
+  {
+    "page.title": "Uso",
+    "page.subtitle": "Quem se cadastra e quem volta. Só você pode ver esta página.",
+    "page.refresh": "Atualizar",
+    "page.updated": "Atualizado {time}",
+    "page.loadError": "Não foi possível carregar o uso",
+
+    "kpi.users": "Usuários",
+    "kpi.usersSub": "{onboarded} concluíram a configuração",
+    "kpi.dau": "Ativos hoje",
+    "kpi.wau": "Ativos nesta semana",
+    "kpi.mau": "Ativos neste mês",
+    "kpi.activeSub": "Últimos {days} dias",
+    "kpi.activeTodaySub": "Últimas 24 horas",
+    "kpi.signups": "Novos nesta semana",
+    "kpi.signupsSub": "{count} nos últimos 30 dias",
+    "kpi.activeInfo":
+      "Ativo significa que abriu o app ou fez login dentro do período. A abertura do app é registrada uma vez por dia.",
+
+    "auth0.notConfigured":
+      "Os e-mails e os logins precisam da Management API do Auth0. Adicione AUTH0_MGMT_CLIENT_ID e AUTH0_MGMT_CLIENT_SECRET para vê-los.",
+    "auth0.error":
+      "O Auth0 não respondeu, então faltam os e-mails e os logins. Confira os logs do servidor.",
+
+    "chart.title": "Cadastros por semana",
+    "chart.subtitle": "As últimas 12 semanas",
+    "chart.week": "Semana de {date}",
+    "chart.signups": { one: "{count} cadastro", other: "{count} cadastros" },
+    "chart.weeklyTotals": "Cadastros por semana",
+
+    "table.title": "Pessoas",
+    "table.subtitle": "As mais ativas recentemente primeiro",
+    "table.user": "Usuário",
+    "table.signedUp": "Cadastro",
+    "table.lastActive": "Última atividade",
+    "table.logins": "Logins",
+    "table.recurring": "Itens do plano",
+    "table.transactions": "Atividade",
+    "table.accounts": "Contas",
+    "table.setup": "Configuração",
+    "table.done": "Concluída",
+    "table.pending": "Pendente",
+    "table.never": "Nunca",
+    "table.empty": "Ninguém se cadastrou ainda.",
   }
 );

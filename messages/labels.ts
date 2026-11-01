@@ -59,5 +59,32 @@ export const LABEL_MESSAGES = defineMessages(
 
     "stack.other": "Otros",
     "stack.unknown": "Desconocida",
+  },
+  {
+    "greeting.morning": "Bom dia",
+    "greeting.afternoon": "Boa tarde",
+    "greeting.evening": "Boa noite",
+
+    "rate.YEARLY": "{value}% ao ano",
+    "rate.MONTHLY": "{value}% ao mês",
+
+    "direction.DEBT.OUT": "Empréstimo",
+    "direction.DEBT.IN": "Amortização",
+    "direction.OUT": "Saque",
+    "direction.IN": "Depósito",
+
+    "accountDraft.nameRequired.INVESTMENT": "Dê um nome à conta",
+    "accountDraft.nameRequired.SAVING": "Dê um nome à caixinha",
+    "accountDraft.nameRequired.DEBT": "Dê um nome à dívida",
+    "accountDraft.rateRange": "A taxa de juros deve estar entre 0 e 100",
+
+    "method.endingIn": "final {last4}",
+    "method.last4Error": "Digite os 4 dígitos ou deixe em branco",
+    "method.network.DIGITAL_WALLET": "Provedor",
+    "method.network.BANK_TRANSFER": "Modalidade",
+    "method.network.card": "Bandeira do cartão",
+
+    "stack.other": "Outros",
+    "stack.unknown": "Desconhecida",
   }
 );

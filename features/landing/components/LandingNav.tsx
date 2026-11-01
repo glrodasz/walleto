@@ -1,24 +1,21 @@
 import Link from "next/link";
 import type { Language } from "../../../types";
-import { Globe } from "../../../components/atoms/Icons";
-import { translate, translator } from "../../../helpers/i18n";
-import { LANGUAGE_NAMES } from "../../../i18n/locale";
-import { UI_MESSAGES } from "../../../messages/ui";
+import { LanguageMenu } from "../../../components/molecules/LanguageMenu";
+import { translator } from "../../../helpers/i18n";
 import { LANDING_MESSAGES } from "../messages";
 import { LANDING_PATH, signInHref } from "../routes";
 
 interface Props {
   language: Language;
-  /** A signed-in visitor (on /en or /es) goes straight back into the app. */
+  /** A signed-in visitor (on /en, /es or /pt) goes straight back into the app. */
   signedIn: boolean;
 }
 
-const OTHER: Record<Language, Language> = { en: "es", es: "en" };
+const landingHref = (target: Language) => LANDING_PATH[target];
 
-/** Logo, the other language, and the way in. */
+/** Logo, the language menu, and the way in. */
 export function LandingNav({ language, signedIn }: Props) {
   const t = translator(LANDING_MESSAGES, language);
-  const other = OTHER[language];
 
   return (
     <header className="nav glass glass--strong">
@@ -29,16 +26,7 @@ export function LandingNav({ language, signedIn }: Props) {
       </Link>
 
       <nav className="actions" aria-label="Walleto">
-        <Link
-          className="lang"
-          href={LANDING_PATH[other]}
-          hrefLang={other}
-          lang={other}
-          aria-label={translate(UI_MESSAGES, other, "language.switchTo")}
-        >
-          <Globe size={14} />
-          <span>{LANGUAGE_NAMES[other]}</span>
-        </Link>
+        <LanguageMenu language={language} hrefFor={landingHref} plain />
         {signedIn ? (
           <Link className="cta" href="/">
             {t("nav.openApp")}
@@ -101,8 +89,8 @@ export function LandingNav({ language, signedIn }: Props) {
           color: var(--fg-0);
         }
 
-        .actions :global(.lang) {
-          gap: 6px;
+        .actions :global(.trigger) {
+          min-height: 44px;
         }
 
         .actions :global(.cta) {

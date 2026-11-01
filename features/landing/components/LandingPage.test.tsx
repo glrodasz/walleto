@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { LandingPage } from "./LandingPage";
 
 describe("LandingPage", () => {
@@ -11,9 +11,19 @@ describe("LandingPage", () => {
     for (const link of screen.getAllByRole("link", { name: /^Entrar/ })) {
       expect(link).toHaveAttribute("href", "/api/auth/login?ui_locales=es");
     }
-    const toEnglish = screen.getByRole("link", { name: "Switch to English" });
-    expect(toEnglish).toHaveAttribute("href", "/en");
-    expect(toEnglish).toHaveTextContent("English");
+    fireEvent.click(screen.getByRole("button", { name: "Idioma: Español" }));
+    expect(screen.getByRole("menuitemradio", { name: "English" })).toHaveAttribute("href", "/en");
+    expect(screen.getByRole("menuitemradio", { name: "Português" })).toHaveAttribute("href", "/pt");
+  });
+
+  it("speaks Brazilian Portuguese on /pt and lists every language for search engines", () => {
+    render(<LandingPage language="pt" origin="https://walleto.app" />);
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      /Seu plano de dinheiro, mês.a.mês\./
+    );
+    for (const link of screen.getAllByRole("link", { name: /^Entrar/ })) {
+      expect(link).toHaveAttribute("href", "/api/auth/login?ui_locales=pt");
+    }
   });
 
   it("shows every feature, drawn rather than captured", () => {

@@ -19,5 +19,14 @@ export const METHOD_FACE_MESSAGES = defineMessages(
     "face.card.DEBIT_CARD": "Débito",
     "face.payTo": "Páguese a la orden de",
     "face.memo": "Concepto",
+  },
+  {
+    "face.addAlias": "Adicione um apelido",
+    "face.newMethod": "Nova forma de pagamento",
+    "face.chooseType": "Escolha um tipo",
+    "face.card.CREDIT_CARD": "Crédito",
+    "face.card.DEBIT_CARD": "Débito",
+    "face.payTo": "Pague-se a",
+    "face.memo": "Referente a",
   }
 );

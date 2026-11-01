@@ -143,5 +143,75 @@ export const PAGE_MESSAGES = defineMessages(
     "privacy.contact.title": "Contáctanos",
     "privacy.contact.before": "¿Preguntas sobre esta política o tus datos? Escríbenos a",
     "privacy.contact.after": ".",
+  },
+  {
+    "meta.description": "Um plano claro hoje, um amanhã mais livre.",
+
+    "onboarding.categories.description":
+      "Seu plano se organiza por categorias. Mantenha as padrão ou adicione as suas.",
+    "onboarding.methods.description":
+      "Como você paga: seus cartões e contas, para que cada item do plano saiba onde é cobrado.",
+    "onboarding.review.description":
+      "É assim que seu plano vai aparecer no início. Volte a qualquer passo para mudá-lo.",
+    "onboarding.incomes.heading": "Quanto você ganha por mês?",
+    "onboarding.expenses.heading": "O que você paga todo mês?",
+    "onboarding.currencies.saveFailed": "Não foi possível salvar suas moedas. Tente de novo.",
+    "onboarding.methods.saveFailed":
+      "Não foi possível salvar suas formas de pagamento. Tente de novo.",
+    "onboarding.incomes.saveFailed": "Não foi possível salvar suas receitas. Tente de novo.",
+    "onboarding.expenses.saveFailed": "Não foi possível salvar suas despesas. Tente de novo.",
+    "onboarding.review.finishFailed": "Não foi possível concluir a configuração. Tente de novo.",
+    "onboarding.review.finish": "Concluir",
+
+    "loginError.title": "Não foi possível entrar · Walleto",
+    "loginError.heading": "Não foi possível entrar",
+    "loginError.body":
+      "Não conseguimos concluir o login. Isso geralmente significa que o Auth0 ainda não permite a URL desta implantação, ou que uma tentativa anterior expirou.",
+    "loginError.reason": "Motivo:",
+    "loginError.retry": "Tentar de novo",
+    "loginError.home": "Voltar ao início",
+
+    "privacy.title": "Política de privacidade · Walleto",
+    "privacy.back": "Voltar ao Walleto",
+    "privacy.heading": "Política de privacidade",
+    "privacy.updated": "Última atualização: {date}",
+    "privacy.overview.title": "Resumo",
+    "privacy.overview.body":
+      "O Walleto é um planejador de finanças pessoais. Esta política explica quais informações coletamos, como as usamos e quais opções você tem. Ao usar o Walleto, você concorda com a coleta e o uso das informações conforme descrito aqui.",
+    "privacy.collect.title": "Informações que coletamos",
+    "privacy.collect.intro": "Coletamos apenas o que o app precisa para funcionar:",
+    "privacy.collect.account":
+      "**Informações da conta**: seu nome e e-mail, fornecidos pelo nosso provedor de autenticação quando você entra.",
+    "privacy.collect.financial":
+      "**Dados financeiros que você insere**: itens recorrentes, lançamentos, categorias, etiquetas, formas de pagamento, contas e saldos que você adiciona ao seu plano. Nunca nos conectamos ao seu banco; cada número é um que você digitou.",
+    "privacy.collect.preferences":
+      "**Preferências**: moeda, formato de data, tema e ajustes de exibição semelhantes.",
+    "privacy.use.title": "Como usamos suas informações",
+    "privacy.use.body":
+      "Usamos suas informações apenas para operar o Walleto: mostrar seu plano, sua atividade e seu patrimônio, converter valores entre moedas e manter suas preferências entre sessões. Não vendemos seus dados nem os usamos para publicidade.",
+    "privacy.storage.title": "Armazenamento e segurança dos dados",
+    "privacy.storage.body":
+      "Seus dados ficam no Google Cloud Firestore e trafegam por conexões criptografadas. A autenticação é feita pelo Auth0; o Walleto nunca vê nem guarda sua senha. Ao sair, os dados financeiros salvos naquele dispositivo são apagados.",
+    "privacy.thirdParty.title": "Serviços de terceiros",
+    "privacy.thirdParty.body":
+      "Usamos poucos provedores para operar o app: Auth0 para o login, Google Cloud Firestore para o armazenamento e um provedor de taxas de câmbio para converter valores entre moedas. Esses provedores processam os dados apenas na medida necessária para nos prestar o serviço.",
+    "privacy.retention.title": "Retenção e exclusão dos dados",
+    "privacy.retention.before":
+      "Mantemos seus dados enquanto sua conta estiver ativa. Você pode pedir uma exportação ou a exclusão completa da sua conta e dos seus dados a qualquer momento escrevendo para",
+    "privacy.retention.after":
+      ". A exclusão apaga seus registros financeiros de forma permanente e não pode ser desfeita.",
+    "privacy.retention.subject": "Excluir minha conta do Walleto",
+    "privacy.rights.title": "Seus direitos",
+    "privacy.rights.body":
+      "Dependendo de onde você mora, você pode ter o direito de acessar, corrigir, exportar ou excluir suas informações pessoais. Escreva para o e-mail acima para exercer qualquer um desses direitos.",
+    "privacy.children.title": "Privacidade de menores",
+    "privacy.children.body":
+      "O Walleto não é destinado a menores de 16 anos e não coletamos informações deles intencionalmente.",
+    "privacy.changes.title": "Alterações nesta política",
+    "privacy.changes.body":
+      "Podemos atualizar esta política de tempos em tempos. Mudanças importantes serão indicadas pela atualização da data no topo desta página.",
+    "privacy.contact.title": "Fale conosco",
+    "privacy.contact.before": "Dúvidas sobre esta política ou seus dados? Escreva para",
+    "privacy.contact.after": ".",
   }
 );

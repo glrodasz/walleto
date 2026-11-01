@@ -118,6 +118,15 @@ describe("login and logout follow the request host", () => {
     });
   });
 
+  it("asks Universal Login for Brazilian Portuguese from /pt", async () => {
+    handleLoginMock.mockResolvedValue(undefined);
+    const fromLanding = { headers: {}, query: { ui_locales: "pt" } } as unknown as NextApiRequest;
+    await handleLoginForHost(fromLanding, {} as NextApiResponse);
+    expect(handleLoginMock).toHaveBeenCalledWith(expect.anything(), expect.anything(), {
+      authorizationParams: { ui_locales: "pt-BR" },
+    });
+  });
+
   it("ignores login hints it doesn't know", async () => {
     handleLoginMock.mockResolvedValue(undefined);
     const odd = {

@@ -8,7 +8,7 @@ export interface LandingRouteProps {
 }
 
 /**
- * Props for /en and /es: the request's origin (for absolute SEO URLs) and
+ * Props for /en, /es and /pt: the request's origin (for absolute SEO URLs) and
  * whether a session exists, so a signed-in visitor gets "Open Walleto"
  * rather than "Create account".
  */

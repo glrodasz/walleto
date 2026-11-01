@@ -14,6 +14,10 @@ describe("resolveLocale — the skill's truth table, without URLs", () => {
     ["es", "en-US", "es"],
     ["en", "es-ES", "en"],
     ["garbage", "es", "es"],
+    [null, "pt-BR", "pt"],
+    [null, "pt-PT, en;q=0.5", "pt"],
+    ["pt", "es-ES", "pt"],
+    ["es", "pt-BR", "es"],
     [null, "", "en"],
   ])("cookie %s · %s → %s", (savedLocale, header, expected) => {
     expect(resolveLocale({ savedLocale, languages: parseAcceptLanguage(header) })).toBe(expected);
@@ -31,6 +35,7 @@ describe("negotiation", () => {
     expect(negotiateLocale(["sv", "es-CO"])).toBe("es");
     expect(negotiateLocale(["en-US", "es"])).toBe("en");
     expect(negotiateLocale(["sv"])).toBe("en");
+    expect(negotiateLocale(["fr", "pt-AO", "es"])).toBe("pt");
   });
 
   it("reads a cookie by name", () => {

@@ -147,12 +147,12 @@ features/
                 EditMethodModal (with the full-size face as a preview) — used by Settings › Payment methods
                 (the /methods page redirects)
   landing/      the public landing page (LandingPage): `/` for signed-out visitors (negotiated language),
-                `/en` and `/es` pinned (`routes.ts`; _document reads the pinned language for <html lang>). The one
+                `/en`, `/es` and `/pt` pinned (`routes.ts`; _document reads the pinned language for <html lang>). The one
                 public screen, so the only one with per-language URLs, canonical/hreflang and Open Graph. Copy in
                 `messages.ts` must stay true of the app today (no pricing, no bank sync). No screenshots: the app is
                 drawn as vector art (`components/art/`, glass cards with the app's icons, domain colours and
                 var(--accent), never a fixed blue); only the Open Graph image lives in `public/landing/<language>/og.png` (the hero rendered at 1200×630 without its buttons; re-render it when the hero changes). Accessibility: a skip link is the first Tab stop and targets `<main id="main-content" tabIndex={-1}>`; each `<nav>` has its own label; small coloured text (eyebrows, art labels) is mixed toward `--fg-0` with `color-mix` to reach 4.5:1, while icons keep the pure colour.
-                One way in, "Sign in" / "Entrar" (`/api/auth/login?ui_locales=…`): Google via Auth0 creates the account on first use
+                The nav's language picker is the shared `LanguageMenu` with links to each pinned URL. One way in, "Sign in" / "Entrar" (`/api/auth/login?ui_locales=…`, `pt` sent to Auth0 as `pt-BR`): Google via Auth0 creates the account on first use
   insights/     SubscriptionInsights — monthly/annualized subscription cost
   investments/  value per account / pocket / debt (and per category for what has no account): invested vs value,
                 gain %, history; helpers/interest.ts estimates with the account's rate; a debt is the
@@ -473,20 +473,21 @@ The app is a **planner**, not an expense tracker: it answers "what's my plan, is
 
 ### 3.7 Language (important)
 
-The interface speaks English and Spanish. **Every visible string goes through a catalog**: nothing user-facing
+The interface speaks English, Spanish and Brazilian Portuguese. **Every visible string goes through a catalog**: nothing user-facing
 is written inline in a component, a helper or a `constants.ts` map.
 
 - **Which language**: the saved choice (the `locale` cookie) → the browser's languages (Accept-Language on the
   server, `navigator.languages` in the browser; q-sorted, first language we speak) → English. `i18n/locale.ts` is
-  the localization skill's core minus its URL scheme: there are **no `/es` URLs** on purpose — every screen is behind
+  the localization skill's core minus its URL scheme: there are **no `/es` or `/pt` URLs** in the app on purpose (only the public landing has them) — every screen is behind
   a login and nothing is shared by link, so the language belongs to the device, not the page. `_app` and
   `_document` resolve it in `getInitialProps` (`requestLocale`), so the first paint and `<html lang>` are already
   right; that costs the static pages (wizard, privacy) their static optimisation, which is the trade.
-- **The toggle** is `components/molecules/LanguageToggle`: the target's endonym ("Español" / "English"), `lang` and an
-  `aria-label` in the target language. A tap goes through `useSetLanguage()`, which writes the cookie
+- **The picker** is `components/molecules/LanguageMenu`: a globe pill naming the current language that opens every
+  language in its own name ("English", "Español", "Português"), each option with `lang`. In the app
+  (`LanguagePreference`) a pick goes through `useSetLanguage()`, which writes the cookie
   (`i18n/persistLocale`) and re-renders in place. It lives in Settings › Preferences next to the theme — not in the
   header. `users.language` is not read: the choice is per device, like the theme's first paint.
-- **Catalogs** are built with `defineMessages(en, es)`: English is the type source, so a key missing in Spanish
+- **Catalogs** are built with `defineMessages(en, es, pt)`: English is the type source, so a key missing in Spanish or Portuguese
   fails `tsc`. They live next to their consumers, like any other module: `messages/common.ts` (actions, the five
   domains, cadences, method types, counts — what two or more areas say the same way), `messages/<area>.ts` for
   shared components, `features/<name>/messages.ts` for a feature. A component reads one with
@@ -501,6 +502,9 @@ is written inline in a component, a helper or a `constants.ts` map.
   user's decimal separator preference (§3.1) already decides how a number is written.
 - **Never translated**: currency codes, and anything the user typed or that was seeded as their data (item,
   category, tag, account and method names).
+- **Portuguese** is Brazilian (`pt`, Intl `pt-BR`; any `pt-*` browser language picks it): "você", sentence case.
+  Plan / Atividade / Patrimônio; Receitas / Despesas / Investimentos / Poupança / Dívidas; "Forma de pagamento",
+  "Etiqueta", "Caixinha" for pocket, "Lançamento" for a transaction; Início / Simulador / Cenários in the nav.
 - **Spanish voice**: "tú", neutral Latin-American Spanish, sentence case. The three nouns of §3.6 are
   Plan / Actividad / Patrimonio; "Medio de pago" for payment method, "Etiqueta" for tag, "Bolsillo" for pocket.
 - Storybook has a **Language** toolbar next to Theme; tests render without a provider, so they read English.

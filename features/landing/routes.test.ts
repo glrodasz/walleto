@@ -1,9 +1,10 @@
 import { landingLanguageFor, signInHref } from "./routes";
 
 describe("landing routes", () => {
-  it("pins the language of /en and /es only", () => {
+  it("pins the language of /en, /es and /pt only", () => {
     expect(landingLanguageFor("/en")).toBe("en");
     expect(landingLanguageFor("/es")).toBe("es");
+    expect(landingLanguageFor("/pt")).toBe("pt");
     expect(landingLanguageFor("/")).toBeNull();
     expect(landingLanguageFor("/expenses")).toBeNull();
   });

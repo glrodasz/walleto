@@ -1,6 +1,6 @@
 import { Select } from "../../../components/atoms/Select";
 import { Monitor, Moon, Sliders, Sun } from "../../../components/atoms/Icons";
-import { LanguageToggle } from "../../../components/molecules/LanguageToggle";
+import { LanguagePreference } from "../../../components/molecules/LanguageMenu";
 import { SegmentedControl } from "../../../components/molecules/SegmentedControl";
 import { DATE_FORMAT_LABELS, formatDate } from "../../../helpers/dates";
 import { t } from "../../../helpers/i18n";
@@ -114,7 +114,7 @@ export function PreferencesCard() {
         }
         info={tr("preferences.confirmVariableHint")}
       />
-      <SettingsRow label={tr("preferences.language")} control={<LanguageToggle />} />
+      <SettingsRow label={tr("preferences.language")} control={<LanguagePreference />} />
       <SettingsRow
         label={tr("preferences.theme")}
         control={

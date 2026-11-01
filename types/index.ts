@@ -44,7 +44,7 @@ export type ThemePreference = "light" | "dark" | "system";
 export type DateFormat = "MDY" | "DMY" | "YMD";
 /** 0 = Sunday, 1 = Monday, as in Date#getDay(). */
 export type WeekStart = 0 | 1;
-export type Language = "en" | "es";
+export type Language = "en" | "es" | "pt";
 /** Which end of a variable expense's band totals count: best, middle or worst case. */
 export type Scenario = "floor" | "average" | "top";
 export type { DecimalSeparator, Decimals } from "../utils/decimal";

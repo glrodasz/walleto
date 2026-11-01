@@ -99,5 +99,54 @@ export const DASHBOARD_MESSAGES = defineMessages(
 
     "upcoming.title": "Lo que viene en tu plan",
     "upcoming.empty": "No viene nada más en tu plan",
+  },
+  {
+    "title.named": "{greeting}, {name}",
+    "title.anonymous": "{greeting}",
+    subtitle: "{month}: veja como está seu dinheiro.",
+
+    "fx.title": "Taxas de câmbio indisponíveis",
+    "fx.description":
+      "Por enquanto os totais somam moedas sem converter. Isso se corrige sozinho quando as taxas voltarem a carregar.",
+
+    "tip.label": "Dica:",
+    "tip.dismiss": "Dispensar dica",
+    "tip.create":
+      "Monte seu plano pelo botão +: adicione o que se repete (aluguel, um salário, uma assinatura) e registre o avulso quando acontecer.",
+
+    "cards.caption": "planejado por mês",
+    "topExpenses.title": "Principais categorias de despesa",
+    "category.unknown": "Desconhecida",
+    "category.other": "Outros",
+
+    "worth.title": "Patrimônio",
+    "worth.today": "Hoje",
+    "worth.empty":
+      "Adicione suas contas de investimento, caixinhas de poupança e dívidas, e depois atualize o valor delas pelo botão + para ver onde você está.",
+    "worth.investments": "Investimentos",
+    "worth.savings": "Poupança",
+    "worth.debts": "Devido",
+    "worth.sub": "O que você tem menos o que deve",
+    "worth.sub.checked": "O que você tem menos o que deve · conferido em {date}",
+    "worth.sub.estimated": "O que você tem menos o que deve · em parte estimado",
+    "worth.sub.checkedEstimated":
+      "O que você tem menos o que deve · conferido em {date} · em parte estimado",
+    "worth.debtsUnknown":
+      "Uma dívida ainda não tem saldo registrado, então não entra na conta. Atualize o saldo para incluí-la.",
+
+    "cashFlow.title": "Fluxo de caixa mensal",
+    "cashFlow.subtitle": "O que realmente aconteceu, por categoria.",
+    "cashFlow.period": "Período",
+    "cashFlow.lastMonths": "Últimos {count} meses",
+    "cashFlow.groupBy": "Agrupar por",
+    "cashFlow.groupBy.domain": "Por tipo",
+    "cashFlow.groupBy.category": "Por categoria",
+    "cashFlow.groupBy.currency": "Por moeda",
+    "cashFlow.legend": "Legenda",
+    "cashFlow.categories": { one: "{count} categoria", other: "{count} categorias" },
+    "cashFlow.currencies": { one: "{count} moeda", other: "{count} moedas" },
+
+    "upcoming.title": "O que vem no seu plano",
+    "upcoming.empty": "Não vem mais nada no seu plano",
   }
 );

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import auth0 from "../../../lib/auth0";
 import { requestOrigin } from "../../../utils/requestOrigin";
-import { isLocale } from "../../../i18n/locale";
+import { isLocale, type Locale } from "../../../i18n/locale";
 
 /**
  * The redirect URI is derived per request from the host the user is on,
@@ -16,13 +16,16 @@ export function callbackUrlFor(req: NextApiRequest): string | undefined {
   return origin ? `${origin}/api/auth/callback` : undefined;
 }
 
+/** Universal Login has no plain "pt", only its Brazilian and European variants. */
+const AUTH0_UI_LOCALE: Record<Locale, string> = { en: "en", es: "es", pt: "pt-BR" };
+
 /**
  * The landing page links here with `ui_locales`, so Universal Login speaks
  * the landing's language. Anything else in the query is ignored.
  */
 export function loginParamsFor(req: NextApiRequest): Record<string, string> {
   const uiLocales = req.query?.ui_locales;
-  return isLocale(uiLocales) ? { ui_locales: uiLocales } : {};
+  return isLocale(uiLocales) ? { ui_locales: AUTH0_UI_LOCALE[uiLocales] } : {};
 }
 
 export async function handleLoginForHost(req: NextApiRequest, res: NextApiResponse) {

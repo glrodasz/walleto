@@ -10,6 +10,10 @@ describe("t", () => {
     expect(t("settings.privacy.title", "es")).toBe("Datos y privacidad");
   });
 
+  it("speaks Portuguese", () => {
+    expect(t("settings.privacy.title", "pt")).toBe("Dados e privacidade");
+  });
+
   it("falls back to English for a language without a catalog", () => {
     expect(t("theme.dark", "xx" as never)).toBe("Dark");
   });
@@ -18,7 +22,8 @@ describe("t", () => {
 describe("translate", () => {
   const messages = defineMessages(
     { greet: "Hi {name}", months: { one: "{count} month", other: "{count} months" } },
-    { greet: "Hola {name}", months: { one: "{count} mes", other: "{count} meses" } }
+    { greet: "Hola {name}", months: { one: "{count} mes", other: "{count} meses" } },
+    { greet: "Olá {name}", months: { one: "{count} mês", other: "{count} meses" } }
   );
 
   it("interpolates params", () => {
@@ -30,6 +35,8 @@ describe("translate", () => {
     expect(translate(messages, "en", "months", { count: 0 })).toBe("0 months");
     expect(translate(messages, "es", "months", { count: 1 })).toBe("1 mes");
     expect(translate(messages, "es", "months", { count: 4 })).toBe("4 meses");
+    expect(translate(messages, "pt", "months", { count: 1 })).toBe("1 mês");
+    expect(translate(messages, "pt", "months", { count: 4 })).toBe("4 meses");
   });
 
   it("leaves an unknown placeholder visible", () => {

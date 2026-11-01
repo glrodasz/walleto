@@ -45,5 +45,27 @@ export const CHART_MESSAGES = defineMessages(
     "netFlow.onPlan": "Dentro del plan",
     "netFlow.overSub": "más planeado para salir que lo que entra, cada mes",
     "netFlow.leftSub": "por asignar cada mes",
+  },
+  {
+    "chart.empty": "Sem atividade neste período",
+    "chart.stillPlanned": "Ainda planejado",
+    "chart.average": "Média {amount}",
+    "chart.monthlyTotals": "Totais mensais",
+    "chart.monthlyCashFlow": "Fluxo de caixa mensal",
+    "chart.stillPlannedRow": ", ainda planejado {amount}",
+    "chart.inProgress": " (em andamento)",
+
+    "breakdown.empty": "Ainda não há dados",
+    "breakdown.share": "Participação de {name}",
+
+    "stat.open": "Abrir {title}",
+    "stat.byCurrency": "Por moeda",
+    "summary.breakdown": "Detalhamento de {title}",
+
+    "netFlow.title": "Plano mensal",
+    "netFlow.overCommitted": "Comprometido demais",
+    "netFlow.onPlan": "Dentro do plano",
+    "netFlow.overSub": "mais planejado para sair do que entra, todo mês",
+    "netFlow.leftSub": "a distribuir todo mês",
   }
 );

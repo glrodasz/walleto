@@ -51,5 +51,30 @@ export const NAVIGATION_MESSAGES = defineMessages(
     "account.logOut": "Cerrar sesión",
 
     "page.title": "{title} — Walleto",
+  },
+  {
+    "nav.dashboard": "Início",
+    "nav.home": "Início",
+    "nav.income": "Receitas",
+    "nav.expenses": "Despesas",
+    "nav.investments": "Investimentos",
+    "nav.investments.short": "Invest.",
+    "nav.savings": "Poupança",
+    "nav.debts": "Dívidas",
+    "nav.prospect": "Simulador",
+    "nav.settings": "Ajustes",
+    "nav.more": "Mais",
+
+    "section.cashFlow": "Fluxo de caixa",
+    "section.netWorth": "Patrimônio",
+    "section.whatIf": "Cenários",
+    "section.account": "Conta",
+
+    "nav.main": "Navegação principal",
+    "nav.mobile": "Navegação móvel",
+    "account.fallbackName": "Conta",
+    "account.logOut": "Sair",
+
+    "page.title": "{title} — Walleto",
   }
 );

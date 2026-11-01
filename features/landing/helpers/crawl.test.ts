@@ -13,11 +13,13 @@ describe("crawl files", () => {
     expect(robotsTxt("http://localhost:3000", "development")).toBe("User-agent: *\nDisallow: /\n");
   });
 
-  it("lists /en and /es with hreflang alternates", () => {
+  it("lists /en, /es and /pt with hreflang alternates", () => {
     const xml = sitemapXml("https://walleto.app");
     expect(xml).toContain("<loc>https://walleto.app/en</loc>");
     expect(xml).toContain("<loc>https://walleto.app/es</loc>");
-    expect(xml.match(/hreflang="x-default" href="https:\/\/walleto.app\/"/g)).toHaveLength(2);
+    expect(xml).toContain("<loc>https://walleto.app/pt</loc>");
+    expect(xml).toContain('hreflang="pt" href="https://walleto.app/pt"');
+    expect(xml.match(/hreflang="x-default" href="https:\/\/walleto.app\/"/g)).toHaveLength(3);
   });
 
   it("escapes an origin that could break the XML", () => {

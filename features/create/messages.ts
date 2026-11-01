@@ -27,5 +27,16 @@ export const CREATE_MESSAGES = defineMessages(
     "sheet.valueHint.INVESTMENT": "Cuánto vale hoy una cuenta, como ganancia % o como valor",
     "sheet.valueHint.SAVING": "Cuánto vale hoy un bolsillo, como ganancia % o como valor",
     "sheet.valueHint.DEBT": "Cuánto debes hoy en una deuda",
+  },
+  {
+    "sheet.type": "Tipo",
+    "sheet.recurringHint": "Algo que se repete: uma assinatura, um salário, o aluguel",
+    "sheet.oneOffHint": "Um único valor numa data, já pago",
+    "sheet.value.INVESTMENT": "Atualizar valor atual",
+    "sheet.value.SAVING": "Atualizar valor atual",
+    "sheet.value.DEBT": "Atualizar saldo atual",
+    "sheet.valueHint.INVESTMENT": "Quanto vale hoje uma conta, como ganho % ou como valor",
+    "sheet.valueHint.SAVING": "Quanto vale hoje uma caixinha, como ganho % ou como valor",
+    "sheet.valueHint.DEBT": "Quanto você deve hoje numa dívida",
   }
 );

@@ -2,7 +2,7 @@
  * Which language the interface speaks — the localization skill's core
  * (precedence, negotiation, the `locale` cookie) without its URL scheme:
  * every screen is behind a login and nothing is shared by link, so there are
- * no /es URLs. The language belongs to the device's saved choice instead.
+ * no /es or /pt URLs. The language belongs to the device's saved choice instead.
  *
  *   saved choice (`locale` cookie) → browser languages → English
  *
@@ -11,14 +11,18 @@
  */
 
 // ── App config ─────────────────────────────────────────────────────────────
-export const LOCALES = ["en", "es"] as const;
+export const LOCALES = ["en", "es", "pt"] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "en";
 export const LOCALE_COOKIE = "locale";
 /** Registrable domain shared by sibling apps; undefined = host-only cookie. */
 export const COOKIE_DOMAIN: string | undefined = undefined;
 
-export const LANGUAGE_NAMES: Record<Locale, string> = { en: "English", es: "Español" };
+export const LANGUAGE_NAMES: Record<Locale, string> = {
+  en: "English",
+  es: "Español",
+  pt: "Português",
+};
 
 // ── Core ───────────────────────────────────────────────────────────────────
 export function isLocale(value: unknown): value is Locale {

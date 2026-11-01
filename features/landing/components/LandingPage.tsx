@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Language } from "../../../types";
 import { translator } from "../../../helpers/i18n";
+import { LOCALES } from "../../../i18n/locale";
 import { GITHUB_REPO_URL } from "../../../constants";
 import {
   ArrowRight,
@@ -78,13 +79,12 @@ const BINARY = Array.from({ length: 14 }, (_, row) =>
   ).join(" ")
 ).join("\n");
 
-const OG_LOCALE: Record<Language, string> = { en: "en_US", es: "es_ES" };
-const OTHER_LANGUAGE: Record<Language, Language> = { en: "es", es: "en" };
+const OG_LOCALE: Record<Language, string> = { en: "en_US", es: "es_ES", pt: "pt_BR" };
 
 /**
  * The public front door: what someone gets when they create an account,
  * told with drawings of the app rather than screenshots. `/` shows it to
- * signed-out visitors; /en and /es pin a language for search engines and
+ * signed-out visitors; /en, /es and /pt pin a language for search engines and
  * shared links.
  */
 export function LandingPage({ language, origin, signedIn = false }: Props) {
@@ -108,8 +108,14 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
         <title>{t("meta.title")}</title>
         <meta key="description" name="description" content={t("meta.description")} />
         <link rel="canonical" href={url(LANDING_PATH[language])} />
-        <link rel="alternate" hrefLang="en" href={url(LANDING_PATH.en)} />
-        <link rel="alternate" hrefLang="es" href={url(LANDING_PATH.es)} />
+        {LOCALES.map((alternate) => (
+          <link
+            key={`alternate-${alternate}`}
+            rel="alternate"
+            hrefLang={alternate}
+            href={url(LANDING_PATH[alternate])}
+          />
+        ))}
         <link rel="alternate" hrefLang="x-default" href={url("/")} />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="Walleto" />
@@ -120,7 +126,13 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta property="og:locale" content={OG_LOCALE[language]} />
-        <meta property="og:locale:alternate" content={OG_LOCALE[OTHER_LANGUAGE[language]]} />
+        {LOCALES.filter((alternate) => alternate !== language).map((alternate) => (
+          <meta
+            key={`og-locale-${alternate}`}
+            property="og:locale:alternate"
+            content={OG_LOCALE[alternate]}
+          />
+        ))}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={t("meta.title")} />
         <meta name="twitter:description" content={t("meta.description")} />
@@ -137,7 +149,7 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
               description: t("meta.description"),
               applicationCategory: "FinanceApplication",
               operatingSystem: "Web",
-              inLanguage: ["en", "es"],
+              inLanguage: LOCALES,
               image: url(ogImageSrc(language)),
             }).replace(/</g, "\\u003c"),
           }}
