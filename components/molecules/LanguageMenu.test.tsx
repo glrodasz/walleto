@@ -48,4 +48,20 @@ describe("LanguageMenu", () => {
     expect(pt).toHaveAttribute("href", "/pt");
     expect(pt).toHaveAttribute("hreflang", "pt");
   });
+
+  it("opens above the pill when there is no room below it", () => {
+    render(<LanguageMenu language="en" onSelect={() => {}} />);
+    const trigger = screen.getByRole("button", { name: "Language: English" });
+    const rect = (top: number, height: number) =>
+      ({ top, bottom: top + height, left: 0, right: 120, width: 120, height }) as DOMRect;
+    jest.spyOn(trigger, "getBoundingClientRect").mockReturnValue(rect(window.innerHeight - 50, 40));
+    jest.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
+      this: HTMLElement
+    ) {
+      return this === trigger ? rect(window.innerHeight - 50, 40) : rect(0, 150);
+    });
+    fireEvent.click(trigger);
+    const top = parseFloat(screen.getByRole("menu").style.top);
+    expect(top).toBe(window.innerHeight - 50 - 6 - 150);
+  });
 });

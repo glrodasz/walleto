@@ -65,7 +65,13 @@ export function LanguageMenu({ language, hrefFor, onSelect, plain = false }: Pro
       EDGE,
       Math.min(trigger.right - menu.width, window.innerWidth - menu.width - EDGE)
     );
-    setPos({ top: trigger.bottom + GAP, left });
+    // Above the pill when there's no room below (a row near the bottom of a
+    // phone): scrolling closes the menu, so a clipped option could never be
+    // reached.
+    const below = trigger.bottom + GAP;
+    const fitsBelow = below + menu.height <= window.innerHeight - EDGE;
+    const top = fitsBelow ? below : Math.max(EDGE, trigger.top - GAP - menu.height);
+    setPos({ top, left });
   }, [open]);
 
   useEffect(() => {
