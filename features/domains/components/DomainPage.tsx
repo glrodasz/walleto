@@ -853,8 +853,6 @@ export function DomainPage({ domain }: Props) {
     >
       {error && <ErrorState error={error} />}
 
-      {domain === "EXPENSE" && <DraftsCard />}
-
       {showTotal && accountDomain ? (
         <WorthSummary
           domain={accountDomain}
@@ -883,6 +881,8 @@ export function DomainPage({ domain }: Props) {
           withdrawn={accountDomain ? monthWithdrawn : undefined}
         />
       )}
+
+      {domain === "EXPENSE" && <DraftsCard />}
 
       <PendingConfirmations
         rows={pending}
