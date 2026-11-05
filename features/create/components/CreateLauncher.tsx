@@ -1,7 +1,20 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { Modal } from "../../../components/molecules/Modal";
-import { Calendar, Chart, Pencil, Plus, Repeat } from "../../../components/atoms/Icons";
+import type { ComponentType } from "react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Calendar,
+  Chart,
+  Circle,
+  CreditCard,
+  Pencil,
+  Plus,
+  Repeat,
+  TrendingUp,
+} from "../../../components/atoms/Icons";
+import type { IconProps } from "../../../components/atoms/Icons";
 import { IconDisc } from "../../../components/molecules/IconDisc";
 import { isAccountDomain } from "../../../helpers/accounts";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
@@ -31,6 +44,15 @@ interface Props {
 }
 
 const DOMAINS: Domain[] = ["EXPENSE", "INCOME", "INVESTMENT", "SAVING", "DEBT"];
+
+/** The same icons the navigation gives each domain's page. */
+const DOMAIN_ICON: Record<Domain, ComponentType<IconProps>> = {
+  EXPENSE: ArrowDown,
+  INCOME: ArrowUp,
+  INVESTMENT: TrendingUp,
+  SAVING: Circle,
+  DEBT: CreditCard,
+};
 
 type Kind = "quick" | "recurring" | "value" | "draft";
 
@@ -73,18 +95,22 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
         <div className="sheet">
           {!fixedDomain && (
             <div className="domains" role="group" aria-label={t("sheet.type")}>
-              {DOMAINS.map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  className={`glass glass--tap domain${d === domain ? " is-active" : ""}`}
-                  aria-pressed={d === domain}
-                  style={{ "--tab-accent": DOMAIN_CONFIG[d].accent } as React.CSSProperties}
-                  onClick={() => setDomain(d)}
-                >
-                  {common(`domainOne.${d}`)}
-                </button>
-              ))}
+              {DOMAINS.map((d) => {
+                const Icon = DOMAIN_ICON[d];
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    className={`glass glass--tap domain${d === domain ? " is-active" : ""}`}
+                    aria-pressed={d === domain}
+                    style={{ "--tab-accent": DOMAIN_CONFIG[d].accent } as React.CSSProperties}
+                    onClick={() => setDomain(d)}
+                  >
+                    <Icon size={18} />
+                    <span>{common(`domainOne.${d}`)}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -208,8 +234,16 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
           margin-bottom: 6px;
         }
 
+        /* Icon above the label: five tabs share the row, so a side-by-side
+           icon would squeeze "Investment" out of its tab. */
         .domain {
-          min-height: 40px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          min-width: 0;
+          min-height: 56px;
           padding: 8px 4px;
           border-radius: var(--r-md);
           color: var(--fg-1);
