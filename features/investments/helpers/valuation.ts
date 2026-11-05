@@ -13,7 +13,7 @@ import type {
   Language,
   Transaction,
 } from "../../../types";
-import { checkedBy, valueAt } from "./interest";
+import { checkedBy, debtValueAt, valueAt } from "./interest";
 import type { Deposit, ValuePoint } from "./interest";
 
 /**
@@ -257,7 +257,9 @@ export function currentValue(
     if (borrowedAt(transactions, selector, asOf, ctx) <= 0) return 0;
     return sign * valueAt(depositsFor(transactions, selector, ctx), [], undefined, asOf);
   }
-  return sign * valueAt(depositsFor(transactions, selector, ctx), checks, rate, asOf);
+  const deposits = depositsFor(transactions, selector, ctx);
+  if (sign < 0) return sign * debtValueAt(deposits, checks, rate, asOf);
+  return sign * valueAt(deposits, checks, rate, asOf);
 }
 
 /**
@@ -290,11 +292,13 @@ export function valuationSeries(
     const checked = checks.some((c) => checkedBy(c.asOf, monthEnd));
     const borrowed = sign < 0 && !checked && borrowedAt(transactions, selector, monthEnd, ctx) > 0;
     const value =
-      sign > 0 || checked
-        ? sign * valueAt(deposits, checks, rate, monthEnd)
-        : borrowed
-          ? sign * valueAt(deposits, [], undefined, monthEnd)
-          : 0;
+      sign > 0
+        ? valueAt(deposits, checks, rate, monthEnd)
+        : checked
+          ? sign * debtValueAt(deposits, checks, rate, monthEnd)
+          : borrowed
+            ? sign * valueAt(deposits, [], undefined, monthEnd)
+            : 0;
     points.push({
       label: formatDate(monthStart, "month", undefined, language),
       income: invested,
