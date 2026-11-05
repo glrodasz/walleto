@@ -4,19 +4,11 @@ import { defineMessages } from "../../helpers/i18n";
 export const DEBT_MESSAGES = defineMessages(
   {
     tag: "Debt",
-    "owed.title": "What you owe",
     "owed.info":
-      "The balance is what you still owe today. It counts in your net worth, not in your month: only the payments you make each month count there. A loan you wrote down as borrowed keeps its own balance (borrowed minus repaid); a mortgage needs a balance update once.",
-    "owed.total": "Total owed",
-    "owed.monthly": "Paid each month",
-    "owed.unknown": {
-      one: "{count} debt has no balance yet and is left out.",
-      other: "{count} debts have no balance yet and are left out.",
-    },
+      "The balance is what you still owe today. It counts in your net worth, not in your month: only the payments you make each month count there. A loan you wrote down as borrowed keeps its own balance (borrowed minus repaid); a mortgage needs a balance update once. Between updates the balance only drops with your payments; interest shows up the next time you update it.",
+    "owed.monthlyLine": "You pay {amount} a month towards it",
     "owed.perMonth": "{amount}/mo",
     "owed.noPlan": "no monthly payment",
-    "owed.noBalance": "no balance yet",
-    "owed.checked": "checked {date}",
     "owed.paidOff": "Paid off",
     "owed.pay": "Pay",
     "owed.payAll": "Pay it all",
@@ -45,19 +37,11 @@ export const DEBT_MESSAGES = defineMessages(
   },
   {
     tag: "Deuda",
-    "owed.title": "Lo que debes",
     "owed.info":
-      "El saldo es lo que aún debes hoy. Cuenta en tu patrimonio, no en tu mes: en el mes solo cuentan los pagos que haces. Un préstamo anotado como prestado lleva su propio saldo (lo prestado menos lo abonado); una hipoteca necesita que actualices el saldo una vez.",
-    "owed.total": "Total adeudado",
-    "owed.monthly": "Pagas cada mes",
-    "owed.unknown": {
-      one: "{count} deuda aún no tiene saldo y queda fuera.",
-      other: "{count} deudas aún no tienen saldo y quedan fuera.",
-    },
+      "El saldo es lo que aún debes hoy. Cuenta en tu patrimonio, no en tu mes: en el mes solo cuentan los pagos que haces. Un préstamo anotado como prestado lleva su propio saldo (lo prestado menos lo abonado); una hipoteca necesita que actualices el saldo una vez. Entre actualizaciones el saldo solo baja con tus pagos; los intereses aparecen la próxima vez que lo actualices.",
+    "owed.monthlyLine": "Pagas {amount} al mes para bajarla",
     "owed.perMonth": "{amount}/mes",
     "owed.noPlan": "sin pago mensual",
-    "owed.noBalance": "sin saldo aún",
-    "owed.checked": "revisado el {date}",
     "owed.paidOff": "Pagada",
     "owed.pay": "Abonar",
     "owed.payAll": "Pagar todo",
@@ -86,19 +70,11 @@ export const DEBT_MESSAGES = defineMessages(
   },
   {
     tag: "Dívida",
-    "owed.title": "O que você deve",
     "owed.info":
-      "O saldo é o que você ainda deve hoje. Conta no seu patrimônio, não no seu mês: no mês só contam os pagamentos que você faz. Um empréstimo anotado como emprestado tem seu próprio saldo (o emprestado menos o amortizado); um financiamento precisa que você atualize o saldo uma vez.",
-    "owed.total": "Total devido",
-    "owed.monthly": "Você paga por mês",
-    "owed.unknown": {
-      one: "{count} dívida ainda não tem saldo e fica de fora.",
-      other: "{count} dívidas ainda não têm saldo e ficam de fora.",
-    },
+      "O saldo é o que você ainda deve hoje. Conta no seu patrimônio, não no seu mês: no mês só contam os pagamentos que você faz. Um empréstimo anotado como emprestado tem seu próprio saldo (o emprestado menos o amortizado); um financiamento precisa que você atualize o saldo uma vez. Entre atualizações o saldo só cai com seus pagamentos; os juros aparecem na próxima vez que você o atualizar.",
+    "owed.monthlyLine": "Você paga {amount} por mês para reduzi-la",
     "owed.perMonth": "{amount}/mês",
     "owed.noPlan": "sem pagamento mensal",
-    "owed.noBalance": "ainda sem saldo",
-    "owed.checked": "conferido em {date}",
     "owed.paidOff": "Quitada",
     "owed.pay": "Amortizar",
     "owed.payAll": "Quitar tudo",

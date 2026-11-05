@@ -26,7 +26,6 @@ import { CategoryMonthList, categoryMonthRows } from "./CategoryMonthList";
 import { CategoryDrilldown } from "./CategoryDrilldown";
 import { RecurringChecklist } from "./RecurringChecklist";
 import { PendingConfirmations } from "./PendingConfirmations";
-import { DebtsOwedCard } from "../../debts/components/DebtsOwedCard";
 import { DraftsCard } from "../../drafts/components/DraftsCard";
 import { SubscriptionInsights } from "../../insights/components/SubscriptionInsights";
 import { AccountValuePanels } from "../../investments/components/AccountValuePanels";
@@ -51,7 +50,7 @@ import {
 } from "../helpers/worthStack";
 import type { ChartMeasure, SummaryScope } from "../helpers/worthStack";
 import { isAccountDomain } from "../../../helpers/accounts";
-import { convertedAmount, countsInMonth } from "../../../helpers/aggregations";
+import { convertedAmount, countsInMonth, sumMonthly } from "../../../helpers/aggregations";
 import { INCEPTION, positionSign } from "../../investments/helpers/valuation";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import {
@@ -239,6 +238,17 @@ export function DomainPage({ domain }: Props) {
   // figure unless the owner flips "Show hidden"; the lists below always show
   // everything, tagged. Hidden from the dashboard is only a tag here.
   const dashboardHiddenItems = useMemo(() => hiddenItemIds(items), [items]);
+  // Debts: what the plan repays each month, next to what is owed — two numbers, never summed.
+  const debtMonthly = useMemo(
+    () =>
+      domain === "DEBT"
+        ? sumMonthly(
+            items.filter((i) => i.active),
+            ctx
+          )
+        : 0,
+    [domain, items, ctx]
+  );
   const hiddenCategories = useMemo(() => hiddenCategoryIds(categories), [categories]);
   const anythingHidden = hiddenCategories.size > 0;
   const hiddenReasons = (t: Transaction) =>
@@ -825,6 +835,7 @@ export function DomainPage({ domain }: Props) {
         categories={categories}
         ctx={ctx}
         currency={currency}
+        items={domain === "DEBT" ? items : undefined}
       />
     ) : (
       <RecurringChecklist
@@ -869,6 +880,7 @@ export function DomainPage({ domain }: Props) {
           approximate={hasForeignEver}
           hiddenLeftOut={anythingHidden && !showHidden}
           toolbar={scopeToggle}
+          monthly={domain === "DEBT" ? debtMonthly : undefined}
         />
       ) : (
         <MonthSummary
@@ -885,10 +897,6 @@ export function DomainPage({ domain }: Props) {
           gain={accountDomain ? monthGain : undefined}
           withdrawn={accountDomain && domain !== "DEBT" ? monthWithdrawn : undefined}
         />
-      )}
-
-      {domain === "DEBT" && (
-        <DebtsOwedCard categories={categories} items={items} ctx={ctx} currency={currency} />
       )}
 
       {domain === "EXPENSE" && <DraftsCard />}

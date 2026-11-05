@@ -174,8 +174,8 @@ describe("domainValueRows for debts", () => {
     );
     const card = rows.find((r) => r.key === "acc:visa")!;
     expect(card.invested).toBe(500);
-    // 4,500 of principal left plus most of a year's interest on it.
-    expect(card.value).toBeGreaterThan(4500);
+    // 4,500 left: the card's rate never grows the stated balance.
+    expect(card.value).toBe(4500);
     expect(card.gainPct).toBeNull();
     // No balance recorded: owed is unknown and never reads as a figure.
     expect(rows.find((r) => r.key === "acc:loan")).toMatchObject({

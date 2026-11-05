@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { Button } from "../../../components/atoms/Button";
@@ -21,7 +21,14 @@ import { dominantCategoryId } from "../helpers/valuation";
 import type { AccountValueRow } from "../helpers/domainValue";
 import { InvestmentValuePanel } from "./InvestmentValuePanel";
 import { ValuationModal } from "./ValuationModal";
-import type { AccountDomain, Category, Currency } from "../../../types";
+import { Badge } from "../../../components/atoms/Badge";
+import { KebabMenu } from "../../../components/molecules/KebabMenu";
+import { debtSummary } from "../../debts/helpers/debtSummary";
+import type { DebtSummaryRow } from "../../debts/helpers/debtSummary";
+import { DebtPaymentModal } from "../../debts/components/DebtPaymentModal";
+import type { DebtPaymentMode } from "../../debts/components/DebtPaymentModal";
+import { DEBT_MESSAGES } from "../../debts/messages";
+import type { AccountDomain, Category, Currency, RecurrentTransaction } from "../../../types";
 import { useDateFormat } from "../../../hooks/usePreferences";
 
 interface Props {
@@ -29,6 +36,8 @@ interface Props {
   categories: Category[];
   ctx: MoneyContext;
   currency: Currency;
+  /** Debts: the plan, for each debt's monthly payment and the quick actions. */
+  items?: RecurrentTransaction[];
 }
 
 /**
@@ -40,9 +49,11 @@ interface Props {
  * runs nowhere else on this page. On debts the same list reads as balances:
  * what was repaid, what is still owed — a dash until a balance is recorded.
  * New accounts are added right here with the Settings creator; the accounts
- * listener brings the new row in.
+ * listener brings the new row in. A debt's row also says what the plan pays
+ * towards it each month and has the quick actions a debt needs: pay part of
+ * it, pay it all, write down more borrowing, or correct the balance.
  */
-export function AccountValueList({ domain, categories, ctx, currency }: Props) {
+export function AccountValueList({ domain, categories, ctx, currency, items = [] }: Props) {
   const { formatDate, language } = useDateFormat();
   const { formatAmount, formatNative, formatPercent, separator } = useMoneyFormat();
   const {
@@ -63,6 +74,15 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
   const tf = useT(FIELD_MESSAGES);
   const accent = DOMAIN_CONFIG[domain].accent;
   const owes = domain === "DEBT";
+  const td = useT(DEBT_MESSAGES);
+  const [paying, setPaying] = useState<{ mode: DebtPaymentMode; debt: DebtSummaryRow } | null>(
+    null
+  );
+  const debts = useMemo(() => {
+    if (!owes) return new Map<string, DebtSummaryRow>();
+    const summary = debtSummary(rows, items, transactions, ctx);
+    return new Map(summary.rows.map((d) => [d.row.key, d]));
+  }, [owes, rows, items, transactions, ctx]);
 
   const open = rows.find((r) => r.key === selected) ?? null;
   // Prefills the value form: most accounts hold one category, so the common
@@ -79,10 +99,15 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
           currency
         )
       : null;
+  const monthlyOf = (row: AccountValueRow) => debts.get(row.key)?.monthly ?? 0;
   const meta = (row: AccountValueRow) =>
     [
       row.sub,
-      t(owes ? "list.repaid" : "list.in", { amount: formatAmount(row.invested, currency) }),
+      owes
+        ? monthlyOf(row) > 0
+          ? td("owed.perMonth", { amount: formatAmount(monthlyOf(row), currency) })
+          : td("owed.noPlan")
+        : t("list.in", { amount: formatAmount(row.invested, currency) }),
       row.latest
         ? t("status.checked", { date: formatDate(row.latest.asOf.toDate(), "day") })
         : owes && row.known
@@ -125,6 +150,11 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
                 <span className="right">
                   <span className="amount">{r.known ? formatAmount(r.value, currency) : "—"}</span>
                   {original(r) && <span className="original">{original(r)}</span>}
+                  {debts.get(r.key)?.paidOff && (
+                    <Badge tone="success" caps size="sm">
+                      {td("owed.paidOff")}
+                    </Badge>
+                  )}
                   {r.gainPct !== null && (
                     <span className={`gain ${r.value - r.invested >= 0 ? "up" : "down"}`}>
                       {r.value - r.invested >= 0 ? "+" : ""}
@@ -132,9 +162,17 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
                     </span>
                   )}
                 </span>
-                <Button size="sm" onClick={() => setRecording(r)}>
-                  {t(owes ? "update.balance" : "update.value")}
-                </Button>
+                {owes && debts.get(r.key) ? (
+                  <DebtActions
+                    debt={debts.get(r.key)!}
+                    onPay={(mode, debt) => setPaying({ mode, debt })}
+                    onUpdate={() => setRecording(r)}
+                  />
+                ) : (
+                  <Button size="sm" onClick={() => setRecording(r)}>
+                    {t(owes ? "update.balance" : "update.value")}
+                  </Button>
+                )}
               </li>
             ))}
           </ul>
@@ -189,6 +227,16 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
           ctx={ctx}
           currency={currency}
           accent={accent}
+        />
+      )}
+
+      {paying && (
+        <DebtPaymentModal
+          mode={paying.mode}
+          debt={paying.debt}
+          categories={categories}
+          ctx={ctx}
+          onClose={() => setPaying(null)}
         />
       )}
 
@@ -325,5 +373,61 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
         }
       `}</style>
     </>
+  );
+}
+
+interface DebtActionsProps {
+  debt: DebtSummaryRow;
+  onPay: (mode: DebtPaymentMode, debt: DebtSummaryRow) => void;
+  onUpdate: () => void;
+}
+
+/**
+ * A debt row's quick actions: the one it needs most as a button (pay what
+ * is owed, or record a balance when there is none), the rest in the menu.
+ * On a phone the button gives way to the name; the menu still has it.
+ */
+function DebtActions({ debt, onPay, onUpdate }: DebtActionsProps) {
+  const t = useT(DEBT_MESSAGES);
+  const owes = debt.row.known && !debt.paidOff;
+  const actions = [
+    ...(owes
+      ? [
+          { label: t("owed.pay"), onSelect: () => onPay("part", debt) },
+          { label: t("owed.payAll"), onSelect: () => onPay("all", debt) },
+        ]
+      : []),
+    { label: t("owed.borrow"), onSelect: () => onPay("borrow", debt) },
+    { label: t("owed.update"), onSelect: onUpdate },
+  ];
+  return (
+    <span className="actions">
+      <span className="quick">
+        {owes ? (
+          <Button size="sm" onClick={() => onPay("part", debt)}>
+            {t("owed.pay")}
+          </Button>
+        ) : !debt.row.known ? (
+          <Button size="sm" onClick={onUpdate}>
+            {t("owed.update")}
+          </Button>
+        ) : null}
+      </span>
+      <KebabMenu aria-label={t("owed.actionsFor", { name: debt.row.name })} actions={actions} />
+      <style jsx>{`
+        .actions {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          flex-shrink: 0;
+        }
+
+        @media (max-width: 479px) {
+          .quick {
+            display: none;
+          }
+        }
+      `}</style>
+    </span>
   );
 }

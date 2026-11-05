@@ -125,7 +125,8 @@ export function InvestmentValuePanel({
         ? interestAccrued(
             depositsFor(transactions, selector, ctx),
             valueChecks(valuations, selector, ctx, sign),
-            rate,
+            // What the checks revealed, never a rate's guess — see `currentValue`.
+            undefined,
             now
           )
         : null,
@@ -199,7 +200,7 @@ export function InvestmentValuePanel({
                 value={value}
                 currency={currency}
                 size="md"
-                approximate={Boolean(rate) || (!!latest && latest.currency !== currency)}
+                approximate={(!owes && Boolean(rate)) || (!!latest && latest.currency !== currency)}
               />
             )}
             <span className="meta">{valueMeta}</span>
@@ -208,12 +209,7 @@ export function InvestmentValuePanel({
             interest !== null && (
               <div>
                 <span className="label">{t("panel.interest")}</span>
-                <Amount
-                  value={interest}
-                  currency={currency}
-                  size="md"
-                  approximate={Boolean(rate)}
-                />
+                <Amount value={interest} currency={currency} size="md" />
                 <span className="meta">{t("panel.sinceFirstBalance")}</span>
               </div>
             )

@@ -156,9 +156,10 @@ describe("currentValue", () => {
     const balance = [valuation(5000, new Date(2026, 0, 1), { ...visa, domain: "DEBT" })];
     const apr = new Date(2026, 3, 1);
     expect(currentValue(repayments, balance, visa, undefined, apr, ctx, -1)).toBe(4000);
-    // With a rate the balance compounds up while each repayment compounds down.
+    // A rate never grows a debt's balance: it stays what the check stated, less repayments,
+    // so the Owed list and the page's Total agree. The next check reveals the interest.
     const rate = { value: 12, period: "YEARLY" as const };
-    expect(currentValue(repayments, balance, visa, rate, apr, ctx, -1)).toBeCloseTo(4134.5, 0);
+    expect(currentValue(repayments, balance, visa, rate, apr, ctx, -1)).toBe(4000);
     // Repayments alone say nothing about a balance: unknown reads as 0, never as an estimate.
     expect(currentValue(repayments, [], visa, rate, apr, ctx, -1)).toBe(0);
     expect(currentValue(repayments, balance, visa, rate, new Date(2025, 11, 1), ctx, -1)).toBe(0);
