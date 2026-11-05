@@ -141,6 +141,27 @@ function buildLedger(): Transaction[] {
         accountId: "acc-visa",
         direction: "OUT",
       }
+    ),
+    // A loan from a friend: written down as borrowed, never balance-checked.
+    oneOff(
+      "tx-ana-loan",
+      "DEBT",
+      "cat-debt-friends",
+      "Loan from Ana",
+      1500,
+      "USD",
+      monthsAgo(4, 3),
+      { accountId: "acc-friend", direction: "OUT" }
+    ),
+    oneOff(
+      "tx-ana-back",
+      "DEBT",
+      "cat-debt-friends",
+      "Paid Ana back",
+      400,
+      "USD",
+      monthsAgo(1, 20),
+      { accountId: "acc-friend" }
     )
   );
 

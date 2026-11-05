@@ -18,7 +18,7 @@ interface Props {
  * under the card's monthly figure. The figure above is a plan run-rate and
  * this is a balance, so it says "Worth" / "Owed" and stays a caption — the
  * two must never read as the same kind of number. A debt has no balance
- * until one is recorded, so the line waits for the first check.
+ * until one is recorded (or its borrowing is), so the line waits for it.
  *
  * Its own component because it opens the inception-to-date listener a value
  * needs, and a hook cannot be called conditionally per card.
@@ -28,10 +28,10 @@ export function DomainValueLine({ domain, categories, currency }: Props) {
   const { formatAmount } = useMoneyFormat();
   const { formatDate } = useDateFormat();
   const t = useT(INVESTMENT_MESSAGES);
-  const { rows, value, lastCheckedAt, loading } = useDomainValue(domain, categories, ctx);
+  const { rows, value, lastCheckedAt, known, loading } = useDomainValue(domain, categories, ctx);
   const owes = domain === "DEBT";
 
-  if (loading || rows.length === 0 || (owes && !lastCheckedAt)) return null;
+  if (loading || rows.length === 0 || (owes && !known)) return null;
   // No check anywhere, but a quoted rate somewhere: the figure is compounded,
   // not stated, and the line has to admit it.
   const estimated = !lastCheckedAt && rows.some((r) => r.rate);
@@ -41,7 +41,9 @@ export function DomainValueLine({ domain, categories, currency }: Props) {
         amount,
         date: formatDate(lastCheckedAt, "day"),
       })
-    : t(estimated ? "line.worth.estimated" : "line.worth", { amount });
+    : owes
+      ? t("line.owed", { amount })
+      : t(estimated ? "line.worth.estimated" : "line.worth", { amount });
 
   return (
     <span className="worth">

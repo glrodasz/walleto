@@ -7,6 +7,7 @@ export {
   computeFlow,
   convertedAmount,
   rowSign,
+  countsInMonth,
   FREQ_TO_MONTHS,
 } from "./aggregations";
 export type { MoneyContext, MoneyFlow } from "./aggregations";

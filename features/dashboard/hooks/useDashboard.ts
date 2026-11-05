@@ -6,7 +6,13 @@ import { useCategories } from "../../../hooks/useCategories";
 import { useMoneyContext } from "../../../hooks/useMoneyContext";
 import { useSelectedMonth } from "../../../hooks/useSelectedMonth";
 import { usePreferences } from "../../../hooks/usePreferences";
-import { groupByCategory, computeMoM, computeFlow, shareByCurrency } from "../../../helpers";
+import {
+  groupByCategory,
+  computeMoM,
+  computeFlow,
+  countsInMonth,
+  shareByCurrency,
+} from "../../../helpers";
 import type { MoneyContext } from "../../../helpers";
 import { hiddenItemIds, withoutHidden } from "../../../helpers/hidden";
 import { monthWindows } from "../../domains/helpers/months";
@@ -86,7 +92,7 @@ export function useDashboard({ period, groupBy }: Options) {
       EXPENSE: withoutHidden(expense.transactions, hiddenItems),
       INVESTMENT: withoutHidden(investment.transactions, hiddenItems),
       SAVING: withoutHidden(saving.transactions, hiddenItems),
-      DEBT: withoutHidden(debt.transactions, hiddenItems),
+      DEBT: withoutHidden(debt.transactions, hiddenItems).filter(countsInMonth),
     }),
     [
       income.transactions,

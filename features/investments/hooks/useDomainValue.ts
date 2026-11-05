@@ -35,6 +35,8 @@ export function useDomainValue(
   invested: number;
   value: number;
   lastCheckedAt: Date | null;
+  /** A debt's balance is known: a check or a recorded borrowing. Always true for assets with rows. */
+  known: boolean;
   /** Inception-to-date, for the panels that chart a single position. */
   transactions: Transaction[];
   /** Every valuation, domains filled in. */

@@ -2,10 +2,12 @@ import type { Category, Currency, RecurrentTransaction } from "../../../types";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
 import { DateBadge } from "../../../components/molecules/DateBadge";
+import { Badge } from "../../../components/atoms/Badge";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { useT } from "../../../hooks/useT";
 import { COMMON_MESSAGES } from "../../../messages/common";
 import { DASHBOARD_MESSAGES } from "../messages";
+import { DEBT_MESSAGES } from "../../debts/messages";
 
 interface Props {
   items: RecurrentTransaction[];
@@ -73,13 +75,25 @@ interface RowProps {
 
 function UpcomingRow({ item, date, category, displayCurrency }: RowProps) {
   const { formatNative } = useMoneyFormat();
+  const td = useT(DEBT_MESSAGES);
+  // A debt payment reads like any other charge; the pill says it repays what is owed.
+  const debt = item.domain === "DEBT";
 
   return (
     <li className="row">
       {date ? <DateBadge date={date} /> : <span className="no-date">—</span>}
       <span className="main">
         <span className="name">{item.name}</span>
-        {category && <span className="category">{category}</span>}
+        {(category || debt) && (
+          <span className="category">
+            {debt && (
+              <Badge color="var(--domain-debt)" caps size="sm">
+                {td("tag")}
+              </Badge>
+            )}
+            {category}
+          </span>
+        )}
       </span>
       <span className="amount">{formatNative(item.amount, item.currency, displayCurrency)}</span>
       <style jsx>{`
@@ -119,6 +133,9 @@ function UpcomingRow({ item, date, category, displayCurrency }: RowProps) {
         }
 
         .category {
+          display: flex;
+          align-items: center;
+          gap: 6px;
           font-size: 0.75rem;
           color: var(--fg-2);
         }

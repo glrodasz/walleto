@@ -154,6 +154,18 @@ describe("worthLedger / worthUntil", () => {
     expect(worthUntil(ledger, gains, new Date(2026, 4, 1), ctx)).toBe(-5100);
   });
 
+  it("keeps a debt nobody checked when its borrowing is on the ledger", () => {
+    const rows = [
+      row(1500, new Date(2026, 0, 3), { accountId: "ana", direction: "OUT" }),
+      row(400, new Date(2026, 2, 20), { accountId: "ana" }),
+      row(900, new Date(2026, 2, 1), { accountId: "car" }), // repayments only: still unknown
+    ];
+    const ledger = worthLedger(rows, [], "DEBT");
+    expect(ledger.map((t) => t.amount)).toEqual([1500, 400]);
+    expect(worthUntil(ledger, [], new Date(2026, 1, 1), ctx)).toBe(-1500);
+    expect(worthUntil(ledger, [], new Date(2026, 3, 1), ctx)).toBe(-1100);
+  });
+
   it("leaves hidden categories out, rows and filed gains alike", () => {
     const rows = [
       row(100, new Date(2026, 0, 5), { domain: "INVESTMENT", categoryId: "stocks" }),

@@ -116,8 +116,10 @@ export function unfiledGainUntil(rows: GainRow[], end: Date): number {
  * `useDomainGains` reports as `worthRows`. An asset keeps every row: its
  * chain telescopes from inception. A debt keeps only the repayments after
  * its chain's first balance check — that check already carries the whole
- * balance (`anchorDebt`) — and a debt with no check at all has no known
- * balance, so its rows are left out, as on the dashboard.
+ * balance (`anchorDebt`). A debt with no check keeps every row when its
+ * borrowing is on the ledger (borrowed − repaid is its balance); without
+ * either it has no known balance, so its rows are left out, as on the
+ * dashboard.
  */
 export function worthLedger(
   transactions: Transaction[],
@@ -130,11 +132,16 @@ export function worthLedger(
     const seen = firstCheck.get(r.selector);
     if (!seen || r.at < seen) firstCheck.set(r.selector, r.at);
   }
+  const keyOf = (t: Transaction) =>
+    selectorKey(t.accountId ? { accountId: t.accountId } : { domain: "DEBT" });
+  // A chain whose borrowing is on the ledger carries its own balance.
+  const borrowed = new Set(transactions.filter((t) => t.direction === "OUT").map(keyOf));
   return transactions.filter((t) => {
-    const key = selectorKey(t.accountId ? { accountId: t.accountId } : { domain: "DEBT" });
+    const key = keyOf(t);
     const anchor = firstCheck.get(key);
+    if (anchor === undefined) return borrowed.has(key);
     // A repayment on the check's own instant is already in the balance it states.
-    return anchor !== undefined && toDate(t.occurredAt) > anchor;
+    return toDate(t.occurredAt) > anchor;
   });
 }
 

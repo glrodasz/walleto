@@ -2,6 +2,7 @@ import {
   computeFlow,
   computeMoM,
   convertedAmount,
+  countsInMonth,
   convertedBand,
   groupByCategory,
   shareByCurrency,
@@ -59,6 +60,15 @@ const makeTransaction = (
   } as Timestamp,
   status: "PAID",
   ...extra,
+});
+
+describe("countsInMonth", () => {
+  it("leaves borrowing on a debt out of the month, and nothing else", () => {
+    expect(countsInMonth({ domain: "DEBT", direction: "OUT" })).toBe(false);
+    expect(countsInMonth({ domain: "DEBT" })).toBe(true);
+    expect(countsInMonth({ domain: "SAVING", direction: "OUT" })).toBe(true);
+    expect(countsInMonth({ domain: "EXPENSE" })).toBe(true);
+  });
 });
 
 describe("convertedAmount", () => {

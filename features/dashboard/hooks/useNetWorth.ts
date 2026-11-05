@@ -10,6 +10,7 @@ function part(v: ReturnType<typeof useDomainValue>): PositionPart {
     hasRows: v.rows.length > 0,
     lastCheckedAt: v.lastCheckedAt,
     estimated: !v.lastCheckedAt && v.rows.some((r) => r.rate),
+    known: v.known,
   };
 }
 

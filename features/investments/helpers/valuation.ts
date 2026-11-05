@@ -133,6 +133,29 @@ export function depositsFor(
     .sort((a, b) => a.at.getTime() - b.at.getTime());
 }
 
+/**
+ * What a debt's ledger says was borrowed up to `asOf` (its OUT rows), in the
+ * reporting currency and positive. A loan written down as "borrowed" carries
+ * its own balance: what was borrowed minus what was repaid since.
+ */
+export function borrowedAt(
+  transactions: Transaction[],
+  selector: ValueSelector,
+  asOf: Date,
+  ctx: MoneyContext
+): number {
+  return transactions
+    .filter(
+      (t) =>
+        isAccountDomain(t.domain) &&
+        t.status === "PAID" &&
+        t.direction === "OUT" &&
+        matchesSelector(t, selector) &&
+        occurred(t) <= asOf
+    )
+    .reduce((sum, t) => sum - convertedAmount(t, ctx), 0);
+}
+
 /** Everything paid in up to `asOf`, in the reporting currency. */
 export function costBasisAt(
   transactions: Transaction[],
@@ -213,9 +236,11 @@ export function latestValuationAt(
  * What the position is worth at `asOf` in the reporting currency: the
  * latest recorded check carried forward (with interest, when the account
  * quotes a rate) plus what went in since — see `interest.valueAt`. For a
- * debt (`sign` −1) the figure is what is owed, and it is 0 until a balance
- * has been recorded: repayments alone say nothing about the balance, so the
- * interest estimate that serves an asset would be meaningless here.
+ * debt (`sign` −1) the figure is what is owed. Before any balance check it
+ * is what the ledger borrowed minus what was repaid since — and 0 when the
+ * ledger never recorded the borrowing (a mortgage): repayments alone say
+ * nothing about the balance, so the interest estimate that serves an asset
+ * would be meaningless here.
  */
 export function currentValue(
   transactions: Transaction[],
@@ -227,7 +252,11 @@ export function currentValue(
   sign: 1 | -1 = 1
 ): number {
   const checks = valueChecks(valuations, selector, ctx, sign);
-  if (sign < 0 && !checks.some((c) => checkedBy(c.asOf, asOf))) return 0;
+  if (sign < 0 && !checks.some((c) => checkedBy(c.asOf, asOf))) {
+    // No check, but the borrowing itself is on the ledger: borrowed − repaid.
+    if (borrowedAt(transactions, selector, asOf, ctx) <= 0) return 0;
+    return sign * valueAt(depositsFor(transactions, selector, ctx), [], undefined, asOf);
+  }
   return sign * valueAt(depositsFor(transactions, selector, ctx), checks, rate, asOf);
 }
 
@@ -256,9 +285,16 @@ export function valuationSeries(
     const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const monthEnd = i === 0 ? now : new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59);
     const invested = deposits.filter((d) => d.at <= monthEnd).reduce((s, d) => s + d.amount, 0);
-    // A debt has no balance before its first check — see `currentValue`.
-    const known = sign > 0 || checks.some((c) => checkedBy(c.asOf, monthEnd));
-    const value = known ? sign * valueAt(deposits, checks, rate, monthEnd) : 0;
+    // A debt has no balance before its first check or recorded borrowing —
+    // see `currentValue`.
+    const checked = checks.some((c) => checkedBy(c.asOf, monthEnd));
+    const borrowed = sign < 0 && !checked && borrowedAt(transactions, selector, monthEnd, ctx) > 0;
+    const value =
+      sign > 0 || checked
+        ? sign * valueAt(deposits, checks, rate, monthEnd)
+        : borrowed
+          ? sign * valueAt(deposits, [], undefined, monthEnd)
+          : 0;
     points.push({
       label: formatDate(monthStart, "month", undefined, language),
       income: invested,

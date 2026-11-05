@@ -62,6 +62,14 @@ export const STORY_ACCOUNTS: Account[] = [
     interestRate: { value: 3.2, period: "YEARLY" },
     createdAt: created,
   },
+  {
+    id: "acc-friend",
+    userId: STORY_USER_ID,
+    domain: "DEBT",
+    name: "Loan from Ana",
+    currency: "USD",
+    createdAt: created,
+  },
 ];
 
 export function accountsFor(domain: AccountDomain | "ALL" | null): Account[] {

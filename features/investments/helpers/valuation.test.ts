@@ -1,4 +1,5 @@
 import {
+  borrowedAt,
   costBasisAt,
   currentValue,
   dominantCategoryId,
@@ -256,6 +257,24 @@ describe("withdrawals and borrowing", () => {
     ];
     const balance = [valuation(5000, new Date(2026, 0, 1), { ...visa, domain: "DEBT" })];
     expect(currentValue(rows, balance, visa, undefined, apr, ctx, -1)).toBe(4800);
+  });
+
+  it("a loan written down as borrowed owes borrowed minus repaid, with no balance check", () => {
+    const ana = { accountId: "ana" };
+    const rows = [
+      tx(1500, new Date(2026, 0, 3), { ...ana, domain: "DEBT", direction: "OUT" }),
+      tx(400, new Date(2026, 2, 20), { ...ana, domain: "DEBT" }),
+    ];
+    expect(borrowedAt(rows, ana, apr, ctx)).toBe(1500);
+    expect(currentValue(rows, [], ana, undefined, apr, ctx, -1)).toBe(1100);
+    // Before the borrowing nothing is owed yet.
+    expect(currentValue(rows, [], ana, undefined, new Date(2025, 11, 1), ctx, -1)).toBe(0);
+    // A rate on the debt does not turn the ledger figure into a guess.
+    const rate = { value: 12, period: "YEARLY" as const };
+    expect(currentValue(rows, [], ana, rate, apr, ctx, -1)).toBe(1100);
+    // A later balance check takes over, as for any debt.
+    const check = [valuation(1000, new Date(2026, 2, 25), { ...ana, domain: "DEBT" })];
+    expect(currentValue(rows, check, ana, undefined, apr, ctx, -1)).toBe(1000);
   });
 
   it("only money that came in decides the dominant category", () => {
