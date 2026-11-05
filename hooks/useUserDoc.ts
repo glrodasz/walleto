@@ -12,6 +12,7 @@ import type {
   DecimalSeparator,
   Decimals,
   EmergencyPlan,
+  ExpenseDraft,
   Language,
   Scenario,
   ThemePreference,
@@ -37,6 +38,8 @@ export interface UserDoc {
   confirmVariableExpenses?: boolean;
   /** Stamped once a day by useLastSeen; read only by the admin dashboard. */
   lastSeenAt?: Timestamp | null;
+  /** Written by /api/expense-drafts only. */
+  expenseDrafts?: ExpenseDraft[];
 }
 
 interface UserDocState {

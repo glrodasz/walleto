@@ -1,7 +1,8 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { Modal } from "../../../components/molecules/Modal";
-import { Plus } from "../../../components/atoms/Icons";
+import { Calendar, Chart, Pencil, Plus, Repeat } from "../../../components/atoms/Icons";
+import { IconDisc } from "../../../components/molecules/IconDisc";
 import { isAccountDomain } from "../../../helpers/accounts";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import type { Domain } from "../../../types";
@@ -9,12 +10,16 @@ import { useT } from "../../../hooks/useT";
 import { COMMON_MESSAGES } from "../../../messages/common";
 import { DOMAIN_MESSAGES } from "../../domains/messages";
 import { CREATE_MESSAGES } from "../messages";
+import { DRAFT_MESSAGES } from "../../drafts/messages";
 
 // Every page mounts the launcher, but the forms only load once one is picked.
 const RecurrentTransactionModal = dynamic(() =>
   import("../../domains/components/RecurrentTransactionModal").then(
     (m) => m.RecurrentTransactionModal
   )
+);
+const DraftModal = dynamic(() =>
+  import("../../drafts/components/DraftModal").then((m) => m.DraftModal)
 );
 const RecordValueModal = dynamic(() =>
   import("../../investments/components/RecordValueModal").then((m) => m.RecordValueModal)
@@ -27,7 +32,7 @@ interface Props {
 
 const DOMAINS: Domain[] = ["EXPENSE", "INCOME", "INVESTMENT", "SAVING", "DEBT"];
 
-type Kind = "quick" | "recurring" | "value";
+type Kind = "quick" | "recurring" | "value" | "draft";
 
 /**
  * The create entry point on every page and every width: a floating +
@@ -39,6 +44,7 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
   const t = useT(CREATE_MESSAGES);
   const copy = useT(DOMAIN_MESSAGES);
   const common = useT(COMMON_MESSAGES);
+  const drafts = useT(DRAFT_MESSAGES);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [domain, setDomain] = useState<Domain>(fixedDomain ?? "EXPENSE");
   const [kind, setKind] = useState<Kind | null>(null);
@@ -87,21 +93,51 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
             className="glass glass--tap option"
             onClick={() => choose("recurring")}
           >
-            <strong>{copy(`plan.add.${domain}`)}</strong>
-            <span>{t("sheet.recurringHint")}</span>
+            <IconDisc domain={domain} size={36}>
+              <Repeat size={18} />
+            </IconDisc>
+            <span className="text">
+              <strong>{copy(`plan.add.${domain}`)}</strong>
+              <span>{t("sheet.recurringHint")}</span>
+            </span>
           </button>
           <button type="button" className="glass glass--tap option" onClick={() => choose("quick")}>
-            <strong>{copy(`oneOff.title.${domain}`)}</strong>
-            <span>{t("sheet.oneOffHint")}</span>
+            <IconDisc domain={domain} size={36}>
+              <Calendar size={18} />
+            </IconDisc>
+            <span className="text">
+              <strong>{copy(`oneOff.title.${domain}`)}</strong>
+              <span>{t("sheet.oneOffHint")}</span>
+            </span>
           </button>
+          {domain === "EXPENSE" && (
+            <button
+              type="button"
+              className="glass glass--tap option"
+              onClick={() => choose("draft")}
+            >
+              <IconDisc color="var(--fg-2)" size={36}>
+                <Pencil size={18} />
+              </IconDisc>
+              <span className="text">
+                <strong>{drafts("sheet.title")}</strong>
+                <span>{drafts("sheet.hint")}</span>
+              </span>
+            </button>
+          )}
           {isAccountDomain(domain) && (
             <button
               type="button"
               className="glass glass--tap option"
               onClick={() => choose("value")}
             >
-              <strong>{t(`sheet.value.${domain}`)}</strong>
-              <span>{t(`sheet.valueHint.${domain}`)}</span>
+              <IconDisc domain={domain} size={36}>
+                <Chart size={18} />
+              </IconDisc>
+              <span className="text">
+                <strong>{t(`sheet.value.${domain}`)}</strong>
+                <span>{t(`sheet.valueHint.${domain}`)}</span>
+              </span>
             </button>
           )}
         </div>
@@ -118,6 +154,7 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
       {kind === "recurring" && (
         <RecurrentTransactionModal open domain={domain} onClose={() => setKind(null)} />
       )}
+      {kind === "draft" && <DraftModal open onClose={() => setKind(null)} />}
       {kind === "value" && isAccountDomain(domain) && (
         <RecordValueModal open domain={domain} onClose={() => setKind(null)} />
       )}
@@ -190,9 +227,8 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
 
         .option {
           display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 4px;
+          align-items: center;
+          gap: 14px;
           padding: 14px 16px;
           border-radius: var(--r-lg);
           color: var(--fg-0);
@@ -201,12 +237,20 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
           cursor: pointer;
         }
 
+        .text {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 4px;
+          min-width: 0;
+        }
+
         .option strong {
           font-size: 0.95rem;
           font-weight: 700;
         }
 
-        .option span {
+        .text > span {
           font-size: 0.8rem;
           color: var(--fg-2);
         }

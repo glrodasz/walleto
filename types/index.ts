@@ -215,6 +215,29 @@ export interface RecurrentTransaction {
   createdAt?: Timestamp;
 }
 
+/** How often a draft repeats, when the user already knows; absent = decide later. */
+export type DraftFrequency = "MONTHLY" | "YEARLY" | "ONE_TIME";
+
+/**
+ * A new expense jotted down in a hurry: a name and whatever else is known.
+ * Kept on the user doc (`users.expenseDrafts`), never in `recurrentTransactions`,
+ * so no total, plan, forecast or materializer can ever count it. "Turn into
+ * expense" opens the full form with these fields filled in.
+ */
+export interface ExpenseDraft {
+  id: string;
+  name: string;
+  amount?: number;
+  currency?: Currency;
+  frequency?: DraftFrequency;
+  /** MONTHLY: the payment day, 1–31. */
+  dayOfMonth?: number;
+  /** YEARLY / ONE_TIME: YYYY-MM-DD (yearly reads its month and day). */
+  date?: string;
+  /** ISO timestamp. */
+  createdAt: string;
+}
+
 export interface Transaction {
   id?: string;
   userId: string;
