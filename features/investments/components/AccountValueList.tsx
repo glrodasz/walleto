@@ -72,7 +72,7 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
   // An account kept in another currency: the converted value reads big, its
   // own currency's figure small underneath — never twice the same number.
   const original = (row: AccountValueRow) =>
-    row.currency && row.currency !== ctx.target && !(owes && !row.latest)
+    row.currency && row.currency !== ctx.target && row.known
       ? formatNative(
           convert(row.value, ctx.target, row.currency, ctx.rates),
           row.currency,
@@ -85,7 +85,9 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
       t(owes ? "list.repaid" : "list.in", { amount: formatAmount(row.invested, currency) }),
       row.latest
         ? t("status.checked", { date: formatDate(row.latest.asOf.toDate(), "day") })
-        : t(owes ? "status.noBalance" : row.rate ? "status.estimated" : "status.noCheck"),
+        : owes && row.known
+          ? t("status.borrowed", { amount: formatAmount(row.borrowed, currency) })
+          : t(owes ? "status.noBalance" : row.rate ? "status.estimated" : "status.noCheck"),
     ]
       .filter(Boolean)
       .join(" · ");
@@ -121,9 +123,7 @@ export function AccountValueList({ domain, categories, ctx, currency }: Props) {
                   <span className="meta">{meta(r)}</span>
                 </button>
                 <span className="right">
-                  <span className="amount">
-                    {owes && !r.latest ? "—" : formatAmount(r.value, currency)}
-                  </span>
+                  <span className="amount">{r.known ? formatAmount(r.value, currency) : "—"}</span>
                   {original(r) && <span className="original">{original(r)}</span>}
                   {r.gainPct !== null && (
                     <span className={`gain ${r.value - r.invested >= 0 ? "up" : "down"}`}>

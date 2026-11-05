@@ -45,6 +45,14 @@ export interface MoneyFields {
  * `convertedAmount` — cost bases, month totals, stacks, the gain chain —
  * nets withdrawals out without knowing they exist.
  */
+/**
+ * Whether a ledger row is money of the month. Borrowing on a debt is not: it
+ * raises what is owed (net worth), but it is neither income nor a payment.
+ */
+export function countsInMonth(row: { domain?: string; direction?: TransactionDirection }): boolean {
+  return !(row.domain === "DEBT" && row.direction === "OUT");
+}
+
 export function rowSign(row: Pick<MoneyFields, "direction">): 1 | -1 {
   return row.direction === "OUT" ? -1 : 1;
 }

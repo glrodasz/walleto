@@ -39,6 +39,17 @@ describe("netWorth", () => {
     expect(result.debtsUnknown).toBe(true);
   });
 
+  it("counts a debt whose borrowing is on the ledger, even without a balance check", () => {
+    const result = netWorth({
+      investments: part({ value: 10_000, hasRows: true }),
+      savings: part(),
+      debts: part({ value: 1_100, hasRows: true, known: true }),
+    });
+    expect(result.debts).toBe(1_100);
+    expect(result.net).toBe(8_900);
+    expect(result.debtsUnknown).toBe(false);
+  });
+
   it("goes negative when the debts outweigh the assets", () => {
     const result = netWorth({
       investments: part(),

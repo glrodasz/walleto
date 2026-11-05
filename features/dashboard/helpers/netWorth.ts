@@ -8,6 +8,8 @@ export interface PositionPart {
   lastCheckedAt: Date | null;
   /** No check, but a quoted rate: the value is compounded, not stated. */
   estimated: boolean;
+  /** A debt's figure is real without a check: its borrowing is on the ledger. */
+  known?: boolean;
 }
 
 export interface NetWorth {
@@ -39,7 +41,7 @@ export function netWorth(parts: {
   debts: PositionPart;
 }): NetWorth {
   const { investments, savings, debts } = parts;
-  const debtsKnown = Boolean(debts.lastCheckedAt);
+  const debtsKnown = Boolean(debts.lastCheckedAt) || Boolean(debts.known);
   const owed = debtsKnown ? debts.value : 0;
   const lastCheckedAt =
     [investments, savings, debts]

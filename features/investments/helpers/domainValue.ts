@@ -1,5 +1,6 @@
 import type { MoneyContext } from "../../../helpers/aggregations";
 import {
+  borrowedAt,
   costBasisAt,
   currentValue,
   gainFromValue,
@@ -34,6 +35,13 @@ export interface AccountValueRow {
   value: number;
   latest: InvestmentValuation | null;
   gainPct: number | null;
+  /**
+   * Whether `value` is a real figure. Always true for an asset; a debt needs
+   * a balance check or a recorded borrowing first.
+   */
+  known: boolean;
+  /** Debts: what the ledger records as borrowed (positive); 0 otherwise. */
+  borrowed: number;
 }
 
 /**
@@ -46,8 +54,9 @@ export interface AccountValueRow {
  * history of the position, not the page's month. `valuations` must already
  * carry their domain (`withDomain`).
  *
- * For debts `invested` is what has been repaid and `value` what is still
- * owed (0 until a balance is recorded); a gain % means nothing there, and
+ * For debts `invested` is what has been repaid net of what was borrowed
+ * and `value` what is still owed (0 until a balance or a borrowing is
+ * recorded — `known` says which); a gain % means nothing there, and
  * the bucket is "Unassigned" rather than "No debt", which would read as
  * debt-free.
  */
@@ -75,6 +84,7 @@ export function domainValueRows(
       valuations.filter((v) => matchesSelector(v, selector)),
       now
     );
+    const borrowed = sign < 0 ? borrowedAt(transactions, selector, now, ctx) : 0;
     return {
       key: selectorKey(selector),
       selector,
@@ -86,6 +96,8 @@ export function domainValueRows(
       value,
       latest,
       gainPct: sign < 0 ? null : gainFromValue(invested, value),
+      known: sign > 0 || latest !== null || borrowed > 0,
+      borrowed,
     };
   };
 
@@ -110,6 +122,8 @@ export function domainValueTotals(rows: AccountValueRow[]): {
   invested: number;
   value: number;
   lastCheckedAt: Date | null;
+  /** Some row has a real figure (for a debt: a check or a recorded borrowing). */
+  known: boolean;
 } {
   let lastCheckedAt: Date | null = null;
   for (const r of rows) {
@@ -120,5 +134,6 @@ export function domainValueTotals(rows: AccountValueRow[]): {
     invested: rows.reduce((sum, r) => sum + r.invested, 0),
     value: rows.reduce((sum, r) => sum + r.value, 0),
     lastCheckedAt,
+    known: rows.some((r) => r.known),
   };
 }

@@ -10,6 +10,7 @@ import { removeInvestmentValuation } from "../../../hooks/useInvestmentValuation
 import { formatInterestRate } from "../../../helpers/accounts";
 import type { MoneyContext } from "../../../helpers/aggregations";
 import {
+  borrowedAt,
   costBasisAt,
   currentValue,
   depositsFor,
@@ -110,6 +111,11 @@ export function InvestmentValuePanel({
   );
   // The check the value is read from: one dated later hasn't happened yet.
   const latest = valuations.find((v) => checkedBy(v.asOf.toDate(), now)) ?? null;
+  // A debt with no check still has a balance when its borrowing is on the ledger.
+  const fromLedger = useMemo(
+    () => owes && !latest && borrowedAt(transactions, selector, now, ctx) > 0,
+    [owes, latest, transactions, selector, now, ctx]
+  );
   const gain = value - invested;
   const gainPct = gainFromValue(invested, value);
   // A debt's third figure: what repayments did not explain since the first balance.
@@ -151,7 +157,7 @@ export function InvestmentValuePanel({
         })
       : t("panel.checked", { date: formatDate(latest.asOf.toDate(), "dayYear") })
     : owes
-      ? t("panel.noBalanceCheck")
+      ? t(fromLedger ? "panel.fromLedger" : "panel.noBalanceCheck")
       : rateLabel
         ? t("panel.estimatedAt", { rate: rateLabel })
         : t("panel.noValueCheck");
@@ -186,7 +192,7 @@ export function InvestmentValuePanel({
           </div>
           <div>
             <span className="label">{t(owes ? "panel.owed" : "panel.currentValue")}</span>
-            {owes && !latest ? (
+            {owes && !latest && !fromLedger ? (
               <span className="dash">—</span>
             ) : (
               <Amount

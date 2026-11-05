@@ -20,6 +20,7 @@ export const INVESTMENT_MESSAGES = defineMessages(
     "line.worth.checked": "Worth {amount} · checked {date}",
     "line.worth.estimated": "Worth {amount} · estimated",
     "line.owed.checked": "Owed {amount} · checked {date}",
+    "line.owed": "Owed {amount}",
 
     "update.value": "Update value",
     "update.balance": "Update balance",
@@ -35,6 +36,7 @@ export const INVESTMENT_MESSAGES = defineMessages(
     "list.repaid": "Repaid (net) {amount}",
     "status.checked": "checked {date}",
     "status.noBalance": "no balance yet",
+    "status.borrowed": "borrowed {amount}",
     "status.estimated": "estimated",
     "status.noCheck": "no value check yet",
 
@@ -63,6 +65,7 @@ export const INVESTMENT_MESSAGES = defineMessages(
     "panel.checked": "checked {date}",
     "panel.checkedRate": "checked {date}, {rate} since",
     "panel.noBalanceCheck": "no balance check yet",
+    "panel.fromLedger": "borrowed minus repaid",
     "panel.estimatedAt": "estimated at {rate}",
     "panel.noValueCheck": "no value check yet",
     "panel.gainOn": "{pct} on {amount}",
@@ -114,6 +117,7 @@ export const INVESTMENT_MESSAGES = defineMessages(
     "line.worth.checked": "Valor {amount} · revisado el {date}",
     "line.worth.estimated": "Valor {amount} · estimado",
     "line.owed.checked": "Adeudado {amount} · revisado el {date}",
+    "line.owed": "Adeudado {amount}",
 
     "update.value": "Actualizar valor",
     "update.balance": "Actualizar saldo",
@@ -129,6 +133,7 @@ export const INVESTMENT_MESSAGES = defineMessages(
     "list.repaid": "Abonado (neto) {amount}",
     "status.checked": "revisado el {date}",
     "status.noBalance": "sin saldo aún",
+    "status.borrowed": "prestado {amount}",
     "status.estimated": "estimado",
     "status.noCheck": "sin valor registrado aún",
 
@@ -156,6 +161,7 @@ export const INVESTMENT_MESSAGES = defineMessages(
     "panel.checked": "revisado el {date}",
     "panel.checkedRate": "revisado el {date}, al {rate} desde entonces",
     "panel.noBalanceCheck": "sin saldo registrado aún",
+    "panel.fromLedger": "lo prestado menos lo abonado",
     "panel.estimatedAt": "estimado al {rate}",
     "panel.noValueCheck": "sin valor registrado aún",
     "panel.gainOn": "{pct} sobre {amount}",
@@ -206,6 +212,7 @@ export const INVESTMENT_MESSAGES = defineMessages(
     "line.worth.checked": "Valor {amount} · conferido em {date}",
     "line.worth.estimated": "Valor {amount} · estimado",
     "line.owed.checked": "Devido {amount} · conferido em {date}",
+    "line.owed": "Devido {amount}",
 
     "update.value": "Atualizar valor",
     "update.balance": "Atualizar saldo",
@@ -222,6 +229,7 @@ export const INVESTMENT_MESSAGES = defineMessages(
     "list.repaid": "Amortizado (líquido) {amount}",
     "status.checked": "conferido em {date}",
     "status.noBalance": "ainda sem saldo",
+    "status.borrowed": "emprestado {amount}",
     "status.estimated": "estimado",
     "status.noCheck": "ainda sem valor registrado",
 
@@ -251,6 +259,7 @@ export const INVESTMENT_MESSAGES = defineMessages(
     "panel.checked": "conferido em {date}",
     "panel.checkedRate": "conferido em {date}, a {rate} desde então",
     "panel.noBalanceCheck": "ainda sem saldo registrado",
+    "panel.fromLedger": "o emprestado menos o amortizado",
     "panel.estimatedAt": "estimado a {rate}",
     "panel.noValueCheck": "ainda sem valor registrado",
     "panel.gainOn": "{pct} sobre {amount}",

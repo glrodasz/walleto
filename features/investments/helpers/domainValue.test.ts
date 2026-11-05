@@ -133,6 +133,7 @@ describe("domainValueTotals", () => {
       invested: 1_500,
       value: 1_800,
       lastCheckedAt: new Date(2026, 7, 4),
+      known: true,
     });
   });
 

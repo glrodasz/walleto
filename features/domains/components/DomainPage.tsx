@@ -26,6 +26,7 @@ import { CategoryMonthList, categoryMonthRows } from "./CategoryMonthList";
 import { CategoryDrilldown } from "./CategoryDrilldown";
 import { RecurringChecklist } from "./RecurringChecklist";
 import { PendingConfirmations } from "./PendingConfirmations";
+import { DebtsOwedCard } from "../../debts/components/DebtsOwedCard";
 import { DraftsCard } from "../../drafts/components/DraftsCard";
 import { SubscriptionInsights } from "../../insights/components/SubscriptionInsights";
 import { AccountValuePanels } from "../../investments/components/AccountValuePanels";
@@ -50,7 +51,7 @@ import {
 } from "../helpers/worthStack";
 import type { ChartMeasure, SummaryScope } from "../helpers/worthStack";
 import { isAccountDomain } from "../../../helpers/accounts";
-import { convertedAmount } from "../../../helpers/aggregations";
+import { convertedAmount, countsInMonth } from "../../../helpers/aggregations";
 import { INCEPTION, positionSign } from "../../investments/helpers/valuation";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import {
@@ -253,8 +254,12 @@ export function DomainPage({ domain }: Props) {
     () => spreadTransactions(items, transactions, windows),
     [items, transactions, windows]
   );
+  // Borrowing on a debt raises the balance but is not money of the month.
   const chartTransactions = useMemo(
-    () => (showHidden ? planRows : planRows.filter((t) => !hiddenCategories.has(t.categoryId))),
+    () =>
+      planRows.filter(
+        (t) => countsInMonth(t) && (showHidden || !hiddenCategories.has(t.categoryId))
+      ),
     [showHidden, planRows, hiddenCategories]
   );
   // The plan side: spread items are already inside the slices, so they must
@@ -878,8 +883,12 @@ export function DomainPage({ domain }: Props) {
           approximate={hasForeign}
           contributed={accountDomain ? contributed : undefined}
           gain={accountDomain ? monthGain : undefined}
-          withdrawn={accountDomain ? monthWithdrawn : undefined}
+          withdrawn={accountDomain && domain !== "DEBT" ? monthWithdrawn : undefined}
         />
+      )}
+
+      {domain === "DEBT" && (
+        <DebtsOwedCard categories={categories} items={items} ctx={ctx} currency={currency} />
       )}
 
       {domain === "EXPENSE" && <DraftsCard />}
