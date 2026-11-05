@@ -59,7 +59,7 @@ export function DebtsOwedCard({ categories, items, ctx, currency }: Props) {
         ? t("owed.perMonth", { amount: formatAmount(d.monthly, currency) })
         : t("owed.noPlan"),
       d.row.latest
-        ? formatDate(d.row.latest.asOf.toDate(), "day")
+        ? t("owed.checked", { date: formatDate(d.row.latest.asOf.toDate(), "day") })
         : d.row.known
           ? null
           : t("owed.noBalance"),
@@ -90,8 +90,12 @@ export function DebtsOwedCard({ categories, items, ctx, currency }: Props) {
         {summary.rows.map((d) => {
           const owes = d.row.known && !d.paidOff;
           const actions = [
+            // On a phone the row's button gives way to the name; the menu still has it.
             ...(owes
-              ? [{ label: t("owed.payAll"), onSelect: () => setPaying({ mode: "all", debt: d }) }]
+              ? [
+                  { label: t("owed.pay"), onSelect: () => setPaying({ mode: "part", debt: d }) },
+                  { label: t("owed.payAll"), onSelect: () => setPaying({ mode: "all", debt: d }) },
+                ]
               : []),
             { label: t("owed.borrow"), onSelect: () => setPaying({ mode: "borrow", debt: d }) },
             { label: t("owed.update"), onSelect: () => setUpdating(d) },
@@ -112,15 +116,17 @@ export function DebtsOwedCard({ categories, items, ctx, currency }: Props) {
               }
               trailing={
                 <span className="actions">
-                  {owes ? (
-                    <Button size="sm" onClick={() => setPaying({ mode: "part", debt: d })}>
-                      {t("owed.pay")}
-                    </Button>
-                  ) : !d.row.known ? (
-                    <Button size="sm" onClick={() => setUpdating(d)}>
-                      {t("owed.update")}
-                    </Button>
-                  ) : null}
+                  <span className="quick">
+                    {owes ? (
+                      <Button size="sm" onClick={() => setPaying({ mode: "part", debt: d })}>
+                        {t("owed.pay")}
+                      </Button>
+                    ) : !d.row.known ? (
+                      <Button size="sm" onClick={() => setUpdating(d)}>
+                        {t("owed.update")}
+                      </Button>
+                    ) : null}
+                  </span>
                   <KebabMenu
                     aria-label={t("owed.actionsFor", { name: d.row.name })}
                     actions={actions}
@@ -188,6 +194,26 @@ export function DebtsOwedCard({ categories, items, ctx, currency }: Props) {
           margin: 0 0 4px;
           font-size: 0.78rem;
           color: var(--fg-2);
+        }
+
+        @media (max-width: 767px) {
+          .totals {
+            grid-template-columns: 1fr;
+            gap: 14px;
+          }
+
+          .monthly {
+            padding-left: 0;
+            padding-top: 14px;
+            border-left: none;
+            border-top: 1px solid var(--line);
+          }
+        }
+
+        @media (max-width: 479px) {
+          .quick {
+            display: none;
+          }
         }
 
         .actions {
