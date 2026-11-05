@@ -858,8 +858,6 @@ export function DomainPage({ domain }: Props) {
     >
       {error && <ErrorState error={error} />}
 
-      {domain === "EXPENSE" && <DraftsCard />}
-
       {showTotal && accountDomain ? (
         <WorthSummary
           domain={accountDomain}
@@ -892,6 +890,8 @@ export function DomainPage({ domain }: Props) {
       {domain === "DEBT" && (
         <DebtsOwedCard categories={categories} items={items} ctx={ctx} currency={currency} />
       )}
+
+      {domain === "EXPENSE" && <DraftsCard />}
 
       <PendingConfirmations
         rows={pending}
