@@ -16,6 +16,7 @@ import { CURRENCY_COLORS, DEFAULT_MONTH_PERIOD, parseMonthPeriod } from "../../.
 import type { MonthPeriod } from "../../../constants";
 import { MonthSummary } from "./MonthSummary";
 import { WorthSummary } from "./WorthSummary";
+import { DebtWorthSummary } from "../../debts/components/DebtWorthSummary";
 import { SegmentedControl } from "../../../components/molecules/SegmentedControl";
 import { ChartControls } from "./ChartControls";
 import type { StackMode } from "./ChartControls";
@@ -26,7 +27,6 @@ import { CategoryMonthList, categoryMonthRows } from "./CategoryMonthList";
 import { CategoryDrilldown } from "./CategoryDrilldown";
 import { RecurringChecklist } from "./RecurringChecklist";
 import { PendingConfirmations } from "./PendingConfirmations";
-import { DebtsOwedCard } from "../../debts/components/DebtsOwedCard";
 import { DraftsCard } from "../../drafts/components/DraftsCard";
 import { SubscriptionInsights } from "../../insights/components/SubscriptionInsights";
 import { AccountValuePanels } from "../../investments/components/AccountValuePanels";
@@ -51,7 +51,7 @@ import {
 } from "../helpers/worthStack";
 import type { ChartMeasure, SummaryScope } from "../helpers/worthStack";
 import { isAccountDomain } from "../../../helpers/accounts";
-import { convertedAmount, countsInMonth } from "../../../helpers/aggregations";
+import { convertedAmount, countsInMonth, sumMonthly } from "../../../helpers/aggregations";
 import { INCEPTION, positionSign } from "../../investments/helpers/valuation";
 import { DOMAIN_CONFIG } from "../helpers/domainConfig";
 import {
@@ -239,6 +239,17 @@ export function DomainPage({ domain }: Props) {
   // figure unless the owner flips "Show hidden"; the lists below always show
   // everything, tagged. Hidden from the dashboard is only a tag here.
   const dashboardHiddenItems = useMemo(() => hiddenItemIds(items), [items]);
+  // Debts: what the plan repays each month, next to what is owed — two numbers, never summed.
+  const debtMonthly = useMemo(
+    () =>
+      domain === "DEBT"
+        ? sumMonthly(
+            items.filter((i) => i.active),
+            ctx
+          )
+        : 0,
+    [domain, items, ctx]
+  );
   const hiddenCategories = useMemo(() => hiddenCategoryIds(categories), [categories]);
   const anythingHidden = hiddenCategories.size > 0;
   const hiddenReasons = (t: Transaction) =>
@@ -584,9 +595,19 @@ export function DomainPage({ domain }: Props) {
   );
   const totalSign = accountDomain ? positionSign(accountDomain) : 1;
   const totalHidden = showHidden ? undefined : hiddenCategories;
+  // "Today" for the current month, as the Owed list reads it: a check or a
+  // repayment dated later this month hasn't happened yet. Through the end of
+  // today, since a check counts from the start of its day.
+  const totalEnd = useMemo(
+    () =>
+      window.isCurrent
+        ? new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+        : window.end,
+    [window.isCurrent, window.end, now]
+  );
   const worthNow = useMemo(
-    () => (showTotal ? totalSign * worthUntil(ledger, worthRows, window.end, ctx, totalHidden) : 0),
-    [showTotal, totalSign, ledger, worthRows, window.end, ctx, totalHidden]
+    () => (showTotal ? totalSign * worthUntil(ledger, worthRows, totalEnd, ctx, totalHidden) : 0),
+    [showTotal, totalSign, ledger, worthRows, totalEnd, ctx, totalHidden]
   );
   const worthBefore = useMemo(
     () =>
@@ -594,23 +615,20 @@ export function DomainPage({ domain }: Props) {
     [showTotal, totalSign, ledger, worthRows, window.start, ctx, totalHidden]
   );
   const ledgerUntilEnd = useMemo(
-    () => ledger.filter((t) => toDate(t.occurredAt) < window.end),
-    [ledger, window.end]
+    () => ledger.filter((t) => toDate(t.occurredAt) < totalEnd),
+    [ledger, totalEnd]
   );
   const worthGainsByCategory = useMemo(
-    () => gainsByCategoryUntil(worthRows, window.end),
-    [worthRows, window.end]
+    () => gainsByCategoryUntil(worthRows, totalEnd),
+    [worthRows, totalEnd]
   );
-  const worthUnfiled = useMemo(
-    () => unfiledGainUntil(worthRows, window.end),
-    [worthRows, window.end]
-  );
+  const worthUnfiled = useMemo(() => unfiledGainUntil(worthRows, totalEnd), [worthRows, totalEnd]);
   const hasForeignEver = useMemo(
     () =>
       showTotal &&
       (ledgerUntilEnd.some((t) => t.currency !== currency) ||
-        worthRows.some((r) => r.at < window.end && r.currency !== currency)),
-    [showTotal, ledgerUntilEnd, worthRows, window.end, currency]
+        worthRows.some((r) => r.at < totalEnd && r.currency !== currency)),
+    [showTotal, ledgerUntilEnd, worthRows, totalEnd, currency]
   );
   const scopeToggle = accountDomain ? (
     <SegmentedControl
@@ -825,6 +843,7 @@ export function DomainPage({ domain }: Props) {
         categories={categories}
         ctx={ctx}
         currency={currency}
+        items={domain === "DEBT" ? items : undefined}
       />
     ) : (
       <RecurringChecklist
@@ -858,7 +877,20 @@ export function DomainPage({ domain }: Props) {
     >
       {error && <ErrorState error={error} />}
 
-      {showTotal && accountDomain ? (
+      {showTotal && domain === "DEBT" ? (
+        <DebtWorthSummary
+          categories={categories}
+          ctx={ctx}
+          end={totalEnd}
+          start={window.start}
+          window={window}
+          previousLabel={previousWindow?.longLabel ?? null}
+          currency={currency}
+          approximate={hasForeignEver}
+          toolbar={scopeToggle}
+          monthly={debtMonthly}
+        />
+      ) : showTotal && accountDomain ? (
         <WorthSummary
           domain={accountDomain}
           window={window}
@@ -885,10 +917,6 @@ export function DomainPage({ domain }: Props) {
           gain={accountDomain ? monthGain : undefined}
           withdrawn={accountDomain && domain !== "DEBT" ? monthWithdrawn : undefined}
         />
-      )}
-
-      {domain === "DEBT" && (
-        <DebtsOwedCard categories={categories} items={items} ctx={ctx} currency={currency} />
       )}
 
       {domain === "EXPENSE" && <DraftsCard />}

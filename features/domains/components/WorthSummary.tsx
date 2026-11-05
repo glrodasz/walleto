@@ -5,6 +5,9 @@ import { DeltaPill } from "../../../components/molecules/DeltaPill";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
 import { useT } from "../../../hooks/useT";
 import { DOMAIN_MESSAGES } from "../messages";
+import { InfoTip } from "../../../components/atoms/InfoTip";
+import { UI_MESSAGES } from "../../../messages/ui";
+import { DEBT_MESSAGES } from "../../debts/messages";
 import type { MonthWindow } from "../helpers/months";
 import type { AccountDomain, Currency } from "../../../types";
 
@@ -23,6 +26,8 @@ interface Props {
   hiddenLeftOut?: boolean;
   /** The Month / Total switch, top right. */
   toolbar?: ReactNode;
+  /** Debts: what the plan repays each month, shown beside what is owed (never added to it). */
+  monthly?: number;
 }
 
 /**
@@ -41,9 +46,12 @@ export function WorthSummary({
   approximate,
   hiddenLeftOut = false,
   toolbar,
+  monthly,
 }: Props) {
   const { formatAmount } = useMoneyFormat();
   const t = useT(DOMAIN_MESSAGES);
+  const td = useT(DEBT_MESSAGES);
+  const tu = useT(UI_MESSAGES);
   const owes = domain === "DEBT";
   const change = worth - previous;
   const pct = previous !== 0 ? (change / Math.abs(previous)) * 100 : null;
@@ -56,12 +64,24 @@ export function WorthSummary({
       <div className="summary">
         <div className="panel">
           <div className="head">
-            <span className="label">{label}</span>
+            <span className="label">
+              {label}
+              {owes && (
+                <InfoTip label={tu("field.moreInfo")} placement="bottom">
+                  {td("owed.info")}
+                </InfoTip>
+              )}
+            </span>
             {toolbar}
           </div>
           <span className="figure">
             <Amount value={worth} currency={currency} size="lg" approximate={approximate} />
           </span>
+          {owes && monthly !== undefined && monthly > 0 && (
+            <span className="line">
+              {td("owed.monthlyLine", { amount: formatAmount(monthly, currency) })}
+            </span>
+          )}
           {hiddenLeftOut && <span className="line muted">{t("worth.hiddenLeftOut")}</span>}
         </div>
 
@@ -113,6 +133,9 @@ export function WorthSummary({
         }
 
         .label {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
           font-size: 0.7rem;
           font-weight: 700;
           letter-spacing: 0.08em;
