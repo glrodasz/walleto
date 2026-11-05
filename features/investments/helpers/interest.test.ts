@@ -1,10 +1,13 @@
 import {
+  calendarMonthsBetween,
+  debtValueAt,
   estimateWithInterest,
   grow,
   interestAccrued,
   monthlyRate,
   monthsBetween,
   valueAt,
+  wholeMonthsBetween,
 } from "./interest";
 
 const jan = new Date(2026, 0, 1);
@@ -122,8 +125,10 @@ describe("a debt as a negative position", () => {
   });
 
   it("interestAccrued is what repayments did not explain since the first balance", () => {
-    const r = monthlyRate(rate);
-    const owed = grow(5000, r, jan, apr) - grow(500, r, feb, apr) - grow(500, r, mar, apr);
+    // Feb 1: 5,000 + 50 − 500 = 4,550. Mar 1: 4,550 + 45.50 − 500 = 4,095.50.
+    // Apr 1: a whole month with nothing paid adds its 40.955.
+    const owed = 4095.5 * 1.01;
+    expect(-debtValueAt(repayments, balance, rate, apr)).toBeCloseTo(owed, 6);
     expect(interestAccrued(repayments, balance, rate, apr)).toBeCloseTo(owed - 5000 + 1000, 6);
     expect(interestAccrued(repayments, balance, undefined, apr)).toBe(0);
   });
@@ -164,5 +169,65 @@ describe("interestAccrued with money borrowed", () => {
       { amount: 500, at: new Date(2026, 2, 1) },
     ];
     expect(interestAccrued(deposits, checks, undefined, new Date(2026, 3, 1))).toBe(200);
+  });
+});
+
+describe("calendar months", () => {
+  it("counts due date to due date as exactly one month", () => {
+    expect(calendarMonthsBetween(new Date(2026, 9, 28), new Date(2026, 10, 28))).toBe(1);
+    expect(calendarMonthsBetween(new Date(2026, 1, 1), new Date(2026, 2, 1))).toBe(1);
+    expect(calendarMonthsBetween(new Date(2026, 9, 5), new Date(2026, 9, 28))).toBeCloseTo(
+      23 / 31,
+      10
+    );
+    expect(wholeMonthsBetween(new Date(2026, 9, 28), new Date(2026, 10, 27))).toBe(0);
+    expect(wholeMonthsBetween(new Date(2026, 9, 28), new Date(2026, 10, 28, 9))).toBe(1);
+    expect(wholeMonthsBetween(new Date(2026, 0, 31), new Date(2026, 1, 28))).toBe(1);
+    expect(calendarMonthsBetween(new Date(2026, 10, 5), new Date(2026, 9, 5))).toBe(0);
+  });
+});
+
+describe("debtValueAt — an amortising bank loan", () => {
+  // SEB loan 48388280: 606,673 owed when checked on Oct 5, 2.85% yearly,
+  // 2,504 paid on Oct 28. The bank shows 605,610 afterwards, and its Nov 28
+  // payment is 1,063 off the balance plus 1,438 of interest.
+  const rate = { value: 2.85, period: "YEARLY" as const };
+  const checks = [{ value: -606673, asOf: new Date(2026, 9, 5, 12) }];
+  const paidOct = { amount: 2504, at: new Date(2026, 9, 28, 12) };
+
+  it("lands on the bank's balance after a payment", () => {
+    const owed = -debtValueAt([paidOct], checks, rate, new Date(2026, 10, 5, 18));
+    expect(owed).toBeCloseTo(605609.85, 2);
+  });
+
+  it("holds still between payments, as the bank shows it", () => {
+    const before = new Date(2026, 9, 27);
+    expect(-debtValueAt([paidOct], checks, rate, before)).toBe(606673);
+    const owedNov5 = -debtValueAt([paidOct], checks, rate, new Date(2026, 10, 5));
+    const owedNov27 = -debtValueAt([paidOct], checks, rate, new Date(2026, 10, 27));
+    expect(owedNov27).toBe(owedNov5);
+  });
+
+  it("charges the next payment one month of interest on the new balance", () => {
+    const paidNov = { amount: 2501, at: new Date(2026, 10, 28, 12) };
+    const owed = -debtValueAt([paidOct, paidNov], checks, rate, new Date(2026, 10, 29));
+    // 605,609.85 + 1,438.32 − 2,501 = 604,547.17 — 1,063 off, as SEB plans it.
+    expect(owed).toBeCloseTo(604547.17, 2);
+  });
+
+  it("adds a month's interest only once a whole month passes unpaid", () => {
+    const r = monthlyRate(rate);
+    expect(-debtValueAt([], checks, rate, new Date(2026, 10, 4))).toBe(606673);
+    expect(-debtValueAt([], checks, rate, new Date(2026, 10, 5))).toBeCloseTo(606673 * (1 + r), 6);
+  });
+
+  it("adds money borrowed without settling interest", () => {
+    const draw = { amount: -1000, at: new Date(2026, 9, 10) };
+    const owed = -debtValueAt([draw, paidOct], checks, rate, new Date(2026, 10, 5));
+    expect(owed).toBeCloseTo(607673 * (1 + monthlyRate(rate)) - 2504, 6);
+  });
+
+  it("is just the balance less repayments without a rate", () => {
+    expect(-debtValueAt([paidOct], checks, undefined, new Date(2026, 10, 5))).toBe(604169);
   });
 });
