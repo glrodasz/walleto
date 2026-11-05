@@ -594,9 +594,19 @@ export function DomainPage({ domain }: Props) {
   );
   const totalSign = accountDomain ? positionSign(accountDomain) : 1;
   const totalHidden = showHidden ? undefined : hiddenCategories;
+  // "Today" for the current month, as the Owed list reads it: a check or a
+  // repayment dated later this month hasn't happened yet. Through the end of
+  // today, since a check counts from the start of its day.
+  const totalEnd = useMemo(
+    () =>
+      window.isCurrent
+        ? new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+        : window.end,
+    [window.isCurrent, window.end, now]
+  );
   const worthNow = useMemo(
-    () => (showTotal ? totalSign * worthUntil(ledger, worthRows, window.end, ctx, totalHidden) : 0),
-    [showTotal, totalSign, ledger, worthRows, window.end, ctx, totalHidden]
+    () => (showTotal ? totalSign * worthUntil(ledger, worthRows, totalEnd, ctx, totalHidden) : 0),
+    [showTotal, totalSign, ledger, worthRows, totalEnd, ctx, totalHidden]
   );
   const worthBefore = useMemo(
     () =>
@@ -604,23 +614,20 @@ export function DomainPage({ domain }: Props) {
     [showTotal, totalSign, ledger, worthRows, window.start, ctx, totalHidden]
   );
   const ledgerUntilEnd = useMemo(
-    () => ledger.filter((t) => toDate(t.occurredAt) < window.end),
-    [ledger, window.end]
+    () => ledger.filter((t) => toDate(t.occurredAt) < totalEnd),
+    [ledger, totalEnd]
   );
   const worthGainsByCategory = useMemo(
-    () => gainsByCategoryUntil(worthRows, window.end),
-    [worthRows, window.end]
+    () => gainsByCategoryUntil(worthRows, totalEnd),
+    [worthRows, totalEnd]
   );
-  const worthUnfiled = useMemo(
-    () => unfiledGainUntil(worthRows, window.end),
-    [worthRows, window.end]
-  );
+  const worthUnfiled = useMemo(() => unfiledGainUntil(worthRows, totalEnd), [worthRows, totalEnd]);
   const hasForeignEver = useMemo(
     () =>
       showTotal &&
       (ledgerUntilEnd.some((t) => t.currency !== currency) ||
-        worthRows.some((r) => r.at < window.end && r.currency !== currency)),
-    [showTotal, ledgerUntilEnd, worthRows, window.end, currency]
+        worthRows.some((r) => r.at < totalEnd && r.currency !== currency)),
+    [showTotal, ledgerUntilEnd, worthRows, totalEnd, currency]
   );
   const scopeToggle = accountDomain ? (
     <SegmentedControl
