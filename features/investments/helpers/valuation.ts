@@ -13,7 +13,7 @@ import type {
   Language,
   Transaction,
 } from "../../../types";
-import { checkedBy, valueAt } from "./interest";
+import { checkedBy, debtValueAt, valueAt } from "./interest";
 import type { Deposit, ValuePoint } from "./interest";
 
 /**
@@ -236,11 +236,7 @@ export function latestValuationAt(
  * What the position is worth at `asOf` in the reporting currency: the
  * latest recorded check carried forward (with interest, when the account
  * quotes a rate) plus what went in since — see `interest.valueAt`. For a
- * debt (`sign` −1) the figure is what is owed: the last stated balance less
- * repayments (plus borrowing) since, never grown by its rate — a mortgage's
- * interest is paid inside its instalment, and a guess would make the
- * balance disagree with the page's Total, which only knows what the checks
- * stated. The next check reveals any interest. Before any balance check it
+ * debt (`sign` −1) the figure is what is owed. Before any balance check it
  * is what the ledger borrowed minus what was repaid since — and 0 when the
  * ledger never recorded the borrowing (a mortgage): repayments alone say
  * nothing about the balance, so the interest estimate that serves an asset
@@ -261,8 +257,9 @@ export function currentValue(
     if (borrowedAt(transactions, selector, asOf, ctx) <= 0) return 0;
     return sign * valueAt(depositsFor(transactions, selector, ctx), [], undefined, asOf);
   }
-  const r = sign < 0 ? undefined : rate;
-  return sign * valueAt(depositsFor(transactions, selector, ctx), checks, r, asOf);
+  const deposits = depositsFor(transactions, selector, ctx);
+  if (sign < 0) return sign * debtValueAt(deposits, checks, rate, asOf);
+  return sign * valueAt(deposits, checks, rate, asOf);
 }
 
 /**
@@ -295,11 +292,13 @@ export function valuationSeries(
     const checked = checks.some((c) => checkedBy(c.asOf, monthEnd));
     const borrowed = sign < 0 && !checked && borrowedAt(transactions, selector, monthEnd, ctx) > 0;
     const value =
-      sign > 0 || checked
-        ? sign * valueAt(deposits, checks, sign < 0 ? undefined : rate, monthEnd)
-        : borrowed
-          ? sign * valueAt(deposits, [], undefined, monthEnd)
-          : 0;
+      sign > 0
+        ? valueAt(deposits, checks, rate, monthEnd)
+        : checked
+          ? sign * debtValueAt(deposits, checks, rate, monthEnd)
+          : borrowed
+            ? sign * valueAt(deposits, [], undefined, monthEnd)
+            : 0;
     points.push({
       label: formatDate(monthStart, "month", undefined, language),
       income: invested,

@@ -89,11 +89,106 @@ export function valueAt(
   return grow(anchor.value, r, anchor.asOf, asOf) + estimateWithInterest(since, r, asOf);
 }
 
+const DAY_MS = MS_PER_DAY;
+
+function daysInMonth(year: number, month: number): number {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+/** `d`'s calendar day `k` months on, clamped to the end of a shorter month. */
+function addMonths(d: Date, k: number): Date {
+  const y = d.getFullYear();
+  const m = d.getMonth() + k;
+  const target = new Date(y, m, 1);
+  const day = Math.min(d.getDate(), daysInMonth(target.getFullYear(), target.getMonth()));
+  return new Date(target.getFullYear(), target.getMonth(), day);
+}
+
+/** Whole calendar months from `from` to `to`: Oct 28 → Nov 27 is 0, → Nov 28 is 1. */
+export function wholeMonthsBetween(from: Date, to: Date): number {
+  const a = new Date(startOfDay(from));
+  const b = new Date(startOfDay(to));
+  if (b <= a) return 0;
+  let k = (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
+  if (addMonths(a, k) > b) k--;
+  return Math.max(0, k);
+}
+
+/**
+ * Calendar months from `from` to `to`: whole months plus the days left over
+ * as a share of the month they fall in. A bank charges one period's interest
+ * from one due date to the next, so Oct 28 → Nov 28 is exactly 1 — the mean
+ * Gregorian month of `monthsBetween` would read it as 1.018 and overcharge.
+ */
+export function calendarMonthsBetween(from: Date, to: Date): number {
+  const k = wholeMonthsBetween(from, to);
+  const base = addMonths(new Date(startOfDay(from)), k);
+  const next = addMonths(new Date(startOfDay(from)), k + 1);
+  const left = Math.round((startOfDay(to) - base.getTime()) / DAY_MS);
+  const span = Math.round((next.getTime() - base.getTime()) / DAY_MS);
+  return k + Math.max(0, left) / span;
+}
+
+/**
+ * What a debt stands at on `asOf`, signed like `valueAt` (owed is negative).
+ *
+ * A loan isn't a savings balance compounding by the day. The bank's balance
+ * is the principal; interest is charged in arrears and settled inside each
+ * repayment, so the balance only moves on a payment date, by the payment less
+ * that period's interest. So, from the latest balance check:
+ *
+ * - each repayment first settles the interest since the previous one (calendar
+ *   months, so a monthly payment carries exactly a month), then lowers the
+ *   balance by what is left — SEB's 2,504 on 606,673 at 2.85% is 1,441 of
+ *   interest and 1,063 off, leaving 605,610;
+ * - the first repayment after a check carries at least a full month: its
+ *   period began at the previous due date, before the check was read;
+ * - money borrowed adds to the balance and settles nothing;
+ * - between payments the balance holds still, as the bank shows it; only a
+ *   whole month gone by with nothing paid adds its interest to what is owed.
+ *
+ * Before any check this is `valueAt`'s estimate, which the callers never use
+ * for a debt (see `valuation.currentValue`).
+ */
+export function debtValueAt(
+  deposits: Deposit[],
+  checks: ValuePoint[],
+  rate: InterestRate | undefined,
+  asOf: Date
+): number {
+  let latest: ValuePoint | null = null;
+  for (const c of checks) {
+    if (checkedBy(c.asOf, asOf) && (!latest || c.asOf >= latest.asOf)) latest = c;
+  }
+  if (!latest) return valueAt(deposits, checks, rate, asOf);
+  const anchor = latest;
+  const r = monthlyRate(rate);
+  let owed = -anchor.value;
+  let settled = anchor.asOf;
+  let first = true;
+  const since = deposits
+    .filter((d) => d.at > anchor.asOf && d.at <= asOf)
+    .sort((a, b) => a.at.getTime() - b.at.getTime());
+  for (const d of since) {
+    if (d.amount <= 0) {
+      owed -= d.amount;
+      continue;
+    }
+    const period = calendarMonthsBetween(settled, d.at);
+    const months = first ? Math.max(1, period) : period;
+    owed = owed * (1 + r * months) - d.amount;
+    settled = d.at;
+    first = false;
+  }
+  owed *= Math.pow(1 + r, wholeMonthsBetween(settled, asOf));
+  return -owed;
+}
+
 /**
  * What a debt has cost since its first balance check: what is owed at `asOf`
  * minus that first balance, plus every repayment made in between — the part
  * of the balance that repayments did not explain. `checks` are signed the way
- * `valueAt` reads a debt (a balance owed is a negative value) and `deposits`
+ * `debtValueAt` reads a debt (a balance owed is a negative value) and `deposits`
  * are the repayments. Null before any check: with no balance there is no
  * interest to measure.
  */
@@ -109,7 +204,7 @@ export function interestAccrued(
   }
   if (!first) return null;
   const anchor = first;
-  const owedNow = -valueAt(deposits, checks, rate, asOf);
+  const owedNow = -debtValueAt(deposits, checks, rate, asOf);
   const repaid = deposits
     .filter((d) => d.at > anchor.asOf && d.at <= asOf)
     .reduce((sum, d) => sum + d.amount, 0);

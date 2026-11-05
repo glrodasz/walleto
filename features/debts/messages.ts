@@ -5,7 +5,7 @@ export const DEBT_MESSAGES = defineMessages(
   {
     tag: "Debt",
     "owed.info":
-      "The balance is what you still owe today. It counts in your net worth, not in your month: only the payments you make each month count there. A loan you wrote down as borrowed keeps its own balance (borrowed minus repaid); a mortgage needs a balance update once. Between updates the balance only drops with your payments; interest shows up the next time you update it.",
+      "The balance is what you still owe today. It counts in your net worth, not in your month: only the payments you make each month count there. A loan you wrote down as borrowed keeps its own balance (borrowed minus repaid); a mortgage needs a balance update once. With an interest rate it moves like your bank's: each payment first covers the month's interest, and the rest lowers what you owe.",
     "owed.monthlyLine": "You pay {amount} a month towards it",
     "owed.perMonth": "{amount}/mo",
     "owed.noPlan": "no monthly payment",
@@ -38,7 +38,7 @@ export const DEBT_MESSAGES = defineMessages(
   {
     tag: "Deuda",
     "owed.info":
-      "El saldo es lo que aún debes hoy. Cuenta en tu patrimonio, no en tu mes: en el mes solo cuentan los pagos que haces. Un préstamo anotado como prestado lleva su propio saldo (lo prestado menos lo abonado); una hipoteca necesita que actualices el saldo una vez. Entre actualizaciones el saldo solo baja con tus pagos; los intereses aparecen la próxima vez que lo actualices.",
+      "El saldo es lo que aún debes hoy. Cuenta en tu patrimonio, no en tu mes: en el mes solo cuentan los pagos que haces. Un préstamo anotado como prestado lleva su propio saldo (lo prestado menos lo abonado); una hipoteca necesita que actualices el saldo una vez. Con tasa de interés se mueve como en tu banco: cada pago cubre primero el interés del mes y el resto baja lo que debes.",
     "owed.monthlyLine": "Pagas {amount} al mes para bajarla",
     "owed.perMonth": "{amount}/mes",
     "owed.noPlan": "sin pago mensual",
@@ -71,7 +71,7 @@ export const DEBT_MESSAGES = defineMessages(
   {
     tag: "Dívida",
     "owed.info":
-      "O saldo é o que você ainda deve hoje. Conta no seu patrimônio, não no seu mês: no mês só contam os pagamentos que você faz. Um empréstimo anotado como emprestado tem seu próprio saldo (o emprestado menos o amortizado); um financiamento precisa que você atualize o saldo uma vez. Entre atualizações o saldo só cai com seus pagamentos; os juros aparecem na próxima vez que você o atualizar.",
+      "O saldo é o que você ainda deve hoje. Conta no seu patrimônio, não no seu mês: no mês só contam os pagamentos que você faz. Um empréstimo anotado como emprestado tem seu próprio saldo (o emprestado menos o amortizado); um financiamento precisa que você atualize o saldo uma vez. Com taxa de juros ele se move como no seu banco: cada pagamento cobre primeiro os juros do mês e o resto reduz o que você deve.",
     "owed.monthlyLine": "Você paga {amount} por mês para reduzi-la",
     "owed.perMonth": "{amount}/mês",
     "owed.noPlan": "sem pagamento mensal",
