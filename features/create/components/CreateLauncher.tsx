@@ -9,12 +9,16 @@ import { useT } from "../../../hooks/useT";
 import { COMMON_MESSAGES } from "../../../messages/common";
 import { DOMAIN_MESSAGES } from "../../domains/messages";
 import { CREATE_MESSAGES } from "../messages";
+import { DRAFT_MESSAGES } from "../../drafts/messages";
 
 // Every page mounts the launcher, but the forms only load once one is picked.
 const RecurrentTransactionModal = dynamic(() =>
   import("../../domains/components/RecurrentTransactionModal").then(
     (m) => m.RecurrentTransactionModal
   )
+);
+const DraftModal = dynamic(() =>
+  import("../../drafts/components/DraftModal").then((m) => m.DraftModal)
 );
 const RecordValueModal = dynamic(() =>
   import("../../investments/components/RecordValueModal").then((m) => m.RecordValueModal)
@@ -27,7 +31,7 @@ interface Props {
 
 const DOMAINS: Domain[] = ["EXPENSE", "INCOME", "INVESTMENT", "SAVING", "DEBT"];
 
-type Kind = "quick" | "recurring" | "value";
+type Kind = "quick" | "recurring" | "value" | "draft";
 
 /**
  * The create entry point on every page and every width: a floating +
@@ -39,6 +43,7 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
   const t = useT(CREATE_MESSAGES);
   const copy = useT(DOMAIN_MESSAGES);
   const common = useT(COMMON_MESSAGES);
+  const drafts = useT(DRAFT_MESSAGES);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [domain, setDomain] = useState<Domain>(fixedDomain ?? "EXPENSE");
   const [kind, setKind] = useState<Kind | null>(null);
@@ -94,6 +99,16 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
             <strong>{copy(`oneOff.title.${domain}`)}</strong>
             <span>{t("sheet.oneOffHint")}</span>
           </button>
+          {domain === "EXPENSE" && (
+            <button
+              type="button"
+              className="glass glass--tap option"
+              onClick={() => choose("draft")}
+            >
+              <strong>{drafts("sheet.title")}</strong>
+              <span>{drafts("sheet.hint")}</span>
+            </button>
+          )}
           {isAccountDomain(domain) && (
             <button
               type="button"
@@ -118,6 +133,7 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
       {kind === "recurring" && (
         <RecurrentTransactionModal open domain={domain} onClose={() => setKind(null)} />
       )}
+      {kind === "draft" && <DraftModal open onClose={() => setKind(null)} />}
       {kind === "value" && isAccountDomain(domain) && (
         <RecordValueModal open domain={domain} onClose={() => setKind(null)} />
       )}

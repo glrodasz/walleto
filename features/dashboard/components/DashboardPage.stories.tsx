@@ -9,6 +9,8 @@ import { useExchangeRates } from "../../../hooks/useExchangeRates";
 import { useUpcomingItems } from "../hooks/useUpcomingItems";
 import { errorState, hookDefaults, loadingState } from "../../../stories/fixtures/hookDefaults";
 import { at, MOBILE, screen } from "../../../stories/templates";
+import { STORY_USER_DOC } from "../../../stories/fixtures/user";
+import { STORY_DRAFTS } from "../../../stories/fixtures/drafts";
 
 /**
  * The home screen, exactly as pages/index.tsx renders it, over the mocked
@@ -89,3 +91,13 @@ export const Error: Story = {
 };
 
 export const Mobile: Story = { globals: MOBILE };
+
+/** Two services jotted down to finish later sit on top. */
+export const WithDrafts: Story = {
+  beforeEach: () => {
+    mocked(useUserDoc).mockReturnValue({
+      ...hookDefaults.useUserDoc(),
+      userDoc: { ...STORY_USER_DOC, expenseDrafts: STORY_DRAFTS },
+    });
+  },
+};

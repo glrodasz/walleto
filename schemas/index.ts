@@ -116,6 +116,25 @@ export const PaymentMethodUpdateSchema = z.object({
   archived: z.boolean().optional(),
 });
 
+/** A quick draft: only the name is required; the rest is whatever is known. */
+export const ExpenseDraftInputSchema = z
+  .object({
+    name: z.string().trim().min(1).max(80),
+    amount: z.number().positive().optional(),
+    currency: CurrencySchema.optional(),
+    frequency: z.enum(["MONTHLY", "YEARLY", "ONE_TIME"]).optional(),
+    dayOfMonth: z.number().int().min(1).max(31).optional(),
+    date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
+  })
+  .refine((v) => v.amount === undefined || v.currency !== undefined, {
+    message: "An amount needs a currency",
+    path: ["currency"],
+  });
+export type ExpenseDraftInput = z.infer<typeof ExpenseDraftInputSchema>;
+
 export const TagInputSchema = z.object({
   name: z.string().trim().min(1).max(30),
 });
