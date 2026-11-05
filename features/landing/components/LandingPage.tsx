@@ -537,6 +537,7 @@ export function LandingPage({ language, origin, signedIn = false }: Props) {
         }
 
         .muted {
+          display: block;
           color: var(--fg-2);
         }
 
