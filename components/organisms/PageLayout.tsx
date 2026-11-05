@@ -163,9 +163,13 @@ export function PageLayout({
           border-color: var(--glass-rim);
         }
 
+        /* Only as tall as what it holds: stretched to the viewport, a short
+           page shared the spare height among its cards (they grow, see Card)
+           and a summary card ended with a big empty bottom. */
         .main {
           grid-column: 1 / -1;
           grid-row: 2;
+          align-self: start;
           min-width: 0;
           padding: 16px 32px 96px;
           display: flex;
@@ -204,7 +208,9 @@ export function PageLayout({
             margin-left: auto;
           }
 
+          /* A column here, so align-self is the width: keep it full. */
           .main {
+            align-self: stretch;
             padding: 12px 16px;
             /* Clear the fixed bottom nav (64px + safe area) and the floating
                create button above it, so the last row is never hidden. */
