@@ -94,7 +94,7 @@ function DraftRow({ draft, onTurn, onDiscard }: RowProps) {
   return (
     <ListItem
       leading={
-        <IconDisc domain="EXPENSE" size={36}>
+        <IconDisc color="var(--fg-2)" size={36}>
           <Pencil size={16} />
         </IconDisc>
       }

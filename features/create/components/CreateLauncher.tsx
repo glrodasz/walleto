@@ -1,7 +1,8 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { Modal } from "../../../components/molecules/Modal";
-import { Plus } from "../../../components/atoms/Icons";
+import { Calendar, Chart, Pencil, Plus, Repeat } from "../../../components/atoms/Icons";
+import { IconDisc } from "../../../components/molecules/IconDisc";
 import { isAccountDomain } from "../../../helpers/accounts";
 import { DOMAIN_CONFIG } from "../../domains/helpers/domainConfig";
 import type { Domain } from "../../../types";
@@ -92,12 +93,22 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
             className="glass glass--tap option"
             onClick={() => choose("recurring")}
           >
-            <strong>{copy(`plan.add.${domain}`)}</strong>
-            <span>{t("sheet.recurringHint")}</span>
+            <IconDisc domain={domain} size={36}>
+              <Repeat size={18} />
+            </IconDisc>
+            <span className="text">
+              <strong>{copy(`plan.add.${domain}`)}</strong>
+              <span>{t("sheet.recurringHint")}</span>
+            </span>
           </button>
           <button type="button" className="glass glass--tap option" onClick={() => choose("quick")}>
-            <strong>{copy(`oneOff.title.${domain}`)}</strong>
-            <span>{t("sheet.oneOffHint")}</span>
+            <IconDisc domain={domain} size={36}>
+              <Calendar size={18} />
+            </IconDisc>
+            <span className="text">
+              <strong>{copy(`oneOff.title.${domain}`)}</strong>
+              <span>{t("sheet.oneOffHint")}</span>
+            </span>
           </button>
           {domain === "EXPENSE" && (
             <button
@@ -105,8 +116,13 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
               className="glass glass--tap option"
               onClick={() => choose("draft")}
             >
-              <strong>{drafts("sheet.title")}</strong>
-              <span>{drafts("sheet.hint")}</span>
+              <IconDisc color="var(--fg-2)" size={36}>
+                <Pencil size={18} />
+              </IconDisc>
+              <span className="text">
+                <strong>{drafts("sheet.title")}</strong>
+                <span>{drafts("sheet.hint")}</span>
+              </span>
             </button>
           )}
           {isAccountDomain(domain) && (
@@ -115,8 +131,13 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
               className="glass glass--tap option"
               onClick={() => choose("value")}
             >
-              <strong>{t(`sheet.value.${domain}`)}</strong>
-              <span>{t(`sheet.valueHint.${domain}`)}</span>
+              <IconDisc domain={domain} size={36}>
+                <Chart size={18} />
+              </IconDisc>
+              <span className="text">
+                <strong>{t(`sheet.value.${domain}`)}</strong>
+                <span>{t(`sheet.valueHint.${domain}`)}</span>
+              </span>
             </button>
           )}
         </div>
@@ -206,9 +227,8 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
 
         .option {
           display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 4px;
+          align-items: center;
+          gap: 14px;
           padding: 14px 16px;
           border-radius: var(--r-lg);
           color: var(--fg-0);
@@ -217,12 +237,20 @@ export function CreateLauncher({ domain: fixedDomain }: Props) {
           cursor: pointer;
         }
 
+        .text {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 4px;
+          min-width: 0;
+        }
+
         .option strong {
           font-size: 0.95rem;
           font-weight: 700;
         }
 
-        .option span {
+        .text > span {
           font-size: 0.8rem;
           color: var(--fg-2);
         }
