@@ -26,6 +26,7 @@ import { CategoryMonthList, categoryMonthRows } from "./CategoryMonthList";
 import { CategoryDrilldown } from "./CategoryDrilldown";
 import { RecurringChecklist } from "./RecurringChecklist";
 import { PendingConfirmations } from "./PendingConfirmations";
+import { DraftsCard } from "../../drafts/components/DraftsCard";
 import { SubscriptionInsights } from "../../insights/components/SubscriptionInsights";
 import { AccountValuePanels } from "../../investments/components/AccountValuePanels";
 import { AccountValueList } from "../../investments/components/AccountValueList";
@@ -851,6 +852,8 @@ export function DomainPage({ domain }: Props) {
       scenario={domain === "EXPENSE"}
     >
       {error && <ErrorState error={error} />}
+
+      {domain === "EXPENSE" && <DraftsCard />}
 
       {showTotal && accountDomain ? (
         <WorthSummary

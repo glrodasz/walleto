@@ -42,6 +42,7 @@ import { useDecimalInput } from "../../../hooks/useDecimalInput";
 import type {
   Currency,
   Domain,
+  ExpenseDraft,
   Frequency,
   RecurrentTransaction,
   Transaction,
@@ -52,6 +53,7 @@ import { useT } from "../../../hooks/useT";
 import { COMMON_MESSAGES } from "../../../messages/common";
 import { DOMAIN_MESSAGES } from "../messages";
 import { SLOT, splitSlot } from "../helpers/slot";
+import { draftSchedule } from "../../../helpers/drafts";
 
 const FREQUENCIES: Frequency[] = [
   "ONE_TIME",
@@ -71,8 +73,12 @@ interface Props {
   transaction?: Transaction;
   /** Create only: what the frequency starts as ("Log a one-off expense" opens on One time). */
   initialFrequency?: Frequency;
+  /** Create only: start from a quick draft (name, amount, cadence) instead of a blank form. */
+  draft?: ExpenseDraft;
   /** Transaction mode: jump to the recurring item that wrote this row. */
   onOpenItem?: (item: RecurrentTransaction) => void;
+  /** After a successful save, before the modal closes (a draft drops itself here). */
+  onSaved?: () => void;
   onClose: () => void;
 }
 
@@ -120,7 +126,9 @@ export function RecurrentTransactionModal({
   item,
   transaction,
   initialFrequency = "MONTHLY",
+  draft,
   onOpenItem,
+  onSaved,
   onClose,
 }: Props) {
   const { formatDate, language } = useDateFormat();
@@ -219,6 +227,18 @@ export function RecurrentTransactionModal({
       });
       return;
     }
+    if (!item && draft) {
+      // A service just taken has no history to write, so no backfill.
+      setForm({
+        ...empty,
+        ...draftSchedule(draft),
+        name: draft.name,
+        amount: draft.amount !== undefined ? decimal.toInput(draft.amount) : "",
+        currency: draft.currency ?? "",
+        backfill: false,
+      });
+      return;
+    }
     if (!item) {
       setForm(empty);
       return;
@@ -257,7 +277,7 @@ export function RecurrentTransactionModal({
       paysDebt: false,
       essential: item.essential ?? null,
     });
-  }, [open, item, transaction, empty, decimal]);
+  }, [open, item, transaction, draft, empty, decimal]);
 
   const patch = (p: Partial<FormState>) => setForm((f) => ({ ...f, ...p }));
 
@@ -561,6 +581,7 @@ export function RecurrentTransactionModal({
           }).catch((err) => console.error("valuation failed:", err));
         }
       }
+      onSaved?.();
       onClose();
     } catch (err) {
       console.error("Failed to save recurrent transaction:", err);

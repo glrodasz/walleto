@@ -10,6 +10,7 @@ import { NetWorthCard } from "./NetWorthCard";
 import { CashFlowCard } from "./CashFlowCard";
 import { UpcomingPayments } from "./UpcomingPayments";
 import { TipBanner } from "./TipBanner";
+import { DraftsCard } from "../../drafts/components/DraftsCard";
 import { DomainValueLine } from "../../investments/components/DomainValueLine";
 import { isAccountDomain } from "../../../helpers/accounts";
 import { topWithOther } from "../helpers/topWithOther";
@@ -163,6 +164,8 @@ export function DashboardPage() {
       {fxUnavailable && <ErrorState title={t("fx.title")} description={t("fx.description")} />}
 
       <TipBanner id="create">{t("tip.create")}</TipBanner>
+
+      <DraftsCard />
 
       <section className="block">
         {userDoc ? (

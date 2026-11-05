@@ -8,6 +8,9 @@ import { hookDefaults, loadingState } from "../../../stories/fixtures/hookDefaul
 import { occurrenceId, occurrenceToTransaction } from "../../../helpers/materializeOccurrences";
 import type { Transaction } from "../../../types";
 import { at, MOBILE, screen, withHash } from "../../../stories/templates";
+import { useUserDoc } from "../../../hooks/useUserDoc";
+import { STORY_USER_DOC } from "../../../stories/fixtures/user";
+import { STORY_DRAFTS } from "../../../stories/fixtures/drafts";
 
 /**
  * The month-first screen the five domain routes share: month summary,
@@ -28,6 +31,17 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Expenses: Story = { parameters: at("/expenses") };
+
+/** Drafts waiting to become expenses sit on top of the page. */
+export const ExpensesWithDrafts: Story = {
+  parameters: at("/expenses"),
+  beforeEach: () => {
+    mocked(useUserDoc).mockReturnValue({
+      ...hookDefaults.useUserDoc(),
+      userDoc: { ...STORY_USER_DOC, expenseDrafts: STORY_DRAFTS },
+    });
+  },
+};
 export const Incomes: Story = { args: { domain: "INCOME" }, parameters: at("/incomes") };
 export const Investments: Story = {
   args: { domain: "INVESTMENT" },
@@ -79,7 +93,6 @@ export const DebtsTotal: Story = {
 export const Loading: Story = {
   parameters: at("/expenses"),
   beforeEach: () => {
-    withHash("")();
     mocked(useCategories).mockImplementation((d) => ({
       ...hookDefaults.useCategories(d),
       categories: [],
@@ -96,7 +109,6 @@ export const Loading: Story = {
 export const Empty: Story = {
   parameters: at("/expenses"),
   beforeEach: () => {
-    withHash("")();
     mocked(useRecurrentTransactions).mockImplementation((d) => ({
       ...hookDefaults.useRecurrentTransactions(d),
       items: [],

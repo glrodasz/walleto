@@ -692,3 +692,64 @@ describe("RecurrentTransactionModal — variable amount", () => {
     expect(screen.queryByRole("checkbox", { name: /Amount varies/ })).toBeNull();
   });
 });
+
+describe("RecurrentTransactionModal — from a draft", () => {
+  const draft = {
+    id: "dr1",
+    name: "Spotify",
+    amount: 11.99,
+    currency: "EUR" as const,
+    frequency: "MONTHLY" as const,
+    dayOfMonth: 14,
+    createdAt: "2026-11-05T12:00:00.000Z",
+  };
+
+  it("starts filled in, with no backfill, and tells the caller once it is saved", async () => {
+    const onSaved = jest.fn();
+    const onClose = jest.fn();
+    render(
+      <RecurrentTransactionModal
+        domain="EXPENSE"
+        open
+        draft={draft}
+        onSaved={onSaved}
+        onClose={onClose}
+      />
+    );
+    expect(screen.getByLabelText("Name")).toHaveValue("Spotify");
+    expect(screen.getByLabelText("Amount")).toHaveValue("11.99");
+    expect(screen.getByLabelText("Payment day")).toHaveValue("14");
+    fireEvent.change(screen.getByLabelText("Category"), { target: { value: "c1" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add to plan" }));
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(onSaved).toHaveBeenCalledTimes(1);
+    expect(createItem).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "Spotify",
+        amount: 11.99,
+        currency: "EUR",
+        frequency: "MONTHLY",
+        startDate: anchorStartDate({ frequency: "MONTHLY", dayOfMonth: 14 }).toISOString(),
+      })
+    );
+  });
+
+  it("keeps the draft when the save fails", async () => {
+    createItem.mockRejectedValueOnce(new Error("boom"));
+    const onSaved = jest.fn();
+    render(
+      <RecurrentTransactionModal
+        domain="EXPENSE"
+        open
+        draft={draft}
+        onSaved={onSaved}
+        onClose={jest.fn()}
+      />
+    );
+    fireEvent.change(screen.getByLabelText("Category"), { target: { value: "c1" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add to plan" }));
+    await waitFor(() => expect(createItem).toHaveBeenCalled());
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+});
