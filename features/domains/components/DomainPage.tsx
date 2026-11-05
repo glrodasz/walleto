@@ -16,6 +16,7 @@ import { CURRENCY_COLORS, DEFAULT_MONTH_PERIOD, parseMonthPeriod } from "../../.
 import type { MonthPeriod } from "../../../constants";
 import { MonthSummary } from "./MonthSummary";
 import { WorthSummary } from "./WorthSummary";
+import { DebtWorthSummary } from "../../debts/components/DebtWorthSummary";
 import { SegmentedControl } from "../../../components/molecules/SegmentedControl";
 import { ChartControls } from "./ChartControls";
 import type { StackMode } from "./ChartControls";
@@ -876,7 +877,20 @@ export function DomainPage({ domain }: Props) {
     >
       {error && <ErrorState error={error} />}
 
-      {showTotal && accountDomain ? (
+      {showTotal && domain === "DEBT" ? (
+        <DebtWorthSummary
+          categories={categories}
+          ctx={ctx}
+          end={totalEnd}
+          start={window.start}
+          window={window}
+          previousLabel={previousWindow?.longLabel ?? null}
+          currency={currency}
+          approximate={hasForeignEver}
+          toolbar={scopeToggle}
+          monthly={debtMonthly}
+        />
+      ) : showTotal && accountDomain ? (
         <WorthSummary
           domain={accountDomain}
           window={window}
@@ -887,7 +901,6 @@ export function DomainPage({ domain }: Props) {
           approximate={hasForeignEver}
           hiddenLeftOut={anythingHidden && !showHidden}
           toolbar={scopeToggle}
-          monthly={domain === "DEBT" ? debtMonthly : undefined}
         />
       ) : (
         <MonthSummary
