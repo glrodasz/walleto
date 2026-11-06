@@ -103,8 +103,13 @@ export function PageLayout({
            right of its line. The controls span the page's whole height so
            their sticky offset holds all the way down, not just over the
            title's row. */
+        /* Past ~1750px of room the page stops growing and centres in the
+           space beside the sidebar: long rows stay readable on big screens. */
         .content {
           flex: 1;
+          width: 100%;
+          max-width: var(--content-max, 1744px);
+          margin-inline: auto;
           display: grid;
           grid-template-columns: minmax(0, 1fr) auto;
           grid-template-rows: auto 1fr;

@@ -919,15 +919,17 @@ export function DomainPage({ domain }: Props) {
         />
       )}
 
-      {domain === "EXPENSE" && <DraftsCard />}
+      <div className="lists">
+        {domain === "EXPENSE" && <DraftsCard />}
 
-      <PendingConfirmations
-        rows={pending}
-        categories={categories}
-        displayCurrency={currency}
-        onConfirm={setConfirmingTx}
-        onKeepVariable={keepVariable}
-      />
+        <PendingConfirmations
+          rows={pending}
+          categories={categories}
+          displayCurrency={currency}
+          onConfirm={setConfirmingTx}
+          onKeepVariable={keepVariable}
+        />
+      </div>
 
       <div className="charts">
         <Card>
@@ -1020,6 +1022,26 @@ export function DomainPage({ domain }: Props) {
           grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
           gap: 16px;
           align-items: stretch;
+        }
+
+        /* Drafts and To confirm stack like the rest of the page; on wide
+           screens they sit side by side (one column each that renders). */
+        .lists {
+          display: contents;
+        }
+
+        @media (min-width: 1920px) {
+          .lists {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: minmax(0, 1fr);
+            gap: 16px;
+            align-items: start;
+          }
+
+          .lists:empty {
+            display: none;
+          }
         }
 
         .detail {
