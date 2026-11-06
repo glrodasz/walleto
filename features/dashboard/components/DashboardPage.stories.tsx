@@ -101,3 +101,12 @@ export const WithDrafts: Story = {
     });
   },
 };
+
+/**
+ * Screens 1920px and wider: drafts, the monthly plan and net worth share the
+ * top row (two columns when there are no drafts). Open it in a wide window.
+ */
+export const WideWithDrafts: Story = {
+  ...WithDrafts,
+  parameters: { viewport: { defaultViewport: "responsive" } },
+};

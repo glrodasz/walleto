@@ -41,43 +41,54 @@ export function SummaryCard({ title, badge, figure, sub, stats = [], note }: Pro
   const t = useT(CHART_MESSAGES);
   return (
     <Card>
-      <div className="summary">
-        <div className="figure">
-          <span className="head">
-            <span className="title">{title}</span>
-            <Badge tone={badge.tone} caps>
-              {badge.label}
-            </Badge>
-          </span>
-          {figure}
-          {sub && <span className="sub">{sub}</span>}
-        </div>
-
-        {stats.length > 0 && (
-          <div className="stats">
-            <ul
-              className="grid"
-              style={{ "--cols": stats.length } as React.CSSProperties}
-              aria-label={t("summary.breakdown", { title })}
-            >
-              {stats.map(({ key, label, domain, Icon, value }) => (
-                <li key={key} className="stat">
-                  <IconDisc domain={domain} size={30}>
-                    <Icon size={14} />
-                  </IconDisc>
-                  <span className="stat-text">
-                    <span className="stat-amount">{value}</span>
-                    <span className="stat-label">{label}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-            {note && <span className="note">{note}</span>}
+      <div className="frame">
+        <div className="summary">
+          <div className="figure">
+            <span className="head">
+              <span className="title">{title}</span>
+              <Badge tone={badge.tone} caps>
+                {badge.label}
+              </Badge>
+            </span>
+            {figure}
+            {sub && <span className="sub">{sub}</span>}
           </div>
-        )}
+
+          {stats.length > 0 && (
+            <div className="stats">
+              <ul
+                className="grid"
+                style={{ "--cols": stats.length } as React.CSSProperties}
+                aria-label={t("summary.breakdown", { title })}
+              >
+                {stats.map(({ key, label, domain, Icon, value }) => (
+                  <li key={key} className="stat">
+                    <IconDisc domain={domain} size={30}>
+                      <Icon size={14} />
+                    </IconDisc>
+                    <span className="stat-text">
+                      <span className="stat-amount">{value}</span>
+                      <span className="stat-label">{label}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {note && <span className="note">{note}</span>}
+            </div>
+          )}
+        </div>
       </div>
 
       <style jsx>{`
+        /* On wide screens the Dashboard puts this card in a column a third
+           of the page wide, so there it is sized by its own width. Narrower
+           screens never become a container and keep the viewport rules. */
+        @media (min-width: 1920px) {
+          .frame {
+            container-type: inline-size;
+          }
+        }
+
         .summary {
           display: grid;
           grid-template-columns: minmax(200px, 0.8fr) minmax(0, 2.2fr);
@@ -178,6 +189,25 @@ export function SummaryCard({ title, badge, figure, sub, stats = [], note }: Pro
         @media (max-width: 640px) {
           .grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .stat + .stat {
+            border-left: none;
+            padding-left: 0;
+          }
+        }
+
+        /* A narrow column on a wide screen: the figure above its parts, which
+           wrap into as many columns as fit a whole amount. */
+        @container (max-width: 700px) {
+          .summary {
+            grid-template-columns: 1fr;
+            gap: 18px;
+          }
+
+          .grid {
+            grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+            row-gap: 14px;
           }
 
           .stat + .stat {

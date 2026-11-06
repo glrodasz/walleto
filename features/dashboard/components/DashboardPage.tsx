@@ -165,24 +165,26 @@ export function DashboardPage() {
 
       <TipBanner id="create">{t("tip.create")}</TipBanner>
 
-      <DraftsCard />
+      <div className="top">
+        <DraftsCard />
 
-      <section className="block">
-        {userDoc ? (
-          <NetFlowCard flow={flow} currency={currency} approximate={approximate} />
-        ) : (
-          <Skeleton.Box width="100%" height={160} />
-        )}
-      </section>
+        <section className="block">
+          {userDoc ? (
+            <NetFlowCard flow={flow} currency={currency} approximate={approximate} />
+          ) : (
+            <Skeleton.Box width="100%" height={160} />
+          )}
+        </section>
 
-      <section className="block">
-        <NetWorthCard
-          worth={worth}
-          currency={currency}
-          loading={!userDoc || worthLoading}
-          approximate={approximate}
-        />
-      </section>
+        <section className="block">
+          <NetWorthCard
+            worth={worth}
+            currency={currency}
+            loading={!userDoc || worthLoading}
+            approximate={approximate}
+          />
+        </section>
+      </div>
 
       <section className="cards" ref={cardsRef}>
         {userDoc
@@ -251,6 +253,23 @@ export function DashboardPage() {
         .block > :global(*) {
           flex: 1;
           min-width: 0;
+        }
+
+        /* Drafts, the monthly plan and net worth stack like the rest of the
+           page until the screen is wide enough to give each a third of it.
+           One column per card that renders, so with no drafts the two
+           summaries split the row. */
+        .top {
+          display: contents;
+        }
+
+        @media (min-width: 1920px) {
+          .top {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: minmax(0, 1fr);
+            gap: 16px;
+          }
         }
 
         /* One row that never wraps: five equal columns when they fit, each at least
