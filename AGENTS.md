@@ -2,7 +2,7 @@
 
 Conventions for **walleto**. The general rule: **small files with a single responsibility**, so every piece can be tested on its own and read at a glance.
 
-Stack: Next.js 14 (Pages Router) · strict TypeScript · Firestore + `firebase-admin` · Auth0 · Zod · styled-jsx · Jest · pnpm 9.
+Stack: Next.js 15 (Pages Router) · strict TypeScript · Firestore + `firebase-admin` · Auth0 · Zod · styled-jsx · Jest · pnpm 9.
 
 ---
 
