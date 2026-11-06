@@ -6,7 +6,7 @@
 
 [![CI](https://github.com/glrodasz/walleto/actions/workflows/ci.yml/badge.svg)](https://github.com/glrodasz/walleto/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-![Next.js 14](https://img.shields.io/badge/Next.js-14-000000.svg)
+![Next.js 15](https://img.shields.io/badge/Next.js-15-000000.svg)
 ![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178C6.svg)
 ![Firestore](https://img.shields.io/badge/data-Firestore-FFCA28.svg)
 ![Auth0](https://img.shields.io/badge/auth-Auth0-EB5424.svg)
@@ -150,7 +150,7 @@ becomes the numbers on screen are drawn in [**docs/ARCHITECTURE.md**](docs/ARCHI
 
 ### Tech stack
 
-**App:** Next.js 14 (Pages Router), React 18, strict TypeScript, styled-jsx, Recharts, Zod ·
+**App:** Next.js 15 (Pages Router), React 18, strict TypeScript, styled-jsx, Recharts, Zod ·
 **Data:** Firestore (client SDK with IndexedDB persistence, `firebase-admin` on the server) ·
 **Auth:** Auth0 (`@auth0/nextjs-auth0`) with Firebase custom tokens · **i18n:** English, Spanish
 and Portuguese catalogs · **Quality:** Jest and Testing Library (1,300+ tests), ESLint, Prettier, Husky,
