@@ -919,65 +919,80 @@ export function DomainPage({ domain }: Props) {
         />
       )}
 
-      <div className="lists">
-        {domain === "EXPENSE" && <DraftsCard />}
-
-        <PendingConfirmations
-          rows={pending}
-          categories={categories}
-          displayCurrency={currency}
-          onConfirm={setConfirmingTx}
-          onKeepVariable={keepVariable}
-        />
-      </div>
-
-      <div className="charts">
-        <Card>
-          <SectionTitle
-            title={t(`chart.title.${domain}`)}
-            subtitle={t(
-              showWorth ? `chart.subtitle.worth.${mode}` : `chart.subtitle.${domain}.${mode}`
-            )}
-          >
-            <ChartControls
-              period={period}
-              onPeriod={setPeriod}
-              mode={mode}
-              onMode={setMode}
-              measure={offersWorth ? measure : undefined}
-              onMeasure={offersWorth ? setMeasure : undefined}
+      {/* Below 1920px these cards fill the page in order (Drafts, To confirm,
+          then chart beside Top categories). From 1920px the board becomes
+          two fixed columns: the wide one for To confirm and the chart, the
+          narrow one for Drafts and Top categories, so short cards stack
+          instead of leaving holes and every edge lines up. */}
+      <div className="board">
+        <div className="column main">
+          <div className="slot full">
+            <PendingConfirmations
+              rows={pending}
+              categories={categories}
+              displayCurrency={currency}
+              onConfirm={setConfirmingTx}
+              onKeepVariable={keepVariable}
             />
-          </SectionTitle>
-          <MonthlyBarsChart
-            data={bars}
-            series={series}
-            stacked={stacks.series.length > 1}
-            currency={currency}
-            loading={txLoading}
-            average={showWorth ? null : average}
-            /* Only when the bars actually draw it — otherwise every bar
-               dims and the whole chart greys out. */
-            selectedKey={selectedOnChart ? window.key : undefined}
-            height={220}
-          />
-          {anythingHidden && (
-            <CheckboxField
-              label={t("chart.showHidden")}
-              hint={t("chart.showHiddenHint")}
-              checked={showHidden}
-              onChange={setShowHidden}
-            />
+          </div>
+          <div className="slot">
+            <Card>
+              <SectionTitle
+                title={t(`chart.title.${domain}`)}
+                subtitle={t(
+                  showWorth ? `chart.subtitle.worth.${mode}` : `chart.subtitle.${domain}.${mode}`
+                )}
+              >
+                <ChartControls
+                  period={period}
+                  onPeriod={setPeriod}
+                  mode={mode}
+                  onMode={setMode}
+                  measure={offersWorth ? measure : undefined}
+                  onMeasure={offersWorth ? setMeasure : undefined}
+                />
+              </SectionTitle>
+              <MonthlyBarsChart
+                data={bars}
+                series={series}
+                stacked={stacks.series.length > 1}
+                currency={currency}
+                loading={txLoading}
+                average={showWorth ? null : average}
+                /* Only when the bars actually draw it — otherwise every bar
+                   dims and the whole chart greys out. */
+                selectedKey={selectedOnChart ? window.key : undefined}
+                height={220}
+              />
+              {anythingHidden && (
+                <CheckboxField
+                  label={t("chart.showHidden")}
+                  hint={t("chart.showHiddenHint")}
+                  checked={showHidden}
+                  onChange={setShowHidden}
+                />
+              )}
+            </Card>
+          </div>
+        </div>
+        <div className="column side">
+          {domain === "EXPENSE" && (
+            <div className="slot full first">
+              <DraftsCard />
+            </div>
           )}
-        </Card>
-        <CategoryBreakdown
-          title={t("chart.topCategories")}
-          rows={topCategories}
-          categories={categories}
-          domain={domain}
-          currency={currency}
-          onViewAll={() => changeView("categories")}
-          loading={txLoading || catLoading}
-        />
+          <div className="slot">
+            <CategoryBreakdown
+              title={t("chart.topCategories")}
+              rows={topCategories}
+              categories={categories}
+              domain={domain}
+              currency={currency}
+              onViewAll={() => changeView("categories")}
+              loading={txLoading || catLoading}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="detail">
@@ -1017,30 +1032,51 @@ export function DomainPage({ domain }: Props) {
       )}
 
       <style jsx>{`
-        .charts {
+        .board {
           display: grid;
           grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
           gap: 16px;
           align-items: stretch;
         }
 
-        /* Drafts and To confirm stack like the rest of the page; on wide
-           screens they sit side by side (one column each that renders). */
-        .lists {
+        .column {
           display: contents;
         }
 
+        .slot {
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
+        }
+
+        .slot:empty {
+          display: none;
+        }
+
+        .full {
+          grid-column: 1 / -1;
+        }
+
+        .first {
+          order: -1;
+        }
+
         @media (min-width: 1920px) {
-          .lists {
-            display: grid;
-            grid-auto-flow: column;
-            grid-auto-columns: minmax(0, 1fr);
+          .column {
+            display: flex;
+            flex-direction: column;
             gap: 16px;
-            align-items: start;
+            min-width: 0;
           }
 
-          .lists:empty {
-            display: none;
+          /* The last card of each column takes the spare height, so both
+             columns end on the same line. */
+          .column > .slot:last-child {
+            flex: 1;
+          }
+
+          .full {
+            grid-column: auto;
           }
         }
 
@@ -1052,7 +1088,7 @@ export function DomainPage({ domain }: Props) {
         }
 
         @media (max-width: 900px) {
-          .charts {
+          .board {
             grid-template-columns: 1fr;
           }
         }
