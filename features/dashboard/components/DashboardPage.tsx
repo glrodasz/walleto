@@ -166,7 +166,9 @@ export function DashboardPage() {
       <TipBanner id="create">{t("tip.create")}</TipBanner>
 
       <div className="top">
-        <DraftsCard />
+        <div className="drafts">
+          <DraftsCard />
+        </div>
 
         <section className="block">
           {userDoc ? (
@@ -256,10 +258,12 @@ export function DashboardPage() {
         }
 
         /* Drafts, the monthly plan and net worth stack like the rest of the
-           page until the screen is wide enough to give each a third of it.
+           page until the screen is wide enough to give each a third of it
+           (Drafts last there).
            One column per card that renders, so with no drafts the two
            summaries split the row. */
-        .top {
+        .top,
+        .drafts {
           display: contents;
         }
 
@@ -269,6 +273,16 @@ export function DashboardPage() {
             grid-auto-flow: column;
             grid-auto-columns: minmax(0, 1fr);
             gap: 16px;
+          }
+
+          /* Drafts go last in the row; below 1920px they stay on top. */
+          .drafts {
+            display: flex;
+            order: 1;
+          }
+
+          .drafts:empty {
+            display: none;
           }
         }
 

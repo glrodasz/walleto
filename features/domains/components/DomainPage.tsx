@@ -28,6 +28,7 @@ import { CategoryDrilldown } from "./CategoryDrilldown";
 import { RecurringChecklist } from "./RecurringChecklist";
 import { PendingConfirmations } from "./PendingConfirmations";
 import { DraftsCard } from "../../drafts/components/DraftsCard";
+import { useExpenseDrafts } from "../../drafts/hooks/useExpenseDrafts";
 import { SubscriptionInsights } from "../../insights/components/SubscriptionInsights";
 import { AccountValuePanels } from "../../investments/components/AccountValuePanels";
 import { AccountValueList } from "../../investments/components/AccountValueList";
@@ -691,6 +692,11 @@ export function DomainPage({ domain }: Props) {
       ),
     [transactions, items, domain, userDoc?.confirmVariableExpenses, now]
   );
+  const drafts = useExpenseDrafts();
+  // Wide screens put To confirm, Top categories and Drafts in one row of
+  // three when there is something to confirm or a draft; otherwise Top
+  // categories stays beside the chart.
+  const leadRow = pending.length > 0 || (domain === "EXPENSE" && drafts.length > 0);
   const pendingIds = useMemo(() => new Set(pending.map((t) => t.id)), [pending]);
   const keepVariable = (row: Transaction) =>
     row.id &&
@@ -919,13 +925,18 @@ export function DomainPage({ domain }: Props) {
         />
       )}
 
-      {/* Below 1920px these cards fill the page in order (Drafts, To confirm,
-          then chart beside Top categories). From 1920px the board becomes
-          two fixed columns: the wide one for To confirm and the chart, the
-          narrow one for Drafts and Top categories, so short cards stack
-          instead of leaving holes and every edge lines up. */}
-      <div className="board">
-        <div className="column main">
+      {/* Below 1920px: Drafts, To confirm, then the chart beside Top
+          categories. From 1920px, when there is something to confirm or a
+          draft, To confirm, Top categories and Drafts share one row of equal
+          columns (like the Dashboard's top row) and the chart takes the full
+          width under it. */}
+      <div className={`board${leadRow ? " lead" : ""}`}>
+        <div className="row">
+          {domain === "EXPENSE" && (
+            <div className="slot full drafts">
+              <DraftsCard />
+            </div>
+          )}
           <div className="slot full">
             <PendingConfirmations
               rows={pending}
@@ -935,53 +946,7 @@ export function DomainPage({ domain }: Props) {
               onKeepVariable={keepVariable}
             />
           </div>
-          <div className="slot">
-            <Card>
-              <SectionTitle
-                title={t(`chart.title.${domain}`)}
-                subtitle={t(
-                  showWorth ? `chart.subtitle.worth.${mode}` : `chart.subtitle.${domain}.${mode}`
-                )}
-              >
-                <ChartControls
-                  period={period}
-                  onPeriod={setPeriod}
-                  mode={mode}
-                  onMode={setMode}
-                  measure={offersWorth ? measure : undefined}
-                  onMeasure={offersWorth ? setMeasure : undefined}
-                />
-              </SectionTitle>
-              <MonthlyBarsChart
-                data={bars}
-                series={series}
-                stacked={stacks.series.length > 1}
-                currency={currency}
-                loading={txLoading}
-                average={showWorth ? null : average}
-                /* Only when the bars actually draw it — otherwise every bar
-                   dims and the whole chart greys out. */
-                selectedKey={selectedOnChart ? window.key : undefined}
-                height={220}
-              />
-              {anythingHidden && (
-                <CheckboxField
-                  label={t("chart.showHidden")}
-                  hint={t("chart.showHiddenHint")}
-                  checked={showHidden}
-                  onChange={setShowHidden}
-                />
-              )}
-            </Card>
-          </div>
-        </div>
-        <div className="column side">
-          {domain === "EXPENSE" && (
-            <div className="slot full first">
-              <DraftsCard />
-            </div>
-          )}
-          <div className="slot">
+          <div className="slot cats">
             <CategoryBreakdown
               title={t("chart.topCategories")}
               rows={topCategories}
@@ -992,6 +957,45 @@ export function DomainPage({ domain }: Props) {
               loading={txLoading || catLoading}
             />
           </div>
+        </div>
+        <div className="slot">
+          <Card>
+            <SectionTitle
+              title={t(`chart.title.${domain}`)}
+              subtitle={t(
+                showWorth ? `chart.subtitle.worth.${mode}` : `chart.subtitle.${domain}.${mode}`
+              )}
+            >
+              <ChartControls
+                period={period}
+                onPeriod={setPeriod}
+                mode={mode}
+                onMode={setMode}
+                measure={offersWorth ? measure : undefined}
+                onMeasure={offersWorth ? setMeasure : undefined}
+              />
+            </SectionTitle>
+            <MonthlyBarsChart
+              data={bars}
+              series={series}
+              stacked={stacks.series.length > 1}
+              currency={currency}
+              loading={txLoading}
+              average={showWorth ? null : average}
+              /* Only when the bars actually draw it — otherwise every bar
+                 dims and the whole chart greys out. */
+              selectedKey={selectedOnChart ? window.key : undefined}
+              height={220}
+            />
+            {anythingHidden && (
+              <CheckboxField
+                label={t("chart.showHidden")}
+                hint={t("chart.showHiddenHint")}
+                checked={showHidden}
+                onChange={setShowHidden}
+              />
+            )}
+          </Card>
         </div>
       </div>
 
@@ -1039,7 +1043,7 @@ export function DomainPage({ domain }: Props) {
           align-items: stretch;
         }
 
-        .column {
+        .row {
           display: contents;
         }
 
@@ -1057,26 +1061,30 @@ export function DomainPage({ domain }: Props) {
           grid-column: 1 / -1;
         }
 
-        .first {
-          order: -1;
+        /* Placed after the chart so it lands in the column beside it. */
+        .cats {
+          order: 1;
         }
 
         @media (min-width: 1920px) {
-          .column {
+          .lead {
             display: flex;
             flex-direction: column;
+          }
+
+          .lead .row {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: minmax(0, 1fr);
             gap: 16px;
-            min-width: 0;
           }
 
-          /* The last card of each column takes the spare height, so both
-             columns end on the same line. */
-          .column > .slot:last-child {
-            flex: 1;
-          }
-
-          .full {
+          .lead .full {
             grid-column: auto;
+          }
+
+          .lead .drafts {
+            order: 2;
           }
         }
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../../../components/atoms/Button";
 import { Card } from "../../../components/atoms/Card";
 import { SectionTitle } from "../../../components/atoms/SectionTitle";
@@ -17,6 +17,22 @@ import type { Category, Currency, Transaction } from "../../../types";
 
 /** How many periods the card asks for at once; confirming one brings up the next. */
 export const PENDING_VISIBLE = 5;
+/** On wide screens the card shares a row with Top categories and Drafts, so it asks for fewer. */
+export const PENDING_VISIBLE_WIDE = 3;
+const WIDE_QUERY = "(min-width: 1920px)";
+
+function useIsWide(): boolean {
+  const [wide, setWide] = useState(false);
+  useEffect(() => {
+    if (!window.matchMedia) return;
+    const mq = window.matchMedia(WIDE_QUERY);
+    const sync = () => setWide(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+  return wide;
+}
 
 interface Props {
   /** Already the pending rows, newest first. */
@@ -41,8 +57,9 @@ export function PendingConfirmations({
 }: Props) {
   const t = useT(DOMAIN_MESSAGES);
   const [showAll, setShowAll] = useState(false);
+  const wide = useIsWide();
   if (rows.length === 0) return null;
-  const visible = showAll ? rows : rows.slice(0, PENDING_VISIBLE);
+  const visible = showAll ? rows : rows.slice(0, wide ? PENDING_VISIBLE_WIDE : PENDING_VISIBLE);
   const hidden = rows.length - visible.length;
   return (
     <Card>
