@@ -6,6 +6,7 @@ import { CategoryIcon } from "../../../components/atoms/CategoryIcon";
 import { RangeAmount } from "../../../components/atoms/RangeAmount";
 import { IconDisc } from "../../../components/molecules/IconDisc";
 import { KebabMenu } from "../../../components/molecules/KebabMenu";
+import { Modal } from "../../../components/molecules/Modal";
 import { ListItem, ListItems } from "../../../components/molecules/ListItem";
 import { toDate } from "../../../helpers/chartData";
 import { useMoneyFormat } from "../../../hooks/useMoneyFormat";
@@ -59,23 +60,30 @@ export function PendingConfirmations({
   const [showAll, setShowAll] = useState(false);
   const wide = useIsWide();
   if (rows.length === 0) return null;
-  const visible = showAll ? rows : rows.slice(0, wide ? PENDING_VISIBLE_WIDE : PENDING_VISIBLE);
+  // On wide screens the card keeps its height in the row it shares, so the
+  // older periods open in a modal that scrolls on its own; elsewhere they
+  // expand in place.
+  const inline = showAll && !wide;
+  const visible = inline ? rows : rows.slice(0, wide ? PENDING_VISIBLE_WIDE : PENDING_VISIBLE);
   const hidden = rows.length - visible.length;
+  const renderRows = (list: Transaction[], onPick: (row: Transaction) => void) => (
+    <ListItems>
+      {list.map((row) => (
+        <PendingRow
+          key={row.id}
+          row={row}
+          category={categories.find((c) => c.id === row.categoryId)}
+          displayCurrency={displayCurrency}
+          onConfirm={onPick}
+          onKeepVariable={onKeepVariable}
+        />
+      ))}
+    </ListItems>
+  );
   return (
     <Card>
       <SectionTitle title={t("pending.title")} subtitle={t("pending.subtitle")} />
-      <ListItems>
-        {visible.map((row) => (
-          <PendingRow
-            key={row.id}
-            row={row}
-            category={categories.find((c) => c.id === row.categoryId)}
-            displayCurrency={displayCurrency}
-            onConfirm={onConfirm}
-            onKeepVariable={onKeepVariable}
-          />
-        ))}
-      </ListItems>
+      {renderRows(visible, onConfirm)}
       {hidden > 0 && (
         <div className="more">
           <Button variant="ghost" size="sm" onClick={() => setShowAll(true)}>
@@ -83,11 +91,34 @@ export function PendingConfirmations({
           </Button>
         </div>
       )}
+      {wide && (
+        <Modal
+          open={showAll}
+          title={`${t("pending.title")} (${rows.length})`}
+          onClose={() => setShowAll(false)}
+        >
+          <div className="scroll">
+            {renderRows(rows, (row) => {
+              setShowAll(false);
+              onConfirm(row);
+            })}
+          </div>
+        </Modal>
+      )}
       <style jsx>{`
         .more {
           display: flex;
           justify-content: flex-end;
           margin-top: 8px;
+        }
+
+        /* The list scrolls under a title that stays put. */
+        .scroll {
+          max-height: calc(100vh - 160px);
+          max-height: calc(100dvh - 160px);
+          overflow-y: auto;
+          margin-right: -8px;
+          padding-right: 8px;
         }
       `}</style>
     </Card>
