@@ -11,9 +11,11 @@ interface Props {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  /** An opaque surface instead of glass, for long lists that must read cleanly. */
+  solid?: boolean;
 }
 
-export function Modal({ open, title, onClose, children }: Props) {
+export function Modal({ open, title, onClose, children, solid = false }: Props) {
   const tc = useT(COMMON_MESSAGES);
   // The layer this modal was opened *from*, so a nested one can outrank the
   // dropdowns the outer modal owns.
@@ -76,7 +78,7 @@ export function Modal({ open, title, onClose, children }: Props) {
       }}
     >
       <div
-        className="glass glass--strong glass--raised panel"
+        className={`glass glass--strong glass--raised panel${solid ? " solid" : ""}`}
         role="dialog"
         aria-modal="true"
         aria-label={title}
@@ -122,6 +124,11 @@ export function Modal({ open, title, onClose, children }: Props) {
           overflow-y: auto;
           overscroll-behavior: contain;
           border-radius: var(--r-xl);
+        }
+
+        .panel.solid {
+          background-color: var(--surface-solid);
+          background-image: none;
         }
 
         /* Phones: a bottom sheet. Full width, anchored to the bottom edge,

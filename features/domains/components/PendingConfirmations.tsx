@@ -93,6 +93,7 @@ export function PendingConfirmations({
       )}
       {wide && (
         <Modal
+          solid
           open={showAll}
           title={`${t("pending.title")} (${rows.length})`}
           onClose={() => setShowAll(false)}

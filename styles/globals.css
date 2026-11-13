@@ -15,6 +15,7 @@
   --input-font-size: 16px;
 
   /* Surfaces */
+  --surface-solid: #ffffff;
   --bg-0: #e9eef5;
   --bg-1: #f7f9fc;
   --bg-2: #eef2f7;
@@ -227,6 +228,7 @@
 [data-theme="dark"] {
   color-scheme: dark;
 
+  --surface-solid: #14141b;
   --bg-0: #0a0a0f;
   --bg-1: #14141b;
   --bg-2: #1c1c26;
