@@ -28,6 +28,7 @@ import { CategoryDrilldown } from "./CategoryDrilldown";
 import { RecurringChecklist } from "./RecurringChecklist";
 import { PendingConfirmations } from "./PendingConfirmations";
 import { DraftsCard } from "../../drafts/components/DraftsCard";
+import { useExpenseDrafts } from "../../drafts/hooks/useExpenseDrafts";
 import { SubscriptionInsights } from "../../insights/components/SubscriptionInsights";
 import { AccountValuePanels } from "../../investments/components/AccountValuePanels";
 import { AccountValueList } from "../../investments/components/AccountValueList";
@@ -691,6 +692,11 @@ export function DomainPage({ domain }: Props) {
       ),
     [transactions, items, domain, userDoc?.confirmVariableExpenses, now]
   );
+  const drafts = useExpenseDrafts();
+  // Wide screens put To confirm, Top categories and Drafts in one row of
+  // three when there is something to confirm or a draft; otherwise Top
+  // categories stays beside the chart.
+  const leadRow = pending.length > 0 || (domain === "EXPENSE" && drafts.length > 0);
   const pendingIds = useMemo(() => new Set(pending.map((t) => t.id)), [pending]);
   const keepVariable = (row: Transaction) =>
     row.id &&
@@ -919,65 +925,78 @@ export function DomainPage({ domain }: Props) {
         />
       )}
 
-      <div className="lists">
-        {domain === "EXPENSE" && <DraftsCard />}
-
-        <PendingConfirmations
-          rows={pending}
-          categories={categories}
-          displayCurrency={currency}
-          onConfirm={setConfirmingTx}
-          onKeepVariable={keepVariable}
-        />
-      </div>
-
-      <div className="charts">
-        <Card>
-          <SectionTitle
-            title={t(`chart.title.${domain}`)}
-            subtitle={t(
-              showWorth ? `chart.subtitle.worth.${mode}` : `chart.subtitle.${domain}.${mode}`
-            )}
-          >
-            <ChartControls
-              period={period}
-              onPeriod={setPeriod}
-              mode={mode}
-              onMode={setMode}
-              measure={offersWorth ? measure : undefined}
-              onMeasure={offersWorth ? setMeasure : undefined}
-            />
-          </SectionTitle>
-          <MonthlyBarsChart
-            data={bars}
-            series={series}
-            stacked={stacks.series.length > 1}
-            currency={currency}
-            loading={txLoading}
-            average={showWorth ? null : average}
-            /* Only when the bars actually draw it — otherwise every bar
-               dims and the whole chart greys out. */
-            selectedKey={selectedOnChart ? window.key : undefined}
-            height={220}
-          />
-          {anythingHidden && (
-            <CheckboxField
-              label={t("chart.showHidden")}
-              hint={t("chart.showHiddenHint")}
-              checked={showHidden}
-              onChange={setShowHidden}
-            />
+      {/* Below 1920px: Drafts, To confirm, then the chart beside Top
+          categories. From 1920px, when there is something to confirm or a
+          draft, To confirm, Top categories and Drafts share one row of equal
+          columns (like the Dashboard's top row) and the chart takes the full
+          width under it. */}
+      <div className={`board${leadRow ? " lead" : ""}`}>
+        <div className="row">
+          {domain === "EXPENSE" && (
+            <div className="slot full drafts">
+              <DraftsCard />
+            </div>
           )}
-        </Card>
-        <CategoryBreakdown
-          title={t("chart.topCategories")}
-          rows={topCategories}
-          categories={categories}
-          domain={domain}
-          currency={currency}
-          onViewAll={() => changeView("categories")}
-          loading={txLoading || catLoading}
-        />
+          <div className="slot full">
+            <PendingConfirmations
+              rows={pending}
+              categories={categories}
+              displayCurrency={currency}
+              onConfirm={setConfirmingTx}
+              onKeepVariable={keepVariable}
+            />
+          </div>
+          <div className="slot cats">
+            <CategoryBreakdown
+              title={t("chart.topCategories")}
+              rows={topCategories}
+              categories={categories}
+              domain={domain}
+              currency={currency}
+              onViewAll={() => changeView("categories")}
+              loading={txLoading || catLoading}
+            />
+          </div>
+        </div>
+        <div className="slot">
+          <Card>
+            <SectionTitle
+              title={t(`chart.title.${domain}`)}
+              subtitle={t(
+                showWorth ? `chart.subtitle.worth.${mode}` : `chart.subtitle.${domain}.${mode}`
+              )}
+            >
+              <ChartControls
+                period={period}
+                onPeriod={setPeriod}
+                mode={mode}
+                onMode={setMode}
+                measure={offersWorth ? measure : undefined}
+                onMeasure={offersWorth ? setMeasure : undefined}
+              />
+            </SectionTitle>
+            <MonthlyBarsChart
+              data={bars}
+              series={series}
+              stacked={stacks.series.length > 1}
+              currency={currency}
+              loading={txLoading}
+              average={showWorth ? null : average}
+              /* Only when the bars actually draw it — otherwise every bar
+                 dims and the whole chart greys out. */
+              selectedKey={selectedOnChart ? window.key : undefined}
+              height={220}
+            />
+            {anythingHidden && (
+              <CheckboxField
+                label={t("chart.showHidden")}
+                hint={t("chart.showHiddenHint")}
+                checked={showHidden}
+                onChange={setShowHidden}
+              />
+            )}
+          </Card>
+        </div>
       </div>
 
       <div className="detail">
@@ -1017,30 +1036,55 @@ export function DomainPage({ domain }: Props) {
       )}
 
       <style jsx>{`
-        .charts {
+        .board {
           display: grid;
           grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
           gap: 16px;
           align-items: stretch;
         }
 
-        /* Drafts and To confirm stack like the rest of the page; on wide
-           screens they sit side by side (one column each that renders). */
-        .lists {
+        .row {
           display: contents;
         }
 
+        .slot {
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
+        }
+
+        .slot:empty {
+          display: none;
+        }
+
+        .full {
+          grid-column: 1 / -1;
+        }
+
+        /* Placed after the chart so it lands in the column beside it. */
+        .cats {
+          order: 1;
+        }
+
         @media (min-width: 1920px) {
-          .lists {
+          .lead {
+            display: flex;
+            flex-direction: column;
+          }
+
+          .lead .row {
             display: grid;
             grid-auto-flow: column;
             grid-auto-columns: minmax(0, 1fr);
             gap: 16px;
-            align-items: start;
           }
 
-          .lists:empty {
-            display: none;
+          .lead .full {
+            grid-column: auto;
+          }
+
+          .lead .drafts {
+            order: 2;
           }
         }
 
@@ -1052,7 +1096,7 @@ export function DomainPage({ domain }: Props) {
         }
 
         @media (max-width: 900px) {
-          .charts {
+          .board {
             grid-template-columns: 1fr;
           }
         }
